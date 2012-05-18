@@ -1,0 +1,8 @@
+build
+dist
+*~
+JTwork
+JTreport
+TAGS
+make/pyc.zip
+make/pyc/
