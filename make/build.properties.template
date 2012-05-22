@@ -30,7 +30,7 @@
 # one of the standard user build.properties files (see build.xml)
 
 # boot.java.home = /opt/jdk/1.6.0
-boot.java.home = /usr/lib/jvm/java-6-sun
+boot.java.home = /usr/lib/jvm/java-7-openjdk-i386
 boot.java = ${boot.java.home}/bin/java
 boot.javac = ${boot.java.home}/bin/javac
 boot.javac.source = 6
