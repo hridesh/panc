@@ -336,7 +336,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         /** A synthetic let expression, of type LetExpr.
          */
-        LETEXPR;                         // ala scheme
+        LETEXPR,                         // ala scheme
+        
+        // Panini code
+        CONFIGDEF,
+        LIBRARYDEF,
+        MODULEDEF;
+        // end Panini code
 
         private Tag noAssignTag;
 
@@ -464,6 +470,118 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     public int getEndPosition(EndPosTable endPosTable) {
         return TreeInfo.getEndPos(this, endPosTable);
     }
+    
+    // Panini code
+    public static class JCConfigDecl extends JCTree implements ConfigTree{
+    	public JCBlock body;
+
+    	public JCConfigDecl(JCBlock body){
+    		this.body = body;
+    	}
+		public Kind getKind() {
+			return Kind.CONFIG;
+		}
+
+		public JCBlock getBody() {
+			return this.body;
+		}
+		
+		public Tag getTag() {
+			return CONFIGDEF;
+		}
+
+		@Override
+		public void accept(Visitor v) { v.visitConfigDef(this);}
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitConfig(this, d);
+		}
+    }
+    
+    public static class JCLibraryDecl extends JCTree implements LibraryTree{
+    	public Name name;
+    	public List<JCTree> defs;
+    	
+    	public JCLibraryDecl(Name name, List<JCTree> defs){
+    		this.name = name;
+    		this.defs = defs;
+    	}
+		public Kind getKind() {
+			return Kind.LIBRARY;
+		}
+		
+		public Name getName(){
+			return name;
+		}
+		
+		public List<JCTree> getMembers(){
+			return defs;
+		}
+		
+		public Tag getTag() {
+			return LIBRARYDEF;
+		}
+
+		@Override
+		public void accept(Visitor v) { v.visitLibraryDef(this);}
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitLibrary(this, d);
+		}
+    }
+    
+    public static class JCModuleDecl extends JCTree implements ModuleTree{
+    	public Name name;
+    	public List<JCVariableDecl> params;
+    	public List<JCExpression> implementing;
+    	public List<JCTree> defs;
+    	
+    	public JCModuleDecl(Name name, 
+    			List<JCVariableDecl> params, 
+    			List<JCExpression> implementing, 
+    			List<JCTree> defs){
+    		this.name = name;
+    		this.params = params;
+    		this.implementing = implementing;
+    		this.defs = defs;
+    	}
+    	
+		public Kind getKind() {
+			return Kind.MODULE;
+		}
+		
+		public Name getName(){
+			return name;
+		}
+		
+		public List<JCVariableDecl> getParameters(){
+			return params;
+		}
+		
+		public List<JCExpression> getImplementsClause(){
+			return implementing;
+		}
+		
+		public List<JCTree> getMembers(){
+			return defs;
+		}
+		
+		public Tag getTag() {
+			return MODULEDEF;
+		}
+
+		@Override
+		public void accept(Visitor v) { v.visitModuleDef(this);}
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitModule(this, d);
+		}
+    }
+    
+    // end Panini code
 
     /**
      * Everything in one source file is kept in a TopLevel structure.
@@ -2396,6 +2514,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitModifiers(JCModifiers that)         { visitTree(that); }
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
+        // Panini code
+        public void visitConfigDef(JCConfigDecl that)	     { visitTree(that); }
+        public void visitLibraryDef(JCLibraryDecl that)	     { visitTree(that); }
+        public void visitModuleDef(JCModuleDecl that)	     { visitTree(that); }
+        // end Panini code
 
         public void visitTree(JCTree that)                   { Assert.error(); }
     }

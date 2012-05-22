@@ -377,7 +377,47 @@ public class Pretty extends JCTree.Visitor {
     /**************************************************************************
      * Visitor methods
      *************************************************************************/
-
+    // Panini code
+    public void visitConfigDef(JCConfigDecl tree){
+    	try{
+    		println();align();
+    		print("config ");
+    		print(tree.body);
+    	} catch (IOException e){
+    		throw new UncheckedIOException(e);
+    	}
+    }
+    
+    public void visitLibraryDef(JCLibraryDecl tree){
+    	try{
+    		println();align();
+    		print("library ");
+    		print(tree.name + " ");
+    		printBlock(tree.defs);
+    	} catch (IOException e){
+    		throw new UncheckedIOException(e);
+    	}
+    }
+    
+    public void visitModuleDef(JCModuleDecl tree){
+    	try{
+    		println();align();
+    		printDocComment(tree);
+    		print("module ");
+    		print(tree.name + " ");
+    		printExprs(tree.params);
+    		if (tree.implementing.nonEmpty()) {
+                print(" implements ");
+                printExprs(tree.implementing);
+            }
+    		print(" ");
+    		printBlock(tree.defs);
+    	} catch (IOException e){
+    		throw new UncheckedIOException(e);
+    	}
+    }
+    
+    // end Panini code
     public void visitTopLevel(JCCompilationUnit tree) {
         try {
             printUnit(tree, null);

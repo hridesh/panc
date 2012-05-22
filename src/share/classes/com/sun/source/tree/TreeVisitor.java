@@ -108,4 +108,9 @@ public interface TreeVisitor<R,P> {
     R visitWhileLoop(WhileLoopTree node, P p);
     R visitWildcard(WildcardTree node, P p);
     R visitOther(Tree node, P p);
+    // Panini Code
+    R visitConfig(ConfigTree node, P p);
+    R visitLibrary(LibraryTree node, P p);
+    R visitModule(ModuleTree node, P p);
+    //end Panini Code
 }

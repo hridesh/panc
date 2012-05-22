@@ -397,4 +397,23 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     public R visitErroneous(ErroneousTree node, P p) {
         return null;
     }
+
+	// Panini code
+	public R visitConfig(ConfigTree node, P p) {
+		R r = scan(node.getBody(), p);
+		return r;
+	}
+
+	public R visitLibrary(LibraryTree node, P p) {
+		R r = scan(node.getMembers(), p);
+		return r;
+	}
+
+	public R visitModule(ModuleTree node, P p) {
+		R r = scan(node.getParameters(), p);
+		r = scanAndReduce(node.getImplementsClause(), p, r);
+		r = scanAndReduce(node.getMembers(), p, r);
+		return r;
+	}
+	//end Panini code
 }

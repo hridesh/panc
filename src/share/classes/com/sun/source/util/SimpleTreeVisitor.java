@@ -263,4 +263,20 @@ public class SimpleTreeVisitor <R,P> implements TreeVisitor<R,P> {
     public R visitOther(Tree node, P p) {
         return defaultAction(node, p);
     }
+    
+    // Panini code
+	public R visitConfig(ConfigTree node, P p) {
+		return defaultAction(node, p);
+	}
+
+	@Override
+	public R visitLibrary(LibraryTree node, P p) {
+		return defaultAction(node, p);
+	}
+
+	@Override
+	public R visitModule(ModuleTree node, P p) {
+		return defaultAction(node, p);
+	}
+	//end Panini code
 }

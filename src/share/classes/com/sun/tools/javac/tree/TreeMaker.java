@@ -114,6 +114,29 @@ public class TreeMaker implements JCTree.Factory {
         this.pos = (pos == null ? Position.NOPOS : pos.getStartPosition());
         return this;
     }
+    
+    // Panini code
+    public JCConfigDecl ConfigDef(JCBlock body){
+    	JCConfigDecl tree = new JCConfigDecl(body);
+    	tree.pos = pos;
+    	return tree;
+    }
+    
+    public JCLibraryDecl LibraryDef(Name name, List<JCTree> defs){
+    	JCLibraryDecl tree = new JCLibraryDecl(name, defs);
+    	tree.pos = pos;
+    	return tree;
+    }
+    
+    public JCModuleDecl ModuleDef(Name name, 
+			List<JCVariableDecl> params, 
+			List<JCExpression> implementing, 
+			List<JCTree> defs){
+    	JCModuleDecl tree = new JCModuleDecl(name, params, implementing, defs);
+    	tree.pos = pos;
+    	return tree;
+    }
+    // end Panini code
 
     /**
      * Create given tree node at current position.

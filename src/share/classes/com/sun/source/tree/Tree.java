@@ -45,6 +45,12 @@ public interface Tree {
      * Enumerates all kinds of trees.
      */
     public enum Kind {
+    	
+    	// Panini code
+    	CONFIG(ConfigTree.class),
+    	LIBRARY(LibraryTree.class),
+    	MODULE(ModuleTree.class),
+    	// end Panini code
 
         /**
          * Used for instances of {@link AnnotationTree}.
