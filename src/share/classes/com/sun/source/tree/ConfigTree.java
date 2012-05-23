@@ -12,7 +12,7 @@
  * License.
  * 
  * For more details and the latest version of this code please see
- * http://www.cs.iastate.edu/~panini/
+ * http://paninij.org
  *
  * Contributor(s): Eric Lin
  */
