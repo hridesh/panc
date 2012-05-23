@@ -14,7 +14,7 @@
  * For more details and the latest version of this code please see
  * http://www.cs.iastate.edu/~panini/
  *
- * Contributor(s): <name>
+ * Contributor(s): Eric Lin
  */
 
 package com.sun.source.tree;
