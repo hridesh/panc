@@ -75,6 +75,14 @@ public class TreeScanner extends Visitor {
     	scan(tree.implementing);
     	scan(tree.defs);
     }
+    
+    public void visitFree(JCFree tree){
+    	scan(tree.exp);
+    }
+    
+    public void visitInclude(JCInclude tree){
+    	scan(tree.lib);
+    }
     // end Panini code
 
     public void visitTopLevel(JCCompilationUnit tree) {

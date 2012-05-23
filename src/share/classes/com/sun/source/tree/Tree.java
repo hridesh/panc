@@ -50,6 +50,8 @@ public interface Tree {
     	CONFIG(ConfigTree.class),
     	LIBRARY(LibraryTree.class),
     	MODULE(ModuleTree.class),
+    	INCLUDE(IncludeTree.class),
+    	FREE(FreeTree.class),
     	// end Panini code
 
         /**

@@ -417,6 +417,25 @@ public class Pretty extends JCTree.Visitor {
     	}
     }
     
+    public void visitInclude(JCInclude tree) {
+        try {
+            print("include ");
+            printExpr(tree.lib);
+            print(";");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    
+    public void visitFree(JCFree tree) {
+        try {
+            print("free ");
+            printExpr(tree.exp);
+            print(";");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
     // end Panini code
     public void visitTopLevel(JCCompilationUnit tree) {
         try {

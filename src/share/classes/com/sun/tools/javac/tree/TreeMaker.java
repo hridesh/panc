@@ -136,6 +136,18 @@ public class TreeMaker implements JCTree.Factory {
     	tree.pos = pos;
     	return tree;
     }
+    
+    public JCInclude Include(JCExpression exp){
+    	JCInclude tree = new JCInclude(exp);
+    	tree.pos = pos;
+    	return tree;
+    }
+    
+    public JCFree Free(JCExpression exp){
+    	JCFree tree = new JCFree(exp);
+    	tree.pos = pos;
+    	return tree;
+    }
     // end Panini code
 
     /**

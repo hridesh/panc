@@ -415,5 +415,15 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 		r = scanAndReduce(node.getMembers(), p, r);
 		return r;
 	}
+	
+	public R visitFree(FreeTree node, P p){
+		R r = scan(node.getExpression(), p);
+		return r;
+	}
+	
+	public R visitInclude(IncludeTree node, P p){
+		R r = scan(node.getExpression(), p);
+		return r;
+	}
 	//end Panini code
 }

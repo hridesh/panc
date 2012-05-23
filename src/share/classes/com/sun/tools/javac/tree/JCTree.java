@@ -341,7 +341,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         // Panini code
         CONFIGDEF,
         LIBRARYDEF,
-        MODULEDEF;
+        MODULEDEF,
+        INCLUDE,
+        FREE;
         // end Panini code
 
         private Tag noAssignTag;
@@ -581,6 +583,61 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
     }
     
+    public static class JCInclude extends JCTree implements IncludeTree{
+    	public JCExpression lib;
+    	
+    	public JCInclude(JCExpression lib){
+    		this.lib = lib;
+    	}
+    	
+		public Kind getKind() {
+			return Kind.INCLUDE;
+		}
+		
+		public JCExpression getExpression(){
+			return lib;
+		}
+		
+		public Tag getTag() {
+			return INCLUDE;
+		}
+
+		@Override
+		public void accept(Visitor v) { v.visitInclude(this);}
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitInclude(this, d);
+		}
+    }
+    
+    public static class JCFree extends JCTree implements FreeTree{
+    	public JCExpression exp;
+    	
+    	public JCFree(JCExpression exp){
+    		this.exp = exp;
+    	}
+    	
+		public Kind getKind() {
+			return Kind.FREE;
+		}
+		
+		public JCExpression getExpression(){
+			return exp;
+		}
+		
+		public Tag getTag() {
+			return FREE;
+		}
+
+		@Override
+		public void accept(Visitor v) { v.visitFree(this);}
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitFree(this, d);
+		}
+    }
     // end Panini code
 
     /**
@@ -2518,6 +2575,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitConfigDef(JCConfigDecl that)	     { visitTree(that); }
         public void visitLibraryDef(JCLibraryDecl that)	     { visitTree(that); }
         public void visitModuleDef(JCModuleDecl that)	     { visitTree(that); }
+        public void visitInclude(JCInclude that)	         { visitTree(that); }
+        public void visitFree(JCFree that)	                 { visitTree(that); }
         // end Panini code
 
         public void visitTree(JCTree that)                   { Assert.error(); }

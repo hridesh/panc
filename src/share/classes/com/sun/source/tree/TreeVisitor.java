@@ -112,5 +112,7 @@ public interface TreeVisitor<R,P> {
     R visitConfig(ConfigTree node, P p);
     R visitLibrary(LibraryTree node, P p);
     R visitModule(ModuleTree node, P p);
+    R visitInclude(IncludeTree node, P p);
+    R visitFree(FreeTree node, P p);
     //end Panini Code
 }

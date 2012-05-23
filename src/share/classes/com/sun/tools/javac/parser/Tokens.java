@@ -171,6 +171,8 @@ public class Tokens {
         MODULE("module"),
         LIBRARY("library"),
         CONFIG("config"),
+        INCLUDE("include"),
+        FREE("free"),
         // end Panini code
         INTLITERAL(Tag.NUMERIC),
         LONGLITERAL(Tag.NUMERIC),
