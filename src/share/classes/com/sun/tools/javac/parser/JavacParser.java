@@ -1884,12 +1884,6 @@ public class JavacParser implements Parser {
             JCModifiers mods = modifiersOpt();
             return List.of(classOrInterfaceOrEnumDeclaration(mods, dc));
         }
-        // Panini code
-        case LIBRARY: case MODULE: case CONFIG: {
-        	String dc = token.comment(CommentStyle.JAVADOC);
-        	return List.of(configOrModuleOrLibraryDecl(null, dc));
-        }
-        // end Panini code
         case INTERFACE:
         case CLASS:
             String dc = token.comment(CommentStyle.JAVADOC);

@@ -583,7 +583,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
     }
     
-    public static class JCInclude extends JCTree implements IncludeTree{
+    public static class JCInclude extends JCStatement implements IncludeTree{
     	public JCExpression lib;
     	
     	public JCInclude(JCExpression lib){
@@ -611,7 +611,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
     }
     
-    public static class JCFree extends JCTree implements FreeTree{
+    public static class JCFree extends JCExpression implements FreeTree{
     	public JCExpression exp;
     	
     	public JCFree(JCExpression exp){

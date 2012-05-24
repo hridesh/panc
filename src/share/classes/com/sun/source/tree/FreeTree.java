@@ -20,6 +20,6 @@
 package com.sun.source.tree;
 
 
-public interface FreeTree extends StatementTree {
+public interface FreeTree extends ExpressionTree {
 	ExpressionTree getExpression();
 }
