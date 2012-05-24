@@ -261,9 +261,9 @@ public class JavacParser implements Parser {
                 case CLASS:
                 case INTERFACE:
                 // Panini code
-                case MODULE:
-                case LIBRARY:
-                case CONFIG:
+//                case MODULE:
+//                case LIBRARY:
+//                case CONFIG:
                 // end Panini code
                 case ENUM:
                     return;
@@ -2618,11 +2618,11 @@ public class JavacParser implements Parser {
         } else if (token.kind == INTERFACE) {
             return interfaceDeclaration(mods, dc);
         } // Panini code
-        else if(token.kind == LIBRARY ||
-        		token.kind == MODULE ||
-        		token.kind == CONFIG){
-        	return configOrModuleOrLibraryDecl(mods ,dc);
-        }
+//        else if(token.kind == LIBRARY ||
+//        		token.kind == MODULE ||
+//        		token.kind == CONFIG){
+//        	return configOrModuleOrLibraryDecl(mods ,dc);
+//        }
         //end Panini code 
         else if (allowEnums) {
             if (token.kind == ENUM) {
@@ -2659,46 +2659,46 @@ public class JavacParser implements Parser {
     }
 
     // Panini code
-    JCStatement configOrModuleOrLibraryDecl(JCModifiers mods, String dc){
-    	if(token.kind == CONFIG)
-    		return configDecl(mods, dc);
-    	else if(token.kind == LIBRARY)
-    		return libraryDecl(mods, dc);
-    	else return moduleDecl(mods, dc);
-    }
-    
-    JCStatement configDecl(JCModifiers mod, String dc){
-    	accept(CONFIG);
-    	int pos = token.pos;
-    	JCBlock body = block();
-    	JCConfigDecl result = toP(F.at(pos).ConfigDef(body)); 
-    	return result;
-    }
-    
-    JCStatement libraryDecl(JCModifiers mod, String dc){
-    	accept(LIBRARY);
-    	int pos = token.pos;
-    	Name name = ident();
-    	List<JCTree> defs = classOrInterfaceBody(name, true);
-    	JCLibraryDecl result = toP(F.at(pos).LibraryDef(name, defs));
-    	return result;
-    }
-
-    JCStatement moduleDecl(JCModifiers mod, String dc){
-    	accept(MODULE);
-    	int pos = token.pos;
-    	Name name = ident();
-    	List<JCVariableDecl> params = formalParameters();
-    	List<JCExpression> implementing = List.nil();
-        if (token.kind == IMPLEMENTS) {
-            nextToken();
-            implementing = typeList();
-        }
-    	List<JCTree> defs = classOrInterfaceBody(name, false);
-    	JCModuleDecl result = 
-    			toP(F.at(pos).ModuleDef(name, params, implementing, defs));
-    	return result;
-    }
+//    JCStatement configOrModuleOrLibraryDecl(JCModifiers mods, String dc){
+//    	if(token.kind == CONFIG)
+//    		return configDecl(mods, dc);
+//    	else if(token.kind == LIBRARY)
+//    		return libraryDecl(mods, dc);
+//    	else return moduleDecl(mods, dc);
+//    }
+//    
+//    JCStatement configDecl(JCModifiers mod, String dc){
+//    	accept(CONFIG);
+//    	int pos = token.pos;
+//    	JCBlock body = block();
+//    	JCConfigDecl result = toP(F.at(pos).ConfigDef(body)); 
+//    	return result;
+//    }
+//    
+//    JCStatement libraryDecl(JCModifiers mod, String dc){
+//    	accept(LIBRARY);
+//    	int pos = token.pos;
+//    	Name name = ident();
+//    	List<JCTree> defs = classOrInterfaceBody(name, true);
+//    	JCLibraryDecl result = toP(F.at(pos).LibraryDef(name, defs));
+//    	return result;
+//    }
+//
+//    JCStatement moduleDecl(JCModifiers mod, String dc){
+//    	accept(MODULE);
+//    	int pos = token.pos;
+//    	Name name = ident();
+//    	List<JCVariableDecl> params = formalParameters();
+//    	List<JCExpression> implementing = List.nil();
+//        if (token.kind == IMPLEMENTS) {
+//            nextToken();
+//            implementing = typeList();
+//        }
+//    	List<JCTree> defs = classOrInterfaceBody(name, false);
+//    	JCModuleDecl result = 
+//    			toP(F.at(pos).ModuleDef(name, params, implementing, defs));
+//    	return result;
+//    }
     // end Panini code
     
     /** ClassDeclaration = CLASS Ident TypeParametersOpt [EXTENDS Type]
