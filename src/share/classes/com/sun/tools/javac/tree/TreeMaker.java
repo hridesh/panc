@@ -163,6 +163,11 @@ public class TreeMaker implements JCTree.Factory {
                 || node instanceof JCImport
                 || node instanceof JCSkip
                 || node instanceof JCErroneous
+                // Panini code
+                || node instanceof JCConfigDecl
+                || node instanceof JCLibraryDecl
+                || node instanceof JCModuleDecl
+                // end Panini code
                 || (node instanceof JCExpressionStatement
                     && ((JCExpressionStatement)node).expr instanceof JCErroneous),
                 node.getClass().getSimpleName());

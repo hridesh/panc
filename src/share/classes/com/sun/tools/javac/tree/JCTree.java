@@ -474,7 +474,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
     
     // Panini code
-    public static class JCConfigDecl extends JCTree implements ConfigTree{
+    public static class JCConfigDecl extends JCStatement implements ConfigTree{
     	public JCBlock body;
 
     	public JCConfigDecl(JCBlock body){
@@ -501,7 +501,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
     }
     
-    public static class JCLibraryDecl extends JCTree implements LibraryTree{
+    public static class JCLibraryDecl extends JCStatement implements LibraryTree{
     	public Name name;
     	public List<JCTree> defs;
     	
@@ -534,7 +534,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
     }
     
-    public static class JCModuleDecl extends JCTree implements ModuleTree{
+    public static class JCModuleDecl extends JCStatement implements ModuleTree{
     	public Name name;
     	public List<JCVariableDecl> params;
     	public List<JCExpression> implementing;
@@ -542,7 +542,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	
     	public JCModuleDecl(Name name, 
     			List<JCVariableDecl> params, 
-    			List<JCExpression> implementing, 
+    			List<JCExpression> implementing,
     			List<JCTree> defs){
     		this.name = name;
     		this.params = params;
