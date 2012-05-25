@@ -251,12 +251,6 @@ public class JavacParser implements Parser {
      */
     private void skip(boolean stopAtImport, boolean stopAtMemberDecl, boolean stopAtIdentifier, boolean stopAtStatement) {
          while (true) {
-        	 // Panini code
-        	 if(token.name().toString().equals("library")||
-    			 token.name().toString().equals("system")||
-    			 token.name().toString().equals("module")) 
-        		 return;
-        	 // end Panini code
              switch (token.kind) {
                 case SEMI:
                     nextToken();
@@ -298,6 +292,12 @@ public class JavacParser implements Parser {
                         return;
                     break;
                 case IDENTIFIER:
+               	 // Panini code
+               	 if(token.name().toString().equals("library")||
+       			 token.name().toString().equals("system")||
+       			 token.name().toString().equals("module")) 
+           		 return;
+               	 // end Panini code
                    if (stopAtIdentifier)
                         return;
                     break;
@@ -1953,7 +1953,7 @@ public class JavacParser implements Parser {
     @SuppressWarnings("fallthrough")
     public JCStatement parseStatement() {
         int pos = token.pos;
-        switch (token.kind) {
+        switch (token.kind) {        
         case LBRACE:
             return block();
         case IF: {
@@ -2616,7 +2616,17 @@ public class JavacParser implements Parser {
      *  @param dc       The documentation comment for the class, or null.
      */
     JCStatement classOrInterfaceOrEnumDeclaration(JCModifiers mods, String dc) {
-        if (token.kind == CLASS) {
+        // Panini code
+    	if(token.kind == IDENTIFIER){
+    		int pos = token.pos;
+    		if(token.name().toString().equals("include")){
+    			nextToken();
+    			JCExpression exp = parseExpression();
+    			return F.at(pos).Include(exp);
+    		}    			
+    	}
+    	// end Panini code
+    	if (token.kind == CLASS) {
             return classDeclaration(mods, dc);
         } else if (token.kind == INTERFACE) {
             return interfaceDeclaration(mods, dc);
