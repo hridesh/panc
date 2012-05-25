@@ -115,8 +115,8 @@ public class TreeMaker implements JCTree.Factory {
         return this;
     }
     // Panini code
-    public JCConfigDecl ConfigDef(JCBlock body){
-    	JCConfigDecl tree = new JCConfigDecl(body);
+    public JCConfigDecl ConfigDef(Name name, JCBlock body){
+    	JCConfigDecl tree = new JCConfigDecl(name, body);
     	tree.pos = pos;
     	return tree;
     }

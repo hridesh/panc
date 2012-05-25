@@ -19,7 +19,10 @@
 
 package com.sun.source.tree;
 
+import com.sun.tools.javac.util.Name;
+
 
 public interface ConfigTree extends StatementTree {
+	Name getName();
 	BlockTree getBody();
 }

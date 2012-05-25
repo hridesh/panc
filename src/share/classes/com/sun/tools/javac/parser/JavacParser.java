@@ -253,7 +253,7 @@ public class JavacParser implements Parser {
          while (true) {
         	 // Panini code
         	 if(token.name().toString().equals("library")||
-    			 token.name().toString().equals("config")||
+    			 token.name().toString().equals("system")||
     			 token.name().toString().equals("module")) 
         		 return;
         	 // end Panini code
@@ -2622,18 +2622,15 @@ public class JavacParser implements Parser {
             return interfaceDeclaration(mods, dc);
         } // Panini code
         else if(token.kind == IDENTIFIER){
-        	if(token.name().toString().equals("config"))
+        	if(token.name().toString().equals("system"))
          		return configDecl(mods, dc);
          	else if(token.name().toString().equals("library"))
          		return libraryDecl(mods, dc);
          	else if(token.name().toString().equals("module"))
          		return moduleDecl(mods, dc);
          	else{
-         		List<JCTree> errs;
-         		errs = List.<JCTree>of(mods, toP(F.at(token.pos).Ident(ident())));
          		setErrorEndPos(token.pos);
-         		return toP(F.Exec(syntaxError(token.pos, errs, "expected3",
-                        CLASS, INTERFACE, ENUM)));
+         		return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.library.module.not.found")));
          	}
         }
         //end Panini code
@@ -2676,8 +2673,9 @@ public class JavacParser implements Parser {
      JCStatement configDecl(JCModifiers mod, String dc){
      	accept(IDENTIFIER);
      	int pos = token.pos;
+     	Name name = ident();
      	JCBlock body = block();
-     	JCConfigDecl result = toP(F.at(pos).ConfigDef(body)); 
+     	JCConfigDecl result = toP(F.at(pos).ConfigDef(name, body)); 
      	return result;
      }
      

@@ -433,7 +433,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 	// Panini code
 	public JCTree visitConfig(ConfigTree node, P p) {
 		JCConfigDecl t = (JCConfigDecl)node;
-		return M.at(t.pos).ConfigDef(t.getBody());
+		return M.at(t.pos).ConfigDef(t.getName(), t.getBody());
 	}
 
 	@Override

@@ -475,12 +475,19 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     // Panini code
     public static class JCConfigDecl extends JCStatement implements ConfigTree{
     	public JCBlock body;
+    	public Name name;
 
-    	public JCConfigDecl(JCBlock body){
+    	public JCConfigDecl(Name name, JCBlock body){
+    		this.name = name;
     		this.body = body;
     	}
+    	
 		public Kind getKind() {
 			return Kind.CONFIG;
+		}
+		
+		public Name getName(){
+			return name;
 		}
 
 		public JCBlock getBody() {
