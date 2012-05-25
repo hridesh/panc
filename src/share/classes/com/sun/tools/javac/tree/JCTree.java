@@ -337,7 +337,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         /** A synthetic let expression, of type LetExpr.
          */
         LETEXPR,                         // ala scheme
-        
         // Panini code
         CONFIGDEF,
         LIBRARYDEF,
@@ -345,6 +344,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         INCLUDE,
         FREE;
         // end Panini code
+
 
         private Tag noAssignTag;
 
@@ -472,7 +472,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     public int getEndPosition(EndPosTable endPosTable) {
         return TreeInfo.getEndPos(this, endPosTable);
     }
-    
     // Panini code
     public static class JCConfigDecl extends JCStatement implements ConfigTree{
     	public JCBlock body;
@@ -724,7 +723,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
             return TOPLEVEL;
         }
     }
-
+    
     /**
      * An import clause.
      * @param qualid    The imported class(es).
@@ -2578,7 +2577,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitInclude(JCInclude that)	         { visitTree(that); }
         public void visitFree(JCFree that)	                 { visitTree(that); }
         // end Panini code
-
         public void visitTree(JCTree that)                   { Assert.error(); }
     }
 

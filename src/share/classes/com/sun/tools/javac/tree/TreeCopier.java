@@ -430,7 +430,6 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
                 throw new AssertionError("unknown tree tag: " + tree.getTag());
         }
     }
-
 	// Panini code
 	public JCTree visitConfig(ConfigTree node, P p) {
 		JCConfigDecl t = (JCConfigDecl)node;

@@ -94,7 +94,7 @@ public class TreeScanner extends Visitor {
     public void visitImport(JCImport tree) {
         scan(tree.qualid);
     }
-
+    
     public void visitClassDef(JCClassDecl tree) {
         scan(tree.mods);
         scan(tree.typarams);

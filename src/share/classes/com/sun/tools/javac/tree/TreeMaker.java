@@ -114,7 +114,6 @@ public class TreeMaker implements JCTree.Factory {
         this.pos = (pos == null ? Position.NOPOS : pos.getStartPosition());
         return this;
     }
-    
     // Panini code
     public JCConfigDecl ConfigDef(JCBlock body){
     	JCConfigDecl tree = new JCConfigDecl(body);
@@ -182,7 +181,7 @@ public class TreeMaker implements JCTree.Factory {
         tree.pos = pos;
         return tree;
     }
-
+    
     public JCClassDecl ClassDef(JCModifiers mods,
                                 Name name,
                                 List<JCTypeParameter> typarams,

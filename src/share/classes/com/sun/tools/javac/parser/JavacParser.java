@@ -87,6 +87,8 @@ public class JavacParser implements Parser {
 
     /** End position mappings container */
     private final AbstractEndPosTable endPosTable;
+    
+    private Name currentToken;
 
     /** Construct a parser from a given scanner, tree factory and log.
      */
@@ -249,6 +251,12 @@ public class JavacParser implements Parser {
      */
     private void skip(boolean stopAtImport, boolean stopAtMemberDecl, boolean stopAtIdentifier, boolean stopAtStatement) {
          while (true) {
+        	 // Panini code
+        	 if(token.name().toString().equals("library")||
+    			 token.name().toString().equals("config")||
+    			 token.name().toString().equals("module")) 
+        		 return;
+        	 // end Panini code
              switch (token.kind) {
                 case SEMI:
                     nextToken();
@@ -260,11 +268,6 @@ public class JavacParser implements Parser {
                 case EOF:
                 case CLASS:
                 case INTERFACE:
-                // Panini code
-//                case MODULE:
-//                case LIBRARY:
-//                case CONFIG:
-                // end Panini code
                 case ENUM:
                     return;
                 case IMPORT:
@@ -2613,17 +2616,27 @@ public class JavacParser implements Parser {
      *  @param dc       The documentation comment for the class, or null.
      */
     JCStatement classOrInterfaceOrEnumDeclaration(JCModifiers mods, String dc) {
-    	if (token.kind == CLASS) {
+        if (token.kind == CLASS) {
             return classDeclaration(mods, dc);
         } else if (token.kind == INTERFACE) {
             return interfaceDeclaration(mods, dc);
         } // Panini code
-//        else if(token.kind == LIBRARY ||
-//        		token.kind == MODULE ||
-//        		token.kind == CONFIG){
-//        	return configOrModuleOrLibraryDecl(mods ,dc);
-//        }
-        //end Panini code 
+        else if(token.kind == IDENTIFIER){
+        	if(token.name().toString().equals("config"))
+         		return configDecl(mods, dc);
+         	else if(token.name().toString().equals("library"))
+         		return libraryDecl(mods, dc);
+         	else if(token.name().toString().equals("module"))
+         		return moduleDecl(mods, dc);
+         	else{
+         		List<JCTree> errs;
+         		errs = List.<JCTree>of(mods, toP(F.at(token.pos).Ident(ident())));
+         		setErrorEndPos(token.pos);
+         		return toP(F.Exec(syntaxError(token.pos, errs, "expected3",
+                        CLASS, INTERFACE, ENUM)));
+         	}
+        }
+        //end Panini code
         else if (allowEnums) {
             if (token.kind == ENUM) {
                 return enumDeclaration(mods, dc);
@@ -2657,50 +2670,43 @@ public class JavacParser implements Parser {
                                           CLASS, INTERFACE)));
         }
     }
-
-    // Panini code
-//    JCStatement configOrModuleOrLibraryDecl(JCModifiers mods, String dc){
-//    	if(token.kind == CONFIG)
-//    		return configDecl(mods, dc);
-//    	else if(token.kind == LIBRARY)
-//    		return libraryDecl(mods, dc);
-//    	else return moduleDecl(mods, dc);
-//    }
-//    
-//    JCStatement configDecl(JCModifiers mod, String dc){
-//    	accept(CONFIG);
-//    	int pos = token.pos;
-//    	JCBlock body = block();
-//    	JCConfigDecl result = toP(F.at(pos).ConfigDef(body)); 
-//    	return result;
-//    }
-//    
-//    JCStatement libraryDecl(JCModifiers mod, String dc){
-//    	accept(LIBRARY);
-//    	int pos = token.pos;
-//    	Name name = ident();
-//    	List<JCTree> defs = classOrInterfaceBody(name, true);
-//    	JCLibraryDecl result = toP(F.at(pos).LibraryDef(name, defs));
-//    	return result;
-//    }
-//
-//    JCStatement moduleDecl(JCModifiers mod, String dc){
-//    	accept(MODULE);
-//    	int pos = token.pos;
-//    	Name name = ident();
-//    	List<JCVariableDecl> params = formalParameters();
-//    	List<JCExpression> implementing = List.nil();
-//        if (token.kind == IMPLEMENTS) {
-//            nextToken();
-//            implementing = typeList();
-//        }
-//    	List<JCTree> defs = classOrInterfaceBody(name, false);
-//    	JCModuleDecl result = 
-//    			toP(F.at(pos).ModuleDef(name, params, implementing, defs));
-//    	return result;
-//    }
-    // end Panini code
     
+
+ // Panini code
+     JCStatement configDecl(JCModifiers mod, String dc){
+     	accept(IDENTIFIER);
+     	int pos = token.pos;
+     	JCBlock body = block();
+     	JCConfigDecl result = toP(F.at(pos).ConfigDef(body)); 
+     	return result;
+     }
+     
+     JCStatement libraryDecl(JCModifiers mod, String dc){
+     	accept(IDENTIFIER);
+     	int pos = token.pos;
+     	Name name = ident();
+     	List<JCTree> defs = classOrInterfaceBody(name, true);
+     	JCLibraryDecl result = toP(F.at(pos).LibraryDef(name, defs));
+     	return result;
+     }
+
+     JCStatement moduleDecl(JCModifiers mod, String dc){
+     	accept(IDENTIFIER);
+     	int pos = token.pos;
+     	Name name = ident();
+     	List<JCVariableDecl> params = formalParameters();
+     	List<JCExpression> implementing = List.nil();
+         if (token.kind == IMPLEMENTS) {
+             nextToken();
+             implementing = typeList();
+         }
+     	List<JCTree> defs = classOrInterfaceBody(name, false);
+     	JCModuleDecl result = 
+     			toP(F.at(pos).ModuleDef(name, params, implementing, defs));
+     	return result;
+     }
+     // end Panini code
+
     /** ClassDeclaration = CLASS Ident TypeParametersOpt [EXTENDS Type]
      *                     [IMPLEMENTS TypeList] ClassBody
      *  @param mods    The modifiers starting the class declaration

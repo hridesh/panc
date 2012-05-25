@@ -45,7 +45,6 @@ public interface Tree {
      * Enumerates all kinds of trees.
      */
     public enum Kind {
-    	
     	// Panini code
     	CONFIG(ConfigTree.class),
     	LIBRARY(LibraryTree.class),
@@ -53,7 +52,6 @@ public interface Tree {
     	INCLUDE(IncludeTree.class),
     	FREE(FreeTree.class),
     	// end Panini code
-
         /**
          * Used for instances of {@link AnnotationTree}.
          */

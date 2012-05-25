@@ -456,7 +456,7 @@ public class Pretty extends JCTree.Visitor {
             throw new UncheckedIOException(e);
         }
     }
-
+    
     public void visitClassDef(JCClassDecl tree) {
         try {
             println(); align();
