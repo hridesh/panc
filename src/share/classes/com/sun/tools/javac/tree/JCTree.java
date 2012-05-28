@@ -888,6 +888,22 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
                             JCExpression defaultValue,
                             MethodSymbol sym)
         {
+    	
+        	// Panini code
+        	// TEMPORARY - Adds public to methods without access modifiers.
+    		//System.out.println("JCMethodDecl! Modifiers = " + mods.getFlags() + "\nName = " + name);
+    		if(mods.getFlags().size() > 0){
+	    		Modifier x = (Modifier)mods.getFlags().toArray()[0];
+	    		if(x != Modifier.PUBLIC && x != Modifier.PROTECTED && x != Modifier.PRIVATE){
+	    			//System.out.println("No access modifier! Adding Public.");
+	    			mods.flags |= 1;
+	    			//System.out.println("new modifiers: ");
+	    			//System.out.println(mods.getFlags());
+	    		}
+    		}
+    		//else mods.flags |= 1;
+    		// end Panini code
+    	
             this.mods = mods;
             this.name = name;
             this.restype = restype;
