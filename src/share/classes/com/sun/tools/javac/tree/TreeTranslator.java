@@ -417,6 +417,20 @@ public class TreeTranslator extends JCTree.Visitor {
         result = tree;
     }
 
+    // Panini code
+    public void visitConfigDef(JCConfigDecl tree){
+//    	tree.mods = translate(tree.mods);
+//        tree.typarams = translateTypeParams(tree.typarams);
+//        tree.extending = translate(tree.extending);
+//        tree.implementing = translate(tree.implementing);
+//        tree.defs = translate(tree.defs);
+        result = tree;
+    }
+    
+    public void visitModuleDef(JCModuleDecl tree){
+    	result = tree;
+    }
+    // end Panini code
     public void visitTree(JCTree tree) {
         throw new AssertionError(tree);
     }

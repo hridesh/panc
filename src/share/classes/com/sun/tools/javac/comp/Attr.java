@@ -1536,7 +1536,7 @@ public class Attr extends JCTree.Visitor {
                 // Otherwise, `site' is an error type and we do nothing
             }
             result = tree.type = syms.voidType;
-        } else {
+        }else {
             // Otherwise, we are seeing a regular method call.
             // Attribute the arguments, yielding list of argument types, ...
             argtypes = attribArgs(tree.args, localEnv);

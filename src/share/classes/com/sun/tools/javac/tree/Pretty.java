@@ -381,7 +381,8 @@ public class Pretty extends JCTree.Visitor {
     public void visitConfigDef(JCConfigDecl tree){
     	try{
     		println();align();
-    		print("config ");
+    		print("system ");
+    		print(tree.name);
     		print(tree.body);
     	} catch (IOException e){
     		throw new UncheckedIOException(e);
@@ -404,8 +405,13 @@ public class Pretty extends JCTree.Visitor {
     		println();align();
     		printDocComment(tree);
     		print("module ");
-    		print(tree.name + " ");
+    		print(tree.name + "(");
     		printExprs(tree.params);
+    		print(")");
+    		if (tree.extending != null) {
+	    		print(" extends ");
+	    		print(tree.extending);
+    		}
     		if (tree.implementing.nonEmpty()) {
                 print(" implements ");
                 printExprs(tree.implementing);

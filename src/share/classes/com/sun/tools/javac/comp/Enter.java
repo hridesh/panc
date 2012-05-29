@@ -44,6 +44,8 @@ import com.sun.tools.javac.util.List;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
+import static com.sun.tools.javac.parser.Tokens.TokenKind.DOT;
+import static com.sun.tools.javac.parser.Tokens.TokenKind.STAR;
 
 /** This class enters symbols for all encountered definitions into
  *  the symbol table. The pass consists of two phases, organized as
@@ -461,7 +463,199 @@ public class Enter extends JCTree.Visitor {
     public void visitTree(JCTree tree) {
         result = null;
     }
+    // Panini code
+    public void visitConfigDef(JCConfigDecl tree){
+    	JCExpression pid = make.Ident(names.fromString("java"));
+    	pid = make.Select(pid, names.fromString("util"));
+    	pid = make.Select(pid, names.fromString("concurrent"));
+    	pid = make.Select(pid, names.fromString("ForkJoinPool"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	Symbol owner = env.info.scope.owner;
+        Scope enclScope = enterScope(env);
+        ClassSymbol c;
+        if (owner.kind == PCK) {
+            // We are seeing a toplevel class.
+            PackageSymbol packge = (PackageSymbol)owner;
+            for (Symbol q = packge; q != null && q.kind == PCK; q = q.owner)
+                q.flags_field |= EXISTS;
+            c = reader.enterClass(tree.name, packge);
+            packge.members().enterIfAbsent(c);
+            if ((tree.mods.flags & PUBLIC) != 0 && !classNameMatchesFileName(c, env)) {
+                log.error(tree.pos(),
+                          "class.public.should.be.in.file", tree.name);
+            }
+        } else {
+            if (!tree.name.isEmpty() &&
+                !chk.checkUniqueClassName(tree.pos(), tree.name, enclScope)) {
+                result = null;
+                return;
+            }
+            if (owner.kind == TYP) {
+                // We are seeing a member class.
+                c = reader.enterClass(tree.name, (TypeSymbol)owner);
+                if ((owner.flags_field & INTERFACE) != 0) {
+                    tree.mods.flags |= PUBLIC | STATIC;
+                }
+            } else {
+                // We are seeing a local class.
+                c = reader.defineClass(tree.name, owner);
+                c.flatname = chk.localClassName(c);
+                if (!c.name.isEmpty())
+                    chk.checkTransparentClass(tree.pos(), c, env.info.scope);
+            }
+        }
+        tree.sym = c;
 
+        // Enter class into `compiled' table and enclosing scope.
+        if (chk.compiled.get(c.flatname) != null) {
+            duplicateClass(tree.pos(), c);
+            result = types.createErrorType(tree.name, (TypeSymbol)owner, Type.noType);
+            tree.sym = (ClassSymbol)result.tsym;
+            return;
+        }
+        chk.compiled.put(c.flatname, c);
+        enclScope.enter(c);
+
+        // Set up an environment for class block and store in `typeEnvs'
+        // table, to be retrieved later in memberEnter and attribution.
+        Env<AttrContext> localEnv = classEnv(tree, env);
+        typeEnvs.put(c, localEnv);
+
+        // Fill out class fields.
+        c.completer = memberEnter;
+        c.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, c, tree);
+        c.sourcefile = env.toplevel.sourcefile;
+        c.members_field = new Scope(c);
+
+        ClassType ct = (ClassType)c.type;
+        if (owner.kind != PCK && (c.flags_field & STATIC) == 0) {
+            // We are seeing a local or inner class.
+            // Set outer_field of this class to closest enclosing class
+            // which contains this class in a non-static context
+            // (its "enclosing instance class"), provided such a class exists.
+            Symbol owner1 = owner;
+            while ((owner1.kind & (VAR | MTH)) != 0 &&
+                   (owner1.flags_field & STATIC) == 0) {
+                owner1 = owner1.owner;
+            }
+            if (owner1.kind == TYP) {
+                ct.setEnclosingType(owner1.type);
+            }
+        }
+
+        // Enter type parameters.
+        ct.typarams_field = classEnter(tree.typarams, localEnv);
+
+        // Add non-local class to uncompleted, to make sure it will be
+        // completed later.
+        if (!c.isLocal() && uncompleted != null) uncompleted.append(c);
+//      System.err.println("entering " + c.fullname + " in " + c.owner);//DEBUG
+
+        
+        // Recursively enter all member classes.
+//        classEnter(tree.defs, localEnv);
+
+        tree.sym = c;
+        c.isConfig = true;
+        result = c.type;
+    }
+    
+    public void visitModuleDef(JCModuleDecl tree){
+    	JCExpression pid = make.Ident(names.fromString("java"));
+    	pid = make.Select(pid, names.fromString("util"));
+    	pid = make.Select(pid, names.fromString("concurrent"));
+    	pid = make.Select(pid, names.fromString("RecursiveAction"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	Symbol owner = env.info.scope.owner;
+        Scope enclScope = enterScope(env);
+        ClassSymbol c;
+        if (owner.kind == PCK) {
+            // We are seeing a toplevel class.
+            PackageSymbol packge = (PackageSymbol)owner;
+            for (Symbol q = packge; q != null && q.kind == PCK; q = q.owner)
+                q.flags_field |= EXISTS;
+            c = reader.enterClass(tree.name, packge);
+            packge.members().enterIfAbsent(c);
+            if ((tree.mods.flags & PUBLIC) != 0 && !classNameMatchesFileName(c, env)) {
+                log.error(tree.pos(),
+                          "class.public.should.be.in.file", tree.name);
+            }
+        } else {
+            if (!tree.name.isEmpty() &&
+                !chk.checkUniqueClassName(tree.pos(), tree.name, enclScope)) {
+                result = null;
+                return;
+            }
+            if (owner.kind == TYP) {
+                // We are seeing a member class.
+                c = reader.enterClass(tree.name, (TypeSymbol)owner);
+                if ((owner.flags_field & INTERFACE) != 0) {
+                    tree.mods.flags |= PUBLIC | STATIC;
+                }
+            } else {
+                // We are seeing a local class.
+                c = reader.defineClass(tree.name, owner);
+                c.flatname = chk.localClassName(c);
+                if (!c.name.isEmpty())
+                    chk.checkTransparentClass(tree.pos(), c, env.info.scope);
+            }
+        }
+        tree.sym = c;
+
+        // Enter class into `compiled' table and enclosing scope.
+        if (chk.compiled.get(c.flatname) != null) {
+            duplicateClass(tree.pos(), c);
+            result = types.createErrorType(tree.name, (TypeSymbol)owner, Type.noType);
+            tree.sym = (ClassSymbol)result.tsym;
+            return;
+        }
+        chk.compiled.put(c.flatname, c);
+        enclScope.enter(c);
+
+        // Set up an environment for class block and store in `typeEnvs'
+        // table, to be retrieved later in memberEnter and attribution.
+        Env<AttrContext> localEnv = classEnv(tree, env);
+        typeEnvs.put(c, localEnv);
+
+        // Fill out class fields.
+        c.completer = memberEnter;
+        c.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, c, tree);
+        c.sourcefile = env.toplevel.sourcefile;
+        c.members_field = new Scope(c);
+
+        ClassType ct = (ClassType)c.type;
+        if (owner.kind != PCK && (c.flags_field & STATIC) == 0) {
+            // We are seeing a local or inner class.
+            // Set outer_field of this class to closest enclosing class
+            // which contains this class in a non-static context
+            // (its "enclosing instance class"), provided such a class exists.
+            Symbol owner1 = owner;
+            while ((owner1.kind & (VAR | MTH)) != 0 &&
+                   (owner1.flags_field & STATIC) == 0) {
+                owner1 = owner1.owner;
+            }
+            if (owner1.kind == TYP) {
+                ct.setEnclosingType(owner1.type);
+            }
+        }
+
+        // Enter type parameters.
+        ct.typarams_field = classEnter(tree.typarams, localEnv);
+
+        // Add non-local class to uncompleted, to make sure it will be
+        // completed later.
+        if (!c.isLocal() && uncompleted != null) uncompleted.append(c);
+//      System.err.println("entering " + c.fullname + " in " + c.owner);//DEBUG
+
+        
+        // Recursively enter all member classes.
+//        classEnter(tree.defs, localEnv);
+
+        tree.sym = c;
+        c.isModule = true;
+        result = c.type;
+    }
+    // end Panini code
     /** Main method: enter all classes in a list of toplevel trees.
      *  @param trees      The list of trees to be processed.
      */

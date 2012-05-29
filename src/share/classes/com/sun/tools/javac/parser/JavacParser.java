@@ -2658,8 +2658,7 @@ public class JavacParser implements Parser {
                 } else {
                     errs = List.<JCTree>of(mods);
                 }
-                return toP(F.Exec(syntaxError(pos, errs, "expected3",
-                                              CLASS, INTERFACE, ENUM)));
+                return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.library.module.not.found")));
             }
         } else {
             if (token.kind == ENUM) {
@@ -2687,7 +2686,8 @@ public class JavacParser implements Parser {
      	int pos = token.pos;
      	Name name = ident();
      	JCBlock body = block();
-     	JCConfigDecl result = toP(F.at(pos).ConfigDef(name, body)); 
+     	JCConfigDecl result = toP(F.at(pos).ConfigDef(mod, name, body)); 
+     	attach(result, dc);
      	return result;
      }
      
@@ -2697,6 +2697,7 @@ public class JavacParser implements Parser {
      	Name name = ident();
      	List<JCTree> defs = classOrInterfaceBody(name, true);
      	JCLibraryDecl result = toP(F.at(pos).LibraryDef(name, defs));
+     	attach(result, dc);
      	return result;
      }
 
@@ -2712,7 +2713,8 @@ public class JavacParser implements Parser {
          }
      	List<JCTree> defs = classOrInterfaceBody(name, false);
      	JCModuleDecl result = 
-     			toP(F.at(pos).ModuleDef(name, params, implementing, defs));
+     			toP(F.at(pos).ModuleDef(mod, name, params, implementing, defs));
+     	attach(result, dc);
      	return result;
      }
      // end Panini code

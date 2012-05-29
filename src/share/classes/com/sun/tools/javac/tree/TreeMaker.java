@@ -115,8 +115,8 @@ public class TreeMaker implements JCTree.Factory {
         return this;
     }
     // Panini code
-    public JCConfigDecl ConfigDef(Name name, JCBlock body){
-    	JCConfigDecl tree = new JCConfigDecl(name, body);
+    public JCConfigDecl ConfigDef(JCModifiers mods, Name name, JCBlock body){
+    	JCConfigDecl tree = new JCConfigDecl(mods, name, body);
     	tree.pos = pos;
     	return tree;
     }
@@ -127,11 +127,12 @@ public class TreeMaker implements JCTree.Factory {
     	return tree;
     }
     
-    public JCModuleDecl ModuleDef(Name name, 
+    public JCModuleDecl ModuleDef(JCModifiers mods,
+    		Name name, 
 			List<JCVariableDecl> params, 
 			List<JCExpression> implementing, 
 			List<JCTree> defs){
-    	JCModuleDecl tree = new JCModuleDecl(name, params, implementing, defs);
+    	JCModuleDecl tree = new JCModuleDecl(mods, name, params, implementing, defs);
     	tree.pos = pos;
     	return tree;
     }

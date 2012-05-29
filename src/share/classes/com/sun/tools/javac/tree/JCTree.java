@@ -473,37 +473,59 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         return TreeInfo.getEndPos(this, endPosTable);
     }
     // Panini code
-    public static class JCConfigDecl extends JCStatement implements ConfigTree{
-    	public JCBlock body;
+    public static class JCConfigDecl extends JCClassDecl implements ConfigTree{
     	public Name name;
-
-    	public JCConfigDecl(Name name, JCBlock body){
-    		this.name = name;
+    	public Kind kind;
+    	public Tag tag;
+    	public JCBlock body;
+    	
+    	public JCConfigDecl(JCModifiers mods, Name name, JCBlock body){
+    		super(mods, name, List.<JCTypeParameter>nil(), 
+    				null, List.<JCExpression>nil(), List.<JCTree>nil(), null);
     		this.body = body;
+    		this.name = name;
+    		kind = Kind.CONFIG;
+    		tag = Tag.CONFIGDEF;
     	}
     	
+    	public JCBlock getBody(){
+    		return body;
+    	}
 		public Kind getKind() {
-			return Kind.CONFIG;
+			return kind;
+		}
+		
+		public void switchToClass(){
+			kind = Kind.CLASS;
+			tag = Tag.CLASSDEF;
 		}
 		
 		public Name getName(){
 			return name;
 		}
 
-		public JCBlock getBody() {
-			return this.body;
+		public List<JCTree> getMembers() {
+			return defs;
 		}
 		
 		public Tag getTag() {
-			return CONFIGDEF;
+			return tag;
 		}
 
 		@Override
-		public void accept(Visitor v) { v.visitConfigDef(this);}
+		public void accept(Visitor v) {
+			if(tag != CLASSDEF)
+				v.visitConfigDef(this);
+			else
+				v.visitClassDef(this);
+			}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitConfig(this, d);
+			if(tag != CLASSDEF)
+				return v.visitConfig(this, d);
+			else
+				return v.visitClass(this, d);
 		}
     }
     
@@ -541,53 +563,39 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
     
     public static class JCModuleDecl extends JCClassDecl implements ModuleTree{
+    	public Name name;
     	public List<JCVariableDecl> params;
+    	public List<JCExpression> implementing;
+    	public Kind kind;
+    	public Tag tag;
     	
-    	public JCModuleDecl(Name name, 
+    	public JCModuleDecl(JCModifiers mods,
+    			Name name, 
     			List<JCVariableDecl> params, 
     			List<JCExpression> implementing,
     			List<JCTree> defs){
-    		super(new JCModifiers(1, List.<JCAnnotation>nil()), name, List.<JCTypeParameter>nil(),
-    				null, implementing, defs, null);
-    		
+    		super(mods, name, List.<JCTypeParameter>nil(), 
+    				null, List.<JCExpression>nil(), defs, null);
+    		this.name = name;
     		this.params = params;
-    		ListBuffer<JCTree> ls = new ListBuffer<JCTree>();
-    		for(JCVariableDecl v : params){ ls.append(v); }
+    		this.implementing = implementing;
+    		this.defs = defs;
+    		this.kind = Kind.MODULE;
+    		this.tag = Tag.MODULEDEF;
     		
-    		ListBuffer<JCTree> blockDefs = new ListBuffer<JCTree>().appendList(ls);
-    		blockDefs.appendList(this.defs);
-    		
-    		JCTree[] a = blockDefs.toArray(new JCTree[blockDefs.count]);
-    		
-    		for(JCTree val: a){
-    			if(val.getClass().toString().endsWith("JCMethodDecl")){
-    				JCMethodDecl m = ((JCMethodDecl)val);
-    				if((((m.mods.flags & Flags.PROTECTED) != 0)
-    						|| ((m.mods.flags & Flags.PRIVATE) != 0))){//do nothing
-    				}else{
-    					m.mods.flags |= Flags.PUBLIC;
-    				}
-    			}else if(val.getClass().toString().endsWith("JCVariableDecl")){ 
-    				JCVariableDecl v = ((JCVariableDecl)val);
-    				//System.out.println(v.getName() + " " + v.getClass());
-    				if((((v.mods.flags & Flags.PUBLIC) != 0) 
-    						|| ((v.mods.flags & Flags.PROTECTED) != 0))){//do nothing
-    				}else{
-    					v.mods.flags |= Flags.PRIVATE;
-    				}
-    			}
-    		}
-    		List<JCTree> lb = new ListBuffer<JCTree>().appendArray(a).toList();
-    		this.defs = lb;
-    		//this.params = List.<JCVariableDecl>nil();
     	}
     	
 		public Kind getKind() {
-			return Kind.MODULE;
+			return kind;
 		}
 		
 		public Name getName(){
 			return name;
+		}
+		
+		public void switchToClass(){
+			kind = Kind.CLASS;
+			tag = Tag.CLASSDEF;
 		}
 		
 		public List<JCVariableDecl> getParameters(){
@@ -603,15 +611,23 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
 		
 		public Tag getTag() {
-			return MODULEDEF;
+			return tag;
 		}
 
 		@Override
-		public void accept(Visitor v) { v.visitModuleDef(this);}
+		public void accept(Visitor v) {
+			if(tag != CLASSDEF)
+				v.visitModuleDef(this);
+			else
+				v.visitClassDef(this);
+			}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitModule(this, d);
+			if(tag != CLASSDEF)
+				return v.visitModule(this, d);
+			else
+				return v.visitClass(this, d);
 		}
     }
     
@@ -914,7 +930,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
                             JCExpression defaultValue,
                             MethodSymbol sym)
         {
-        	this.mods = mods;
+            this.mods = mods;
             this.name = name;
             this.restype = restype;
             this.typarams = typarams;

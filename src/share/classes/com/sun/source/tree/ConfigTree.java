@@ -19,6 +19,8 @@
 
 package com.sun.source.tree;
 
+import java.util.List;
+
 import com.sun.tools.javac.util.Name;
 
 

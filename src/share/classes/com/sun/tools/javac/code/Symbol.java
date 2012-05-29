@@ -57,6 +57,11 @@ import static com.sun.tools.javac.code.TypeTags.*;
 public abstract class Symbol implements Element {
     // public Throwable debug = new Throwable();
 
+	// Panini code
+	public boolean isConfig;
+	public boolean isLibrary;
+	public boolean isModule;
+	// end Panini code
     /** The kind of this symbol.
      *  @see Kinds
      */
