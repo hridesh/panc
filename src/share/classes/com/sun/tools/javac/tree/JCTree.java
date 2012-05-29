@@ -540,20 +540,46 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
     }
     
-    public static class JCModuleDecl extends JCStatement implements ModuleTree{
-    	public Name name;
+    public static class JCModuleDecl extends JCClassDecl implements ModuleTree{
     	public List<JCVariableDecl> params;
-    	public List<JCExpression> implementing;
-    	public List<JCTree> defs;
     	
     	public JCModuleDecl(Name name, 
     			List<JCVariableDecl> params, 
     			List<JCExpression> implementing,
     			List<JCTree> defs){
-    		this.name = name;
+    		super(new JCModifiers(1, List.<JCAnnotation>nil()), name, List.<JCTypeParameter>nil(),
+    				null, implementing, defs, null);
+    		
     		this.params = params;
-    		this.implementing = implementing;
-    		this.defs = defs;
+    		ListBuffer<JCTree> ls = new ListBuffer<JCTree>();
+    		for(JCVariableDecl v : params){ ls.append(v); }
+    		
+    		ListBuffer<JCTree> blockDefs = new ListBuffer<JCTree>().appendList(ls);
+    		blockDefs.appendList(this.defs);
+    		
+    		JCTree[] a = blockDefs.toArray(new JCTree[blockDefs.count]);
+    		
+    		for(JCTree val: a){
+    			if(val.getClass().toString().endsWith("JCMethodDecl")){
+    				JCMethodDecl m = ((JCMethodDecl)val);
+    				if((((m.mods.flags & Flags.PROTECTED) != 0)
+    						|| ((m.mods.flags & Flags.PRIVATE) != 0))){//do nothing
+    				}else{
+    					m.mods.flags |= Flags.PUBLIC;
+    				}
+    			}else if(val.getClass().toString().endsWith("JCVariableDecl")){ 
+    				JCVariableDecl v = ((JCVariableDecl)val);
+    				//System.out.println(v.getName() + " " + v.getClass());
+    				if((((v.mods.flags & Flags.PUBLIC) != 0) 
+    						|| ((v.mods.flags & Flags.PROTECTED) != 0))){//do nothing
+    				}else{
+    					v.mods.flags |= Flags.PRIVATE;
+    				}
+    			}
+    		}
+    		List<JCTree> lb = new ListBuffer<JCTree>().appendArray(a).toList();
+    		this.defs = lb;
+    		//this.params = List.<JCVariableDecl>nil();
     	}
     	
 		public Kind getKind() {
@@ -888,23 +914,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
                             JCExpression defaultValue,
                             MethodSymbol sym)
         {
-    	
-        	// Panini code
-        	// TEMPORARY - Adds public to methods without access modifiers.
-    		//System.out.println("JCMethodDecl! Modifiers = " + mods.getFlags() + "\nName = " + name);
-    		if(mods.getFlags().size() > 0){
-	    		Modifier x = (Modifier)mods.getFlags().toArray()[0];
-	    		if(x != Modifier.PUBLIC && x != Modifier.PROTECTED && x != Modifier.PRIVATE){
-	    			//System.out.println("No access modifier! Adding Public.");
-	    			mods.flags |= 1;
-	    			//System.out.println("new modifiers: ");
-	    			//System.out.println(mods.getFlags());
-	    		}
-    		}
-    		//else mods.flags |= 1;
-    		// end Panini code
-    	
-            this.mods = mods;
+        	this.mods = mods;
             this.name = name;
             this.restype = restype;
             this.typarams = typarams;

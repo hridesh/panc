@@ -1900,6 +1900,17 @@ public class JavacParser implements Parser {
             } else if (allowAsserts && token.kind == ASSERT) {
                 return List.of(parseStatement());
             }
+            // Panini code
+        case IDENTIFIER:
+        	//System.out.println(token.name());
+    		if(token.name().toString().equals("include")){
+    			nextToken();
+    			JCExpression exp = parseExpression();
+    			//System.out.println(exp.getClass());
+    			return List.<JCStatement>of(F.at(pos).Include(exp));
+    		}
+            // end Panini code
+            
             /* fall through to default */
         default:
             Token prevToken = token;
@@ -2268,6 +2279,7 @@ public class JavacParser implements Parser {
         int lastPos = Position.NOPOS;
     loop:
         while (true) {
+        	/**/
             long flag;
             switch (token.kind) {
             case PRIVATE     : flag = Flags.PRIVATE; break;
@@ -2616,16 +2628,6 @@ public class JavacParser implements Parser {
      *  @param dc       The documentation comment for the class, or null.
      */
     JCStatement classOrInterfaceOrEnumDeclaration(JCModifiers mods, String dc) {
-        // Panini code
-    	if(token.kind == IDENTIFIER){
-    		int pos = token.pos;
-    		if(token.name().toString().equals("include")){
-    			nextToken();
-    			JCExpression exp = parseExpression();
-    			return F.at(pos).Include(exp);
-    		}    			
-    	}
-    	// end Panini code
     	if (token.kind == CLASS) {
             return classDeclaration(mods, dc);
         } else if (token.kind == INTERFACE) {
@@ -2931,7 +2933,16 @@ public class JavacParser implements Parser {
                        (mods.flags & Flags.StandardFlags & ~Flags.STATIC) == 0 &&
                        mods.annotations.isEmpty()) {
                 return List.<JCTree>of(block(pos, mods.flags));
-            } else {
+            } else 
+            // Panini code
+            if(token.kind == IDENTIFIER && token.name().toString().equals("include")){
+            	List<JCStatement> stm = blockStatement();
+            	ListBuffer<JCTree> ls = new ListBuffer<JCTree>();
+            	for(JCStatement s : stm){ ls.append(s); }
+            	return ls.toList();
+            } else 
+            // end Panini code
+            {
                 pos = token.pos;
                 List<JCTypeParameter> typarams = typeParametersOpt();
                 // if there are type parameters but no modifiers, save the start
