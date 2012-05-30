@@ -1778,9 +1778,16 @@ public class JavacParser implements Parser {
 
     /** Block = "{" BlockStatements "}"
      */
-    JCBlock block(int pos, long flags) {
+    // Panini code
+    JCBlock block(int pos, long flags){
+    	return block(pos, flags, false);
+    }
+    // Prevents modification on other methods
+    // end Panini code
+    
+    JCBlock block(int pos, long flags, boolean isConfig) {
         accept(LBRACE);
-        List<JCStatement> stats = blockStatements();
+        List<JCStatement> stats = blockStatements(isConfig);
         JCBlock t = F.at(pos).Block(flags, stats);
         while (token.kind == CASE || token.kind == DEFAULT) {
             syntaxError("orphaned", token.kind);
@@ -1793,6 +1800,14 @@ public class JavacParser implements Parser {
         return toP(t);
     }
 
+    // Panini code
+    public JCBlock block(boolean isConfig){
+    	if(isConfig)
+    		return block(token.pos, 0, true);
+    	else return block();
+    }
+    // end Panini code
+    
     public JCBlock block() {
         return block(token.pos, 0);
     }
@@ -1804,12 +1819,18 @@ public class JavacParser implements Parser {
      *  LocalVariableDeclarationStatement
      *                  = { FINAL | '@' Annotation } Type VariableDeclarators ";"
      */
+    // Panini code
+    List<JCStatement> blockStatements(){
+    	return blockStatements(false);
+    }
+    // end Panini code
+    
     @SuppressWarnings("fallthrough")
-    List<JCStatement> blockStatements() {
+    List<JCStatement> blockStatements(boolean isConfig) {
         //todo: skip to anchor on error(?)
         ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
         while (true) {
-            List<JCStatement> stat = blockStatement();
+            List<JCStatement> stat = blockStatement(isConfig);
             if (stat.isEmpty()) {
                 return stats.toList();
             } else {
@@ -1852,10 +1873,20 @@ public class JavacParser implements Parser {
             return first;
         }
     }
-
+    // Panini code
+    List<JCStatement> blockStatement(){
+    	return blockStatement(false);
+    }
+    // end Panini code
+    
     @SuppressWarnings("fallthrough")
-    List<JCStatement> blockStatement() {
+    List<JCStatement> blockStatement(boolean isConfig) {
         //todo: skip to anchor on error(?)
+    	if(isConfig){
+    		if(token.kind != IDENTIFIER && token.kind != RBRACE){
+    			reportSyntaxError(token.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.config");
+    		}
+    	}
         int pos = token.pos;
         switch (token.kind) {
         case RBRACE: case CASE: case DEFAULT: case EOF:
@@ -2685,7 +2716,7 @@ public class JavacParser implements Parser {
      	accept(IDENTIFIER);
      	int pos = token.pos;
      	Name name = ident();
-     	JCBlock body = block();
+     	JCBlock body = block(true);
      	JCConfigDecl result = toP(F.at(pos).ConfigDef(mod, name, body)); 
      	attach(result, dc);
      	return result;
