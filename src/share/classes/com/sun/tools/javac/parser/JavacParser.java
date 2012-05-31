@@ -1933,11 +1933,9 @@ public class JavacParser implements Parser {
             }
             // Panini code
         case IDENTIFIER:
-        	//System.out.println(token.name());
     		if(token.name().toString().equals("include")){
     			nextToken();
     			JCExpression exp = parseExpression();
-    			//System.out.println(exp.getClass());
     			return List.<JCStatement>of(F.at(pos).Include(exp));
     		}
             // end Panini code

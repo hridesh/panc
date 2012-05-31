@@ -63,7 +63,7 @@ public class TreeScanner extends Visitor {
  ****************************************************************************/
     // Panini code
     public void visitConfigDef(JCConfigDecl tree){
-    	scan(tree.body);
+    	visitClassDef(tree);
     }
     
     public void visitLibraryDef(JCLibraryDecl tree){
@@ -71,9 +71,7 @@ public class TreeScanner extends Visitor {
     }
     
     public void visitModuleDef(JCModuleDecl tree){
-    	scan(tree.params);
-    	scan(tree.implementing);
-    	scan(tree.defs);
+    	visitClassDef(tree);
     }
     
     public void visitFree(JCFree tree){

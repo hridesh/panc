@@ -2285,47 +2285,6 @@ public class Lower extends TreeTranslator {
         currentClass = tree.sym;
         currentMethodSym = null;
         classdefs.put(currentClass, tree);
-
-        // Panini code
-        // If this is a system definition
-        if (tree.sym.isConfig){
-        	JCMethodDecl maindef = (JCMethodDecl)tree.defs.tail.head;
-        	List<JCStatement> stat = maindef.getBody().stats;
-        	int moduleDefCount = 0;
-        	while(stat.nonEmpty()){
-        		if(stat.head.getTag() == VARDEF){
-        			Symbol sym = attr.rs.findType(attrEnv, names.fromString(stat.head.type.toString()));
-        			JCVariableDecl dec = (JCVariableDecl)stat.head;
-        			if(sym.isModule){
-        				moduleDefCount++;
-        				JCAssign newAssign = make.Assign(make.Ident(dec.sym),
-        						makeNewClass(sym.type, List.<JCExpression>nil()));
-        				newAssign.type = dec.type;
-        				JCExpressionStatement nameAssign =make.Exec(newAssign);
-        				nameAssign.type = dec.type;
-        				maindef.getBody().stats.append(nameAssign);
-        				maindef.body.stats = maindef.body.stats.append(nameAssign);
-        			}
-        			else if(stat.head.type.isPrimitive()){//TODO or Stringtype
-        				dec.mods.flags |= FINAL;
-        			}
-        		}
-        		else if(stat.head.getTag() == APPLY){//JCMethodInvocation
-        			
-    			}
-        		stat = stat.tail;
-        	}
-        	
-        	VarSymbol poolsym = new VarSymbol(0,
-        			names.fromString("pool"),
-        			attr.rs.findType(attrEnv, names.fromString("ForkJoinPool")).type,
-                    tree.sym);
-        	maindef.body.stats = maindef.body.stats.append(
-        		make.VarDef(poolsym, makeNewClass(poolsym.type, List.<JCExpression>of(make.Literal(moduleDefCount)))));
-        }
-        
-        //end Panini code
-        
         proxies = proxies.dup(currentClass);
         List<VarSymbol> prevOuterThisStack = outerThisStack;
 

@@ -558,6 +558,7 @@ public class Enter extends JCTree.Visitor {
         tree.sym = c;
         c.isConfig = true;
         result = c.type;
+        tree.switchToClass();
     }
     
     public void visitModuleDef(JCModuleDecl tree){
@@ -565,7 +566,9 @@ public class Enter extends JCTree.Visitor {
     	pid = make.Select(pid, names.fromString("util"));
     	pid = make.Select(pid, names.fromString("concurrent"));
     	pid = make.Select(pid, names.fromString("RecursiveAction"));
+    	// TODO check imports to stop adding multiple redundant imports
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	tree.extending = make.Ident(names.fromString("RecursiveAction"));
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
         ClassSymbol c;
@@ -650,10 +653,76 @@ public class Enter extends JCTree.Visitor {
         
         // Recursively enter all member classes.
 //        classEnter(tree.defs, localEnv);
-
+        
+        boolean hasRun = false;
+        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+        for(int i=0;i<tree.defs.length();i++){
+        	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
+        		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
+        		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
+        			MethodSymbol msym = new MethodSymbol(
+            				PROTECTED,
+            				names.fromString("compute"),
+            				new MethodType(
+            						List.<Type>nil(),
+            						syms.voidType,
+            						List.<Type>nil(),
+            						syms.methodClass
+            						),
+            						tree.sym
+            				);
+            		JCMethodDecl computeDecl = make.MethodDef(msym,
+            				mdecl.body);
+            		computeDecl.params = List.<JCVariableDecl>nil();
+            		memberEnter.memberEnter(computeDecl, localEnv);
+            		definitions.add(computeDecl);
+            		hasRun=true;
+        		}
+        		else{
+        			if((mdecl.mods.flags & PRIVATE) ==0
+        					&&(mdecl.mods.flags & PROTECTED) ==0)
+        				mdecl.mods.flags |= PUBLIC;
+        			definitions.add(mdecl);
+        		}
+        	}else
+    			definitions.add(tree.defs.get(i));
+        	
+        }
+        if(!hasRun){
+    		MethodSymbol msym = new MethodSymbol(
+    				PROTECTED,
+    				names.fromString("compute"),
+    				new MethodType(
+    						List.<Type>nil(),
+    						syms.voidType,
+    						List.<Type>nil(),
+    						syms.methodClass
+    						),
+    						tree.sym
+    				);
+    		JCMethodDecl computeDecl = make.MethodDef(msym,
+    				make.Block(0, List.<JCStatement>nil()));
+    		computeDecl.params = List.<JCVariableDecl>nil();
+    		memberEnter.memberEnter(computeDecl, localEnv);
+    		definitions.add(computeDecl);
+    		hasRun=true;
+    	}
+    	List<JCVariableDecl> fields = tree.getParameters();
+    	while(fields.nonEmpty()){
+    		definitions.prepend(make.VarDef(make.Modifiers(PUBLIC),
+    				fields.head.name,
+    				fields.head.vartype,
+    				null));
+    		fields = fields.tail;
+    	}    	
+    	tree.defs = definitions.toList();;
         tree.sym = c;
         c.isModule = true;
+        syms.modules.put(c.fullname, c);
+        syms.moduleparams.put(c, tree.params);
         result = c.type;
+        classEnter(tree.defs, localEnv);
+        tree.switchToClass();
     }
     // end Panini code
     /** Main method: enter all classes in a list of toplevel trees.

@@ -678,6 +678,8 @@ public class Attr extends JCTree.Visitor {
             if (t.getUpperBound() == null) {
                 log.error(tree.pos(), "illegal.forward.ref");
                 return types.createErrorType(t);
+                
+                
             }
         } else {
             t = chk.checkClassType(tree.pos(), t, checkExtensible|!allowGenerics);
@@ -701,6 +703,108 @@ public class Attr extends JCTree.Visitor {
         chk.checkNonCyclic(tree.pos(), t);
         return t;
     }
+    
+    // Panini code
+    public void visitConfigDef(JCConfigDecl tree){
+    	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
+    	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
+    	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
+    	ListBuffer<JCStatement> submits = new ListBuffer<JCStatement>();
+    	ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
+    	Map<Name, Name> variables = new HashMap<Name, Name>();
+    	int moduleCount = 0;
+    	for(int i=0;i <tree.body.stats.length();i++){
+    		if(tree.body.stats.get(i).getTag() == VARDEF){
+    			JCVariableDecl mdecl = (JCVariableDecl)tree.body.stats.get(i);
+    			if(syms.modules.containsKey(names.fromString(mdecl.vartype.toString()))){
+    				ClassSymbol c = syms.modules.get(names.fromString(mdecl.vartype.toString()));
+    				decls.add(mdecl);
+    				moduleCount ++;
+    				JCNewClass newClass = make.at(mdecl.pos()).NewClass(null, null, 
+    						make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
+    				newClass.constructor = rs.resolveConstructor
+    						(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
+    				newClass.type = c.type;
+    				JCAssign newAssign = make.at(mdecl.pos()).Assign(make.Ident(mdecl.name),
+    						newClass);
+    				newAssign.type = mdecl.type;
+    				JCExpressionStatement nameAssign = make.at(mdecl.pos()).Exec(newAssign);
+    				nameAssign.type = mdecl.type;
+    				inits.append(nameAssign);
+    				JCExpressionStatement submitAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+    						make.Select(make.Ident(names.fromString("pool")), names.fromString("submit")), 
+    						List.<JCExpression>of(make.Ident(mdecl.name))));
+    				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+    						make.Select(make.Ident(mdecl.name), names.fromString("join")), 
+    						List.<JCExpression>nil()));
+    		    	submits.append(submitAssign);
+    		    	joins.append(joinAssign);
+    		    	variables.put(mdecl.name, c.name);
+    			}
+    			else{
+    				mdecl.mods.flags |=FINAL;
+    				decls.add(mdecl);
+    			}
+    		}else if(tree.body.stats.get(i).getTag() == EXEC){
+    			JCMethodInvocation mi = 
+    					(JCMethodInvocation)((JCExpressionStatement)tree.body.stats.get(i)).expr;
+    			ClassSymbol c = (ClassSymbol)rs.findType(env, 
+    					variables.get(names.fromString(mi.meth.toString())));
+    			if(mi.args.length()!=syms.moduleparams.get(c).length()){
+    				log.error(mi.pos(), "arguments.of.wiring.mismatch");
+    			}else{
+	    			for(int j=0;j<mi.args.length();j++){
+	    				JCAssign newAssign = 
+	    						make.at(mi.pos()).Assign(make.Select(mi.meth, 
+	    								syms.moduleparams.get(c).get(j).getName()), 
+	    						mi.args.get(j));
+	    				JCExpressionStatement assignAssign = make.Exec(newAssign);
+	    				assigns.append(assignAssign);
+	    			}
+    			}
+    		}else{
+    			//if it reaches here, there's something wrong with the parser
+    		}
+    	}
+    	Type fjp = rs.findType(env, names.fromString("ForkJoinPool")).type;
+    	JCNewClass newClass = make.NewClass(null, null, 
+				make.QualIdent(fjp.tsym), List.<JCExpression>of(make.Literal(moduleCount)), null);
+		newClass.constructor = rs.resolveConstructor
+				(tree.pos(), env, fjp, TreeInfo.types(List.<JCExpression>of(make.Literal(moduleCount))), null,false,false);
+		newClass.type = fjp;
+		JCVariableDecl pooldecl = make.VarDef(make.Modifiers(0), 
+				names.fromString("pool"), 
+				make.Ident(names.fromString("ForkJoinPool")), 
+				newClass);
+		pooldecl.type = fjp;
+		submits.prepend(pooldecl);
+		
+    	Type arrayType = new ArrayType(syms.stringType, syms.arrayClass);
+        MethodSymbol msym = new MethodSymbol(
+    			PUBLIC|STATIC,
+    			names.fromString("main"),
+    			new MethodType(
+    					List.<Type>of(arrayType),
+    					syms.voidType,
+    					List.<Type>nil(),
+    					syms.methodClass
+    					),
+    			tree.sym
+    			);
+    	JCVariableDecl mainArg = make.Param(
+    			names.fromString("args"),
+    			arrayType,
+    			msym);
+    	JCMethodDecl maindecl = make.MethodDef(msym,
+    			tree.body);
+    	maindecl.params = List.<JCVariableDecl>of(mainArg);
+    	tree.defs = tree.defs.append(maindecl);
+    	maindecl.body.stats = decls.appendList(inits).appendList(assigns).appendList(submits).appendList(joins).toList();
+    	
+    	tree.switchToClass();
+    	memberEnter.memberEnter(maindecl, env);
+    }
+    // end Panini code
 
     public void visitClassDef(JCClassDecl tree) {
         // Local classes have not been entered yet, so we need to do it now:
@@ -3023,8 +3127,6 @@ public class Attr extends JCTree.Visitor {
      *  @param c   The class symbol whose definition will be attributed.
      */
     void attribClass(ClassSymbol c) throws CompletionFailure {
-        if (c.type.tag == ERROR) return;
-
         // Check for cycles in the inheritance graph, which can arise from
         // ill-formed class files.
         chk.checkNonCyclic(null, c.type);
@@ -3048,7 +3150,6 @@ public class Attr extends JCTree.Visitor {
 
             // Get environment current at the point of class definition.
             Env<AttrContext> env = enter.typeEnvs.get(c);
-
             // The info.lint field in the envs stored in enter.typeEnvs is deliberately uninitialized,
             // because the annotations were not available at the time the env was created. Therefore,
             // we look up the environment chain for the first enclosing environment for which the
@@ -3077,8 +3178,18 @@ public class Attr extends JCTree.Visitor {
                     !target.compilerBootstrap(c)) {
                     log.error(env.tree.pos(), "enum.types.not.extensible");
                 }
+                // Panini code
+                if(c.isConfig){
+                	Env<AttrContext> oldEnv = this.env;
+                	this.env = env;
+                	((JCConfigDecl)env.tree).switchToConfig();
+                	env.tree.accept(this);
+                	((JCConfigDecl)env.tree).switchToClass();
+                	this.env = oldEnv;
+                }
+                // end Panini code
                 attribClassBody(env, c);
-
+                
                 chk.checkDeprecatedAnnotation(env.tree.pos(), c);
             } finally {
                 log.useSource(prev);

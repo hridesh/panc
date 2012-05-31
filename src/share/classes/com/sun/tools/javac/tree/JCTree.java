@@ -500,6 +500,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 			tag = Tag.CLASSDEF;
 		}
 		
+		public void switchToConfig(){
+			kind = Kind.CONFIG;
+			tag = Tag.CONFIGDEF;
+		}
+		
 		public Name getName(){
 			return name;
 		}

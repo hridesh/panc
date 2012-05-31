@@ -29,6 +29,9 @@ import java.util.*;
 import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.element.ElementVisitor;
 
+// Panini code
+import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
+// end Panini code
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.code.Symbol.*;
@@ -185,6 +188,11 @@ public class Symtab {
      */
     public final Map<Name, ClassSymbol> classes = new HashMap<Name, ClassSymbol>();
 
+    // Panini code
+    public final Map<Name, ClassSymbol> modules = new HashMap<Name, ClassSymbol>();
+    public final Map<ClassSymbol, List<JCVariableDecl>> moduleparams = new HashMap<ClassSymbol, List<JCVariableDecl>>();
+    // end Panini code
+    
     /** A hashtable containing the encountered packages.
      *  the table should be updated from outside to reflect packages defined
      *  by compiled source files.
