@@ -28,6 +28,7 @@ package com.sun.tools.javac.parser;
 import java.util.*;
 
 import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
+import com.sun.source.tree.Tree.Kind;
 
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.parser.Tokens.*;
@@ -47,6 +48,7 @@ import static com.sun.tools.javac.parser.Tokens.TokenKind.EQ;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.GT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.IMPORT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.LT;
+
 import static com.sun.tools.javac.util.ListBuffer.lb;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
@@ -1882,11 +1884,16 @@ public class JavacParser implements Parser {
     @SuppressWarnings("fallthrough")
     List<JCStatement> blockStatement(boolean isConfig) {
         //todo: skip to anchor on error(?)
+    	// Panini code
     	if(isConfig){
-    		if(token.kind != IDENTIFIER && token.kind != RBRACE){
+    		if((token.kind.tag != Token.Tag.NAMED && token.kind != RBRACE)
+    				|| token.kind == ASSERT || token.kind == ENUM 
+    				|| token.kind == SUPER	|| token.kind == THIS){
     			reportSyntaxError(token.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.config");
+    			//Other errors (e.g.: void x;) are suppressed by the rest of the code
     		}
     	}
+    	// end Panini code
         int pos = token.pos;
         switch (token.kind) {
         case RBRACE: case CASE: case DEFAULT: case EOF:
@@ -1920,6 +1927,9 @@ public class JavacParser implements Parser {
         }
         case INTERFACE:
         case CLASS:
+        	if (isConfig) {
+        		
+        	}
             String dc = token.comment(CommentStyle.JAVADOC);
             return List.of(classOrInterfaceOrEnumDeclaration(modifiersOpt(), dc));
         case ENUM:
