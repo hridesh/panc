@@ -705,6 +705,35 @@ public class Attr extends JCTree.Visitor {
     }
     
     // Panini code
+    public void visitInclude(JCInclude tree){
+    	
+    }
+    
+    public void visitModuleDef(JCModuleDecl tree){
+//    	ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+//    	for(int i=0;i<tree.defs.length();i++){
+//    		if(tree.defs.get(i).getTag() == INCLUDE){
+//    			JCInclude inc = (JCInclude)tree.defs.get(i);
+//    			Symbol s = rs.findIdent(env.outer, names.fromString(inc.lib.toString()), PCK);
+//    			if(syms.libraries.containsKey(s.flatName())){
+//    				env.toplevel.defs= 
+//    						env.toplevel.defs.appendList(syms.libraries.get(s.flatName()));
+//    				enter.classEnter(syms.libraries.get(s.flatName()), env.outer);
+//    			}
+//    			else if(s.kind==PACKAGE){
+//	    			JCImport imp = make.Import(inc.lib, false);
+//	    			env.toplevel.defs.prepend(imp);
+//    			}
+//    			System.out.println(env.toplevel.defs);
+//    		}
+//    		else
+//    			definitions.add(tree.defs.get(i));
+//    	}
+//    	
+//    	tree.defs = definitions.toList();
+//    	tree.switchToClass();
+    }
+    
     public void visitConfigDef(JCConfigDecl tree){
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
@@ -740,28 +769,60 @@ public class Attr extends JCTree.Visitor {
     		    	submits.append(submitAssign);
     		    	joins.append(joinAssign);
     		    	variables.put(mdecl.name, c.name);
+    			}else if(syms.libclasses.containsKey(names.fromString(mdecl.vartype.toString()))){
+    				ClassSymbol c = syms.libclasses.get(names.fromString(mdecl.vartype.toString()));
+    				decls.add(mdecl);
+    				moduleCount ++;
+    				JCNewClass newClass = make.at(mdecl.pos()).NewClass(null, null, 
+    						make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
+    				newClass.constructor = rs.resolveConstructor
+    						(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
+    				newClass.type = c.type;
+    				JCAssign newAssign = make.at(mdecl.pos()).Assign(make.Ident(mdecl.name),
+    						newClass);
+    				newAssign.type = mdecl.type;
+    				JCExpressionStatement nameAssign = make.at(mdecl.pos()).Exec(newAssign);
+    				nameAssign.type = mdecl.type;
+    				inits.append(nameAssign);
+    				JCExpressionStatement submitAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+    						make.Select(make.Ident(names.fromString("pool")), names.fromString("submit")), 
+    						List.<JCExpression>of(make.Ident(mdecl.name))));
+    				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+    						make.Select(make.Ident(mdecl.name), names.fromString("join")), 
+    						List.<JCExpression>nil()));
+    		    	submits.append(submitAssign);
+    		    	joins.append(joinAssign);
+    		    	variables.put(mdecl.name, c.name);
     			}
     			else{
     				mdecl.mods.flags |=FINAL;
     				decls.add(mdecl);
     			}
     		}else if(tree.body.stats.get(i).getTag() == EXEC){
-    			JCMethodInvocation mi = 
-    					(JCMethodInvocation)((JCExpressionStatement)tree.body.stats.get(i)).expr;
-    			ClassSymbol c = (ClassSymbol)rs.findType(env, 
-    					variables.get(names.fromString(mi.meth.toString())));
-    			if(mi.args.length()!=syms.moduleparams.get(c).length()){
-    				log.error(mi.pos(), "arguments.of.wiring.mismatch");
-    			}else{
-	    			for(int j=0;j<mi.args.length();j++){
-	    				JCAssign newAssign = 
-	    						make.at(mi.pos()).Assign(make.Select(mi.meth, 
-	    								syms.moduleparams.get(c).get(j).getName()), 
-	    						mi.args.get(j));
-	    				JCExpressionStatement assignAssign = make.Exec(newAssign);
-	    				assigns.append(assignAssign);
-	    			}
-    			}
+    			try {
+					JCMethodInvocation mi = (JCMethodInvocation) ((JCExpressionStatement) tree.body.stats
+							.get(i)).expr;
+					//    			System.out.println(variables.get(names.fromString(mi.meth.toString())));
+					ClassSymbol c = (ClassSymbol) rs
+							.findType(env, variables.get(names
+									.fromString(mi.meth.toString())));
+					if (mi.args.length() != syms.moduleparams.get(c).length()) {
+						log.error(mi.pos(), "arguments.of.wiring.mismatch");
+					} else {
+						for (int j = 0; j < mi.args.length(); j++) {
+							JCAssign newAssign = make
+									.at(mi.pos())
+									.Assign(make.Select(mi.meth,
+											syms.moduleparams.get(c).get(j)
+													.getName()), mi.args.get(j));
+							JCExpressionStatement assignAssign = make
+									.Exec(newAssign);
+							assigns.append(assignAssign);
+						}
+					}
+				} catch (Exception e) {
+					// TODO: handle exception
+				}
     		}else{
     			//if it reaches here, there's something wrong with the parser
     		}
@@ -3185,6 +3246,14 @@ public class Attr extends JCTree.Visitor {
                 	((JCConfigDecl)env.tree).switchToConfig();
                 	env.tree.accept(this);
                 	((JCConfigDecl)env.tree).switchToClass();
+                	this.env = oldEnv;
+                }
+                else if(c.isModule){
+                	Env<AttrContext> oldEnv = this.env;
+                	this.env = env;
+                	((JCModuleDecl)env.tree).switchToModule();
+                	env.tree.accept(this);
+                	((JCModuleDecl)env.tree).switchToClass();
                 	this.env = oldEnv;
                 }
                 // end Panini code

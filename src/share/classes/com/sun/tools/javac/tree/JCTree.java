@@ -537,13 +537,22 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     public static class JCLibraryDecl extends JCStatement implements LibraryTree{
     	public Name name;
     	public List<JCTree> defs;
-    	
+    	boolean isIncluded;
     	public JCLibraryDecl(Name name, List<JCTree> defs){
     		this.name = name;
     		this.defs = defs;
+    		this.isIncluded = false;
     	}
 		public Kind getKind() {
 			return Kind.LIBRARY;
+		}
+		
+		public void switchIncluded(){
+			isIncluded = !isIncluded;
+		}
+		
+		public boolean isIncluded(){
+			return isIncluded;
 		}
 		
 		public Name getName(){
@@ -601,6 +610,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		public void switchToClass(){
 			kind = Kind.CLASS;
 			tag = Tag.CLASSDEF;
+		}
+		
+		public void switchToModule(){
+			kind = Kind.MODULE;
+			tag = Tag.MODULEDEF;
 		}
 		
 		public List<JCVariableDecl> getParameters(){

@@ -44,8 +44,10 @@ import com.sun.tools.javac.util.List;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
+import static com.sun.tools.javac.code.TypeTags.PACKAGE;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.DOT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.STAR;
+import static com.sun.tools.javac.tree.JCTree.Tag.INCLUDE;
 
 /** This class enters symbols for all encountered definitions into
  *  the symbol table. The pass consists of two phases, organized as
@@ -561,6 +563,14 @@ public class Enter extends JCTree.Visitor {
         tree.switchToClass();
     }
     
+    public void visitLibraryDef(JCLibraryDecl tree){
+    	ClassSymbol c;
+    	PackageSymbol packge = (PackageSymbol)env.info.scope.owner;
+        
+        c = reader.enterClass(tree.name, packge);
+        syms.libraries.put(c.flatname, tree);
+    }
+    
     public void visitModuleDef(JCModuleDecl tree){
     	JCExpression pid = make.Ident(names.fromString("java"));
     	pid = make.Select(pid, names.fromString("util"));
@@ -684,9 +694,32 @@ public class Enter extends JCTree.Visitor {
         				mdecl.mods.flags |= PUBLIC;
         			definitions.add(mdecl);
         		}
-        	}else
-    			definitions.add(tree.defs.get(i));
-        	
+        	}
+        	else if(tree.defs.get(i).getTag() == INCLUDE){
+    			JCInclude inc = (JCInclude)tree.defs.get(i);
+    			if(syms.libraries.containsKey(names.fromString(inc.lib.toString()))){
+    				if(!syms.libraries.get(names.fromString(inc.lib.toString())).isIncluded()){
+    					JCLibraryDecl libdecl = syms.libraries.get(names.fromString(inc.lib.toString()));
+    					libdecl.switchIncluded();
+    					syms.libraries.put(names.fromString(inc.lib.toString()), libdecl);
+    					for(int j=0;j<libdecl.defs.length();j++){
+    						JCClassDecl cdecl = (JCClassDecl)libdecl.defs.get(j);
+    						env.toplevel.defs = env.toplevel.defs.append(cdecl);
+    						ClassSymbol cs;
+    				    	PackageSymbol packge = (PackageSymbol)env.info.scope.owner;
+    				        
+    				        cs = reader.enterClass(cdecl.name, packge);
+    				        cdecl.sym = cs;
+    				        syms.libclasses.put(cdecl.name, cs);
+    						classEnter(cdecl, env);
+    					}
+    				}
+    			}
+				else {
+	    			JCImport imp = make.Import(inc.lib, false);
+	    			env.toplevel.defs = env.toplevel.defs.prepend(imp);
+    			}
+    		}else definitions.add(tree.defs.get(i));
         }
         if(!hasRun){
     		MethodSymbol msym = new MethodSymbol(
