@@ -709,31 +709,6 @@ public class Attr extends JCTree.Visitor {
     	
     }
     
-    public void visitModuleDef(JCModuleDecl tree){
-//    	ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
-//    	for(int i=0;i<tree.defs.length();i++){
-//    		if(tree.defs.get(i).getTag() == INCLUDE){
-//    			JCInclude inc = (JCInclude)tree.defs.get(i);
-//    			Symbol s = rs.findIdent(env.outer, names.fromString(inc.lib.toString()), PCK);
-//    			if(syms.libraries.containsKey(s.flatName())){
-//    				env.toplevel.defs= 
-//    						env.toplevel.defs.appendList(syms.libraries.get(s.flatName()));
-//    				enter.classEnter(syms.libraries.get(s.flatName()), env.outer);
-//    			}
-//    			else if(s.kind==PACKAGE){
-//	    			JCImport imp = make.Import(inc.lib, false);
-//	    			env.toplevel.defs.prepend(imp);
-//    			}
-//    			System.out.println(env.toplevel.defs);
-//    		}
-//    		else
-//    			definitions.add(tree.defs.get(i));
-//    	}
-//    	
-//    	tree.defs = definitions.toList();
-//    	tree.switchToClass();
-    }
-    
     public void visitConfigDef(JCConfigDecl tree){
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
@@ -799,13 +774,12 @@ public class Attr extends JCTree.Visitor {
     				decls.add(mdecl);
     			}
     		}else if(tree.body.stats.get(i).getTag() == EXEC){
-    			try {
 					JCMethodInvocation mi = (JCMethodInvocation) ((JCExpressionStatement) tree.body.stats
 							.get(i)).expr;
-					//    			System.out.println(variables.get(names.fromString(mi.meth.toString())));
+					try{
 					ClassSymbol c = (ClassSymbol) rs
 							.findType(env, variables.get(names
-									.fromString(mi.meth.toString())));
+									.fromString(mi.meth.toString())));					
 					if (mi.args.length() != syms.moduleparams.get(c).length()) {
 						log.error(mi.pos(), "arguments.of.wiring.mismatch");
 					} else {
@@ -820,9 +794,9 @@ public class Attr extends JCTree.Visitor {
 							assigns.append(assignAssign);
 						}
 					}
-				} catch (Exception e) {
-					// TODO: handle exception
-				}
+					}catch (NullPointerException e){
+						log.error(mi.pos(), "only.module.types.allowed");
+					}
     		}else{
     			//if it reaches here, there's something wrong with the parser
     		}
@@ -3246,14 +3220,6 @@ public class Attr extends JCTree.Visitor {
                 	((JCConfigDecl)env.tree).switchToConfig();
                 	env.tree.accept(this);
                 	((JCConfigDecl)env.tree).switchToClass();
-                	this.env = oldEnv;
-                }
-                else if(c.isModule){
-                	Env<AttrContext> oldEnv = this.env;
-                	this.env = env;
-                	((JCModuleDecl)env.tree).switchToModule();
-                	env.tree.accept(this);
-                	((JCModuleDecl)env.tree).switchToClass();
                 	this.env = oldEnv;
                 }
                 // end Panini code

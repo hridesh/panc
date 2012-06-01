@@ -1840,6 +1840,10 @@ public class JavacParser implements Parser {
                 if (token.pos <= endPosTable.errorEndPos) {
                     skip(false, true, true, true);
                 }
+                for(JCStatement s : stat){
+                	if(s.getTag() == FORLOOP)
+                		reportSyntaxError(s.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.config");
+                }
                 stats.addAll(stat);
             }
         }
@@ -1896,9 +1900,9 @@ public class JavacParser implements Parser {
     }
     // Panini code
     List<JCStatement> configStatement(){
-    	if((token.kind.tag != Token.Tag.NAMED && token.kind != RBRACE)
+    	if(token.kind != FOR &&((token.kind.tag != Token.Tag.NAMED && (token.kind != RBRACE))
 				|| token.kind == ASSERT || token.kind == ENUM 
-				|| token.kind == SUPER	|| token.kind == THIS){
+				|| token.kind == SUPER	|| token.kind == THIS)){
 			reportSyntaxError(token.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.config");
 			//Other errors (e.g.: void x;) are suppressed by the rest of the code
 		}
