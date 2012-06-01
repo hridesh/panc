@@ -399,6 +399,12 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     }
 
 	// Panini code
+    //@Override
+	public R visitModuleArray(ModuleArrayTree node, P p) {
+		R r = scan(node.getType(), p);
+		return r;
+	}
+    
 	public R visitConfig(ConfigTree node, P p) {
 		R r = scan(node.getBody(), p);
 		return r;

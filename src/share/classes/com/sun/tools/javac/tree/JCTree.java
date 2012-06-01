@@ -338,6 +338,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
          */
         LETEXPR,                         // ala scheme
         // Panini code
+        MODULEARRAY,
         CONFIGDEF,
         LIBRARYDEF,
         MODULEDEF,
@@ -472,7 +473,45 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     public int getEndPosition(EndPosTable endPosTable) {
         return TreeInfo.getEndPos(this, endPosTable);
     }
+    
     // Panini code
+    public static class JCModuleArrayTree extends JCExpression implements ModuleArrayTree{
+
+    	public JCExpression elemtype;
+    	public int amount;
+    	
+		protected JCModuleArrayTree(JCExpression elemtype, int amount) {
+			this.elemtype = elemtype;
+			this.amount = amount;
+		}
+
+		@Override
+		public int getAmount() {
+			return this.amount;
+		}
+		
+		@Override
+        public <R,D> R accept(TreeVisitor<R,D> v, D d) {
+            return v.visitArrayType(this, d);
+        }
+		
+		public Kind getKind() { return Kind.MODULE_ARRAY; }
+		
+		@Override
+        public Tag getTag() {
+            return MODULEARRAY;
+        }
+
+		@Override
+		public Tree getType() {
+			return elemtype;
+		}
+
+		@Override
+		public void accept(Visitor v) {	v.visitModuleArray(this); }
+    	
+    }
+    
     public static class JCConfigDecl extends JCClassDecl implements ConfigTree{
     	public Name name;
     	public Kind kind;
@@ -2639,6 +2678,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
         // Panini code
+        public void visitModuleArray(JCModuleArrayTree that) { visitTree(that); }
         public void visitConfigDef(JCConfigDecl that)	     { visitTree(that); }
         public void visitLibraryDef(JCLibraryDecl that)	     { visitTree(that); }
         public void visitModuleDef(JCModuleDecl that)	     { visitTree(that); }

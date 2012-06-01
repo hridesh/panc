@@ -431,6 +431,13 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         }
     }
 	// Panini code
+    @Override
+	public JCTree visitModuleArray(ModuleArrayTree node, P p) {
+    	JCModuleArrayTree t = (JCModuleArrayTree) node;
+        JCExpression elemtype = copy(t.elemtype, p);
+        return M.at(t.pos).ModuleArray(elemtype, t.getAmount());
+	}
+    
 	public JCTree visitConfig(ConfigTree node, P p) {
 		JCConfigDecl t = (JCConfigDecl)node;
 		return M.at(t.pos).ConfigDef(t.getModifiers(), t.getName(), t.getBody());

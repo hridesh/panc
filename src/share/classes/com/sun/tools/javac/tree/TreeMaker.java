@@ -115,6 +115,12 @@ public class TreeMaker implements JCTree.Factory {
         return this;
     }
     // Panini code
+    public JCModuleArrayTree ModuleArray(JCExpression elemtype, int amount) {
+        JCModuleArrayTree tree = new JCModuleArrayTree(elemtype, amount);
+        tree.pos = pos;
+        return tree;
+    }
+    
     public JCConfigDecl ConfigDef(JCModifiers mods, Name name, JCBlock body){
     	JCConfigDecl tree = new JCConfigDecl(mods, name, body);
     	tree.pos = pos;

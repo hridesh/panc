@@ -378,6 +378,27 @@ public class Pretty extends JCTree.Visitor {
      * Visitor methods
      *************************************************************************/
     // Panini code
+    public void visitModuleArray(JCModuleArrayTree tree) {
+        try {
+            printBaseElementType(tree);
+            printBrackets(tree);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    
+    private void printBrackets(JCModuleArrayTree tree) throws IOException {
+        JCTree elem;
+        while (true) {
+            elem = tree.elemtype;
+            print("[" + tree.amount + "]");
+            if (!elem.hasTag(MODULEARRAY)) break;
+            tree = (JCModuleArrayTree) elem;
+        }
+    }
+    
+    
+    
     public void visitConfigDef(JCConfigDecl tree){
     	try{
     		println();align();

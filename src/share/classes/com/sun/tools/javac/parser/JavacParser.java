@@ -1535,7 +1535,7 @@ public class JavacParser implements Parser {
     }
 
     /** BracketsOpt = {"[" "]"}
-     */
+     *//*LOOK*/
     private JCExpression bracketsOpt(JCExpression t) {
         if (token.kind == LBRACKET) {
             int pos = token.pos;
