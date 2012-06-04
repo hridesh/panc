@@ -968,6 +968,10 @@ public class TreeInfo {
             return innermostType(((JCArrayTypeTree)type).elemtype);
         case WILDCARD:
             return innermostType(((JCWildcard)type).inner);
+        // Panini code
+        case MODULEARRAY:
+            return innermostType(((JCModuleArrayTree)type).elemtype);
+        // end Panini code
         default:
             return type;
         }

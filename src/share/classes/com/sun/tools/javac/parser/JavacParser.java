@@ -1582,6 +1582,36 @@ public class JavacParser implements Parser {
         return t;
     }
 
+    // Panini code
+    /** BracketsOpt = {"[" "]"}
+     *//*LOOK*/
+    private JCExpression configBracketsOpt(JCExpression t) {
+        if (token.kind == LBRACKET) {
+            int pos = token.pos;
+            nextToken();
+            t = configBracketsOptCont(t, pos);
+            F.at(pos);
+        }
+        return t;
+    }
+
+        private JCArrayTypeTree configBracketsOptCont(JCExpression t, int pos) {
+            if (token.kind == RBRACKET) {
+                accept(RBRACKET);
+                t = bracketsOpt(t);
+                return toP(F.at(pos).TypeArray(t));
+            } else {
+                JCExpression sizeTree = literal(names.empty);
+                if (sizeTree.getKind()!=Kind.INT_LITERAL) {
+                    System.out.println("Need to have an int as the size parameter for a module array"); //TODO real error here
+                    System.exit(5555);
+                }
+                accept(RBRACKET);
+                return toP(F.at(pos).ModuleArray(t, ((Integer)((JCLiteral)sizeTree).value).intValue()));
+            }
+    }
+    // end Panini code
+
     /**
      * MemberReferenceSuffix = "#" [TypeArguments] Ident
      *                       | "#" [TypeArguments] "new"
@@ -1899,14 +1929,87 @@ public class JavacParser implements Parser {
         }
     }
     // Panini code
+    @SuppressWarnings("fallthrough")
     List<JCStatement> configStatement(){
     	if(token.kind != FOR &&((token.kind.tag != Token.Tag.NAMED && (token.kind != RBRACE))
-				|| token.kind == ASSERT || token.kind == ENUM 
-				|| token.kind == SUPER	|| token.kind == THIS)){
+                                || token.kind == ASSERT || token.kind == ENUM 
+                                || token.kind == SUPER	|| token.kind == THIS)){
 			reportSyntaxError(token.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.config");
 			//Other errors (e.g.: void x;) are suppressed by the rest of the code
 		}
-    	return blockStatement();
+//todo: skip to anchor on error(?)
+        int pos = token.pos;
+        switch (token.kind) {
+        case RBRACE: case CASE: case DEFAULT: case EOF:
+            return List.nil();
+        case LBRACE: case IF: case FOR: case WHILE: case DO: case TRY:
+        case SWITCH: case SYNCHRONIZED: case RETURN: case THROW: case BREAK:
+        case CONTINUE: case SEMI: case ELSE: case FINALLY: case CATCH:
+            return List.of(parseStatement());
+        case MONKEYS_AT:
+        case FINAL: {
+            String dc = token.comment(CommentStyle.JAVADOC);
+            JCModifiers mods = modifiersOpt();
+            if (token.kind == INTERFACE ||
+                token.kind == CLASS ||
+                allowEnums && token.kind == ENUM) {
+                return List.of(classOrInterfaceOrEnumDeclaration(mods, dc));
+            } else {
+                JCExpression t = parseType();
+                ListBuffer<JCStatement> stats =
+                    variableDeclarators(mods, t, new ListBuffer<JCStatement>());
+                // A "LocalVariableDeclarationStatement" subsumes the terminating semicolon
+                storeEnd(stats.elems.last(), token.endPos);
+                accept(SEMI);
+                return stats.toList();
+            }
+        }
+        case ABSTRACT: case STRICTFP: {
+            String dc = token.comment(CommentStyle.JAVADOC);
+            JCModifiers mods = modifiersOpt();
+            return List.of(classOrInterfaceOrEnumDeclaration(mods, dc));
+        }
+        case INTERFACE:
+        case CLASS:
+            String dc = token.comment(CommentStyle.JAVADOC);
+            return List.of(classOrInterfaceOrEnumDeclaration(modifiersOpt(), dc));
+        case ENUM:
+        case ASSERT:
+            if (allowEnums && token.kind == ENUM) {
+                error(token.pos, "local.enum");
+                dc = token.comment(CommentStyle.JAVADOC);
+                return List.of(classOrInterfaceOrEnumDeclaration(modifiersOpt(), dc));
+            } else if (allowAsserts && token.kind == ASSERT) {
+                return List.of(parseStatement());
+            }            
+            /* fall through to default */
+        default:
+            Token prevToken = token;
+            JCExpression t = term(EXPR | TYPE);
+            if (token.kind == COLON && t.hasTag(IDENT)) {
+                nextToken();
+                JCStatement stat = parseStatement();
+                return List.<JCStatement>of(F.at(pos).Labelled(prevToken.name(), stat));
+            } else if ((lastmode & TYPE) != 0 &&
+                       (token.kind == IDENTIFIER ||
+                        token.kind == ASSERT ||
+                        token.kind == ENUM)) {
+                pos = token.pos;
+                JCModifiers mods = F.at(Position.NOPOS).Modifiers(0);
+                F.at(pos);
+                ListBuffer<JCStatement> stats =
+                    configVariableDeclarators(mods, t, new ListBuffer<JCStatement>());
+                // A "LocalVariableDeclarationStatement" subsumes the terminating semicolon
+                storeEnd(stats.elems.last(), token.endPos);
+                accept(SEMI);
+                return stats.toList();
+            } else {
+                // This Exec is an "ExpressionStatement"; it subsumes the terminating semicolon
+                JCExpressionStatement expr = to(F.at(pos).Exec(checkExprStat(t)));
+                accept(SEMI);
+                return List.<JCStatement>of(expr);
+            }
+        }
     }
     // end Panini code
     
@@ -2541,6 +2644,69 @@ public class JavacParser implements Parser {
         type = bracketsOpt(type);
         return toP(F.at(pos).VarDef(mods, name, type, null));
     }
+
+    // Panini code
+    /** VariableDeclarators = VariableDeclarator { "," VariableDeclarator }
+     */
+    public <T extends ListBuffer<? super JCVariableDecl>> T configVariableDeclarators(JCModifiers mods,
+                                                                         JCExpression type,
+                                                                         T vdefs)
+    {
+        return configVariableDeclaratorsRest(token.pos, mods, type, ident(), false, null, vdefs);
+    }
+
+        /** VariableDeclaratorsRest = VariableDeclaratorRest { "," VariableDeclarator }
+     *  ConstantDeclaratorsRest = ConstantDeclaratorRest { "," ConstantDeclarator }
+     *
+     *  @param reqInit  Is an initializer always required?
+     *  @param dc       The documentation comment for the variable declarations, or null.
+     */
+    <T extends ListBuffer<? super JCVariableDecl>> T configVariableDeclaratorsRest(int pos,
+                                                                     JCModifiers mods,
+                                                                     JCExpression type,
+                                                                     Name name,
+                                                                     boolean reqInit,
+                                                                     String dc,
+                                                                     T vdefs)
+    {
+        vdefs.append(configVariableDeclaratorRest(pos, mods, type, name, reqInit, dc));
+        while (token.kind == COMMA) {
+            // All but last of multiple declarators subsume a comma
+            storeEnd((JCTree)vdefs.elems.last(), token.endPos);
+            nextToken();
+            vdefs.append(configVariableDeclarator(mods, type, reqInit, dc));
+        }
+        return vdefs;
+    }
+
+        /** VariableDeclarator = Ident VariableDeclaratorRest
+     *  ConstantDeclarator = Ident ConstantDeclaratorRest
+     */
+    JCVariableDecl configVariableDeclarator(JCModifiers mods, JCExpression type, boolean reqInit, String dc) {
+        return variableDeclaratorRest(token.pos, mods, type, ident(), reqInit, dc);
+    }
+
+    /** VariableDeclaratorRest = BracketsOpt ["=" VariableInitializer]
+     *  ConstantDeclaratorRest = BracketsOpt "=" VariableInitializer
+     *
+     *  @param reqInit  Is an initializer always required?
+     *  @param dc       The documentation comment for the variable declarations, or null.
+     */
+    JCVariableDecl configVariableDeclaratorRest(int pos, JCModifiers mods, JCExpression type, Name name,
+                                  boolean reqInit, String dc) {
+        type = configBracketsOpt(type);
+        JCExpression init = null;
+        if (token.kind == EQ) {
+            nextToken();
+            init = variableInitializer();
+        }
+        else if (reqInit) syntaxError(token.pos, "expected", EQ);
+        JCVariableDecl result =
+            toP(F.at(pos).VarDef(mods, name, type, init));
+        attach(result, dc);
+        return result;
+    }
+    // end Panini code
 
     /** Resources = Resource { ";" Resources }
      */

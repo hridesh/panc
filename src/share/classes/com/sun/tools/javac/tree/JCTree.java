@@ -475,13 +475,12 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
     
     // Panini code
-    public static class JCModuleArrayTree extends JCExpression implements ModuleArrayTree{
+    public static class JCModuleArrayTree extends JCArrayTypeTree implements ModuleArrayTree{
 
-    	public JCExpression elemtype;
     	public int amount;
     	
 		protected JCModuleArrayTree(JCExpression elemtype, int amount) {
-			this.elemtype = elemtype;
+            super(elemtype);
 			this.amount = amount;
 		}
 
@@ -492,7 +491,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		
 		@Override
         public <R,D> R accept(TreeVisitor<R,D> v, D d) {
-            return v.visitArrayType(this, d);
+            return v.visitModuleArray(this, d);
         }
 		
 		public Kind getKind() { return Kind.MODULE_ARRAY; }
@@ -501,11 +500,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public Tag getTag() {
             return MODULEARRAY;
         }
-
-		@Override
-		public Tree getType() {
-			return elemtype;
-		}
 
 		@Override
 		public void accept(Visitor v) {	v.visitModuleArray(this); }
