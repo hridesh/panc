@@ -47,7 +47,7 @@ import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.TypeTags.PACKAGE;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.DOT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.STAR;
-import static com.sun.tools.javac.tree.JCTree.Tag.INCLUDE;
+import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
 /** This class enters symbols for all encountered definitions into
  *  the symbol table. The pass consists of two phases, organized as
@@ -719,6 +719,10 @@ public class Enter extends JCTree.Visitor {
 	    			JCImport imp = make.Import(inc.lib, false);
 	    			env.toplevel.defs = env.toplevel.defs.prepend(imp);
     			}
+    		}else if(tree.defs.get(i).getTag() == VARDEF){
+    			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
+    			mdecl.mods.flags |=PRIVATE;
+    			definitions.add(mdecl);
     		}else definitions.add(tree.defs.get(i));
         }
         if(!hasRun){

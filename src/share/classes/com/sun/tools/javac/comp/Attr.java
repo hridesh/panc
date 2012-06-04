@@ -709,6 +709,28 @@ public class Attr extends JCTree.Visitor {
     	
     }
     
+    public List<JCStatement> transWiring(JCMethodInvocation mi, Map<Name, Name> variables){
+    	ClassSymbol c = (ClassSymbol) rs
+				.findType(env, variables.get(names
+						.fromString(mi.meth.toString())));
+    	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
+		if (mi.args.length() != syms.moduleparams.get(c).length()) {
+			log.error(mi.pos(), "arguments.of.wiring.mismatch");
+		} else {
+			for (int j = 0; j < mi.args.length(); j++) {
+				JCAssign newAssign = make
+						.at(mi.pos())
+						.Assign(make.Select(mi.meth,
+								syms.moduleparams.get(c).get(j)
+										.getName()), mi.args.get(j));
+				JCExpressionStatement assignAssign = make
+						.Exec(newAssign);
+				assigns.append(assignAssign);
+			}
+		}
+		return assigns.toList();
+    }
+    
     public void visitConfigDef(JCConfigDecl tree){
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
@@ -718,6 +740,7 @@ public class Attr extends JCTree.Visitor {
     	Map<Name, Name> variables = new HashMap<Name, Name>();
     	int moduleCount = 0;
     	for(int i=0;i <tree.body.stats.length();i++){
+//    		System.out.println(tree.body.stats.get(i).getTag());
     		if(tree.body.stats.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.body.stats.get(i);
     			if(syms.modules.containsKey(names.fromString(mdecl.vartype.toString()))){
@@ -770,35 +793,104 @@ public class Attr extends JCTree.Visitor {
     		    	variables.put(mdecl.name, c.name);
     			}
     			else{
-    				mdecl.mods.flags |=FINAL;
-    				decls.add(mdecl);
+    				if(mdecl.vartype.getTag()==MODULEARRAY){
+    					JCModuleArrayTree mat = (JCModuleArrayTree)mdecl.vartype;
+    					ClassSymbol c = syms.modules.get(names.fromString(mat.elemtype.toString()));
+    					JCNewArray s= make.NewArray(make.Ident(c.type.tsym), 
+    							List.<JCExpression>of(make.Literal(mat.amount)), null);
+    					JCVariableDecl newArray = 
+    					make.VarDef(make.Modifiers(0), 
+    							mdecl.name, make.TypeArray(make.Ident(c.type.tsym)), s);
+    					decls.add(newArray);
+    	    			ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
+    	    			JCVariableDecl arraycache = make.VarDef(make.Modifiers(0), 
+    	    					names.fromString("index$"), 
+    	    					make.TypeIdent(INT), 
+    	    					make.Literal(0));
+    	    			JCBinary cond = make.Binary(LT, make.Ident(names.fromString("index$")),
+    	    							make.Select(make.Ident(mdecl.name), 
+    	    									names.fromString("length")));
+    	    			JCUnary unary = make.Unary(PREINC, make.Ident(names.fromString("index$")));
+    	    			JCExpressionStatement step = 
+    							make.Exec(unary);
+    	    			JCNewClass newClass = make.NewClass(null, null, 
+    							make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
+    					newClass.constructor = rs.resolveConstructor
+    							(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
+    					newClass.type = c.type;
+    	    			loopBody.add(make.Exec(make.Assign(
+    	    					make.Indexed(make.Ident(mdecl.name), make.Ident(names.fromString("index$"))), 
+    	    					newClass)));
+    	    			JCForLoop floop = 
+    	    					make.ForLoop(List.<JCStatement>of(arraycache), 
+    	    							cond, 
+    	    							List.of(step), 
+    	    							make.Block(0, loopBody.toList()));
+    	    			assigns.append(floop);
+    	    			moduleCount += mat.amount;
+    	    			for(int j=0;j<mat.amount;j++){
+	    	    			JCExpressionStatement submitAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+	        						make.Select(make.Ident(names.fromString("pool")), names.fromString("submit")), 
+	        						List.<JCExpression>of(make.Indexed(make.Ident(mdecl.name), make.Literal(j)))));
+	        				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+	        						make.Select(make.Indexed(make.Ident(mdecl.name), make.Literal(j)), names.fromString("join")), 
+	        						List.<JCExpression>nil()));
+	        		    	submits.append(submitAssign);
+	        		    	joins.append(joinAssign);
+    	    			}
+    				}
+    				else{
+	    				mdecl.mods.flags |=FINAL;
+	    				decls.add(mdecl);
+    				}
     			}
     		}else if(tree.body.stats.get(i).getTag() == EXEC){
 					JCMethodInvocation mi = (JCMethodInvocation) ((JCExpressionStatement) tree.body.stats
 							.get(i)).expr;
 					try{
-					ClassSymbol c = (ClassSymbol) rs
-							.findType(env, variables.get(names
-									.fromString(mi.meth.toString())));					
-					if (mi.args.length() != syms.moduleparams.get(c).length()) {
-						log.error(mi.pos(), "arguments.of.wiring.mismatch");
-					} else {
-						for (int j = 0; j < mi.args.length(); j++) {
-							JCAssign newAssign = make
-									.at(mi.pos())
-									.Assign(make.Select(mi.meth,
-											syms.moduleparams.get(c).get(j)
-													.getName()), mi.args.get(j));
-							JCExpressionStatement assignAssign = make
-									.Exec(newAssign);
-							assigns.append(assignAssign);
-						}
-					}
+						assigns.appendList(transWiring(mi, variables));
 					}catch (NullPointerException e){
 						log.error(mi.pos(), "only.module.types.allowed");
 					}
-    		}else{
-    			//if it reaches here, there's something wrong with the parser
+    		}else if(tree.body.stats.get(i).getTag() == FOREACHLOOP){
+    			JCEnhancedForLoop loop = (JCEnhancedForLoop) tree.body.stats.get(i);
+    			variables.put(loop.var.name, names.fromString(loop.var.vartype.toString()));
+    			// no type checking here
+    			ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
+    			JCVariableDecl vdecl = make.at(loop.pos).VarDef(make.Modifiers(0), 
+    					loop.var.name,
+    					loop.var.vartype,
+    					make.Indexed(loop.expr, make.Ident(names.fromString("index$"))));
+    			loopBody.add(vdecl);
+    			
+    			JCVariableDecl arraycache = make.at(loop.pos).VarDef(make.Modifiers(0), 
+    					names.fromString("index$"), 
+    					make.TypeIdent(INT), 
+    					make.Literal(0));
+    			JCBinary cond = make.at(loop.pos).Binary(LT, make.Ident(names.fromString("index$")),
+    							make.Select(loop.expr, 
+    									names.fromString("length")));
+    			JCUnary unary = make.at(loop.pos).Unary(PREINC, make.Ident(names.fromString("index$")));
+    			JCExpressionStatement step = 
+						make.at(loop.pos).Exec(unary);
+    			if(loop.body.getTag() == Tag.BLOCK){
+    				JCBlock jb = (JCBlock)loop.body;
+    				for(JCStatement s : jb.stats){
+    					JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)s).expr;
+    					loopBody.appendList(transWiring(mi,variables));
+    				}
+				}
+    			else{
+    				JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)loop.body).expr;
+    				loopBody.appendList(transWiring(mi,variables));
+				}
+    			JCForLoop floop = 
+    					make.at(loop.pos).ForLoop(List.<JCStatement>of(arraycache), 
+    							cond, 
+    							List.of(step), 
+    							make.Block(0, loopBody.toList()));
+    			assigns.append(floop);
+    		}else{		//if it reaches here, there's something wrong with the parser//add error messages
     		}
     	}
     	Type fjp = rs.findType(env, names.fromString("ForkJoinPool")).type;
