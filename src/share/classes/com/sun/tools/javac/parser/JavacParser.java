@@ -1535,7 +1535,7 @@ public class JavacParser implements Parser {
     }
 
     /** BracketsOpt = {"[" "]"}
-     *//*LOOK*/
+     */
     private JCExpression bracketsOpt(JCExpression t) {
         if (token.kind == LBRACKET) {
             int pos = token.pos;
@@ -1584,7 +1584,7 @@ public class JavacParser implements Parser {
 
     // Panini code
     /** BracketsOpt = {"[" "]"}
-     *//*LOOK*/
+     */
     private JCExpression configBracketsOpt(JCExpression t) {
         if (token.kind == LBRACKET) {
             int pos = token.pos;
@@ -1986,6 +1986,13 @@ public class JavacParser implements Parser {
         default:
             Token prevToken = token;
             JCExpression t = term(EXPR | TYPE);
+//            if(token.kind == LPAREN){
+//            	System.out.println("Agora quem dá bola é o santos!");
+  //          	List<JCExpression> args = null;
+    //        	return List.of(F.at(pos).
+      //      			ModuleArrayCall(names.fromString(t.toString()), 0, args));
+  //          }else
+            
             if (token.kind == COLON && t.hasTag(IDENT)) {
                 nextToken();
                 JCStatement stat = parseStatement();
@@ -2004,6 +2011,7 @@ public class JavacParser implements Parser {
                 accept(SEMI);
                 return stats.toList();
             } else {
+            	//System.out.println("Default " + prevToken.kind + (prevToken.kind == IDENTIFIER ? prevToken.name() : ""));
                 // This Exec is an "ExpressionStatement"; it subsumes the terminating semicolon
                 JCExpressionStatement expr = to(F.at(pos).Exec(checkExprStat(t)));
                 accept(SEMI);

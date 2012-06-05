@@ -338,6 +338,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
          */
         LETEXPR,                         // ala scheme
         // Panini code
+        MAAPPLY,
         MODULEARRAY,
         CONFIGDEF,
         LIBRARYDEF,
@@ -475,11 +476,58 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
     
     // Panini code
+    public static class JCModuleArrayCall extends JCTree implements ModuleArrayCallTree{
+
+    	public Name name;
+    	public int index;
+    	public List<JCExpression> arguments;
+    	
+    	public JCModuleArrayCall(Name name, int index, List<JCExpression> args){
+    		this.name = name;
+    		this.index = index;
+    		this.arguments = args;
+    	}
+    	
+		@Override
+		public Kind getKind() {
+			return Kind.MODULE_ARRAY_CALL;
+		}
+
+		@Override
+		public Name getName() {
+			return this.name;
+		}
+
+		@Override
+		public int getIndex() {
+			return this.index;
+		}
+
+		@Override
+		public List<JCExpression> getArgs() {
+			return this.arguments;
+		}
+
+		@Override
+		public Tag getTag() {
+			return MAAPPLY;
+		}
+
+		@Override
+		public void accept(Visitor v) { v.visitModuleArrayCall(this); }
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitModuleArrayCall(this, d);
+		}
+    	
+    }
+    
     public static class JCModuleArrayTree extends JCArrayTypeTree implements ModuleArrayTree{
 
     	public int amount;
     	
-		protected JCModuleArrayTree(JCExpression elemtype, int amount) {
+		public JCModuleArrayTree(JCExpression elemtype, int amount) {
             super(elemtype);
 			this.amount = amount;
 		}
@@ -2672,6 +2720,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
         // Panini code
+        public void visitModuleArrayCall(JCModuleArrayCall that) { visitTree(that); }
         public void visitModuleArray(JCModuleArrayTree that) { visitTree(that); }
         public void visitConfigDef(JCConfigDecl that)	     { visitTree(that); }
         public void visitLibraryDef(JCLibraryDecl that)	     { visitTree(that); }

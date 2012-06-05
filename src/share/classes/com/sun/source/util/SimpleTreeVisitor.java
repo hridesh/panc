@@ -266,7 +266,10 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 
 	// Panini code
 
-	//@Override
+	public R visitModuleArrayCall(ModuleArrayCallTree node, P p) {
+		return defaultAction(node, p);
+	}
+	
 	public R visitModuleArray(ModuleArrayTree node, P p) {
 		return defaultAction(node, p);
 	}

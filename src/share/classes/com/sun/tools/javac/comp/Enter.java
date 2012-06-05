@@ -663,7 +663,7 @@ public class Enter extends JCTree.Visitor {
         
         // Recursively enter all member classes.
 //        classEnter(tree.defs, localEnv);
-        
+        int indexer = 0;
         boolean hasRun = false;
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
         for(int i=0;i<tree.defs.length();i++){
@@ -690,8 +690,13 @@ public class Enter extends JCTree.Visitor {
         		}
         		else{
         			if((mdecl.mods.flags & PRIVATE) ==0
-        					&&(mdecl.mods.flags & PROTECTED) ==0)
+        					&&(mdecl.mods.flags & PROTECTED) ==0){
         				mdecl.mods.flags |= PUBLIC;
+        			JCVariableDecl v = make.VarDef(make.Modifiers(PUBLIC | FINAL | STATIC), 
+        					names.fromString("panini$methodConst$" + mdecl.name.toString()),
+        					make.TypeIdent(TypeTags.INT), make.Literal(++indexer));
+        			definitions.add(v);
+        			}
         			definitions.add(mdecl);
         		}
         	}

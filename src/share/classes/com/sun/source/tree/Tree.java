@@ -46,6 +46,7 @@ public interface Tree {
      */
     public enum Kind {
     	// Panini code
+    	MODULE_ARRAY_CALL(ModuleArrayCallTree.class),
     	MODULE_ARRAY(ModuleArrayTree.class),
     	CONFIG(ConfigTree.class),
     	LIBRARY(LibraryTree.class),
