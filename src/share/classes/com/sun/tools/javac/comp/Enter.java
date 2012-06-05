@@ -466,7 +466,37 @@ public class Enter extends JCTree.Visitor {
         result = null;
     }
     // Panini code
+    public void addDuck(){
+    	if(!syms.duckAdded){
+    		make.MethodDef(make.Modifiers(PUBLIC), 
+    				names.fromString(PaniniConstants.PANINI_FINISH), 
+    				make.Type(syms.voidType), List.<JCTypeParameter>nil(), 
+    				List.<JCVariableDecl>of(make.VarDef(make.Modifiers(0), names.fromString("t"),
+    						make.Ident(names.fromString("T")), null)), 
+    				List.<JCExpression>nil(), null, null);
+    		JCClassDecl cdecl = make.ClassDef(make.Modifiers(INTERFACE), 
+    				names.fromString(PaniniConstants.DUCK_INTERFACE_NAME), 
+    				List.<JCTypeParameter>of(make.TypeParameter(names.fromString("T"), List.<JCExpression>nil())), 
+    				null, List.<JCExpression>nil(), List.<JCTree>of(make.MethodDef(make.Modifiers(PUBLIC), 
+    	    				names.fromString(PaniniConstants.PANINI_FINISH), 
+    	    				make.Type(syms.voidType), List.<JCTypeParameter>nil(), 
+    	    				List.<JCVariableDecl>of(make.VarDef(make.Modifiers(0), names.fromString("t"),
+    	    						make.Ident(names.fromString("T")), null)), 
+    	    				List.<JCExpression>nil(), null, null)));
+			env.toplevel.defs = env.toplevel.defs.append(cdecl);
+			ClassSymbol cs;
+	    	PackageSymbol packge = (PackageSymbol)env.info.scope.owner;
+//	        
+	        cs = reader.enterClass(cdecl.name, packge);
+	        cdecl.sym = cs;
+	        syms.libclasses.put(cdecl.name, cs);
+			classEnter(cdecl, env);
+    		syms.duckAdded=true;
+    	}
+    }
+    
     public void visitConfigDef(JCConfigDecl tree){
+    	addDuck();
     	JCExpression pid = make.Ident(names.fromString("java"));
     	pid = make.Select(pid, names.fromString("util"));
     	pid = make.Select(pid, names.fromString("concurrent"));
@@ -566,9 +596,51 @@ public class Enter extends JCTree.Visitor {
     public void visitLibraryDef(JCLibraryDecl tree){
     	ClassSymbol c;
     	PackageSymbol packge = (PackageSymbol)env.info.scope.owner;
+        ListBuffer<JCTree> interfaces = new ListBuffer<JCTree>();
         
+    	for(int i=0;i<tree.defs.length();i++){
+	    	if(tree.defs.get(i).getTag()==CLASSDEF){
+	    		JCClassDecl jcClass = (JCClassDecl)tree.defs.get(i);
+	    		if((jcClass.mods.flags & INTERFACE)!=0){
+	    			ListBuffer<JCTree> defs = new ListBuffer<JCTree>();
+	    			ListBuffer<JCExpression> implement = new ListBuffer<JCExpression>();
+	    			implement.add(make.Ident(jcClass.name));
+	    			implement.add(make.TypeApply(make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME)), List.<JCExpression>of(make.Ident(jcClass.name))));
+	    			defs.add(make.VarDef(make.Modifiers(PRIVATE), 
+	    					names.fromString("wrapped"), 
+	    					make.Ident(jcClass.name), null));
+	    			ListBuffer<JCStatement> valueBody = new ListBuffer<JCStatement>();
+	    			
+	    			defs.add(make.MethodDef(make.Modifiers(PUBLIC), 
+	    					names.fromString("value"), 
+	    					make.Type(syms.booleanType), 
+	    					List.<JCTypeParameter>nil(), 
+	    					List.<JCVariableDecl>nil(), 
+	    					List.<JCExpression>nil(), 
+	    					make.Block(0, valueBody.toList()), 
+	    					null));
+	    			defs.add(make.MethodDef(make.Modifiers(PUBLIC),
+	    					names.fromString(PaniniConstants.PANINI_FINISH), 
+	    					make.Type(syms.voidType), 
+	    					List.<JCTypeParameter>nil(), 
+	    					List.<JCVariableDecl>of(
+	    							make.VarDef(make.Modifiers(0), 
+	    									names.fromString("t"), 
+	    									make.Ident(jcClass.name), null)), 
+	    									List.<JCExpression>nil(), 
+	    									make.Block(0, List.<JCStatement>of(make.Exec(make.Assign
+	    											(make.Ident(names.fromString("wrapped")), make.Ident(names.fromString("t")))))), 
+	    									null));
+	    			interfaces.add(make.ClassDef(make.Modifiers(0), 
+	    					names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" +jcClass.name.toString()), 
+	    					jcClass.getTypeParameters(), jcClass.extending, implement.toList(), 
+	    					defs.toList()));
+	    		}
+	    	}
+    	}
         c = reader.enterClass(tree.name, packge);
         syms.libraries.put(c.flatname, tree);
+        tree.defs = tree.defs.appendList(interfaces);
     }
     
     public void visitModuleDef(JCModuleDecl tree){
@@ -576,8 +648,20 @@ public class Enter extends JCTree.Visitor {
     	pid = make.Select(pid, names.fromString("util"));
     	pid = make.Select(pid, names.fromString("concurrent"));
     	pid = make.Select(pid, names.fromString("RecursiveAction"));
-    	// TODO check imports to stop adding multiple redundant imports
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	pid = make.Ident(names.fromString("java"));
+    	pid = make.Select(pid, names.fromString("util"));
+    	pid = make.Select(pid, names.fromString("LinkedList"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	pid = make.Ident(names.fromString("java"));
+    	pid = make.Select(pid, names.fromString("util"));
+    	pid = make.Select(pid, names.fromString("Queue"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	pid = make.Ident(names.fromString("java"));
+    	pid = make.Select(pid, names.fromString("util"));
+    	pid = make.Select(pid, names.fromString("List"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	
     	tree.extending = make.Ident(names.fromString("RecursiveAction"));
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
@@ -666,6 +750,42 @@ public class Enter extends JCTree.Visitor {
         int indexer = 0;
         boolean hasRun = false;
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+        JCVariableDecl queue = 
+        make.VarDef(make.Modifiers(PUBLIC), 
+        		names.fromString(PaniniConstants.MODULE_CALL_QUEUES), 
+        		make.TypeApply(make.Ident(names.fromString("Queue")), 
+        				List.<JCExpression>of(make.Ident(names.fromString("Integer")))), 
+        				make.NewClass(null, 
+        		        		null, 
+        		        		make.TypeApply(make.Ident(names.fromString("LinkedList")), 
+        		        				List.<JCExpression>of(make.Ident(names.fromString("Integer")))), 
+        		        		List.<JCExpression>nil(), 
+        		        		null));
+        definitions.add(queue);
+        queue =
+        		make.VarDef(make.Modifiers(PUBLIC), 
+                		names.fromString(PaniniConstants.MODULE_ARG_QUEUES), 
+                		make.TypeApply(make.Ident(names.fromString("Queue")), 
+                				List.<JCExpression>of(make.Ident(names.fromString("Object")))), 
+                				make.NewClass(null, 
+                		        		null, 
+                		        		make.TypeApply(make.Ident(names.fromString("LinkedList")), 
+                		        				List.<JCExpression>of(make.Ident(names.fromString("Object")))), 
+                		        		List.<JCExpression>nil(), 
+                		        		null));
+        definitions.add(queue);
+        queue =
+        		make.VarDef(make.Modifiers(PUBLIC), 
+                		names.fromString(PaniniConstants.MODULE_RETURN_QUEUES), 
+                		make.TypeApply(make.Ident(names.fromString("Queue")), 
+                				List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME)))), 
+                				make.NewClass(null, 
+                		        		null, 
+                		        		make.TypeApply(make.Ident(names.fromString("LinkedList")), 
+                		        				List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME)))), 
+                		        		List.<JCExpression>nil(), 
+                		        		null));
+        definitions.add(queue);
         for(int i=0;i<tree.defs.length();i++){
         	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
         		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
@@ -749,6 +869,7 @@ public class Enter extends JCTree.Visitor {
     		definitions.add(computeDecl);
     		hasRun=true;
     	}
+        //TODO convert modules to modulewrappers
     	List<JCVariableDecl> fields = tree.getParameters();
     	while(fields.nonEmpty()){
     		definitions.prepend(make.VarDef(make.Modifiers(PUBLIC),
@@ -756,7 +877,31 @@ public class Enter extends JCTree.Visitor {
     				fields.head.vartype,
     				null));
     		fields = fields.tail;
-    	}    	
+    	}
+    	//paninimessage
+    	ListBuffer<JCVariableDecl> vars  = new ListBuffer<JCVariableDecl>();
+    	vars.add(make.VarDef(make.Modifiers(0), names.fromString("name"), 
+    			make.Type(syms.intType), null));
+    	vars.add(make.VarDef(make.Modifiers(0), names.fromString("args"), 
+    			make.TypeApply(make.Ident(names.fromString("List")), 
+    					List.<JCExpression>of(make.Ident(names.fromString("Object")))), 
+    					null));
+    	vars.add(make.VarDef(make.Modifiers(0), names.fromString("d"), 
+    			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME)), 
+    					null));
+    	ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
+    	stats.add(make.Exec(make.Apply(null, (make.Select(make.Ident(names.fromString(PaniniConstants.MODULE_CALL_QUEUES)), names.fromString("add"))), 
+    			List.<JCExpression>of(make.Ident(names.fromString("name"))))));
+    	stats.add(make.Exec(make.Apply(null, (make.Select(make.Ident(names.fromString(PaniniConstants.MODULE_ARG_QUEUES)), names.fromString("addAll"))), 
+    			List.<JCExpression>of(make.Ident(names.fromString("args"))))));
+    	stats.add(make.Exec(make.Apply(null, (make.Select(make.Ident(names.fromString(PaniniConstants.MODULE_RETURN_QUEUES)), names.fromString("add"))), 
+    			List.<JCExpression>of(make.Ident(names.fromString("d"))))));
+    	JCBlock body = make.Block(0, stats.toList());
+    	definitions.add(make.MethodDef(make.Modifiers(PUBLIC), 
+    			names.fromString(PaniniConstants.PANINI_MESSAGE),
+    			make.Type(syms.voidType), 
+    			List.<JCTypeParameter>nil(), vars.toList(), List.<JCExpression>nil(), body, null));
+    	
     	tree.defs = definitions.toList();;
         tree.sym = c;
         c.isModule = true;

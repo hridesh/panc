@@ -191,6 +191,7 @@ public class Symtab {
     public final Map<Name, ClassSymbol> classes = new HashMap<Name, ClassSymbol>();
 
     // Panini code
+    public boolean duckAdded = false;
     public final Map<Name, ClassSymbol> modules = new HashMap<Name, ClassSymbol>();
     public final Map<Name, ClassSymbol> libclasses = new HashMap<Name, ClassSymbol>();
     public final Map<ClassSymbol, List<JCVariableDecl>> moduleparams = new HashMap<ClassSymbol, List<JCVariableDecl>>();

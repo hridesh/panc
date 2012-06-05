@@ -845,6 +845,7 @@ public class Attr extends JCTree.Visitor {
     				}
     			}
     		}else if(tree.body.stats.get(i).getTag() == EXEC){
+    			if(((JCExpressionStatement)tree.body.stats.get(i)).expr.getTag()==APPLY){
 					JCMethodInvocation mi = (JCMethodInvocation) ((JCExpressionStatement) tree.body.stats
 							.get(i)).expr;
 					try{
@@ -852,6 +853,32 @@ public class Attr extends JCTree.Visitor {
 					}catch (NullPointerException e){
 						log.error(mi.pos(), "only.module.types.allowed");
 					}
+    			}//modulearray
+//    			else if(((JCExpressionStatement)tree.body.stats.get(i)).expr.getTag()==APPLY){
+//    				JCModuleArrayCall mi = (JCModuleArrayCall) ((JCExpressionStatement) tree.body.stats
+//							.get(i)).expr;
+//    				ClassSymbol c = (ClassSymbol) rs
+//    						.findType(env, variables.get(names
+//    								.fromString(mi.name.toString())));
+//    				if (mi.args.length() != syms.moduleparams.get(c).length()) {
+//    					log.error(mi.pos(), "arguments.of.wiring.mismatch");
+//    				} else {
+//    					for (int j = 0; j < mi.args.length(); j++) {
+//    						JCAssign newAssign = make
+//    								.at(mi.pos())
+//    								.Assign(make.Select
+//    										(make.Indexed
+//    												(make.Ident(mi.module), 
+//    														make.Literal(mi._index)),
+//    										syms.moduleparams.get(c).get(j)
+//    												.getName()), mi.args.get(j));
+//    						JCExpressionStatement assignAssign = make
+//    								.Exec(newAssign);
+//    						assigns.append(assignAssign);
+//    					}
+//    				}
+//    				
+//    			}
     		}else if(tree.body.stats.get(i).getTag() == FOREACHLOOP){
     			JCEnhancedForLoop loop = (JCEnhancedForLoop) tree.body.stats.get(i);
     			variables.put(loop.var.name, names.fromString(loop.var.vartype.toString()));
@@ -884,6 +911,7 @@ public class Attr extends JCTree.Visitor {
     				JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)loop.body).expr;
     				loopBody.appendList(transWiring(mi,variables));
 				}
+    			
     			JCForLoop floop = 
     					make.at(loop.pos).ForLoop(List.<JCStatement>of(arraycache), 
     							cond, 
