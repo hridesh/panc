@@ -69,7 +69,7 @@ public class ModuleInternal extends Internal
             msgCases.append(case_(id(PaniniConstants.PANINI_METHOD_CONST + method.name.toString())));
                                  
         }
-
+        }
         JCMethodDecl m = method(mods, "compute", voidt(),
                                 params(),
                                 body(

@@ -20,6 +20,7 @@
 package com.sun.tools.javac.util;
 
 public class PaniniConstants {
+	public final static String PANINI = "Panini$";
 	public final static String MODULE_CALL_QUEUES = "panini$msgNameQueue";
 	public final static String MODULE_ARG_QUEUES = "panini$msgArgsQueue";
 	public final static String MODULE_RETURN_QUEUES = "panini$msgDuckQueue";

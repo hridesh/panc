@@ -731,6 +731,10 @@ public class Attr extends JCTree.Visitor {
 		return assigns.toList();
     }
     
+    public void visitModuleDef(JCModuleDecl tree){
+    	
+    }
+    
     public void visitConfigDef(JCConfigDecl tree){
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
@@ -3340,6 +3344,14 @@ public class Attr extends JCTree.Visitor {
                 	((JCConfigDecl)env.tree).switchToConfig();
                 	env.tree.accept(this);
                 	((JCConfigDecl)env.tree).switchToClass();
+                	this.env = oldEnv;
+                }
+                else if(c.isModule){
+                	Env<AttrContext> oldEnv = this.env;
+                	this.env = env;
+                	((JCModuleDecl)env.tree).switchToModule();
+                	env.tree.accept(this);
+                	((JCModuleDecl)env.tree).switchToClass();
                 	this.env = oldEnv;
                 }
                 // end Panini code

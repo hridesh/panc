@@ -618,6 +618,22 @@ public class Enter extends JCTree.Visitor {
 	    					make.Ident(jcClass.name), null));
 	    			ListBuffer<JCStatement> valueBody = new ListBuffer<JCStatement>();
 	    			
+	    			List<JCCatch> catchers = List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), names.fromString("e"), 
+	    					make.Ident(names.fromString("InterruptedException")), null), 
+	    					make.Block(0, 
+	    							List.<JCStatement>of(make.Return
+	    									(make.Apply(null, make.Ident
+	    											(names.fromString("value")), List.<JCExpression>nil()))))));
+	    			ListBuffer<JCStatement> tryBody = new ListBuffer<JCStatement>();
+	    			tryBody.add(make.If(make.Binary(EQ, 
+	    					make.Ident(names.fromString("wrapped")), make.Literal(TypeTags.BOT, null)), 
+	    					make.Exec(make.Apply(null, 
+	    							make.Ident(names.fromString("wait")), List.<JCExpression>nil())), 
+	    					null));
+	    			tryBody.add(make.Return(make.Apply(null, make.Select(make.Ident(names.fromString("wrapped")), names.fromString("value")), List.<JCExpression>nil())));
+	    			valueBody.add(make.Synchronized(make.This(Type.noType), 
+	    					make.Block(0, List.<JCStatement>of(make.Try(make.Block(0, tryBody.toList()), 
+	    							catchers, null)))));
 	    			defs.add(make.MethodDef(make.Modifiers(PUBLIC), 
 	    					names.fromString("value"), 
 	    					make.Type(syms.booleanType), 
@@ -667,6 +683,10 @@ public class Enter extends JCTree.Visitor {
     	pid = make.Ident(names.fromString("java"));
     	pid = make.Select(pid, names.fromString("util"));
     	pid = make.Select(pid, names.fromString("List"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	pid = make.Ident(names.fromString("java"));
+    	pid = make.Select(pid, names.fromString("util"));
+    	pid = make.Select(pid, names.fromString("Collections"));
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     	
     	tree.extending = make.Ident(names.fromString("RecursiveAction"));
@@ -751,9 +771,6 @@ public class Enter extends JCTree.Visitor {
         if (!c.isLocal() && uncompleted != null) uncompleted.append(c);
 //      System.err.println("entering " + c.fullname + " in " + c.owner);//DEBUG
 
-        
-        // Recursively enter all member classes.
-//        classEnter(tree.defs, localEnv);
         int indexer = 0;
         boolean hasRun = false;
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
@@ -793,6 +810,7 @@ public class Enter extends JCTree.Visitor {
                 		        		List.<JCExpression>nil(), 
                 		        		null));
         definitions.add(queue);
+        ListBuffer<JCTree> wrapperMethods = new ListBuffer<JCTree>();
         for(int i=0;i<tree.defs.length();i++){
         	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
         		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
@@ -824,6 +842,48 @@ public class Enter extends JCTree.Visitor {
                                                        make.TypeIdent(TypeTags.INT), make.Literal(++indexer));
                         tree.publicMethods = tree.publicMethods.append(mdecl);
                         definitions.add(v);
+        			ListBuffer<JCStatement> wrapperMethodBody = new ListBuffer<JCStatement>();
+        			ListBuffer<JCExpression> collectionArgs = new ListBuffer<JCExpression>();
+        			ListBuffer<JCExpression> applyArgs = new ListBuffer<JCExpression>();
+        			
+        			for(JCVariableDecl params : mdecl.params){
+        				collectionArgs.add(make.Ident(params.name));
+        			}
+        			applyArgs.add(make.Select(make.Ident(tree.name), names.fromString(PaniniConstants.MODULE_METHOD_NAMES+ "$" + mdecl.name)));
+        			make.Select(make.Ident(names.fromString("Collections")), names.fromString("emptyList"));
+        			if(collectionArgs.length()==0)
+        				applyArgs.add(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString("Collections")), names.fromString("emptyList")), 
+        					List.<JCExpression>nil()));
+        			else
+        				applyArgs.add(make.Apply(List.<JCExpression>nil(), make.Select(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString("Collections")), names.fromString("emptyList")), 
+        					List.<JCExpression>nil()), names.fromString("addAll")), 
+        					collectionArgs.toList()));
+        			if(!mdecl.restype.toString().equals("void"))
+        				applyArgs.add(make.Ident(names.fromString("d")));
+        			else
+        				applyArgs.add(make.Literal(TypeTags.BOT, null));
+        			wrapperMethodBody.add(make.Exec((make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString("wrapped")), 
+        					names.fromString(PaniniConstants.PANINI_MESSAGE)), 
+        					applyArgs.toList()))));
+        			
+        			if(!mdecl.restype.toString().equals("void")){
+        				wrapperMethodBody.prepend(make.VarDef(make.Modifiers(0), 
+        						names.fromString("d"), 
+        						make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
+        						make.NewClass(null, 
+        								List.<JCExpression>nil(), 
+        								make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
+        								List.<JCExpression>nil(), 
+        								null)));
+        				wrapperMethodBody.add(make.Return(make.Ident(names.fromString("d"))));
+        			}
+        			
+        			
+        			
+        			wrapperMethods.add(make.MethodDef(make.Modifiers(PUBLIC), 
+        					mdecl.name, mdecl.restype, 
+        					mdecl.typarams, mdecl.params, mdecl.thrown, 
+        					make.Block(0, wrapperMethodBody.toList()), null));
         			}
         			definitions.add(mdecl);
         		}
@@ -875,8 +935,35 @@ public class Enter extends JCTree.Visitor {
             memberEnter.memberEnter(m, localEnv);
             definitions.add(m);
     		hasRun=true;
+    		
+    		ListBuffer<JCTree> classBody = new ListBuffer<JCTree>();
+    		classBody.add(make.VarDef(make.Modifiers(PRIVATE), 
+    				names.fromString("wrapped"), 
+    				make.Ident(tree.name), null));
+    		classBody.add(make.MethodDef(make.Modifiers(PUBLIC), 
+    				names.init, 
+    				null, List.<JCTypeParameter>nil(), 
+    				List.<JCVariableDecl>of(make.VarDef(make.Modifiers(0), names.fromString("wrapped"), 
+    						make.Ident(tree.name), null)), 
+    						List.<JCExpression>nil(), 
+    						make.Block(0, List.<JCStatement>of(make.Exec(make.Assign(make.Select(make.This(Type.noType), names.fromString("wrapped")), make.Ident(names.fromString("wrapped")))))), 
+    						null));
+    		
+    		classBody.appendList(wrapperMethods);
+    		JCClassDecl cdecl = make.ClassDef(make.Modifiers(0), 
+    				names.fromString(PaniniConstants.PANINI + tree.name.toString() + "Wrapper"), 
+    				List.<JCTypeParameter>nil(), 
+    				null, List.<JCExpression>nil(), classBody.toList());
+    		env.toplevel.defs = env.toplevel.defs.append(cdecl);
+			ClassSymbol cs;
+	    	PackageSymbol packge = (PackageSymbol)env.info.scope.owner;
+	        
+	        cs = reader.enterClass(cdecl.name, packge);
+	        cdecl.sym = cs;
+	        syms.libclasses.put(cdecl.name, cs);
+			classEnter(cdecl, env);	
+			System.out.println(env);
     	}
-        //TODO convert modules to modulewrappers
     	List<JCVariableDecl> fields = tree.getParameters();
     	while(fields.nonEmpty()){
     		definitions.prepend(make.VarDef(make.Modifiers(PUBLIC),
@@ -885,7 +972,6 @@ public class Enter extends JCTree.Visitor {
     				null));
     		fields = fields.tail;
     	}
-    	//paninimessage
     	ListBuffer<JCVariableDecl> vars  = new ListBuffer<JCVariableDecl>();
     	vars.add(make.VarDef(make.Modifiers(0), names.fromString("name"), 
     			make.Type(syms.intType), null));
@@ -917,6 +1003,7 @@ public class Enter extends JCTree.Visitor {
         result = c.type;
         classEnter(tree.defs, localEnv);
         tree.switchToClass();
+        System.out.println(tree);
     }
     // end Panini code
     /** Main method: enter all classes in a list of toplevel trees.
