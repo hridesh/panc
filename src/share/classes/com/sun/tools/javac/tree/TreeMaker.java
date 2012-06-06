@@ -115,7 +115,7 @@ public class TreeMaker implements JCTree.Factory {
         return this;
     }
     // Panini code
-    public JCModuleArrayCall ModuleArrayCall(Name name, int index, List<JCExpression> args){
+    public JCModuleArrayCall ModuleArrayCall(Name name, JCExpression index, List<JCExpression> args){
     	JCModuleArrayCall tree = new JCModuleArrayCall(name, index, args);
     	tree.pos = pos;
     	return tree;

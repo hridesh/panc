@@ -476,13 +476,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
     
     // Panini code
-    public static class JCModuleArrayCall extends JCTree implements ModuleArrayCallTree{
+    public static class JCModuleArrayCall extends JCStatement implements ModuleArrayCallTree{
 
     	public Name name;
-    	public int index;
+    	public JCExpression index;
     	public List<JCExpression> arguments;
     	
-    	public JCModuleArrayCall(Name name, int index, List<JCExpression> args){
+    	public JCModuleArrayCall(Name name, JCExpression index, List<JCExpression> args){
     		this.name = name;
     		this.index = index;
     		this.arguments = args;
@@ -499,7 +499,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
 
 		@Override
-		public int getIndex() {
+		public JCExpression getIndex() {
 			return this.index;
 		}
 

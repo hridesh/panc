@@ -1986,14 +1986,12 @@ public class JavacParser implements Parser {
         default:
             Token prevToken = token;
             JCExpression t = term(EXPR | TYPE);
-//            if(token.kind == LPAREN){
-//            	System.out.println("Agora quem dá bola é o santos!");
-  //          	List<JCExpression> args = null;
-    //        	return List.of(F.at(pos).
-      //      			ModuleArrayCall(names.fromString(t.toString()), 0, args));
-  //          }else
-            
-            if (token.kind == COLON && t.hasTag(IDENT)) {
+            if(token.kind == LPAREN){
+            	List<JCExpression> args = arguments();
+            	accept(SEMI);
+            	return List.<JCStatement>of(F.at(pos).
+            			ModuleArrayCall(names.fromString(t.toString()), ((JCArrayAccess)t).index, args));
+            }else if (token.kind == COLON && t.hasTag(IDENT)) {
                 nextToken();
                 JCStatement stat = parseStatement();
                 return List.<JCStatement>of(F.at(pos).Labelled(prevToken.name(), stat));

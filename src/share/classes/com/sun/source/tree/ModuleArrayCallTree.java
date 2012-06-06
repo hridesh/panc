@@ -29,7 +29,7 @@ import com.sun.tools.javac.util.Name;
 
 public interface ModuleArrayCallTree extends Tree{
 	public Name getName();
-	public int getIndex();
+	public JCExpression getIndex();
 	public List<JCExpression> getArgs();
 	
 }
