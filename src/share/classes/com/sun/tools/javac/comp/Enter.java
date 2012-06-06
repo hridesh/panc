@@ -109,6 +109,9 @@ public class Enter extends JCTree.Visitor {
     Names names;
     JavaFileManager fileManager;
     PkgInfo pkginfoOpt;
+    // Panini code
+    ModuleInternal moduleInternal;
+    // end Panini code
 
     private final Todo todo;
 
@@ -142,6 +145,10 @@ public class Enter extends JCTree.Visitor {
 
         Options options = Options.instance(context);
         pkginfoOpt = PkgInfo.get(options);
+
+        // Panini code
+        moduleInternal = new ModuleInternal(make, names, this, memberEnter, syms);
+        // end Panini code
     }
 
     /** A hashtable mapping classes and packages to the environments current
@@ -812,10 +819,11 @@ public class Enter extends JCTree.Visitor {
         			if((mdecl.mods.flags & PRIVATE) ==0
         					&&(mdecl.mods.flags & PROTECTED) ==0){
         				mdecl.mods.flags |= PUBLIC;
-        			JCVariableDecl v = make.VarDef(make.Modifiers(PUBLIC | FINAL | STATIC), 
-        					names.fromString("panini$methodConst$" + mdecl.name.toString()),
-        					make.TypeIdent(TypeTags.INT), make.Literal(++indexer));
-        			definitions.add(v);
+                        JCVariableDecl v = make.VarDef(make.Modifiers(PUBLIC | FINAL | STATIC), 
+                                                       names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString()),
+                                                       make.TypeIdent(TypeTags.INT), make.Literal(++indexer));
+                        tree.publicMethods = tree.publicMethods.append(mdecl);
+                        definitions.add(v);
         			}
         			definitions.add(mdecl);
         		}
@@ -851,22 +859,21 @@ public class Enter extends JCTree.Visitor {
     		}else definitions.add(tree.defs.get(i));
         }
         if(!hasRun){
-    		MethodSymbol msym = new MethodSymbol(
-    				PROTECTED,
-    				names.fromString("compute"),
-    				new MethodType(
-    						List.<Type>nil(),
-    						syms.voidType,
-    						List.<Type>nil(),
-    						syms.methodClass
-    						),
-    						tree.sym
-    				);
-    		JCMethodDecl computeDecl = make.MethodDef(msym,
-    				make.Block(0, List.<JCStatement>nil()));
-    		computeDecl.params = List.<JCVariableDecl>nil();
-    		memberEnter.memberEnter(computeDecl, localEnv);
-    		definitions.add(computeDecl);
+            MethodSymbol msym = new MethodSymbol(
+                PROTECTED,
+                names.fromString("compute"),
+                new MethodType(
+                    List.<Type>nil(),
+                    syms.voidType,
+                    List.<Type>nil(),
+                    syms.methodClass
+                    ),
+                tree.sym
+                );
+            JCMethodDecl m = moduleInternal.generateComputeMethod(tree);
+            m.sym = msym;
+            memberEnter.memberEnter(m, localEnv);
+            definitions.add(m);
     		hasRun=true;
     	}
         //TODO convert modules to modulewrappers
