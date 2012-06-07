@@ -1989,8 +1989,10 @@ public class JavacParser implements Parser {
             if(token.kind == LPAREN){
             	List<JCExpression> args = arguments();
             	accept(SEMI);
-            	return List.<JCStatement>of(F.at(pos).
-            			ModuleArrayCall(names.fromString(t.toString()), ((JCArrayAccess)t).index, args));
+            	JCStatement stm = F.at(pos).
+            			ModuleArrayCall(names.fromString(((JCArrayAccess)t).indexed.toString()), 
+            					((JCArrayAccess)t).index, args);
+            	return List.<JCStatement>of(stm);
             }else if (token.kind == COLON && t.hasTag(IDENT)) {
                 nextToken();
                 JCStatement stat = parseStatement();
@@ -2913,7 +2915,7 @@ public class JavacParser implements Parser {
      	int pos = token.pos;
      	Name name = ident();
      	JCBlock body = configBlock();
-     	JCConfigDecl result = toP(F.at(pos).ConfigDef(mod, name, body)); 
+     	JCConfigDecl result = toP(F.at(pos).ConfigDef(mod, name, body));
      	attach(result, dc);
      	return result;
      }

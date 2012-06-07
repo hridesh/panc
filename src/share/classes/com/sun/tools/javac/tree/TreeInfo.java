@@ -970,7 +970,7 @@ public class TreeInfo {
             return innermostType(((JCWildcard)type).inner);
         // Panini code
         case MODULEARRAY:
-            return innermostType(((JCModuleArrayTree)type).elemtype);
+            return innermostType(((JCModuleArray)type).elemtype);
         // end Panini code
         default:
             return type;

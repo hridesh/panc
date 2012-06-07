@@ -809,7 +809,7 @@ public class Attr extends JCTree.Visitor {
     			}
     			else{
     				if(mdecl.vartype.getTag()==MODULEARRAY){
-    					JCModuleArrayTree mat = (JCModuleArrayTree)mdecl.vartype;
+    					JCModuleArray mat = (JCModuleArray)mdecl.vartype;
     					ClassSymbol c = syms.modules.get(names.fromString(mat.elemtype.toString()));
     					JCNewArray s= make.NewArray(make.Ident(c.type.tsym), 
     							List.<JCExpression>of(make.Literal(mat.amount)), null);

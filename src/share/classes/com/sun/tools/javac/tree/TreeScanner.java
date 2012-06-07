@@ -66,7 +66,7 @@ public class TreeScanner extends Visitor {
         scan(tree.arguments);
     }
     
-    public void visitModuleArray(JCModuleArrayTree tree) {
+    public void visitModuleArray(JCModuleArray tree) {
         scan(tree.elemtype);
     }
     

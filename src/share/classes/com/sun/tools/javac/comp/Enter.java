@@ -967,7 +967,6 @@ public class Enter extends JCTree.Visitor {
 	        cdecl.sym = cs;
 	        syms.libclasses.put(cdecl.name, cs);
 			classEnter(cdecl, env);	
-			System.out.println(env);
     	}
     	List<JCVariableDecl> fields = tree.getParameters();
     	while(fields.nonEmpty()){

@@ -121,8 +121,8 @@ public class TreeMaker implements JCTree.Factory {
     	return tree;
     }
     
-    public JCModuleArrayTree ModuleArray(JCExpression elemtype, int amount) {
-        JCModuleArrayTree tree = new JCModuleArrayTree(elemtype, amount);
+    public JCModuleArray ModuleArray(JCExpression elemtype, int amount) {
+        JCModuleArray tree = new JCModuleArray(elemtype, amount);
         tree.pos = pos;
         return tree;
     }

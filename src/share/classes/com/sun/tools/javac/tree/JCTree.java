@@ -523,11 +523,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	
     }
     
-    public static class JCModuleArrayTree extends JCArrayTypeTree implements ModuleArrayTree{
+    public static class JCModuleArray extends JCArrayTypeTree implements ModuleArrayTree{
 
     	public int amount;
     	
-		public JCModuleArrayTree(JCExpression elemtype, int amount) {
+		public JCModuleArray(JCExpression elemtype, int amount) {
             super(elemtype);
 			this.amount = amount;
 		}
@@ -2725,7 +2725,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
         // Panini code
         public void visitModuleArrayCall(JCModuleArrayCall that) { visitTree(that); }
-        public void visitModuleArray(JCModuleArrayTree that) { visitTree(that); }
+        public void visitModuleArray(JCModuleArray that) { visitTree(that); }
         public void visitConfigDef(JCConfigDecl that)	     { visitTree(that); }
         public void visitLibraryDef(JCLibraryDecl that)	     { visitTree(that); }
         public void visitModuleDef(JCModuleDecl that)	     { visitTree(that); }
