@@ -664,6 +664,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	public Kind kind;
     	public Tag tag;
         public List<JCMethodDecl> publicMethods;
+        public JCMethodDecl computeMethod;
+        public boolean needsDefaultRun;
     	
     	public JCModuleDecl(JCModifiers mods,
     			Name name, 
@@ -679,6 +681,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     		this.kind = Kind.MODULE;
     		this.tag = Tag.MODULEDEF;
     		this.publicMethods = List.<JCMethodDecl>nil();
+            this.needsDefaultRun = false;
     	}
     	
 		public Kind getKind() {

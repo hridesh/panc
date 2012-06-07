@@ -492,6 +492,14 @@ public class Internal
         return make0().Unary(JCTree.Tag.NOT, cond);
     }
 
+    protected JCUnary pp(JCExpression cond) {
+        return make0().Unary(JCTree.Tag.POSTINC, cond);
+    }
+
+    protected JCUnary mm(JCExpression cond) {
+        return make0().Unary(JCTree.Tag.POSTDEC, cond);
+    }
+
     protected JCBinary isNull(String s) {
         return make0().Binary(JCTree.Tag.EQ, make0().Ident(names.fromString(s)), make0().Literal(TypeTags.BOT, null));
     }
@@ -502,6 +510,22 @@ public class Internal
 
     protected JCBinary notNull(JCExpression e) {
         return make0().Binary(JCTree.Tag.NE, e, make0().Literal(TypeTags.BOT, null));
+    }
+
+    protected JCBinary eqNum(JCExpression e, int n) {
+        return make0().Binary(JCTree.Tag.EQ, e, make0().Literal(new Integer(n)));
+    }
+
+    protected JCBinary notNum(JCExpression e, int n) {
+        return make0().Binary(JCTree.Tag.NE, e, make0().Literal(new Integer(n)));
+    }
+
+    protected JCBinary geq(JCExpression e, JCExpression e1) {
+        return make0().Binary(JCTree.Tag.GE, e, e1);
+    }
+
+    protected JCLiteral intlit(int i) {
+        return make0().Literal(i);
     }
     
     protected JCLiteral nullv() {
@@ -535,6 +559,11 @@ public class Internal
     protected JCTypeCast cast(String clazz, JCExpression expr) {
         return make0().TypeCast(make0().Ident(names.fromString(clazz)), expr);
     }
+
+    protected JCTypeCast cast(JCExpression clazz, JCExpression expr) {
+        return make0().TypeCast(clazz, expr);
+    }
+
 
     protected JCReturn returnt(JCExpression e) {
         return make0().Return(e);
@@ -577,5 +606,13 @@ public class Internal
 
     protected JCCase case_(JCExpression pattern, JCStatement ... s) {
         return case_(pattern, lb(s));
+    }
+
+    protected JCBreak break_() {
+        return make0().Break(null);
+    }
+
+    protected JCArrayAccess aindex(JCExpression array, JCExpression index) {
+        return make0().Indexed(array, index);
     }
 }

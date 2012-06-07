@@ -831,6 +831,7 @@ public class Enter extends JCTree.Visitor {
             		computeDecl.params = List.<JCVariableDecl>nil();
             		memberEnter.memberEnter(computeDecl, localEnv);
             		definitions.add(computeDecl);
+                    tree.computeMethod = computeDecl;
             		hasRun=true;
         		}
         		else{
@@ -930,11 +931,15 @@ public class Enter extends JCTree.Visitor {
                     ),
                 tree.sym
                 );
-            JCMethodDecl m = moduleInternal.generateComputeMethod(tree);
+            JCMethodDecl m = make.MethodDef(msym,
+                                            make.Block(0, List.<JCStatement>nil()));
+            m.params = List.<JCVariableDecl>nil();
             m.sym = msym;
             memberEnter.memberEnter(m, localEnv);
             definitions.add(m);
     		hasRun=true;
+            tree.needsDefaultRun = true;
+            tree.computeMethod = m;
     		
     		ListBuffer<JCTree> classBody = new ListBuffer<JCTree>();
     		classBody.add(make.VarDef(make.Modifiers(PRIVATE), 
@@ -1003,7 +1008,6 @@ public class Enter extends JCTree.Visitor {
         result = c.type;
         classEnter(tree.defs, localEnv);
         tree.switchToClass();
-        System.out.println(tree);
     }
     // end Panini code
     /** Main method: enter all classes in a list of toplevel trees.

@@ -90,6 +90,9 @@ public class Attr extends JCTree.Visitor {
     final JCDiagnostic.Factory diags;
     final Annotate annotate;
     final DeferredLintHandler deferredLintHandler;
+    // Ptolemy code
+    ModuleInternal moduleInternal;
+    // end Ptolemy code
 
     public static Attr instance(Context context) {
         Attr instance = context.get(attrKey);
@@ -138,6 +141,10 @@ public class Attr extends JCTree.Visitor {
         varInfo = new ResultInfo(VAR, Type.noType);
         unknownExprInfo = new ResultInfo(VAL, Type.noType);
         unknownTypeInfo = new ResultInfo(TYP, Type.noType);
+
+        // Ptolemy code
+        moduleInternal = new ModuleInternal(make, names, enter, memberEnter, syms);
+        // end Ptolemy code
     }
 
     /** Switch: relax some constraints for retrofit mode.
@@ -732,7 +739,12 @@ public class Attr extends JCTree.Visitor {
     }
     
     public void visitModuleDef(JCModuleDecl tree){
-    	
+        attribClassBody(env, tree.sym);
+        if (tree.needsDefaultRun)
+            tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
+        tree.switchToClass();
+        System.out.println(tree);
+        tree.switchToModule();
     }
     
     public void visitConfigDef(JCConfigDecl tree){
@@ -744,7 +756,6 @@ public class Attr extends JCTree.Visitor {
     	Map<Name, Name> variables = new HashMap<Name, Name>();
     	int moduleCount = 0;
     	for(int i=0;i <tree.body.stats.length();i++){
-//    		System.out.println(tree.body.stats.get(i).getTag());
     		if(tree.body.stats.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.body.stats.get(i);
     			if(syms.modules.containsKey(names.fromString(mdecl.vartype.toString()))){

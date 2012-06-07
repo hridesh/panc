@@ -26,6 +26,7 @@ import java.util.Iterator;
 
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
+import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.PaniniConstants;
 import javax.lang.model.type.TypeKind;
@@ -49,47 +50,62 @@ public class ModuleInternal extends Internal
         contractDefs = new ListBuffer<JCTree>();
     }
 
-    public JCMethodDecl generateComputeMethod(JCModuleDecl tree) {
+    public JCBlock generateComputeMethodBody(JCModuleDecl tree) {
         JCModifiers mods = mods(Flags.PROTECTED);
+        JCModifiers noMods = mods(0);
 
-        ListBuffer<JCCase> msgCases = new ListBuffer<JCCase>();
+        ListBuffer<JCStatement> ifBody = new ListBuffer<JCStatement>();
+
+        ifBody.append(es(apply("queueLock", "lock")));
+        ifBody.append(es(mm(id("size"))));
+        ifBody.append(var(noMods, "name", id("Object"), aindex(id("objects"), pp(id("head")))));
+        ifBody.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
+
         
         for (JCMethodDecl method : tree.publicMethods) {
-            JCExpression restype = method.restype;
-            System.out.println(restype); System.out.println(restype.getTag());
-            if (restype.getTag()==Tag.TYPEIDENT) {
-                JCPrimitiveTypeTree prestype = (JCPrimitiveTypeTree)method.restype;
-                if (prestype.getPrimitiveTypeKind()!=TypeKind.VOID) {
-                    System.out.println("Can't have a non-void primitive return type in a public module method");
-                    System.exit(5555);
-                } else {
-                    // void type
-                }
+            ListBuffer<JCStatement> innerIfStatements = new ListBuffer<JCStatement>();
+            Type restype = ((MethodType)method.sym.type).restype;
 
-            msgCases.append(case_(id(PaniniConstants.PANINI_METHOD_CONST + method.name.toString())));
-                                 
+            if (restype.tag==TypeTags.VOID) {
+                innerIfStatements.append(es(apply("queueLock", "unlock")));
+                innerIfStatements.append(es(apply(thist(), method.name.toString() + "$Original")));
+            } else if (restype.tag==TypeTags.CLASS) {
+                innerIfStatements.append(es(mm(id("size"))));
+                innerIfStatements.append(var(noMods, "d", ta(id("PaniniDuck"), typeargs(id("BooleanC"))),
+                                             cast(ta(id("PaniniDuck"), typeargs(id("BooleanC"))), 
+                                                  aindex(id("objects"), pp(id("head"))))));
+                innerIfStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
+                innerIfStatements.append(es(apply("queueLock", "unlock")));
+                innerIfStatements.append(es(apply("d", "panini$finish",
+                                                  args(apply(thist(), method.name.toString() + "$Original")))));
+                innerIfStatements.append(sync(id("d"), body(es(apply("d", "notifyAll")))));
+
+            } else {
+                System.out.println("Unsupported return type in a public module method. Can only be void or non-primitive.");
+                System.exit(5555);
+            }
+
+            ifBody.append(ifs(apply("name", "equals", lb(id(PaniniConstants.PANINI_METHOD_CONST + method.name.toString()))), body(innerIfStatements)));
         }
-        }
-        JCMethodDecl m = method(mods, "compute", voidt(),
-                                params(),
-                                body(
-                                    whilel(truev(),
-                                           body(
-                                               ifs(nott(apply("panini$msgNameQueue", "isEmpty")),
-                                                   body(
-                                                       sync(id("panini$msgNameQueue"),
-                                                            body(
-                                                                swtch(apply("panini$msgNameQueue", "poll"),
-                                                                      msgCases
-                                                                    )
-                                                                )
-                                                           )
-                                                       )
-                                                   )
-                                               )
-                                        )
-                                    ));
-        return m;
+        return body(
+            whilel(truev(),
+                   body(
+                       ifs(eqNum(select(thist(), "size"), 0),
+                           body(ifBody
+/*
+                               
+
+                               var(noMods, "d", ta(id("PaniniDuck"), typeargs(id("BooleanC"))),
+                                   cast(ta(id("PaniniDuck"), typeargs(id("BooleanC"))), 
+                                        aindex(id("objects"), pp(id("head")))))
+                                   
+*/                                 
+                                                                                                
+                               )
+                           )
+                       )
+                )
+            );
     }
 /*
     public void generateInternalInterfaceDef(JCEventDecl tree, int pos) {
