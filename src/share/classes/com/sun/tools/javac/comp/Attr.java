@@ -741,10 +741,11 @@ public class Attr extends JCTree.Visitor {
 
     public void visitModuleDef(JCModuleDecl tree){
         attribClassBody(env, tree.sym);
-        if (tree.needsDefaultRun)
+        if (tree.needsDefaultRun){
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
+            List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree);
+        }
         tree.switchToClass();
-        System.out.println(tree);
         tree.switchToModule();
     }
 
@@ -802,7 +803,7 @@ public class Attr extends JCTree.Visitor {
     			}
     			else{
     				if(mdecl.vartype.getTag()==MODULEARRAY){
-    					JCModuleArrayTree mat = (JCModuleArrayTree)mdecl.vartype;
+    					JCModuleArray mat = (JCModuleArray)mdecl.vartype;
     					ClassSymbol c = syms.modules.get(names.fromString(mat.elemtype.toString()));
     					JCNewArray s= make.NewArray(make.Ident(c.type.tsym), 
     							List.<JCExpression>of(make.Literal(mat.amount)), null);
