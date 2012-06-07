@@ -738,6 +738,7 @@ public class Attr extends JCTree.Visitor {
 		return assigns.toList();
     }
     
+
     public void visitModuleDef(JCModuleDecl tree){
         attribClassBody(env, tree.sym);
         if (tree.needsDefaultRun)
@@ -746,7 +747,7 @@ public class Attr extends JCTree.Visitor {
         System.out.println(tree);
         tree.switchToModule();
     }
-    
+
     public void visitConfigDef(JCConfigDecl tree){
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
@@ -773,13 +774,9 @@ public class Attr extends JCTree.Visitor {
     				JCExpressionStatement nameAssign = make.at(mdecl.pos()).Exec(newAssign);
     				nameAssign.type = mdecl.type;
     				inits.append(nameAssign);
-    				JCExpressionStatement submitAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-    						make.Select(make.Ident(names.fromString("pool")), names.fromString("submit")), 
-    						List.<JCExpression>of(make.Ident(mdecl.name))));
     				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-    						make.Select(make.Ident(mdecl.name), names.fromString("join")), 
+    						make.Select(make.Ident(mdecl.name), names.fromString("start")), 
     						List.<JCExpression>nil()));
-    		    	submits.append(submitAssign);
     		    	joins.append(joinAssign);
     		    	variables.put(mdecl.name, c.name);
     			}else if(syms.libclasses.containsKey(names.fromString(mdecl.vartype.toString()))){
@@ -797,19 +794,15 @@ public class Attr extends JCTree.Visitor {
     				JCExpressionStatement nameAssign = make.at(mdecl.pos()).Exec(newAssign);
     				nameAssign.type = mdecl.type;
     				inits.append(nameAssign);
-    				JCExpressionStatement submitAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-    						make.Select(make.Ident(names.fromString("pool")), names.fromString("submit")), 
-    						List.<JCExpression>of(make.Ident(mdecl.name))));
     				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-    						make.Select(make.Ident(mdecl.name), names.fromString("join")), 
+    						make.Select(make.Ident(mdecl.name), names.fromString("start")), 
     						List.<JCExpression>nil()));
-    		    	submits.append(submitAssign);
     		    	joins.append(joinAssign);
     		    	variables.put(mdecl.name, c.name);
     			}
     			else{
     				if(mdecl.vartype.getTag()==MODULEARRAY){
-    					JCModuleArray mat = (JCModuleArray)mdecl.vartype;
+    					JCModuleArrayTree mat = (JCModuleArrayTree)mdecl.vartype;
     					ClassSymbol c = syms.modules.get(names.fromString(mat.elemtype.toString()));
     					JCNewArray s= make.NewArray(make.Ident(c.type.tsym), 
     							List.<JCExpression>of(make.Literal(mat.amount)), null);
@@ -936,19 +929,7 @@ public class Attr extends JCTree.Visitor {
     		}else{		//if it reaches here, there's something wrong with the parser//add error messages
     		}
     	}
-    	Type fjp = rs.findType(env, names.fromString("ForkJoinPool")).type;
-    	JCNewClass newClass = make.NewClass(null, null, 
-				make.QualIdent(fjp.tsym), List.<JCExpression>of(make.Literal(moduleCount)), null);
-		newClass.constructor = rs.resolveConstructor
-				(tree.pos(), env, fjp, TreeInfo.types(List.<JCExpression>of(make.Literal(moduleCount))), null,false,false);
-		newClass.type = fjp;
-		JCVariableDecl pooldecl = make.VarDef(make.Modifiers(0), 
-				names.fromString("pool"), 
-				make.Ident(names.fromString("ForkJoinPool")), 
-				newClass);
-		pooldecl.type = fjp;
-		submits.prepend(pooldecl);
-		
+    	
     	Type arrayType = new ArrayType(syms.stringType, syms.arrayClass);
         MethodSymbol msym = new MethodSymbol(
     			PUBLIC|STATIC,
@@ -973,6 +954,7 @@ public class Attr extends JCTree.Visitor {
     	
     	tree.switchToClass();
     	memberEnter.memberEnter(maindecl, env);
+    	System.out.println(tree);
     }
     // end Panini code
 
@@ -3357,7 +3339,7 @@ public class Attr extends JCTree.Visitor {
                 	((JCConfigDecl)env.tree).switchToClass();
                 	this.env = oldEnv;
                 }
-                else if(c.isModule){
+                if(c.isModule){
                 	Env<AttrContext> oldEnv = this.env;
                 	this.env = env;
                 	((JCModuleDecl)env.tree).switchToModule();

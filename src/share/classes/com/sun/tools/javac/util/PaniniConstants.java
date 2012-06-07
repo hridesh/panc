@@ -21,6 +21,13 @@ package com.sun.tools.javac.util;
 
 public class PaniniConstants {
 	public final static String PANINI = "Panini$";
+	public final static String PANINI_QUEUE = "PaniniModule";
+	public final static String PANINI_MODULE_OBJECTS = "objects";
+	public final static String PANINI_MODULE_HEAD = "head";
+	public final static String PANINI_MODULE_TAIL = "tail";
+	public final static String PANINI_MODULE_SIZE = "size";
+	public final static String PANINI_MODULE_QUEUELOCK = "queueLock";
+	public final static String PANINI_MODULE_EXTENDQUEUE = "extendQueue";
 	public final static String MODULE_CALL_QUEUES = "panini$msgNameQueue";
 	public final static String MODULE_ARG_QUEUES = "panini$msgArgsQueue";
 	public final static String MODULE_RETURN_QUEUES = "panini$msgDuckQueue";

@@ -504,11 +504,6 @@ public class Enter extends JCTree.Visitor {
     
     public void visitConfigDef(JCConfigDecl tree){
     	addDuck();
-    	JCExpression pid = make.Ident(names.fromString("java"));
-    	pid = make.Select(pid, names.fromString("util"));
-    	pid = make.Select(pid, names.fromString("concurrent"));
-    	pid = make.Select(pid, names.fromString("ForkJoinPool"));
-    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
         ClassSymbol c;
@@ -670,26 +665,15 @@ public class Enter extends JCTree.Visitor {
     	JCExpression pid = make.Ident(names.fromString("java"));
     	pid = make.Select(pid, names.fromString("util"));
     	pid = make.Select(pid, names.fromString("concurrent"));
-    	pid = make.Select(pid, names.fromString("RecursiveAction"));
-    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
-    	pid = make.Ident(names.fromString("java"));
-    	pid = make.Select(pid, names.fromString("util"));
-    	pid = make.Select(pid, names.fromString("LinkedList"));
-    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
-    	pid = make.Ident(names.fromString("java"));
-    	pid = make.Select(pid, names.fromString("util"));
-    	pid = make.Select(pid, names.fromString("Queue"));
+    	pid = make.Select(pid, names.fromString("locks"));
+    	pid = make.Select(pid, names.fromString("ReentrantLock"));
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     	pid = make.Ident(names.fromString("java"));
     	pid = make.Select(pid, names.fromString("util"));
     	pid = make.Select(pid, names.fromString("List"));
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
-    	pid = make.Ident(names.fromString("java"));
-    	pid = make.Select(pid, names.fromString("util"));
-    	pid = make.Select(pid, names.fromString("Collections"));
-    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     	
-    	tree.extending = make.Ident(names.fromString("RecursiveAction"));
+    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_QUEUE));
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
         ClassSymbol c;
@@ -774,50 +758,13 @@ public class Enter extends JCTree.Visitor {
         int indexer = 0;
         boolean hasRun = false;
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
-        JCVariableDecl queue = 
-        make.VarDef(make.Modifiers(PUBLIC), 
-        		names.fromString(PaniniConstants.MODULE_CALL_QUEUES), 
-        		make.TypeApply(make.Ident(names.fromString("Queue")), 
-        				List.<JCExpression>of(make.Ident(names.fromString("Integer")))), 
-        				make.NewClass(null, 
-        		        		null, 
-        		        		make.TypeApply(make.Ident(names.fromString("LinkedList")), 
-        		        				List.<JCExpression>of(make.Ident(names.fromString("Integer")))), 
-        		        		List.<JCExpression>nil(), 
-        		        		null));
-        definitions.add(queue);
-        queue =
-        		make.VarDef(make.Modifiers(PUBLIC), 
-                		names.fromString(PaniniConstants.MODULE_ARG_QUEUES), 
-                		make.TypeApply(make.Ident(names.fromString("Queue")), 
-                				List.<JCExpression>of(make.Ident(names.fromString("Object")))), 
-                				make.NewClass(null, 
-                		        		null, 
-                		        		make.TypeApply(make.Ident(names.fromString("LinkedList")), 
-                		        				List.<JCExpression>of(make.Ident(names.fromString("Object")))), 
-                		        		List.<JCExpression>nil(), 
-                		        		null));
-        definitions.add(queue);
-        queue =
-        		make.VarDef(make.Modifiers(PUBLIC), 
-                		names.fromString(PaniniConstants.MODULE_RETURN_QUEUES), 
-                		make.TypeApply(make.Ident(names.fromString("Queue")), 
-                				List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME)))), 
-                				make.NewClass(null, 
-                		        		null, 
-                		        		make.TypeApply(make.Ident(names.fromString("LinkedList")), 
-                		        				List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME)))), 
-                		        		List.<JCExpression>nil(), 
-                		        		null));
-        definitions.add(queue);
-        ListBuffer<JCTree> wrapperMethods = new ListBuffer<JCTree>();
         for(int i=0;i<tree.defs.length();i++){
         	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
         		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
         		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
-        			MethodSymbol msym = new MethodSymbol(
-            				PROTECTED,
-            				names.fromString("compute"),
+            		MethodSymbol msym = new MethodSymbol(
+            				PUBLIC,
+            				names.fromString("run"),
             				new MethodType(
             						List.<Type>nil(),
             						syms.voidType,
@@ -834,60 +781,62 @@ public class Enter extends JCTree.Visitor {
                     tree.computeMethod = computeDecl;
             		hasRun=true;
         		}
-        		else{
-        			if((mdecl.mods.flags & PRIVATE) ==0
+        		else if((mdecl.mods.flags & PRIVATE) ==0
         					&&(mdecl.mods.flags & PROTECTED) ==0){
-        				mdecl.mods.flags |= PUBLIC;
-                        JCVariableDecl v = make.VarDef(make.Modifiers(PUBLIC | FINAL | STATIC), 
-                                                       names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString()),
-                                                       make.TypeIdent(TypeTags.INT), make.Literal(++indexer));
-                        tree.publicMethods = tree.publicMethods.append(mdecl);
-                        definitions.add(v);
-        			ListBuffer<JCStatement> wrapperMethodBody = new ListBuffer<JCStatement>();
-        			ListBuffer<JCExpression> collectionArgs = new ListBuffer<JCExpression>();
-        			ListBuffer<JCExpression> applyArgs = new ListBuffer<JCExpression>();
-        			
-        			for(JCVariableDecl params : mdecl.params){
-        				collectionArgs.add(make.Ident(params.name));
-        			}
-        			applyArgs.add(make.Select(make.Ident(tree.name), names.fromString(PaniniConstants.MODULE_METHOD_NAMES+ "$" + mdecl.name)));
-        			make.Select(make.Ident(names.fromString("Collections")), names.fromString("emptyList"));
-        			if(collectionArgs.length()==0)
-        				applyArgs.add(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString("Collections")), names.fromString("emptyList")), 
-        					List.<JCExpression>nil()));
-        			else
-        				applyArgs.add(make.Apply(List.<JCExpression>nil(), make.Select(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString("Collections")), names.fromString("emptyList")), 
-        					List.<JCExpression>nil()), names.fromString("addAll")), 
-        					collectionArgs.toList()));
-        			if(!mdecl.restype.toString().equals("void"))
-        				applyArgs.add(make.Ident(names.fromString("d")));
-        			else
-        				applyArgs.add(make.Literal(TypeTags.BOT, null));
-        			wrapperMethodBody.add(make.Exec((make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString("wrapped")), 
-        					names.fromString(PaniniConstants.PANINI_MESSAGE)), 
-        					applyArgs.toList()))));
-        			
-        			if(!mdecl.restype.toString().equals("void")){
-        				wrapperMethodBody.prepend(make.VarDef(make.Modifiers(0), 
-        						names.fromString("d"), 
-        						make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
-        						make.NewClass(null, 
-        								List.<JCExpression>nil(), 
-        								make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
-        								List.<JCExpression>nil(), 
-        								null)));
-        				wrapperMethodBody.add(make.Return(make.Ident(names.fromString("d"))));
-        			}
-        			
-        			
-        			
-        			wrapperMethods.add(make.MethodDef(make.Modifiers(PUBLIC), 
-        					mdecl.name, mdecl.restype, 
-        					mdecl.typarams, mdecl.params, mdecl.thrown, 
-        					make.Block(0, wrapperMethodBody.toList()), null));
-        			}
+    				mdecl.mods.flags |= PUBLIC;
+                    JCVariableDecl v = make.VarDef(make.Modifiers(PUBLIC | STATIC | FINAL), 
+                                                   names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString()),
+                                                   make.Ident(names.fromString("Integer")), 
+                                                   make.NewClass(null, List.<JCExpression>nil(), make.Ident(names.fromString("Integer")), 
+                                                		   List.<JCExpression>of(make.Literal(indexer++)), 
+                                                		   null));
+                    
+                    definitions.prepend(v);
+                    
+                    ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
+                    
+                    
+                    copyBody.appendList(push(names.fromString(PaniniConstants.PANINI_METHOD_CONST+mdecl.name)));
+                    if(mdecl.params.length()!=0){
+                    	for(JCVariableDecl n : mdecl.params){
+                    		copyBody.appendList(push(n.name));
+                    	}
+                    }
+                    if(!mdecl.restype.toString().equals("void")){
+                    	copyBody.appendList(push(names.fromString("d")));
+                    }
+                    copyBody.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
+                    		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("lock")), 
+                    		List.<JCExpression>nil())));
+                    copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+                    		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("unlock")), 
+                    		List.<JCExpression>nil())));
+                    if(!mdecl.restype.toString().equals("void")){
+                    	copyBody.prepend(make.VarDef(make.Modifiers(0), 
+                    			names.fromString("d"), 
+                    			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
+                    			make.NewClass(null, List.<JCExpression>nil(), 
+                    					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
+                    					List.<JCExpression>nil(), null)));
+                    	copyBody.append(make.Return(make.Ident(names.fromString("d"))));
+                    }
+                    
+                    JCMethodDecl methodCopy = make.MethodDef(
+                    		make.Modifiers(PUBLIC), 
+                    		mdecl.name, 
+                    		mdecl.restype, 
+                    		mdecl.typarams, 
+                    		mdecl.params,
+                    		mdecl.thrown, 
+                    		make.Block(0, copyBody.toList()), 
+                    		null);
+                    
+                    mdecl.name = mdecl.name.append(names.fromString("$Original"));
+                    tree.publicMethods = tree.publicMethods.append(methodCopy);
+                    definitions.add(mdecl);
+                    definitions.add(methodCopy);
+        		}else 
         			definitions.add(mdecl);
-        		}
         	}
         	else if(tree.defs.get(i).getTag() == INCLUDE){
     			JCInclude inc = (JCInclude)tree.defs.get(i);
@@ -921,8 +870,8 @@ public class Enter extends JCTree.Visitor {
         }
         if(!hasRun){
             MethodSymbol msym = new MethodSymbol(
-                PROTECTED,
-                names.fromString("compute"),
+                PUBLIC,
+                names.fromString("run"),
                 new MethodType(
                     List.<Type>nil(),
                     syms.voidType,
@@ -931,7 +880,7 @@ public class Enter extends JCTree.Visitor {
                     ),
                 tree.sym
                 );
-            JCMethodDecl m = make.MethodDef(msym,
+			JCMethodDecl m = make.MethodDef(msym,
                                             make.Block(0, List.<JCStatement>nil()));
             m.params = List.<JCVariableDecl>nil();
             m.sym = msym;
@@ -954,7 +903,6 @@ public class Enter extends JCTree.Visitor {
     						make.Block(0, List.<JCStatement>of(make.Exec(make.Assign(make.Select(make.This(Type.noType), names.fromString("wrapped")), make.Ident(names.fromString("wrapped")))))), 
     						null));
     		
-    		classBody.appendList(wrapperMethods);
     		JCClassDecl cdecl = make.ClassDef(make.Modifiers(0), 
     				names.fromString(PaniniConstants.PANINI + tree.name.toString() + "Wrapper"), 
     				List.<JCTypeParameter>nil(), 
@@ -976,28 +924,6 @@ public class Enter extends JCTree.Visitor {
     				null));
     		fields = fields.tail;
     	}
-    	ListBuffer<JCVariableDecl> vars  = new ListBuffer<JCVariableDecl>();
-    	vars.add(make.VarDef(make.Modifiers(0), names.fromString("name"), 
-    			make.Type(syms.intType), null));
-    	vars.add(make.VarDef(make.Modifiers(0), names.fromString("args"), 
-    			make.TypeApply(make.Ident(names.fromString("List")), 
-    					List.<JCExpression>of(make.Ident(names.fromString("Object")))), 
-    					null));
-    	vars.add(make.VarDef(make.Modifiers(0), names.fromString("d"), 
-    			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME)), 
-    					null));
-    	ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
-    	stats.add(make.Exec(make.Apply(null, (make.Select(make.Ident(names.fromString(PaniniConstants.MODULE_CALL_QUEUES)), names.fromString("add"))), 
-    			List.<JCExpression>of(make.Ident(names.fromString("name"))))));
-    	stats.add(make.Exec(make.Apply(null, (make.Select(make.Ident(names.fromString(PaniniConstants.MODULE_ARG_QUEUES)), names.fromString("addAll"))), 
-    			List.<JCExpression>of(make.Ident(names.fromString("args"))))));
-    	stats.add(make.Exec(make.Apply(null, (make.Select(make.Ident(names.fromString(PaniniConstants.MODULE_RETURN_QUEUES)), names.fromString("add"))), 
-    			List.<JCExpression>of(make.Ident(names.fromString("d"))))));
-    	JCBlock body = make.Block(0, stats.toList());
-    	definitions.add(make.MethodDef(make.Modifiers(PUBLIC), 
-    			names.fromString(PaniniConstants.PANINI_MESSAGE),
-    			make.Type(syms.voidType), 
-    			List.<JCTypeParameter>nil(), vars.toList(), List.<JCExpression>nil(), body, null));
     	
     	tree.defs = definitions.toList();;
         tree.sym = c;
@@ -1007,7 +933,35 @@ public class Enter extends JCTree.Visitor {
         result = c.type;
         classEnter(tree.defs, localEnv);
         tree.switchToClass();
+        System.out.println(tree);
     }
+    
+    public List<JCStatement> push(Name n){
+    	ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
+    	stats.add(make.Exec(make.Assign(make.Indexed(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
+    			make.Unary(POSTINC, 
+    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
+    					make.Ident(n))));
+    	stats.add(make.Exec(make.Unary(POSTINC, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)))));
+    	stats.add(make.If(make.Binary(GE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
+    			make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
+    					names.fromString("length"))), 
+    			make.Exec(make.Assign(
+    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
+    					make.Literal(0))), 
+    			null));
+    	stats.add(make.If(make.Binary(AND, 
+    			make.Binary(EQ, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
+    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), 
+    			make.Binary(NE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
+    					make.Literal(0))),
+    			make.Exec(make.Apply(List.<JCExpression>nil(), 
+    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_EXTENDQUEUE)), 
+    					List.<JCExpression>nil())), 
+    			null));
+    	return stats.toList();
+    }
+    
     // end Panini code
     /** Main method: enter all classes in a list of toplevel trees.
      *  @param trees      The list of trees to be processed.
