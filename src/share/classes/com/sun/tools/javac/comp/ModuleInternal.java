@@ -74,8 +74,8 @@ public class ModuleInternal extends Internal
                 innerIfStatements.append(es(apply(thist(), method.name.toString() + "$Original")));
             } else if (restype.tag==TypeTags.CLASS) {
                 innerIfStatements.append(es(mm(id("size"))));
-                innerIfStatements.append(var(noMods, "d", ta(id(PaniniConstants.DUCK_INTERFACE_NAME), typeargs(id("BooleanC"))),
-                                             cast(ta(id(PaniniConstants.DUCK_INTERFACE_NAME), typeargs(id("BooleanC"))), 
+                innerIfStatements.append(var(noMods, "d", ta(id(PaniniConstants.DUCK_INTERFACE_NAME), typeargs(id(restype.toString()))),
+                                             cast(ta(id(PaniniConstants.DUCK_INTERFACE_NAME), typeargs(id(restype.toString()))), 
                                                   aindex(id("objects"), pp(id("head"))))));
                 innerIfStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
                 innerIfStatements.append(es(apply("queueLock", "unlock")));
