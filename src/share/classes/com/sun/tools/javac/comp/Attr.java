@@ -740,11 +740,15 @@ public class Attr extends JCTree.Visitor {
     
 
     public void visitModuleDef(JCModuleDecl tree){
-        attribClassBody(env, tree.sym);
         if (tree.needsDefaultRun){
+        	List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree);
+        	enter.classEnter(wrapperClasses, env.outer);
+        	attribClassBody(env, tree.sym);
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
-            List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree);
-        }
+            System.out.println(env.outer);
+        	System.out.println(env.outer);
+//        	System.out.println(wrapperClasses);
+        	}
         tree.switchToClass();
         tree.switchToModule();
     }
@@ -955,7 +959,6 @@ public class Attr extends JCTree.Visitor {
     	
     	tree.switchToClass();
     	memberEnter.memberEnter(maindecl, env);
-    	System.out.println(tree);
     }
     // end Panini code
 

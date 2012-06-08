@@ -658,7 +658,7 @@ public class Enter extends JCTree.Visitor {
     	}
         c = reader.enterClass(tree.name, packge);
         syms.libraries.put(c.flatname, tree);
-        tree.defs = tree.defs.appendList(interfaces);
+//        tree.defs = tree.defs.appendList(interfaces);
     }
     
     public void visitModuleDef(JCModuleDecl tree){
@@ -937,7 +937,6 @@ public class Enter extends JCTree.Visitor {
         result = c.type;
         classEnter(tree.defs, localEnv);
         tree.switchToClass();
-        System.out.println(tree);
     }
     
     public List<JCStatement> push(Name n){

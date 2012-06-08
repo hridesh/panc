@@ -524,6 +524,10 @@ public class Internal
         return make0().Binary(JCTree.Tag.GE, e, e1);
     }
 
+    protected JCBinary gt(JCExpression e, JCExpression e1) {
+        return make0().Binary(JCTree.Tag.GT, e, e1);
+    }
+
     protected JCLiteral intlit(int i) {
         return make0().Literal(i);
     }

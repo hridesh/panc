@@ -2280,6 +2280,7 @@ public class Lower extends TreeTranslator {
     }
 
     public void visitClassDef(JCClassDecl tree) {
+        System.out.println(tree);
         ClassSymbol currentClassPrev = currentClass;
         MethodSymbol currentMethodSymPrev = currentMethodSym;
         currentClass = tree.sym;
