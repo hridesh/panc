@@ -1,5 +1,5 @@
 /*
- * This file is part of the Ptolemy project at Iowa State University.
+ * This file is part of the Panini project at Iowa State University.
  *
  * The contents of this file are subject to the Mozilla Public License
  * Version 1.1 (the "License"); you may not use this file except in
@@ -12,7 +12,7 @@
  * License.
  * 
  * For more details and the latest version of this code please see
- * http://www.cs.iastate.edu/~ptolemy/
+ * http://www.paninij.org
  *
  * Contributor(s): Rex Fernando
  */
@@ -25,6 +25,7 @@ import com.sun.tools.javac.tree.JCTree.JCModuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCTypeParameter;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.*;
+
 import java.util.Iterator;
 
 import com.sun.tools.javac.code.Symbol.*;
@@ -32,6 +33,8 @@ import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.PaniniConstants;
+
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.type.TypeKind;
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -319,28 +322,69 @@ public class ModuleInternal extends Internal
                                                          tree.internalInterface = internalTree; //
     }*/
 
-	public List<JCClassDecl> generateClassWrappers(JCModuleDecl tree) {
+	public List<JCClassDecl> generateClassWrappers(JCModuleDecl tree, Env<AttrContext> env, Resolve rs) {
+		
 		
 		ListBuffer<JCClassDecl> classes = new ListBuffer<JCClassDecl>();
 		for(JCMethodDecl method : tree.publicMethods){
 			Type restype = ((MethodType)method.sym.type).restype;
+			
+			ClassSymbol c = (ClassSymbol)rs.findIdent(env, names.fromString(restype.toString()), TYP);
+			Iterator<Symbol> iter = c.members().getElements().iterator();
 			if(restype.tag==TypeTags.CLASS) {
 				JCVariableDecl var = var(mods(PRIVATE|VOLATILE), 
 						"wrapped", restype.toString(), nullv());
-				
-				List<JCCatch> catchers = List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), names.fromString("e"), 
-    					make.Ident(names.fromString("InterruptedException")), null), 
-    					make.Block(0, 
-    							List.<JCStatement>of(make.Return
-    									(make.Apply(null, make.Ident
-    											(names.fromString("value")), List.<JCExpression>nil()))))));
-				
-				JCMethodDecl value = method(mods(PUBLIC),
-						names.fromString("value"),
-						make.Type(syms.booleanType),
-						body(make.Try(body(sync(make.This(Type.noType),body(ifs(isNull("wrapped"),es(apply("wait")))))), catchers, null), returnt(apply("wrapped", "value")))
-						); 
-				
+				ListBuffer<JCTree> wrappedMethods= new ListBuffer<JCTree>();
+				ListBuffer<JCTree> constructors= new ListBuffer<JCTree>();
+				while(iter.hasNext()){
+					Symbol s = iter.next();
+					if(s.getKind()==ElementKind.METHOD){
+						MethodSymbol m = (MethodSymbol)s;
+						if(!m.type.getReturnType().toString().equals("void")){
+							List<JCCatch> catchers = List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), names.fromString("e"), 
+			    					make.Ident(names.fromString("InterruptedException")), null), 
+			    					make.Block(0, 
+			    							List.<JCStatement>of(make.Return
+			    									(make.Apply(null, make.Ident
+			    											(m.name), List.<JCExpression>nil()))))));
+							JCMethodDecl value = method(mods(PUBLIC),
+									m.name,
+									make.Type(m.type.getReturnType()),
+									body(make.Try(body(sync(make.This(Type.noType),body(ifs(isNull("wrapped"),es(apply("wait")))))), catchers, null), returnt(apply("wrapped", m.name)))
+									);
+							wrappedMethods.add(value);
+						}
+						else{
+							List<JCCatch> catchers = List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), names.fromString("e"), 
+			    					make.Ident(names.fromString("InterruptedException")), null), 
+			    					make.Block(0, 
+			    							List.<JCStatement>of(make.Exec
+			    									(make.Apply(null, make.Ident
+			    											(m.name), List.<JCExpression>nil()))))));
+							JCMethodDecl value = method(mods(PUBLIC),
+									m.name,
+									make.Type(m.type),
+									body(make.Try(body(sync(make.This(Type.noType),body(ifs(isNull("wrapped"),es(apply("wait")))))), catchers, null), es(apply("wrapped", m.name)))
+									);
+							wrappedMethods.add(value);
+						}
+					}
+					else if (s.getKind()==ElementKind.CONSTRUCTOR){
+						MethodSymbol m = (MethodSymbol)s;
+						ListBuffer<JCExpression> inits = new ListBuffer<JCExpression>();
+						for(VarSymbol v : m.params()){
+							if(v.type.toString().equals("boolean"))
+								inits.add(falsev());
+							else if (v.type.isPrimitive()){
+								inits.add(intlit(0));
+							}
+						}
+						constructors.add(constructor(mods(PUBLIC), params(), 
+								body(es(make.Apply(List.<JCExpression>nil(), 
+										make.Ident(names._super), 
+										inits.toList())))));
+					}
+				}
 				ListBuffer<JCVariableDecl> finishParams = new ListBuffer<JCVariableDecl>();
 				finishParams.add(var(mods(0),"t",restype.toString()));
 				JCMethodDecl finish = method(mods(PUBLIC), 
@@ -349,15 +393,12 @@ public class ModuleInternal extends Internal
 						finishParams,
 						body(es(assign("wrapped", id("t"))))
 						);
-				JCMethodDecl constructor ;
 				JCExpression extending;
 				List<JCExpression> implement;
 				if(restype.isInterface()){
-					constructor = constructor(mods(PUBLIC), params(), body(es(supert())));
 					extending = null;
 					implement = implementing(ta(id(PaniniConstants.DUCK_INTERFACE_NAME), args(id(restype.toString()))), id(restype.toString())).toList();
 				}else{
-					constructor = constructor(mods(PUBLIC), params(), body(es(make.Apply(List.<JCExpression>nil(), make.Ident(names._super), List.<JCExpression>of(falsev())))));
 					extending = id(restype.toString());
 					implement = implementing(ta(id(PaniniConstants.DUCK_INTERFACE_NAME), args(id(restype.toString())))).toList();
 				}
@@ -366,7 +407,7 @@ public class ModuleInternal extends Internal
 						List.<JCTypeParameter>nil(), 
 						extending, 
 						implement, 
-						defs(var, constructor, value, finish).toList()));
+						defs(var, finish).appendList(constructors).appendList(wrappedMethods).toList()));
             }
 			return classes.toList();
 		}
