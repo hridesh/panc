@@ -75,12 +75,21 @@ public class ModuleInternal extends Internal
 
 
             if (restype.tag==TypeTags.VOID) {
+                ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+
+                for (int i = 0; i < method.params.size(); i++) {
+                    innerIfStatements.append(es(mm(id("size"))));                    
+                    innerIfStatements.append(var(noMods, "var"+i, method.params.get(i).sym.type.toString(), cast(method.params.get(i).sym.type.toString(), aindex(id("objects"), pp(id("head"))))));
+                    innerIfStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
+                    args.append(id("var"+i));
+                }
+
                 innerIfStatements.append(es(mm(id("size"))));
                 innerIfStatements.append(var(noMods, "d", PaniniConstants.DUCK_INTERFACE_NAME, cast(PaniniConstants.DUCK_INTERFACE_NAME, aindex(id("objects"), pp(id("head"))))));
                 innerIfStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
                 innerIfStatements.append(es(apply("queueLock", "unlock")));
 
-                innerIfStatements.append(es(apply(thist(), method.name.toString() + "$Original")));
+                innerIfStatements.append(es(apply(thist(), method.name.toString() + "$Original", args)));
 
                 innerIfStatements.append(sync(id("d"), body(es(apply("d", "notifyAll")))));
             } else if (restype.tag==TypeTags.CLASS) {
