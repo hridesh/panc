@@ -31,6 +31,7 @@ import java.util.Iterator;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.TypeTags;
+import com.sun.tools.javac.comp.Resolve.SymbolNotFoundError;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.PaniniConstants;
 
@@ -342,19 +343,22 @@ public class ModuleInternal extends Internal
     }*/
 
 	public List<JCClassDecl> generateClassWrappers(JCModuleDecl tree, Env<AttrContext> env, Resolve rs) {
-		
-		
 		ListBuffer<JCClassDecl> classes = new ListBuffer<JCClassDecl>();
+		
+	  
 		for(JCMethodDecl method : tree.publicMethods){
 			Type restype = ((MethodType)method.sym.type).restype;
-
+			
+			
+			
 			ClassSymbol c;
             if(restype.toString().equals("void"))
                 c = (ClassSymbol)rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME+"$Void"), TYP);
             else
                 c = (ClassSymbol)rs.findIdent(env, names.fromString(restype.toString()), TYP);
 			Iterator<Symbol> iter = c.members().getElements().iterator();
-			if(restype.tag==TypeTags.CLASS) {
+			if(restype.tag==TypeTags.CLASS&&
+					rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME+"$"+restype.toString()), TYP).toString().equals("symbol not found error")) {
 				JCVariableDecl var = var(mods(PRIVATE|VOLATILE), 
 						"wrapped", restype.toString(), nullv());
 				ListBuffer<JCTree> wrappedMethods= new ListBuffer<JCTree>();
@@ -425,6 +429,7 @@ public class ModuleInternal extends Internal
 					extending = id(restype.toString());
 					implement = implementing(ta(id(PaniniConstants.DUCK_INTERFACE_NAME), args(id(restype.toString())))).toList();
 				}
+				
 				classes.add(make.ClassDef(mods(0), 
 						names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + restype.toString()), 
 						List.<JCTypeParameter>nil(), 
@@ -432,7 +437,6 @@ public class ModuleInternal extends Internal
 						implement, 
 						defs(var, finish).appendList(constructors).appendList(wrappedMethods).toList()));
             }
-			
 		}
         return classes.toList();
 	}
