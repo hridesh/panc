@@ -745,11 +745,7 @@ public class Attr extends JCTree.Visitor {
         	enter.classEnter(wrapperClasses, env.outer);
         	attribClassBody(env, tree.sym);
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
-//        	System.out.println(wrapperClasses);
         	}
-        tree.switchToClass();
-//        System.out.println(env.toplevel.defs);
-        tree.switchToModule();
     }
 
     public void visitConfigDef(JCConfigDecl tree){

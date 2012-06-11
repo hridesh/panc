@@ -347,7 +347,7 @@ public class ModuleInternal extends Internal
 		ListBuffer<JCClassDecl> classes = new ListBuffer<JCClassDecl>();
 		for(JCMethodDecl method : tree.publicMethods){
 			Type restype = ((MethodType)method.sym.type).restype;
-			
+
 			ClassSymbol c;
             if(restype.toString().equals("void"))
                 c = (ClassSymbol)rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME+"$Void"), TYP);
@@ -432,8 +432,8 @@ public class ModuleInternal extends Internal
 						implement, 
 						defs(var, finish).appendList(constructors).appendList(wrappedMethods).toList()));
             }
-			return classes.toList();
+			
 		}
-		return null;
+        return classes.toList();
 	}
 }
