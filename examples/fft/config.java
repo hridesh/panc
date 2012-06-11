@@ -1,0 +1,3 @@
+system FFT {
+    FFTWorker f;
+}
