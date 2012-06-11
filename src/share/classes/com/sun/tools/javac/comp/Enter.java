@@ -828,44 +828,124 @@ public class Enter extends JCTree.Visitor {
         }
         if(!hasRun){
         	for(JCMethodDecl mdecl : tree.publicMethods){
-	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
-	            copyBody.appendList(push(names.fromString(PaniniConstants.PANINI_METHOD_CONST+mdecl.name)));
-	            if(mdecl.params.length()!=0){
-	            	for(JCVariableDecl n : mdecl.params){
-	            		copyBody.appendList(push(n.name));
-	            	}
-	            }
-	            if(!mdecl.restype.toString().equals("void")){
-	            	copyBody.appendList(push(names.fromString("d")));
-	            }
-	            copyBody.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
-	            		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("lock")), 
-	            		List.<JCExpression>nil())));
-	            copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
-	            		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("unlock")), 
-	            		List.<JCExpression>nil())));
-	            if(!mdecl.restype.toString().equals("void")){
-	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
-	            			names.fromString("d"), 
-	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
-	            			make.NewClass(null, List.<JCExpression>nil(), 
-	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
-	            					List.<JCExpression>nil(), null)));
-	            	copyBody.append(make.Return(make.Ident(names.fromString("d"))));
-	            }
-	            
-	            JCMethodDecl methodCopy = make.MethodDef(
-	            		make.Modifiers(PUBLIC), 
-	            		mdecl.name.append(names.fromString("$Original")), 
-	            		mdecl.restype, 
-	            		mdecl.typarams, 
-	            		mdecl.params,
-	            		mdecl.thrown, 
-	            		mdecl.body, 
-	            		null);
-	            mdecl.body = make.Block(0, copyBody.toList());
-	            definitions.add(methodCopy);
-	            definitions.add(mdecl);
+//	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
+//	        	copyBody.append(make.If(make.Binary(LT, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
+//	            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), 
+//	            		make.If(make.Binary(LT, make.Binary(PLUS, make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
+//	        					names.fromString("length")), make.Binary(MINUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
+//	        		            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
+//	        		            		make.Literal(mdecl.params.length()+2)), 
+//	    	            		make.Exec(make.Apply(List.<JCExpression>nil(), 
+//	    	        					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_EXTENDQUEUE)), 
+//	    	        					List.<JCExpression>nil())), 
+//	    	            		null), 
+//	    	            		make.If(make.Binary(LT, 
+//	    	    	            		make.Binary(MINUS, 
+//	    	    	            				make.Ident(names.fromString
+//	    	    	            						(PaniniConstants.PANINI_MODULE_HEAD)), 
+//	    	    	            						make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), make.Literal(mdecl.params.length()+2)), 
+//	    	    	            						make.Exec(make.Apply(List.<JCExpression>nil(), 
+//	    	    	            	        					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_EXTENDQUEUE)), 
+//	    	    	            	        					List.<JCExpression>nil())), 
+//	    	    	            		null)));
+//	        	copyBody.append(make.Exec(make.Assign(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
+//	        			make.Binary(PLUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
+//	        					make.Literal(mdecl.params.length()+2)))));
+//	            copyBody.appendList(push(names.fromString(PaniniConstants.PANINI_METHOD_CONST+mdecl.name)));
+//	            if(mdecl.params.length()!=0){
+//	            	for(JCVariableDecl n : mdecl.params){
+//	            		copyBody.appendList(push(n.name));
+//	            	}
+//	            }
+//	         
+//	            copyBody.appendList(push(names.fromString("d")));
+//	            
+//	            copyBody.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
+//	            		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("lock")), 
+//	            		List.<JCExpression>nil())));
+//	            copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+//	            		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("unlock")), 
+//	            		List.<JCExpression>nil())));
+//	            if(!mdecl.restype.toString().equals("void")){
+//	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
+//	            			names.fromString("d"), 
+//	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
+//	            			make.NewClass(null, List.<JCExpression>nil(), 
+//	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
+//	            					List.<JCExpression>nil(), null)));
+//	            	copyBody.append(make.Return(make.Ident(names.fromString("d"))));
+//	            }
+//	            else{
+//	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
+//	            			names.fromString("d"), 
+//	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$Void")), 
+//	            			make.NewClass(null, List.<JCExpression>nil(), 
+//	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$Void")), 
+//	            					List.<JCExpression>nil(), null)));
+//	            }
+//	            
+//	            JCMethodDecl methodCopy = make.MethodDef(
+//	            		make.Modifiers(PRIVATE), 
+//	            		mdecl.name.append(names.fromString("$Original")), 
+//	            		mdecl.restype, 
+//	            		mdecl.typarams, 
+//	            		mdecl.params,
+//	            		mdecl.thrown, 
+//	            		mdecl.body, 
+//	            		null);
+//	            methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name, mdecl.restype.type, tree.sym);
+//	            System.out.println(methodCopy.sym.owner);
+//	            mdecl.body = make.Block(0, copyBody.toList());
+//	            definitions.add(methodCopy);
+//	            definitions.add(mdecl);
+    	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
+    	            copyBody.appendList(push(names.fromString(PaniniConstants.PANINI_METHOD_CONST+mdecl.name)));
+    	            if(mdecl.params.length()!=0){
+    	            	for(JCVariableDecl n : mdecl.params){
+    	            		copyBody.appendList(push(n.name));
+    	            	}
+    	            }
+    	            copyBody.appendList(push(names.fromString("d")));
+    	            
+    	            copyBody.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    	            		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("lock")), 
+    	            		List.<JCExpression>nil())));
+    	            copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    	            		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("unlock")), 
+    	            		List.<JCExpression>nil())));
+    	            if(!mdecl.restype.toString().equals("void")){
+    	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
+    	            			names.fromString("d"), 
+    	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
+    	            			make.NewClass(null, List.<JCExpression>nil(), 
+    	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
+    	            					List.<JCExpression>nil(), null)));
+    	            	copyBody.append(make.Return(make.Ident(names.fromString("d"))));
+    	            }else{
+    	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
+    	            			names.fromString("d"), 
+    	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$Void")), 
+    	            			make.NewClass(null, List.<JCExpression>nil(), 
+    	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$Void")), 
+    	            					List.<JCExpression>nil(), null)));
+    	            }
+    	            ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
+    	            for(JCVariableDecl v : mdecl.params){
+    	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
+    	            }
+    	            
+    	            JCMethodDecl methodCopy = make.MethodDef(
+    	            		make.Modifiers(PUBLIC), 
+    	            		mdecl.name.append(names.fromString("$Original")), 
+    	            		mdecl.restype, 
+    	            		mdecl.typarams, 
+    	            		vars.toList(),
+    	            		mdecl.thrown, 
+    	            		mdecl.body, 
+    	            		null);
+    	            mdecl.body = make.Block(0, copyBody.toList());
+    	            definitions.add(methodCopy);
+    	            definitions.add(mdecl);
         	}
             MethodSymbol msym = new MethodSymbol(
                 PUBLIC,
