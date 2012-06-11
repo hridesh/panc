@@ -436,7 +436,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 	public JCTree visitModuleArrayCall(ModuleArrayCallTree node, P p) {
 		JCModuleArrayCall t = (JCModuleArrayCall) node;
 		List<JCExpression> args = copy(t.arguments, p);
-		return M.at(t.pos).ModuleArrayCall(t.name, t.index, args);
+		return M.at(t.pos).ModuleArrayCall(t.name, t.index, t.indexed, args);
 	}
     
     @Override

@@ -480,11 +480,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     	public Name name;
     	public JCExpression index;
+    	public JCExpression indexed;
     	public List<JCExpression> arguments;
     	
-    	public JCModuleArrayCall(Name name, JCExpression index, List<JCExpression> args){
+    	public JCModuleArrayCall(Name name, JCExpression index, JCExpression indexed, List<JCExpression> args){
     		this.name = name;
     		this.index = index;
+    		this.indexed = indexed;
     		this.arguments = args;
     	}
     	

@@ -1991,7 +1991,7 @@ public class JavacParser implements Parser {
             	accept(SEMI);
             	JCStatement stm = F.at(pos).
             			ModuleArrayCall(names.fromString(((JCArrayAccess)t).indexed.toString()), 
-            					((JCArrayAccess)t).index, args);
+            					((JCArrayAccess)t).index, ((JCArrayAccess)t).indexed, args);
             	return List.<JCStatement>of(stm);
             }else if (token.kind == COLON && t.hasTag(IDENT)) {
                 nextToken();
