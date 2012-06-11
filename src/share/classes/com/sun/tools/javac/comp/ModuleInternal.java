@@ -348,7 +348,11 @@ public class ModuleInternal extends Internal
 		for(JCMethodDecl method : tree.publicMethods){
 			Type restype = ((MethodType)method.sym.type).restype;
 			
-			ClassSymbol c = (ClassSymbol)rs.findIdent(env, names.fromString(restype.toString()), TYP);
+			ClassSymbol c;
+            if(restype.toString().equals("void"))
+                c = (ClassSymbol)rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME+"$Void"), TYP);
+            else
+                c = (ClassSymbol)rs.findIdent(env, names.fromString(restype.toString()), TYP);
 			Iterator<Symbol> iter = c.members().getElements().iterator();
 			if(restype.tag==TypeTags.CLASS) {
 				JCVariableDecl var = var(mods(PRIVATE|VOLATILE), 
