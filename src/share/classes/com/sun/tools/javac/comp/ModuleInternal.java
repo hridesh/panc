@@ -72,28 +72,46 @@ public class ModuleInternal extends Internal
             ListBuffer<JCStatement> innerIfStatements = new ListBuffer<JCStatement>();
             Type restype = ((MethodType)method.sym.type).restype;
 
+
             if (restype.tag==TypeTags.VOID) {
-                innerIfStatements.append(es(apply("queueLock", "unlock")));
-                innerIfStatements.append(es(apply(thist(), method.name.toString() + "$Original")));
-            } else if (restype.tag==TypeTags.CLASS) {
                 innerIfStatements.append(es(mm(id("size"))));
-                innerIfStatements.append(var(noMods, "d", ta(id(PaniniConstants.DUCK_INTERFACE_NAME), typeargs(id(restype.toString()))),
-                                             cast(ta(id(PaniniConstants.DUCK_INTERFACE_NAME), typeargs(id(restype.toString()))), 
-                                                  aindex(id("objects"), pp(id("head"))))));
+                innerIfStatements.append(var(noMods, "d", PaniniConstants.DUCK_INTERFACE_NAME, cast(PaniniConstants.DUCK_INTERFACE_NAME, aindex(id("objects"), pp(id("head"))))));
                 innerIfStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
                 innerIfStatements.append(es(apply("queueLock", "unlock")));
-                innerIfStatements.append(es(apply("d", "panini$finish",
-                                                  args(apply(thist(), method.name.toString() + "$Original")))));
-                innerIfStatements.append(sync(id("d"), body(es(apply("d", "notifyAll")))));
 
+                innerIfStatements.append(es(apply(thist(), method.name.toString() + "$Original")));
+
+                innerIfStatements.append(sync(id("d"), body(es(apply("d", "notifyAll")))));
+            } else if (restype.tag==TypeTags.CLASS) {
+                ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+
+                for (int i = 0; i < method.params.size(); i++) {
+                    innerIfStatements.append(es(mm(id("size"))));                    
+                    innerIfStatements.append(var(noMods, "var"+i, method.params.get(i).sym.type.toString(), cast(method.params.get(i).sym.type.toString(), aindex(id("objects"), pp(id("head"))))));
+                    innerIfStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
+                    args.append(id("var"+i));
+                }
+
+                innerIfStatements.append(es(mm(id("size"))));
+                innerIfStatements.append(var(noMods, "d", PaniniConstants.DUCK_INTERFACE_NAME, cast(PaniniConstants.DUCK_INTERFACE_NAME, aindex(id("objects"), pp(id("head"))))));
+                innerIfStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
+                innerIfStatements.append(es(apply("queueLock", "unlock")));
+
+                innerIfStatements.append(es(apply("d", "panini$finish",
+                                                  args(apply(thist(), method.name.toString() + "$Original", args)))));
+
+                innerIfStatements.append(sync(id("d"), body(es(apply("d", "notifyAll")))));
             } else {
                 System.out.println("Unsupported return type in a public module method. Can only be void or non-primitive.");
                 System.exit(5555);
             }
 
+            
             ifBody.append(ifs(apply("name", "equals", lb(id(PaniniConstants.PANINI_METHOD_CONST + method.name.toString()))), body(innerIfStatements)));
+
         }
-        return body(
+
+        JCBlock b =  body(
             whilel(truev(),
                    body(
                        ifs(gt(select(thist(), "size"), intlit(0)),
@@ -112,6 +130,7 @@ public class ModuleInternal extends Internal
                        )
                 )
             );
+        System.out.println(b); return b;
     }
 /*
     public void generateInternalInterfaceDef(JCEventDecl tree, int pos) {

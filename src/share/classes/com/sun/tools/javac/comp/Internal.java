@@ -516,6 +516,10 @@ public class Internal
         return make0().Binary(JCTree.Tag.EQ, e, make0().Literal(new Integer(n)));
     }
 
+    protected JCBinary eq(JCExpression e, JCExpression e1) {
+        return make0().Binary(JCTree.Tag.EQ, e, e1);
+    }
+
     protected JCBinary notNum(JCExpression e, int n) {
         return make0().Binary(JCTree.Tag.NE, e, make0().Literal(new Integer(n)));
     }
