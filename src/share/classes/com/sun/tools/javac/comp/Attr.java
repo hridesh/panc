@@ -743,14 +743,12 @@ public class Attr extends JCTree.Visitor {
         if (tree.needsDefaultRun){
         	List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree, env, rs);
         	enter.classEnter(wrapperClasses, env.outer);
-        	System.out.println(tree);
         	attribClassBody(env, tree.sym);
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
 //        	System.out.println(wrapperClasses);
         	}
         tree.switchToClass();
-        
-        System.out.println(tree);
+//        System.out.println(env.toplevel.defs);
         tree.switchToModule();
     }
 
