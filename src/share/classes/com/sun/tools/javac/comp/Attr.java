@@ -841,13 +841,13 @@ public class Attr extends JCTree.Visitor {
     	    			assigns.append(floop);
     	    			moduleCount += mat.amount;
     	    			for(int j=0;j<mat.amount;j++){
-	    	    			JCExpressionStatement submitAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-	        						make.Select(make.Ident(names.fromString("pool")), names.fromString("submit")), 
-	        						List.<JCExpression>of(make.Indexed(make.Ident(mdecl.name), make.Literal(j)))));
+//	    	    			JCExpressionStatement submitAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+//	        						make.Select(make.Ident(names.fromString("pool")), names.fromString("submit")), 
+//	        						List.<JCExpression>of(make.Indexed(make.Ident(mdecl.name), make.Literal(j)))));
 	        				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-	        						make.Select(make.Indexed(make.Ident(mdecl.name), make.Literal(j)), names.fromString("join")), 
+	        						make.Select(make.Indexed(make.Ident(mdecl.name), make.Literal(j)), names.fromString("start")), 
 	        						List.<JCExpression>nil()));
-	        		    	submits.append(submitAssign);
+//	        		    	submits.append(submitAssign);
 	        		    	joins.append(joinAssign);
     	    			}
     				}
