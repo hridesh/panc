@@ -1,0 +1,13 @@
+Passing null as a parameter
+typechecking
+linear transfer of ownership
+integrating with traditional task parallelism
+events
+interfacing with traditional java
+specifically IO libraries
+examples
+deterministic semantics
+deadlocks
+intra-module calls shouldn´t go through queue
+run loop interleaving
+change busywaiting to block waiting in generated run method
