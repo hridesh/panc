@@ -1075,6 +1075,11 @@
             </sequential>
         </macrodef>
     </target>
+	
+	<target name="export" depends="build">
+	      <exec dir="make/" executable="./export.sh">
+	      </exec>
+	    </target>
 
 </project>
 
