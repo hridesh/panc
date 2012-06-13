@@ -142,9 +142,9 @@ public class Attr extends JCTree.Visitor {
         unknownExprInfo = new ResultInfo(VAL, Type.noType);
         unknownTypeInfo = new ResultInfo(TYP, Type.noType);
 
-        // Ptolemy code
+        // Panini code
         moduleInternal = new ModuleInternal(make, names, enter, memberEnter, syms);
-        // end Ptolemy code
+        // end Panini code
     }
 
     /** Switch: relax some constraints for retrofit mode.
@@ -804,6 +804,7 @@ public class Attr extends JCTree.Visitor {
     				if(mdecl.vartype.getTag()==MODULEARRAY){
     					JCModuleArray mat = (JCModuleArray)mdecl.vartype;
     					ClassSymbol c = syms.modules.get(names.fromString(mat.elemtype.toString()));
+    					//TODO give an error message if c is not found;
     					JCNewArray s= make.NewArray(make.Ident(c.type.tsym), 
     							List.<JCExpression>of(make.Literal(mat.amount)), null);
     					JCVariableDecl newArray = 

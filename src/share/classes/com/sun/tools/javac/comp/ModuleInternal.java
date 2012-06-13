@@ -140,7 +140,7 @@ public class ModuleInternal extends Internal
                        )
                 )
             );
-        System.out.println(b); return b;
+        return b;
     }
 /*
     public void generateInternalInterfaceDef(JCEventDecl tree, int pos) {

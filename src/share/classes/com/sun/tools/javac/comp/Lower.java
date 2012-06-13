@@ -2809,6 +2809,16 @@ public class Lower extends TreeTranslator {
 
     public void visitApply(JCMethodInvocation tree) {
         Symbol meth = TreeInfo.symbol(tree.meth);
+        // Panini code
+        if(meth.owner.toString().equals(outermostClassDef.sym.toString())&&
+        		outermostClassDef.sym.isModule&&
+        		(currentMethodSym.flags()&PRIVATE)!=0&&
+        		(meth.flags()&PUBLIC)!=0){
+        	JCIdent id = (JCIdent)tree.meth;
+        	id.name = names.fromString(id.name.toString().concat("$Original"));
+        }
+        // end Panini code
+        
         List<Type> argtypes = meth.type.getParameterTypes();
         if (allowEnums &&
             meth.name==names.init &&

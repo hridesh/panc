@@ -508,7 +508,6 @@ public class Enter extends JCTree.Visitor {
                                    List.<JCVariableDecl>of(make.VarDef(make.Modifiers(0), names.fromString("t"),
                                                    make.Ident(names.fromString("Object")), null)),
                                    List.<JCExpression>nil(), make.Block(0, List.<JCStatement>nil()), null)));
-            System.out.println(voidDuck);
             env.toplevel.defs = env.toplevel.defs.append(voidDuck);
             env.toplevel.defs = env.toplevel.defs.append(cdecl);
             ClassSymbol cs;
@@ -957,7 +956,7 @@ public class Enter extends JCTree.Visitor {
     	            }
     	            
     	            JCMethodDecl methodCopy = make.MethodDef(
-    	            		make.Modifiers(PUBLIC), 
+    	            		make.Modifiers(PRIVATE), 
     	            		mdecl.name.append(names.fromString("$Original")), 
     	            		mdecl.restype, 
     	            		mdecl.typarams, 
