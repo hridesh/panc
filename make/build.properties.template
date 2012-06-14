@@ -118,7 +118,8 @@ javac.includes = \
         javax/lang/model/ \
         javax/tools/ \
         com/sun/source/ \
-        com/sun/tools/javac/
+        com/sun/tools/javac/ \
+	org.paninij
 
 javac.tests = \
         tools/javac
