@@ -50,7 +50,7 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
-import org.paninij.ModuleMethodInterleaving;
+import org.paninij.Interleaving;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;

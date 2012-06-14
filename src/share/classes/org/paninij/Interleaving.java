@@ -44,26 +44,22 @@ import com.sun.source.util.SimpleTreeVisitor;
 import org.paninij.effects.*;
 
 
-public class ModuleMethodInterleaving {
-    protected static final Context.Key<ModuleMethodInterleaving> mmiKey =
-        new Context.Key<ModuleMethodInterleaving>();
+public class Interleaving {
+    protected static final Context.Key<Interleaving> mmiKey =
+        new Context.Key<Interleaving>();
 
 
     SideEffectsComp sideEffectsComp;
 
-    public static ModuleMethodInterleaving instance(Context context) {
-        ModuleMethodInterleaving instance = context.get(mmiKey);
+    public static Interleaving instance(Context context) {
+        Interleaving instance = context.get(mmiKey);
         if (instance == null)
-            instance = new ModuleMethodInterleaving(context);
+            instance = new Interleaving(context);
         return instance;
     }
     
-    public ModuleMethodInterleaving(Context context) {
+    public Interleaving(Context context) {
         context.put(mmiKey, this);
-    }
-
-    public List<BlockDivisionPoint> computeInterleavingPoints(JCMethodDecl m) {
-        return List.<BlockDivisionPoint>nil();
     }
 
     public void insertInterleaving(JCModuleDecl module, JCMethodDecl method) {
@@ -73,14 +69,14 @@ public class ModuleMethodInterleaving {
     }
 
     public void insertInterleavingAtPoint(JCModuleDecl module, JCMethodDecl method, BlockDivisionPoint p) {
-        EffectSet before = sideEffectsComp.methodEffectsBeforePoint(method, p);
-        EffectSet after = sideEffectsComp.methodEffectsAfterPoint(method, p);
+        EffectSet before = sideEffectsComp.methodEffectsBeforePoint(method, p); 
+        EffectSet after = sideEffectsComp.methodEffectsAfterPoint(method, p); 
         
         ListBuffer<Integer> safeMessages = new ListBuffer<Integer>();
         EffectSet[] messageEffects = new EffectSet[module.publicMethods.size()];
         for (int i = 0; i < module.publicMethods.size(); i++) {
             messageEffects[i] = sideEffectsComp.moduleMessageEffects(module, i);
-            if (!messageEffects[i].orderMatters(before, after)) {
+            if (!messageEffects[i].doesInterfere(before, after)) {
                 safeMessages.append(i);
             }
         } 
@@ -89,8 +85,12 @@ public class ModuleMethodInterleaving {
 
         method.body = p.insertStatementsAtPoint(method.body, interleavingStatements);
     }
+    
+    private final List<BlockDivisionPoint> computeInterleavingPoints(JCMethodDecl m) {
+     return List.<BlockDivisionPoint>nil();
+    }
 
-    public List<JCStatement> generateInterleavingStatements(JCMethodDecl method, List<Integer> messages) {
+    private final List<JCStatement> generateInterleavingStatements(JCMethodDecl method, List<Integer> messages) {
         return List.<JCStatement>nil();
     }
 }

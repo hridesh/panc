@@ -21,5 +21,5 @@ package org.paninij.effects;
 
 
 public class EffectSet {
-    public boolean orderMatters(EffectSet before, EffectSet after) { return true; }
+    public boolean doesInterfere(EffectSet before, EffectSet after) { return true; }
 }
