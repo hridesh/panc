@@ -49,6 +49,10 @@ import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
+// Panini code
+import org.paninij.ModuleMethodInterleaving;
+// end Panini code
+
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Flags.ANNOTATION;
 import static com.sun.tools.javac.code.Flags.BLOCK;
