@@ -1079,7 +1079,12 @@
 	<target name="export" depends="build">
 	      <exec dir="make/" executable="./export.sh">
 	      </exec>
-	    </target>
+	</target>
+	    
+	<target name="runtime" depends="build">
+		<exec dir="make/" executable="./runtime.sh">
+		</exec>
+	</target>
 
 </project>
 
