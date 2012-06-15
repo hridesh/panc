@@ -431,6 +431,18 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         }
     }
 	// Panini code
+    public JCTree visitProc(ProcedureTree node, P p){
+    	JCMethodDecl t  = (JCMethodDecl) node;
+        JCModifiers mods = copy(t.mods, p);
+        JCExpression restype = copy(t.restype, p);
+        List<JCTypeParameter> typarams = copy(t.typarams, p);
+        List<JCVariableDecl> params = copy(t.params, p);
+        List<JCExpression> thrown = copy(t.thrown, p);
+        JCBlock body = copy(t.body, p);
+        JCExpression defaultValue = copy(t.defaultValue, p);
+        return M.at(t.pos).MethodDef(mods, t.name, restype, typarams, params, thrown, body, defaultValue);
+    }
+    
     public JCTree visitProcInvocation(ProcInvocationTree node, P p) {
         JCProcInvocation t = (JCProcInvocation) node;
         List<JCExpression> typeargs = copy(t.typeargs, p);

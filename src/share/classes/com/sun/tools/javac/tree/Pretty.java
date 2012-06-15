@@ -378,6 +378,70 @@ public class Pretty extends JCTree.Visitor {
      * Visitor methods
      *************************************************************************/
     // Panini code
+    public void visitProcDef(JCProcDecl tree){
+    	try {
+            // when producing source output, omit anonymous constructors
+            if (tree.name == tree.name.table.names.init &&
+                    enclClassName == null &&
+                    sourceOutput) return;
+            println(); align();
+            printDocComment(tree);
+            printExpr(tree.mods);
+            printTypeParameters(tree.typarams);
+            if (tree.name == tree.name.table.names.init) {
+                print(enclClassName != null ? enclClassName : tree.name);
+            } else {
+                printExpr(tree.restype);
+                print(" " + tree.name);
+            }
+            print("(");
+            printExprs(tree.params);
+            print(")");
+            if (tree.thrown.nonEmpty()) {
+                print(" throws ");
+                printExprs(tree.thrown);
+            }
+            if (tree.defaultValue != null) {
+                print(" default ");
+                printExpr(tree.defaultValue);
+            }
+            if (tree.body != null) {
+                print(" ");
+                printStat(tree.body);
+            } else {
+                print(";");
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    
+    public void visitProcInvocation(JCProcInvocation tree){
+    	try {
+            if (!tree.typeargs.isEmpty()) {
+                if (tree.meth.hasTag(SELECT)) {
+                    JCFieldAccess left = (JCFieldAccess)tree.meth;
+                    printExpr(left.selected);
+                    print(".<");
+                    printExprs(tree.typeargs);
+                    print(">" + left.name);
+                } else {
+                    print("<");
+                    printExprs(tree.typeargs);
+                    print(">");
+                    printExpr(tree.meth);
+                }
+            } else {
+                printExpr(tree.meth);
+            }
+            print("(");
+            printExprs(tree.args);
+            print(")");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    
     public void visitStateDef(JCStateDecl tree){
     	visitVarDef(tree);
     }

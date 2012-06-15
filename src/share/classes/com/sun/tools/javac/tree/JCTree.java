@@ -37,6 +37,7 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Scope.*;
 import com.sun.tools.javac.code.Symbol.*;
@@ -339,6 +340,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
          */
         LETEXPR,                         // ala scheme
         // Panini code
+        PROC,
         MAAPPLY,
         MODULEARRAY,
         SYSTEMDEF,
@@ -479,6 +481,35 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
     
     // Panini code
+    public static class JCProcDecl extends JCMethodDecl implements ProcedureTree{
+
+		protected JCProcDecl(JCModifiers mods, Name name, JCExpression restype,
+				List<JCTypeParameter> typarams, List<JCVariableDecl> params,
+				List<JCExpression> thrown, JCBlock body,
+				JCExpression defaultValue, MethodSymbol sym) {
+			super(mods, name, restype, typarams, params, thrown, body, defaultValue, sym);
+		}
+		
+    	
+		@Override
+		public Kind getKind(){
+			return Kind.PROCEDURE;
+		}
+		
+		@Override
+		public Tag getTag(){
+			return Tag.PROC;
+		}
+		
+		@Override
+		public void accept(Visitor v) { v.visitProcDef(this); }
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitProc(this, d);
+		} 
+    	
+    }
     public static class JCProcInvocation extends JCMethodInvocation implements ProcInvocationTree{
 
 		protected JCProcInvocation(List<JCExpression> typeargs,
@@ -2780,10 +2811,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
         // Panini code
+        public void visitProcDef(JCProcDecl that)            { visitTree(that); }
         public void visitProcApply(JCProcInvocation that)    { visitTree(that); }
         public void visitStateDef(JCStateDecl that)	         { visitTree(that); }
         public void visitModuleArrayCall(JCModuleArrayCall that) { visitTree(that); }
-        public void visitModuleArray(JCModuleArray that) { visitTree(that); }
+        public void visitModuleArray(JCModuleArray that)     { visitTree(that); }
         public void visitSystemDef(JCSystemDecl that)	     { visitTree(that); }
         public void visitLibraryDef(JCLibraryDecl that)	     { visitTree(that); }
         public void visitModuleDef(JCModuleDecl that)	     { visitTree(that); }

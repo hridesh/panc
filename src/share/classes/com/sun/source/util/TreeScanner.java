@@ -399,10 +399,13 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     }
 
 	// Panini code
+    public R visitProc(ProcedureTree node, P p) {
+		return visitMethod(node, p);
+	}
+    
     public R visitProcInvocation(ProcInvocationTree node, P p) {
 		return visitMethodInvocation(node, p);
 	}
-    
     
     public R visitStateDef(StateTree node, P p) {
 		return visitVariable(node, p);
