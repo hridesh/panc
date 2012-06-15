@@ -115,6 +115,12 @@ public class TreeMaker implements JCTree.Factory {
         return this;
     }
     // Panini code
+    public JCStateDecl StateDef(JCModifiers mods, Name name, JCExpression vartype, JCExpression init) {
+        JCStateDecl tree = new JCStateDecl(mods, name, vartype, init, null);
+        tree.pos = pos;
+        return tree;
+    }
+    
     public JCModuleArrayCall ModuleArrayCall(Name name, JCExpression index, JCExpression indexed, List<JCExpression> args){
     	JCModuleArrayCall tree = new JCModuleArrayCall(name, index, indexed, args);
     	tree.pos = pos;
@@ -127,8 +133,8 @@ public class TreeMaker implements JCTree.Factory {
         return tree;
     }
     
-    public JCConfigDecl ConfigDef(JCModifiers mods, Name name, JCBlock body){
-    	JCConfigDecl tree = new JCConfigDecl(mods, name, body);
+    public JCSystemDecl ConfigDef(JCModifiers mods, Name name, JCBlock body){
+    	JCSystemDecl tree = new JCSystemDecl(mods, name, body);
     	tree.pos = pos;
     	return tree;
     }
@@ -176,7 +182,7 @@ public class TreeMaker implements JCTree.Factory {
                 || node instanceof JCSkip
                 || node instanceof JCErroneous
                 // Panini code
-                || node instanceof JCConfigDecl
+                || node instanceof JCSystemDecl
                 || node instanceof JCLibraryDecl
                 || node instanceof JCModuleDecl
                 // end Panini code

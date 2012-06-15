@@ -70,7 +70,7 @@ public class TreeScanner extends Visitor {
         scan(tree.elemtype);
     }
     
-    public void visitConfigDef(JCConfigDecl tree){
+    public void visitSystemDef(JCSystemDecl tree){
     	visitClassDef(tree);
     }
     

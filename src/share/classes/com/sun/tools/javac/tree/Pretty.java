@@ -378,6 +378,10 @@ public class Pretty extends JCTree.Visitor {
      * Visitor methods
      *************************************************************************/
     // Panini code
+    public void visitStateDef(JCStateDecl tree){
+    	visitVarDef(tree);
+    }
+    
     public void visitModuleArrayCall(JCModuleArrayCall tree){
     	try {
 			print(tree.name + "[" + tree.index + "]" + "(" + tree.arguments + ");");
@@ -407,7 +411,7 @@ public class Pretty extends JCTree.Visitor {
     
     
     
-    public void visitConfigDef(JCConfigDecl tree){
+    public void visitSystemDef(JCSystemDecl tree){
     	try{
     		println();align();
     		print("system ");

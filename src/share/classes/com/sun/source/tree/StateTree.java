@@ -16,15 +16,9 @@
  *
  * Contributor(s): Eric Lin
  */
-
 package com.sun.source.tree;
 
-import java.util.List;
 
-import com.sun.tools.javac.util.Name;
-
-
-public interface ConfigTree extends StatementTree {
-	Name getName();
-	BlockTree getBody();
+public interface StateTree extends VariableTree {
+    
 }

@@ -265,6 +265,9 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 	}
 
 	// Panini code
+	public R visitStateDef(StateTree node, P p) {
+		return defaultAction(node, p);
+	}
 
 	public R visitModuleArrayCall(ModuleArrayCallTree node, P p) {
 		return defaultAction(node, p);
@@ -274,7 +277,7 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 		return defaultAction(node, p);
 	}
 
-	public R visitConfig(ConfigTree node, P p) {
+	public R visitSystem(SystemTree node, P p) {
 		return defaultAction(node, p);
 	}
 

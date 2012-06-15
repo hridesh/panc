@@ -418,7 +418,7 @@ public class TreeTranslator extends JCTree.Visitor {
     }
 
     // Panini code
-    public void visitConfigDef(JCConfigDecl tree){
+    public void visitSystemDef(JCSystemDecl tree){
         result = tree;
     }
     

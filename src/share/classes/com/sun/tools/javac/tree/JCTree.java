@@ -37,6 +37,7 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Scope.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.parser.EndPosTable;
@@ -340,10 +341,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         // Panini code
         MAAPPLY,
         MODULEARRAY,
-        CONFIGDEF,
+        SYSTEMDEF,
         LIBRARYDEF,
         MODULEDEF,
         INCLUDE,
+        STATE,
         FREE;
         // end Panini code
 
@@ -476,6 +478,31 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
     
     // Panini code
+    public static class JCStateDecl extends JCVariableDecl implements StateTree{
+
+		protected JCStateDecl(JCModifiers mods, Name name,
+				JCExpression vartype, JCExpression init, VarSymbol sym) {
+			super(mods, name, vartype, init, sym);
+		}
+		@Override
+		public Kind getKind(){
+			return null;
+		}
+		
+		@Override
+		public Tag getTag(){
+			return Tag.STATE;
+		}
+		
+		@Override
+		public void accept(Visitor v) { v.visitStateDef(this); }
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitStateDef(this, d);
+		} 
+    }
+    
     public static class JCModuleArrayCall extends JCStatement implements ModuleArrayCallTree{
 
     	public Name name;
@@ -556,19 +583,19 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	
     }
     
-    public static class JCConfigDecl extends JCClassDecl implements ConfigTree{
+    public static class JCSystemDecl extends JCClassDecl implements SystemTree{
     	public Name name;
     	public Kind kind;
     	public Tag tag;
     	public JCBlock body;
     	
-    	public JCConfigDecl(JCModifiers mods, Name name, JCBlock body){
+    	public JCSystemDecl(JCModifiers mods, Name name, JCBlock body){
     		super(mods, name, List.<JCTypeParameter>nil(), 
     				null, List.<JCExpression>nil(), List.<JCTree>nil(), null);
     		this.body = body;
     		this.name = name;
-    		kind = Kind.CONFIG;
-    		tag = Tag.CONFIGDEF;
+    		kind = Kind.SYSTEM;
+    		tag = Tag.SYSTEMDEF;
     	}
     	
     	public JCBlock getBody(){
@@ -583,9 +610,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 			tag = Tag.CLASSDEF;
 		}
 		
-		public void switchToConfig(){
-			kind = Kind.CONFIG;
-			tag = Tag.CONFIGDEF;
+		public void switchtoSystem(){
+			kind = Kind.SYSTEM;
+			tag = Tag.SYSTEMDEF;
 		}
 		
 		public Name getName(){
@@ -603,7 +630,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		@Override
 		public void accept(Visitor v) {
 			if(tag != CLASSDEF)
-				v.visitConfigDef(this);
+				v.visitSystemDef(this);
 			else
 				v.visitClassDef(this);
 			}
@@ -611,7 +638,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
 			if(tag != CLASSDEF)
-				return v.visitConfig(this, d);
+				return v.visitSystem(this, d);
 			else
 				return v.visitClass(this, d);
 		}
@@ -2726,9 +2753,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
         // Panini code
+        public void visitStateDef(JCStateDecl that)	         { visitTree(that); }
         public void visitModuleArrayCall(JCModuleArrayCall that) { visitTree(that); }
         public void visitModuleArray(JCModuleArray that) { visitTree(that); }
-        public void visitConfigDef(JCConfigDecl that)	     { visitTree(that); }
+        public void visitSystemDef(JCSystemDecl that)	     { visitTree(that); }
         public void visitLibraryDef(JCLibraryDecl that)	     { visitTree(that); }
         public void visitModuleDef(JCModuleDecl that)	     { visitTree(that); }
         public void visitInclude(JCInclude that)	         { visitTree(that); }

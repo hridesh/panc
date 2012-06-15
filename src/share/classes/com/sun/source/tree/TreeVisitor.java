@@ -109,9 +109,10 @@ public interface TreeVisitor<R,P> {
     R visitWildcard(WildcardTree node, P p);
     R visitOther(Tree node, P p);
     // Panini Code
+    R visitStateDef(StateTree tree, P p);
     R visitModuleArrayCall(ModuleArrayCallTree tree, P p);
     R visitModuleArray(ModuleArrayTree tree, P p);
-    R visitConfig(ConfigTree node, P p);
+    R visitSystem(SystemTree node, P p);
     R visitLibrary(LibraryTree node, P p);
     R visitModule(ModuleTree node, P p);
     R visitInclude(IncludeTree node, P p);

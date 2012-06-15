@@ -717,10 +717,15 @@ public class Attr extends JCTree.Visitor {
     
     // Panini code
     public void visitInclude(JCInclude tree){
+   
     	
     }
     
     public List<JCStatement> transWiring(JCMethodInvocation mi, Map<Name, Name> variables){
+    	if(variables.get(names
+				.fromString(mi.meth.toString()))==null){
+    		log.error(mi.pos(), "module.array.type.error", mi.meth);
+    	}
     	ClassSymbol c = (ClassSymbol) rs
 				.findType(env, variables.get(names
 						.fromString(mi.meth.toString())));
@@ -752,21 +757,19 @@ public class Attr extends JCTree.Visitor {
         	}
     }
 
-    public void visitConfigDef(JCConfigDecl tree){
+    public void visitSystemDef(JCSystemDecl tree){
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> submits = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
     	Map<Name, Name> variables = new HashMap<Name, Name>();
-    	int moduleCount = 0;
     	for(int i=0;i <tree.body.stats.length();i++){
     		if(tree.body.stats.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.body.stats.get(i);
     			if(syms.modules.containsKey(names.fromString(mdecl.vartype.toString()))){
-    				ClassSymbol c = syms.modules.get(names.fromString(mdecl.vartype.toString()));
+    				ClassSymbol c = syms.modules.get(names.fromString(mdecl.vartype.toString()));    				
     				decls.add(mdecl);
-    				moduleCount ++;
     				JCNewClass newClass = make.at(mdecl.pos()).NewClass(null, null, 
     						make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
     				newClass.constructor = rs.resolveConstructor
@@ -786,7 +789,6 @@ public class Attr extends JCTree.Visitor {
     			}else if(syms.libclasses.containsKey(names.fromString(mdecl.vartype.toString()))){
     				ClassSymbol c = syms.libclasses.get(names.fromString(mdecl.vartype.toString()));
     				decls.add(mdecl);
-    				moduleCount ++;
     				JCNewClass newClass = make.at(mdecl.pos()).NewClass(null, null, 
     						make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
     				newClass.constructor = rs.resolveConstructor
@@ -808,7 +810,9 @@ public class Attr extends JCTree.Visitor {
     				if(mdecl.vartype.getTag()==MODULEARRAY){
     					JCModuleArray mat = (JCModuleArray)mdecl.vartype;
     					ClassSymbol c = syms.modules.get(names.fromString(mat.elemtype.toString()));
-    					//TODO give an error message if c is not found;
+    					if(c==null){
+    					log.error(mdecl.pos(), "module.array.type.error", mat.elemtype);
+    					}
     					JCNewArray s= make.NewArray(make.Ident(c.type.tsym), 
     							List.<JCExpression>of(make.Literal(mat.amount)), null);
     					JCVariableDecl newArray = 
@@ -840,21 +844,21 @@ public class Attr extends JCTree.Visitor {
     	    							List.of(step), 
     	    							make.Block(0, loopBody.toList()));
     	    			assigns.append(floop);
-    	    			moduleCount += mat.amount;
     	    			for(int j=0;j<mat.amount;j++){
-//	    	    			JCExpressionStatement submitAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-//	        						make.Select(make.Ident(names.fromString("pool")), names.fromString("submit")), 
-//	        						List.<JCExpression>of(make.Indexed(make.Ident(mdecl.name), make.Literal(j)))));
 	        				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
 	        						make.Select(make.Indexed(make.Ident(mdecl.name), make.Literal(j)), names.fromString("start")), 
 	        						List.<JCExpression>nil()));
-//	        		    	submits.append(submitAssign);
-	        		    	joins.append(joinAssign);
+	        		    	joins.append(joinAssign);	        		    	
     	    			}
+        		    	variables.put(mdecl.name, c.name);
     				}
     				else{
-	    				mdecl.mods.flags |=FINAL;
-	    				decls.add(mdecl);
+//    					System.out.println(mdecl.vartype);
+    					if(mdecl.vartype.getTag()==TYPEIDENT ||mdecl.vartype.toString().equals("String")){
+		    				mdecl.mods.flags |=FINAL;
+		    				decls.add(mdecl);
+    					}else
+    						log.error(mdecl.pos(), "only.primitive.types.or.strings.allowed");
     				}
     			}
     		}else if(tree.body.stats.get(i).getTag() == EXEC){
@@ -894,8 +898,15 @@ public class Attr extends JCTree.Visitor {
 //    			}
     		}else if(tree.body.stats.get(i).getTag() == FOREACHLOOP){
     			JCEnhancedForLoop loop = (JCEnhancedForLoop) tree.body.stats.get(i);
-    			variables.put(loop.var.name, names.fromString(loop.var.vartype.toString()));
-    			// no type checking here
+    			ClassSymbol c = syms.modules.get(names.fromString(loop.var.vartype.toString()));
+				if(c==null){
+				log.error(loop.pos(), "module.array.type.error", loop.var.vartype);
+				}
+				variables.put(loop.var.name, names.fromString(loop.var.vartype.toString()));
+				ClassSymbol d = syms.modules.get(variables.get(names.fromString(loop.expr.toString())));
+				if(!types.isSameType(c.type, d.type)){
+					log.error(loop.var.pos(),"expected", d.type);
+				}
     			ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
     			JCVariableDecl vdecl = make.at(loop.pos).VarDef(make.Modifiers(0), 
     					loop.var.name,
@@ -916,11 +927,21 @@ public class Attr extends JCTree.Visitor {
     			if(loop.body.getTag() == Tag.BLOCK){
     				JCBlock jb = (JCBlock)loop.body;
     				for(JCStatement s : jb.stats){
+    					if(s.getTag()!=EXEC){
+    						log.error(s.pos(),"foreachloop.statement.error");
+    					}else if(((JCExpressionStatement)s).expr.getTag()!=APPLY){
+    						log.error(s.pos(),"foreachloop.statement.error");
+    					}
     					JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)s).expr;
     					loopBody.appendList(transWiring(mi,variables));
     				}
 				}
     			else{
+    				if(loop.body.getTag()!=EXEC){
+						log.error(loop.body.pos(),"foreachloop.statement.error");
+					}else if(((JCExpressionStatement)loop.body).expr.getTag()!=APPLY){
+						log.error(loop.body.pos(),"foreachloop.statement.error");
+					}
     				JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)loop.body).expr;
     				loopBody.appendList(transWiring(mi,variables));
 				}
@@ -3338,9 +3359,9 @@ public class Attr extends JCTree.Visitor {
                 if(c.isConfig){
                 	Env<AttrContext> oldEnv = this.env;
                 	this.env = env;
-                	((JCConfigDecl)env.tree).switchToConfig();
+                	((JCSystemDecl)env.tree).switchtoSystem();
                 	env.tree.accept(this);
-                	((JCConfigDecl)env.tree).switchToClass();
+                	((JCSystemDecl)env.tree).switchToClass();
                 	this.env = oldEnv;
                 }
                 if(c.isModule){

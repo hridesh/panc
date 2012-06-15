@@ -431,6 +431,13 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         }
     }
 	// Panini code
+    public JCTree visitStateDef(StateTree node, P p){
+    	JCStateDecl t = (JCStateDecl) node;
+        JCModifiers mods = copy(t.mods, p);
+        JCExpression vartype = copy(t.vartype, p);
+        JCExpression init = copy(t.init, p);
+        return M.at(t.pos).StateDef(mods, t.name, vartype, init);
+    }
     
     @Override
 	public JCTree visitModuleArrayCall(ModuleArrayCallTree node, P p) {
@@ -446,8 +453,8 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         return M.at(t.pos).ModuleArray(elemtype, t.getAmount());
 	}
     
-	public JCTree visitConfig(ConfigTree node, P p) {
-		JCConfigDecl t = (JCConfigDecl)node;
+	public JCTree visitSystem(SystemTree node, P p) {
+		JCSystemDecl t = (JCSystemDecl)node;
 		return M.at(t.pos).ConfigDef(t.getModifiers(), t.getName(), t.getBody());
 	}
 

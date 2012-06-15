@@ -2915,7 +2915,7 @@ public class JavacParser implements Parser {
      	int pos = token.pos;
      	Name name = ident();
      	JCBlock body = configBlock();
-     	JCConfigDecl result = toP(F.at(pos).ConfigDef(mod, name, body));
+     	JCSystemDecl result = toP(F.at(pos).ConfigDef(mod, name, body));
      	attach(result, dc);
      	return result;
      }
@@ -2934,9 +2934,15 @@ public class JavacParser implements Parser {
      	accept(IDENTIFIER);
      	int pos = token.pos;
      	Name name = ident();
+     	if(token.kind == EXTENDS){
+     		log.error(token.pos, "module.extend.error");
+     		nextToken();
+     		parseType();
+     	}
      	List<JCVariableDecl> params = formalParameters();
      	List<JCExpression> implementing = List.nil();
          if (token.kind == IMPLEMENTS) {
+        	 log.error(token.pos, "module.implement.error");
              nextToken();
              implementing = typeList();
          }

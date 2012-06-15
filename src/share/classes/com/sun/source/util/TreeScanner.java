@@ -399,6 +399,9 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     }
 
 	// Panini code
+    public R visitStateDef(StateTree node, P p) {
+		return visitVariable(node, p);
+	}
     
     public R visitModuleArrayCall(ModuleArrayCallTree node, P p) {
 		R r = scan(node.getArgs(), p);
@@ -410,7 +413,7 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 		return r;
 	}
     
-	public R visitConfig(ConfigTree node, P p) {
+	public R visitSystem(SystemTree node, P p) {
 		R r = scan(node.getBody(), p);
 		return r;
 	}
