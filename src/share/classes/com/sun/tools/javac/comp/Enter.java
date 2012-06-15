@@ -947,7 +947,6 @@ public class Enter extends JCTree.Visitor {
 	            mdecl.body = make.Block(0, copyBody.toList());
 	            definitions.add(methodCopy);
 	            definitions.add(mdecl);
-	            System.out.println(mdecl);
         	}
             MethodSymbol msym = new MethodSymbol(
                 PUBLIC,
@@ -993,7 +992,6 @@ public class Enter extends JCTree.Visitor {
         result = c.type;
         classEnter(tree.defs, localEnv);
         tree.switchToClass();
-        System.out.println(tree);
     }
     
     public List<JCStatement> push(Name n){

@@ -764,6 +764,7 @@ public class Attr extends JCTree.Visitor {
     	ListBuffer<JCStatement> submits = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
     	Map<Name, Name> variables = new HashMap<Name, Name>();
+    	Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
     	for(int i=0;i <tree.body.stats.length();i++){
     		if(tree.body.stats.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.body.stats.get(i);
@@ -851,9 +852,9 @@ public class Attr extends JCTree.Visitor {
 	        		    	joins.append(joinAssign);	        		    	
     	    			}
         		    	variables.put(mdecl.name, c.name);
+        		    	modArrays.put(mdecl.name, mat.amount);
     				}
     				else{
-//    					System.out.println(mdecl.vartype);
     					if(mdecl.vartype.getTag()==TYPEIDENT ||mdecl.vartype.toString().equals("String")){
 		    				mdecl.mods.flags |=FINAL;
 		    				decls.add(mdecl);
@@ -870,32 +871,7 @@ public class Attr extends JCTree.Visitor {
 					}catch (NullPointerException e){
 						log.error(mi.pos(), "only.module.types.allowed");
 					}
-    			}//modulearray
-//    			else if(((JCExpressionStatement)tree.body.stats.get(i)).expr.getTag()==APPLY){
-//    				JCModuleArrayCall mi = (JCModuleArrayCall) ((JCExpressionStatement) tree.body.stats
-//							.get(i)).expr;
-//    				ClassSymbol c = (ClassSymbol) rs
-//    						.findType(env, variables.get(names
-//    								.fromString(mi.name.toString())));
-//    				if (mi.args.length() != syms.moduleparams.get(c).length()) {
-//    					log.error(mi.pos(), "arguments.of.wiring.mismatch");
-//    				} else {
-//    					for (int j = 0; j < mi.args.length(); j++) {
-//    						JCAssign newAssign = make
-//    								.at(mi.pos())
-//    								.Assign(make.Select
-//    										(make.Indexed
-//    												(make.Ident(mi.module), 
-//    														make.Literal(mi._index)),
-//    										syms.moduleparams.get(c).get(j)
-//    												.getName()), mi.args.get(j));
-//    						JCExpressionStatement assignAssign = make
-//    								.Exec(newAssign);
-//    						assigns.append(assignAssign);
-//    					}
-//    				}
-//    				
-//    			}
+    			}
     		}else if(tree.body.stats.get(i).getTag() == FOREACHLOOP){
     			JCEnhancedForLoop loop = (JCEnhancedForLoop) tree.body.stats.get(i);
     			ClassSymbol c = syms.modules.get(names.fromString(loop.var.vartype.toString()));
@@ -904,6 +880,8 @@ public class Attr extends JCTree.Visitor {
 				}
 				variables.put(loop.var.name, names.fromString(loop.var.vartype.toString()));
 				ClassSymbol d = syms.modules.get(variables.get(names.fromString(loop.expr.toString())));
+				if(d==null)
+					log.error(loop.expr.pos(), "symbol.not.found");
 				if(!types.isSameType(c.type, d.type)){
 					log.error(loop.var.pos(),"expected", d.type);
 				}
@@ -952,7 +930,44 @@ public class Attr extends JCTree.Visitor {
     							List.of(step), 
     							make.Block(0, loopBody.toList()));
     			assigns.append(floop);
-    		}else{		//if it reaches here, there's something wrong with the parser//add error messages
+    		}else if(tree.body.stats.get(i).getTag()==MAAPPLY){		
+    			JCModuleArrayCall mi = (JCModuleArrayCall) tree.body.stats
+						.get(i);
+    			if(!variables.containsKey(names
+								.fromString(mi.name.toString()))){
+    				log.error(mi.pos(), "symbol.not.found");
+    			}
+				ClassSymbol c = (ClassSymbol) rs
+						.findType(env, variables.get(names
+								.fromString(mi.name.toString())));
+				if(mi.index.getTag()!=Tag.LITERAL)
+					log.error(mi.index.pos(), "module.array.call.illegal.index");
+				JCLiteral ind = (JCLiteral)mi.index;
+				if((int)ind.value<0||(int)ind.value>=modArrays.get(names
+						.fromString(mi.name.toString())))
+				{
+					log.error(mi.index.pos(), "module.array.call.index.out.of.bound", ind.value, modArrays.get(names
+							.fromString(mi.name.toString())));
+				}
+				if (mi.arguments.length() != syms.moduleparams.get(c).length()) {
+					log.error(mi.pos(), "arguments.of.wiring.mismatch");
+				} else {
+					for (int j = 0; j < mi.arguments.length(); j++) {
+						JCAssign newAssign = make
+								.at(mi.pos())
+								.Assign(make.Select
+										(make.Indexed
+												(mi.indexed, 
+														mi.index),
+										syms.moduleparams.get(c).get(j)
+												.getName()), mi.arguments.get(j));
+						JCExpressionStatement assignAssign = make
+								.Exec(newAssign);
+						assigns.append(assignAssign);
+					}
+				}
+    		}else{
+    			throw new AssertionError("Invalid statement gone through the parser");
     		}
     	}
     	
@@ -980,6 +995,7 @@ public class Attr extends JCTree.Visitor {
     	
     	tree.switchToClass();
     	memberEnter.memberEnter(maindecl, env);
+    	System.out.println(tree);
     }
     // end Panini code
 
