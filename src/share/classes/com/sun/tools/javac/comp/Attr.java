@@ -1165,6 +1165,11 @@ public class Attr extends JCTree.Visitor {
         Lint prevLint = chk.setLint(lint);
 
         // Check that the variable's declared type is well-formed.
+        // Panini code
+        if(tree.getTag()==Tag.STATE)
+    		if(syms.modules.containsKey(names.fromString(tree.vartype.toString())))
+    			log.error(tree.pos(), "states.with.module.type.error");
+        // end Panini code
         chk.validate(tree.vartype, env);
         deferredLintHandler.flush(tree.pos());
 

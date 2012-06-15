@@ -346,6 +346,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         MODULEDEF,
         INCLUDE,
         STATE,
+        PROCCALL,
         FREE;
         // end Panini code
 
@@ -478,6 +479,32 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
     
     // Panini code
+    public static class JCProcInvocation extends JCMethodInvocation implements ProcInvocationTree{
+
+		protected JCProcInvocation(List<JCExpression> typeargs,
+				JCExpression meth, List<JCExpression> args) {
+			super(typeargs, meth, args);
+		}
+    	
+		@Override
+		public Kind getKind(){
+			return Kind.PROCCALL;
+		}
+		
+		@Override
+		public Tag getTag(){
+			return Tag.PROCCALL;
+		}
+		
+		@Override
+		public void accept(Visitor v) { v.visitProcApply(this); }
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitProcInvocation(this, d);
+		} 
+    }
+    
     public static class JCStateDecl extends JCVariableDecl implements StateTree{
 
 		protected JCStateDecl(JCModifiers mods, Name name,
@@ -486,7 +513,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
 		@Override
 		public Kind getKind(){
-			return null;
+			return Kind.STATE;
 		}
 		
 		@Override
@@ -495,11 +522,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
 		
 		@Override
-		public void accept(Visitor v) { v.visitStateDef(this); }
+		public void accept(Visitor v) { v.visitVarDef(this); }
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitStateDef(this, d);
+			return v.visitVariable(this, d);
 		} 
     }
     
@@ -2701,7 +2728,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
      */
     public static abstract class Visitor {
         public void visitTopLevel(JCCompilationUnit that)    { visitTree(that); }
-        public void visitImport(JCImport that)               { visitTree(that); }
+		public void visitImport(JCImport that)               { visitTree(that); }
         public void visitClassDef(JCClassDecl that)          { visitTree(that); }
         public void visitMethodDef(JCMethodDecl that)        { visitTree(that); }
         public void visitVarDef(JCVariableDecl that)         { visitTree(that); }
@@ -2753,6 +2780,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
         // Panini code
+        public void visitProcApply(JCProcInvocation that)    { visitTree(that); }
         public void visitStateDef(JCStateDecl that)	         { visitTree(that); }
         public void visitModuleArrayCall(JCModuleArrayCall that) { visitTree(that); }
         public void visitModuleArray(JCModuleArray that) { visitTree(that); }

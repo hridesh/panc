@@ -46,6 +46,7 @@ public interface Tree {
      */
     public enum Kind {
     	// Panini code
+    	PROCCALL(ProcInvocationTree.class),
     	STATE(StateTree.class),
     	MODULE_ARRAY_CALL(ModuleArrayCallTree.class),
     	MODULE_ARRAY(ModuleArrayTree.class),

@@ -848,8 +848,13 @@ public class Enter extends JCTree.Visitor {
     			}
     		}else if(tree.defs.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
+    			if(mdecl.mods.flags!=0)
+    				log.error(mdecl.pos(), "illegal.state.modifiers");
+    			if(mdecl.init ==null)
+    				log.warning(mdecl.pos(), "state.not.initialized");
     			mdecl.mods.flags |=PRIVATE;
-    			definitions.add(mdecl);
+    			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, mdecl.vartype, mdecl.init);
+    			definitions.add(state);
     		}else definitions.add(tree.defs.get(i));
         }
         if(!hasRun){
@@ -988,6 +993,7 @@ public class Enter extends JCTree.Visitor {
         result = c.type;
         classEnter(tree.defs, localEnv);
         tree.switchToClass();
+        System.out.println(tree);
     }
     
     public List<JCStatement> push(Name n){
