@@ -482,31 +482,52 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     
     // Panini code
     public static class JCProcDecl extends JCMethodDecl implements ProcedureTree{
+    	public Kind kind;
+    	public Tag tag;
 
 		protected JCProcDecl(JCModifiers mods, Name name, JCExpression restype,
 				List<JCTypeParameter> typarams, List<JCVariableDecl> params,
 				List<JCExpression> thrown, JCBlock body,
 				JCExpression defaultValue, MethodSymbol sym) {
 			super(mods, name, restype, typarams, params, thrown, body, defaultValue, sym);
+			kind = Kind.PROCEDURE;
+			tag = Tag.PROC;
 		}
 		
+		public void switchToMethod(){
+			kind = Kind.METHOD;
+			tag = Tag.METHODDEF;
+		}
     	
+		public void switchToProc(){
+			kind = Kind.PROCEDURE;
+			tag = Tag.PROC;
+		}
+		
 		@Override
 		public Kind getKind(){
-			return Kind.PROCEDURE;
+			return kind;
 		}
 		
 		@Override
 		public Tag getTag(){
-			return Tag.PROC;
+			return tag;
 		}
 		
 		@Override
-		public void accept(Visitor v) { v.visitProcDef(this); }
+		public void accept(Visitor v) { 
+			if(kind != Kind.PROCEDURE)
+				v.visitMethodDef(this); 
+			else
+				v.visitProcDef(this);
+		}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitProc(this, d);
+			if(kind != Kind.PROCEDURE)
+				return v.visitMethod(this, d); 
+			else
+				return v.visitProc(this, d);
 		} 
     	
     }

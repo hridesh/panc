@@ -816,9 +816,18 @@ public class Enter extends JCTree.Visitor {
                                                    make.NewClass(null, List.<JCExpression>nil(), make.Ident(names.fromString("Integer")), 
                                                 		   List.<JCExpression>of(make.Literal(indexer++)), 
                                                 		   null));
-                    
+                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC),
+                    		mdecl.name,
+                    		mdecl.restype,
+                    		mdecl.typarams,
+                    		mdecl.params,
+                    		mdecl.thrown,
+                    		mdecl.body,
+                    		null
+                    		);
+                    p.switchToMethod();
                     definitions.prepend(v);
-                    tree.publicMethods = tree.publicMethods.append(mdecl);
+                    tree.publicMethods = tree.publicMethods.append(p);
         		}else 
         			definitions.add(mdecl);
         	}

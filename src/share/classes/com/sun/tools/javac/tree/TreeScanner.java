@@ -62,8 +62,8 @@ public class TreeScanner extends Visitor {
  * Visitor methods
  ****************************************************************************/
     // Panini code
-    public void visitProc(JCProcDecl tree) {
-        visitProc(tree);
+    public void visitProcDef(JCProcDecl tree) {
+        visitMethodDef(tree);
     }
     
     public void visitProcInvocation(JCProcInvocation tree) {

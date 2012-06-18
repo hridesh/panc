@@ -750,11 +750,12 @@ public class Attr extends JCTree.Visitor {
 
     public void visitModuleDef(JCModuleDecl tree){
         if (tree.needsDefaultRun){
+        	attribClassBody(env, tree.sym);
         	List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree, env, rs);
         	enter.classEnter(wrapperClasses, env.outer);
-        	attribClassBody(env, tree.sym);
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
         	}
+//        System.out.println(tree);
     }
 
     public void visitSystemDef(JCSystemDecl tree){
@@ -995,7 +996,17 @@ public class Attr extends JCTree.Visitor {
     	
     	tree.switchToClass();
     	memberEnter.memberEnter(maindecl, env);
-    	System.out.println(tree);
+    }
+    
+    public void visitProcDef(JCProcDecl tree){
+    	Type restype = ((MethodType)tree.sym.type).restype;
+    	if(restype.tsym.isModule||tree.sym.getReturnType().isPrimitive()||
+    			tree.sym.getReturnType().toString().equals("java.lang.String"))
+    	{
+    		log.error("procedure.restype.illegal", tree.sym.getReturnType(), tree.sym);
+    		System.exit(1);
+    	}
+    	tree.switchToMethod();
     }
     // end Panini code
 
@@ -1027,9 +1038,16 @@ public class Attr extends JCTree.Visitor {
             result = tree.type = c.type;
         }
     }
-
+   
     public void visitMethodDef(JCMethodDecl tree) {
         MethodSymbol m = tree.sym;
+        
+        // Panini code
+        if(m.isProcedure){
+        	((JCProcDecl)tree).switchToProc();
+        	tree.accept(this);
+        }
+        // end Panini code
 
         Lint lint = env.info.lint.augment(m.attributes_field, m.flags());
         Lint prevLint = chk.setLint(lint);

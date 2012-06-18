@@ -115,6 +115,26 @@ public class TreeMaker implements JCTree.Factory {
         return this;
     }
     // Panini code
+    public JCProcDecl ProcDef(JCModifiers mods,
+	            Name name,
+	            JCExpression restype,
+	            List<JCTypeParameter> typarams,
+	            List<JCVariableDecl> params,
+	            List<JCExpression> thrown,
+	            JCBlock body,
+	            JCExpression defaultValue) {
+	JCProcDecl tree = new JCProcDecl(mods,
+	                    name,
+	                    restype,
+	                    typarams,
+	                    params,
+	                    thrown,
+	                    body,
+	                    defaultValue,
+	                    null);
+	tree.pos = pos;
+	return tree;
+	}
     public JCProcInvocation ProcApply(List<JCExpression> typeargs,
             JCExpression fn,
             List<JCExpression> args)

@@ -1023,6 +1023,10 @@ public abstract class Symbol implements Element {
      */
     public static class MethodSymbol extends Symbol implements ExecutableElement {
 
+    	// Panini code
+    	public boolean isProcedure;
+    	// end Panini code
+    	
         /** The code of the method. */
         public Code code = null;
 

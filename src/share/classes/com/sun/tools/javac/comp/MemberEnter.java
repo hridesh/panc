@@ -594,6 +594,14 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         annotateLater(tree.mods.annotations, localEnv, m);
         if (tree.defaultValue != null)
             annotateDefaultValueLater(tree.defaultValue, localEnv, m);
+        
+        // Panini code
+        if(!tree.name.toString().contains("$Original")&&m.owner.isModule&&!((tree.name.equals(names.fromString("run")) || (tree.name.equals(names.init))))){
+        	m.isProcedure = true;
+        }
+        else
+        	m.isProcedure = false;
+        // end Panini code
     }
 
     /** Create a fresh environment for method bodies.

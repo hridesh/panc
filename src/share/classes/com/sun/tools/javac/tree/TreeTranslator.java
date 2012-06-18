@@ -425,6 +425,10 @@ public class TreeTranslator extends JCTree.Visitor {
     public void visitModuleDef(JCModuleDecl tree){
     	result = tree;
     }
+    
+    public void visitProcDef(JCProcDecl tree){
+    	visitMethodDef(tree);
+    }
     // end Panini code
     public void visitTree(JCTree tree) {
         throw new AssertionError(tree);
