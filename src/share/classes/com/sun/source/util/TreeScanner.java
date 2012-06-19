@@ -407,7 +407,7 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 		return visitMethodInvocation(node, p);
 	}
     
-    public R visitStateDef(StateTree node, P p) {
+    public R visitState(StateTree node, P p) {
 		return visitVariable(node, p);
 	}
     

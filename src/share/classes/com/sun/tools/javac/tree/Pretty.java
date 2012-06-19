@@ -416,7 +416,7 @@ public class Pretty extends JCTree.Visitor {
         }
     }
     
-    public void visitProcInvocation(JCProcInvocation tree){
+    public void visitProcApply(JCProcInvocation tree){
     	try {
             if (!tree.typeargs.isEmpty()) {
                 if (tree.meth.hasTag(SELECT)) {

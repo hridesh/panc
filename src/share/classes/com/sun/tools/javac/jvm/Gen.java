@@ -472,9 +472,7 @@ public class Gen extends JCTree.Visitor {
             case METHODDEF:
                 methodDefs.append(def);
                 break;
-                // Panini code
-            case VARDEF: case STATE:
-            	// end Panini code
+            case VARDEF:
                 JCVariableDecl vdef = (JCVariableDecl) def;
                 VarSymbol sym = vdef.sym;
                 checkDimension(vdef.pos(), sym.type);

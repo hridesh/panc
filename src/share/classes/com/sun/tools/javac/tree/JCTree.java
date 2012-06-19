@@ -532,53 +532,91 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	
     }
     public static class JCProcInvocation extends JCMethodInvocation implements ProcInvocationTree{
+    	Kind kind;
+    	Tag tag;
 
 		protected JCProcInvocation(List<JCExpression> typeargs,
 				JCExpression meth, List<JCExpression> args) {
 			super(typeargs, meth, args);
+			kind = Kind.PROCCALL;
+			tag = Tag.PROCCALL;
+		}
+		
+		public void switchToMethod(){
+			kind = Kind.METHOD_INVOCATION;
+			tag = Tag.APPLY;
+		}
+		
+		public void switchToProcedure(){
+			kind = Kind.PROCCALL;
+			tag = Tag.PROCCALL;
 		}
     	
 		@Override
 		public Kind getKind(){
-			return Kind.PROCCALL;
+			return kind;
 		}
 		
 		@Override
 		public Tag getTag(){
-			return Tag.PROCCALL;
+			return tag;
 		}
 		
 		@Override
-		public void accept(Visitor v) { v.visitProcApply(this); }
+		public void accept(Visitor v) { 
+			if(kind != Kind.PROCCALL)v.visitApply(this);
+			else v.visitProcApply(this);
+		}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitProcInvocation(this, d);
+			if(kind != Kind.PROCCALL)
+				return v.visitMethodInvocation(this, d);
+			else
+				return v.visitProcInvocation(this, d);
 		} 
     }
     
     public static class JCStateDecl extends JCVariableDecl implements StateTree{
+    	Kind kind;
+    	Tag tag;
 
 		protected JCStateDecl(JCModifiers mods, Name name,
 				JCExpression vartype, JCExpression init, VarSymbol sym) {
 			super(mods, name, vartype, init, sym);
+			kind = Kind.STATE;
+			tag = Tag.STATE;
 		}
 		@Override
 		public Kind getKind(){
-			return Kind.STATE;
+			return kind;
 		}
 		
 		@Override
 		public Tag getTag(){
-			return Tag.STATE;
+			return tag;
+		}
+		
+		public void switchToVar(){
+			kind = Kind.VARIABLE;
+			tag = Tag.VARDEF;
+		}
+		
+		public void switchToState(){
+			kind = Kind.STATE;
+			tag = Tag.STATE;
 		}
 		
 		@Override
-		public void accept(Visitor v) { v.visitVarDef(this); }
+		public void accept(Visitor v) { 
+			if(kind != Kind.STATE)v.visitVarDef(this); 
+			else v.visitStateDef(this);
+		}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitVariable(this, d);
+			if(kind != Kind.STATE) return v.visitVariable(this, d);
+			else return v.visitState(this, d);
 		} 
     }
     

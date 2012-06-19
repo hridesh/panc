@@ -66,7 +66,7 @@ public class TreeScanner extends Visitor {
         visitMethodDef(tree);
     }
     
-    public void visitProcInvocation(JCProcInvocation tree) {
+    public void visitProcApply(JCProcInvocation tree) {
         visitApply(tree);
     }
     

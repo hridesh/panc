@@ -451,7 +451,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         return M.at(t.pos).ProcApply(typeargs, meth, args);
     }
     
-    public JCTree visitStateDef(StateTree node, P p){
+    public JCTree visitState(StateTree node, P p){
     	JCStateDecl t = (JCStateDecl) node;
         JCModifiers mods = copy(t.mods, p);
         JCExpression vartype = copy(t.vartype, p);

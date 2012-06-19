@@ -418,6 +418,13 @@ public class TreeTranslator extends JCTree.Visitor {
     }
 
     // Panini code
+    
+    public void visitProcApply(JCProcInvocation tree) {
+        tree.meth = translate(tree.meth);
+        tree.args = translate(tree.args);
+        result = tree;
+    }
+    
     public void visitSystemDef(JCSystemDecl tree){
         result = tree;
     }
@@ -427,7 +434,13 @@ public class TreeTranslator extends JCTree.Visitor {
     }
     
     public void visitProcDef(JCProcDecl tree){
-    	visitMethodDef(tree);
+    	tree.mods = translate(tree.mods);
+        tree.restype = translate(tree.restype);
+        tree.typarams = translateTypeParams(tree.typarams);
+        tree.params = translateVarDefs(tree.params);
+        tree.thrown = translate(tree.thrown);
+        tree.body = translate(tree.body);
+        result = tree;
     }
     // end Panini code
     public void visitTree(JCTree tree) {

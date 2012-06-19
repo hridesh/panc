@@ -863,6 +863,7 @@ public class Enter extends JCTree.Visitor {
     				log.warning(mdecl.pos(), "state.not.initialized");
     			mdecl.mods.flags |=PRIVATE;
     			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, mdecl.vartype, mdecl.init);
+    			state.switchToVar();
     			definitions.add(state);
     		}else definitions.add(tree.defs.get(i));
         }

@@ -273,7 +273,7 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 		return defaultAction(node, p);
 	}
 	
-	public R visitStateDef(StateTree node, P p) {
+	public R visitState(StateTree node, P p) {
 		return defaultAction(node, p);
 	}
 

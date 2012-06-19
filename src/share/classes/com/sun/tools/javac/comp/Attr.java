@@ -750,9 +750,15 @@ public class Attr extends JCTree.Visitor {
 
     public void visitModuleDef(JCModuleDecl tree){
         if (tree.needsDefaultRun){
-        	attribClassBody(env, tree.sym);
+//        	attribClassBody(env, tree.sym);
+        	
+        	
+        	System.out.println(tree);
         	List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree, env, rs);
+        	System.out.println(tree);
+        	
         	enter.classEnter(wrapperClasses, env.outer);
+        	attribClassBody(env, tree.sym);
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
         	}
 //        System.out.println(tree);
@@ -1044,8 +1050,12 @@ public class Attr extends JCTree.Visitor {
         
         // Panini code
         if(m.isProcedure){
+        	try{
         	((JCProcDecl)tree).switchToProc();
-        	tree.accept(this);
+        	tree.accept(this);}
+        	catch(ClassCastException e){
+        		
+        	}
         }
         // end Panini code
 
@@ -1761,6 +1771,19 @@ public class Attr extends JCTree.Visitor {
      *        the return type of the method, not the method's type itself!
      */
     public void visitApply(JCMethodInvocation tree) {
+    	
+//    	Symbol meth = TreeInfo.symbol(tree.meth);
+//    	System.out.println(tree);
+//    	if(env.enclClass.sym.isModule){
+//    		JCProcInvocation pi = make.ProcApply(tree.typeargs, tree.meth, tree.args);
+//    		System.out.println(meth.owner);
+////    		tree = pi;
+//    	}
+//    	System.out.println(tree);
+//    	System.out.println(tree.getTag());
+//    	while()
+//    	System.out.println(tree);
+//    	System.out.println("toplevel: "+ env.toplevel);
         // The local environment of a method application is
         // a new environment nested in the current one.
         Env<AttrContext> localEnv = env.dup(tree, env.info.dup());

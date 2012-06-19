@@ -111,7 +111,7 @@ public interface TreeVisitor<R,P> {
     // Panini Code
     R visitProc(ProcedureTree tree, P p);
     R visitProcInvocation(ProcInvocationTree tree, P p);
-    R visitStateDef(StateTree tree, P p);
+    R visitState(StateTree tree, P p);
     R visitModuleArrayCall(ModuleArrayCallTree tree, P p);
     R visitModuleArray(ModuleArrayTree tree, P p);
     R visitSystem(SystemTree node, P p);
