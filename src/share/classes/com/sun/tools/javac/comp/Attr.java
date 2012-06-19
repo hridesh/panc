@@ -944,7 +944,7 @@ public class Attr extends JCTree.Visitor {
 				if(mi.index.getTag()!=Tag.LITERAL)
 					log.error(mi.index.pos(), "module.array.call.illegal.index");
 				JCLiteral ind = (JCLiteral)mi.index;
-				if((int)ind.value<0||(int)ind.value>=modArrays.get(names
+				if((Integer)ind.value<0||(Integer)ind.value>=modArrays.get(names
 						.fromString(mi.name.toString())))
 				{
 					log.error(mi.index.pos(), "module.array.call.index.out.of.bound", ind.value, modArrays.get(names
