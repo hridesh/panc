@@ -1076,15 +1076,17 @@
         </macrodef>
     </target>
 	
-	<target name="export" depends="build">
-	      <exec dir="make/" executable="./export.sh">
-	      </exec>
-	</target>
-	    
 	<target name="runtime" depends="build">
 		<exec dir="make/" executable="./runtime.sh">
 		</exec>
 	</target>
+	
+	<target name="export" depends="build,runtime">
+	      <exec dir="make/" executable="./export.sh">
+	      </exec>
+	</target>
+	    
+	
 
 </project>
 

@@ -13,7 +13,7 @@ cp -r ../../../../build/bootstrap/classes/org/paninij/runtime .
 cd ../..	
 jar cvf panini_rt.jar *
 
-cp panini_rt.jar ../export/
+cp panini_rt.jar ../export
 cd ..
 
 rm -rf jar
