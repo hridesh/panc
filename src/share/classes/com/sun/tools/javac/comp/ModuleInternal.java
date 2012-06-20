@@ -358,17 +358,18 @@ public class ModuleInternal extends Internal
 		for(JCMethodDecl method : tree.publicMethods){
 			Type restype = ((MethodType)method.sym.type).restype;
 			
-			
-			
 			ClassSymbol c;
             if(restype.toString().equals("void"))
                 c = (ClassSymbol)rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME+"$Void"), TYP);
             else
                 c = (ClassSymbol)rs.findIdent(env, names.fromString(restype.toString()), TYP);
 			Iterator<Symbol> iter = c.members().getElements().iterator();
+			System.out.println(restype.tag);
+			System.out.println(rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME+"$"+restype.toString()), TYP).toString());
+			
 			if(restype.tag==TypeTags.CLASS&&
 					rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME+"$"+restype.toString()), TYP).toString().equals("symbol not found error")) {
-				JCVariableDecl var = var(mods(PRIVATE|VOLATILE), 
+				JCVariableDecl var = var(mods(PRIVATE), 
 						"wrapped", restype.toString(), nullv());
 				ListBuffer<JCTree> wrappedMethods= new ListBuffer<JCTree>();
 				ListBuffer<JCTree> constructors= new ListBuffer<JCTree>();
@@ -423,11 +424,13 @@ public class ModuleInternal extends Internal
 				}
 				ListBuffer<JCVariableDecl> finishParams = new ListBuffer<JCVariableDecl>();
 				finishParams.add(var(mods(0),"t",restype.toString()));
+				
+				
 				JCMethodDecl finish = method(mods(PUBLIC), 
 						names.fromString(PaniniConstants.PANINI_FINISH),
 						make.Type(syms.voidType),
 						finishParams,
-						body(es(assign("wrapped", id("t"))))
+						body(sync(thist(), body(es(assign("wrapped", id("t"))), es(apply("notifyAll")))))
 						);
 				JCExpression extending;
 				List<JCExpression> implement;
