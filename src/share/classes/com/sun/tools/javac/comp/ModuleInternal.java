@@ -364,9 +364,6 @@ public class ModuleInternal extends Internal
             else
                 c = (ClassSymbol)rs.findIdent(env, names.fromString(restype.toString()), TYP);
 			Iterator<Symbol> iter = c.members().getElements().iterator();
-			System.out.println(restype.tag);
-			System.out.println(rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME+"$"+restype.toString()), TYP).toString());
-			
 			if(restype.tag==TypeTags.CLASS&&
 					rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME+"$"+restype.toString()), TYP).toString().equals("symbol not found error")) {
 				JCVariableDecl var = var(mods(PRIVATE), 

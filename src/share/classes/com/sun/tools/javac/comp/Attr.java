@@ -747,18 +747,39 @@ public class Attr extends JCTree.Visitor {
 		return assigns.toList();
     }
     
+    public List<JCStatement> push(Name n){
+    	ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
+    	stats.add(make.Exec(make.Assign(make.Indexed(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
+    			make.Unary(POSTINC, 
+    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
+    					make.Ident(n))));
+//    	stats.add(make.Exec(make.Unary(POSTINC, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)))));
+    	stats.add(make.If(make.Binary(GE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
+    			make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
+    					names.fromString("length"))), 
+    			make.Exec(make.Assign(
+    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
+    					make.Literal(0))), 
+    			null));
+//    	stats.add(make.If(make.Binary(AND, 
+//    			make.Binary(EQ, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
+//    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), 
+//    			make.Binary(NE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
+//    					make.Literal(0))),
+//    			make.Exec(make.Apply(List.<JCExpression>nil(), 
+//    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_EXTENDQUEUE)), 
+//    					List.<JCExpression>nil())), 
+//    			null));
+    	return stats.toList();
+    }
+    
 
     public void visitModuleDef(JCModuleDecl tree){
         if (tree.needsDefaultRun){
-//        	attribClassBody(env, tree.sym);
-        	
-        	
-        	System.out.println(tree);
         	List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree, env, rs);
-        	System.out.println(tree);
-        	
         	enter.classEnter(wrapperClasses, env.outer);
         	attribClassBody(env, tree.sym);
+        	
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
         	}
 //        System.out.println(tree);
@@ -1054,7 +1075,6 @@ public class Attr extends JCTree.Visitor {
         	((JCProcDecl)tree).switchToProc();
         	tree.accept(this);}
         	catch(ClassCastException e){
-        		
         	}
         }
         // end Panini code
@@ -3436,7 +3456,6 @@ public class Attr extends JCTree.Visitor {
                 }
                 // end Panini code
                 attribClassBody(env, c);
-                
                 chk.checkDeprecatedAnnotation(env.tree.pos(), c);
             } finally {
                 log.useSource(prev);

@@ -885,7 +885,7 @@ public class Enter extends JCTree.Visitor {
 	            		make.If(make.Binary(LT, make.Binary(PLUS, make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
 	        					names.fromString("length")), make.Binary(MINUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
 	        		            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
-	        		            		make.Literal(mdecl.params.length()+2+1)), 
+	        		            		make.Literal(mdecl.params.length()+2)), 
 	        		            		make.If(make.Binary(NE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
 	        		                					make.Literal(0)),
 	        		                			make.Exec(make.Apply(List.<JCExpression>nil(), 
