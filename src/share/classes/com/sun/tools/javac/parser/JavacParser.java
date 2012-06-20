@@ -211,6 +211,10 @@ public class JavacParser implements Parser {
     /** The mode of the term that was parsed last.
      */
     private int lastmode = 0;
+    
+    // Panini code
+    boolean inModule = false;
+    // end Panini code
 
     /* ---------- token management -------------- */
 
@@ -1425,7 +1429,15 @@ public class JavacParser implements Parser {
     JCMethodInvocation arguments(List<JCExpression> typeArgs, JCExpression t) {
         int pos = token.pos;
         List<JCExpression> args = arguments();
-        return toP(F.at(pos).Apply(typeArgs, t, args));
+        // Panini code
+        if(inModule){
+        	JCProcInvocation proc = toP(F.at(pos).ProcApply(typeArgs, t, args));
+        	proc.switchToMethod();
+        	return proc;
+        }
+        else
+        // end Panini code
+        	return toP(F.at(pos).Apply(typeArgs, t, args));
     }
 
     /**  TypeArgumentsOpt = [ TypeArguments ]
@@ -1603,7 +1615,7 @@ public class JavacParser implements Parser {
             } else {
                 JCExpression sizeTree = literal(names.empty);
                 if (sizeTree.getKind()!=Kind.INT_LITERAL) {
-                    System.out.println("Need to have an int as the size parameter for a module array"); //TODO real error here
+                    log.error(pos, "module.array.call.illegal.index");
                     System.exit(5555);
                 }
                 accept(RBRACKET);
@@ -2864,7 +2876,7 @@ public class JavacParser implements Parser {
         } // Panini code
         else if(token.kind == IDENTIFIER){
         	if(token.name().toString().equals("system"))
-         		return configDecl(mods, dc);
+         		return systemDecl(mods, dc);
          	else if(token.name().toString().equals("library"))
          		return libraryDecl(mods, dc);
          	else if(token.name().toString().equals("module"))
@@ -2910,13 +2922,15 @@ public class JavacParser implements Parser {
     
 
     // Panini code
-     JCStatement configDecl(JCModifiers mod, String dc){
+     JCStatement systemDecl(JCModifiers mod, String dc){
+    	inModule = true;
      	accept(IDENTIFIER);
      	int pos = token.pos;
      	Name name = ident();
      	JCBlock body = configBlock();
      	JCSystemDecl result = toP(F.at(pos).ConfigDef(mod, name, body));
      	attach(result, dc);
+     	inModule = false;
      	return result;
      }
      

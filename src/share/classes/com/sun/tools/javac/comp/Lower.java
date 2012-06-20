@@ -2807,25 +2807,39 @@ public class Lower extends TreeTranslator {
         }
     }
 
+    // Panini code
+    public void visitProcApply(JCProcInvocation tree){
+    	Symbol meth = TreeInfo.symbol(tree.meth);
+    	
+    	//check intra procedure calls
+    	if(meth.owner.toString().equals(outermostClassDef.sym.toString())&&
+        		outermostClassDef.sym.isModule&&
+        		(currentMethodSym.flags()&PRIVATE)!=0&&
+        		(meth.flags()&PUBLIC)!=0){
+        	JCIdent id = (JCIdent)tree.meth;
+        	id.name = names.fromString(id.name.toString().concat("$Original"));
+        }
+    }
+    // end Panini code
+    
     public void visitApply(JCMethodInvocation tree) {
         Symbol meth = TreeInfo.symbol(tree.meth);
         // Panini code
-        if(meth.owner.isModule){//switch to procedure call
-        	JCProcInvocation pi = make.ProcApply(tree.typeargs, tree.meth, tree.args);
-        	pi.varargsElement=tree.varargsElement;
-        	pi.type = tree.type;
+        if(meth.owner.isModule){
+        	JCProcInvocation pi;
+        	try{
+        	pi = (JCProcInvocation) tree;
+        	}catch (ClassCastException e){
+        		pi = make.ProcApply(tree.typeargs, tree.meth, tree.args);
+        		pi.varargsElement=tree.varargsElement;
+            	pi.type = tree.type;
+            	tree = pi;
+        	}
+        	pi.switchToProcedure();
+        	pi.accept(this);
         	pi.switchToMethod();
-        	tree = pi;
         }
-//        if(meth.owner.toString().equals(outermostClassDef.sym.toString())&&
-//        		outermostClassDef.sym.isModule&&
-//        		(currentMethodSym.flags()&PRIVATE)!=0&&
-//        		(meth.flags()&PUBLIC)!=0){        	
-//        	JCIdent id = (JCIdent)tree.meth;
-//        	id.name = names.fromString(id.name.toString().concat("$Original"));
-//        }
         // end Panini code
-        
         List<Type> argtypes = meth.type.getParameterTypes();
         if (allowEnums &&
             meth.name==names.init &&

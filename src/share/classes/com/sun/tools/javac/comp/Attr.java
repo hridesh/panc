@@ -1791,19 +1791,6 @@ public class Attr extends JCTree.Visitor {
      *        the return type of the method, not the method's type itself!
      */
     public void visitApply(JCMethodInvocation tree) {
-    	
-//    	Symbol meth = TreeInfo.symbol(tree.meth);
-//    	System.out.println(tree);
-//    	if(env.enclClass.sym.isModule){
-//    		JCProcInvocation pi = make.ProcApply(tree.typeargs, tree.meth, tree.args);
-//    		System.out.println(meth.owner);
-////    		tree = pi;
-//    	}
-//    	System.out.println(tree);
-//    	System.out.println(tree.getTag());
-//    	while()
-//    	System.out.println(tree);
-//    	System.out.println("toplevel: "+ env.toplevel);
         // The local environment of a method application is
         // a new environment nested in the current one.
         Env<AttrContext> localEnv = env.dup(tree, env.info.dup());
@@ -1815,7 +1802,6 @@ public class Attr extends JCTree.Visitor {
         List<Type> typeargtypes = null;
 
         Name methName = TreeInfo.name(tree.meth);
-
         boolean isConstructorCall =
             methName == names._this || methName == names._super;
 

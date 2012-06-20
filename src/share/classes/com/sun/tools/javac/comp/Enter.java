@@ -958,6 +958,9 @@ public class Enter extends JCTree.Visitor {
 	            definitions.add(methodCopy);
 	            definitions.add(mdecl);
         	}
+//        	definitions.add(make.Annotation(make.Ident(names.fromString("SuppressWarnings")), 
+//        			List.<JCExpression>of(make.Literal("\"unchecked\""))));
+        	
             MethodSymbol msym = new MethodSymbol(
                 PUBLIC,
                 names.fromString("run"),
@@ -971,6 +974,8 @@ public class Enter extends JCTree.Visitor {
                 );
 			JCMethodDecl m = make.MethodDef(msym,
                                             make.Block(0, List.<JCStatement>nil()));
+			m.mods = make.Modifiers(PUBLIC, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("SuppressWarnings")), 
+        			List.<JCExpression>of(make.Literal("unchecked")))));
             m.params = List.<JCVariableDecl>nil();
             m.sym = msym;
             memberEnter.memberEnter(m, localEnv);
