@@ -91,7 +91,6 @@ public class ModuleInternal extends Internal
 
                 innerIfStatements.append(es(apply(thist(), method.name.toString() + "$Original", args)));
 
-                innerIfStatements.append(sync(id("d"), body(es(apply("d", "notifyAll")))));
             } else if (restype.tag==TypeTags.CLASS) {
                 ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 
@@ -110,7 +109,6 @@ public class ModuleInternal extends Internal
                 innerIfStatements.append(es(apply("d", "panini$finish",
                                                   args(apply(thist(), method.name.toString() + "$Original", args)))));
 
-                innerIfStatements.append(sync(id("d"), body(es(apply("d", "notifyAll")))));
             } else {
                 System.out.println("Unsupported return type in a public module method. Can only be void or non-primitive.");
                 System.exit(5555);
