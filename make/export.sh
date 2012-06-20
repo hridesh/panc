@@ -5,6 +5,8 @@ cd `dirname $0`
 rm -rf panc
 rm -rf panc.zip
 
+./runtime.sh
+
 mkdir panc
 mkdir panc/lib
 mkdir panc/bin
