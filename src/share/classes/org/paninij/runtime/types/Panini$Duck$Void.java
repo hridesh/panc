@@ -30,7 +30,7 @@ public class Panini$Duck$Void implements Panini$Duck<Void> {
 		return null;
 	}
 
-	public void paninifinish(Void t) {
+	public void panini$finish(Void t) {
 		future.set();
 	}
 

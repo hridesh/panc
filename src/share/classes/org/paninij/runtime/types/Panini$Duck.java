@@ -22,7 +22,7 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 public interface Panini$Duck<T> {
 	
-    public void paninifinish(T t);
+    public void panini$finish(T t);
     
    	public static class DuckBarrier extends AbstractQueuedSynchronizer {
      public final void get() {

@@ -524,7 +524,7 @@ public class Enter extends JCTree.Visitor {
     }
     
     public void visitSystemDef(JCSystemDecl tree){
-    	addDuck();
+//    	addDuck();
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
         ClassSymbol c;
@@ -698,6 +698,18 @@ public class Enter extends JCTree.Visitor {
     	pid = make.Select(pid, names.fromString("runtime"));
     	pid = make.Select(pid, names.fromString("PaniniModule"));
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	pid = make.Ident(names.fromString("org"));
+    	pid = make.Select(pid, names.fromString("paninij"));
+    	pid = make.Select(pid, names.fromString("runtime"));
+    	pid = make.Select(pid, names.fromString("types"));
+    	pid = make.Select(pid, names.fromString("Panini$Duck"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	pid = make.Ident(names.fromString("org"));
+    	pid = make.Select(pid, names.fromString("paninij"));
+    	pid = make.Select(pid, names.fromString("runtime"));
+    	pid = make.Select(pid, names.fromString("types"));
+    	pid = make.Select(pid, names.fromString("Panini$Duck$Void"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     	
     	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_QUEUE));
     	Symbol owner = env.info.scope.owner;
@@ -870,16 +882,6 @@ public class Enter extends JCTree.Visitor {
         if(!hasRun){
         	for(JCMethodDecl mdecl : tree.publicMethods){
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
-	        	
-	        	make.Binary(AND, make.Binary(AND, make.Binary(LT, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
-	            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), make.Binary(LT, make.Binary(PLUS, make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
-	        					names.fromString("length")), make.Binary(MINUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
-	        		            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
-	        		            		make.Literal(mdecl.params.length()+2+1))), make.Binary(NE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), make.Literal(0)));
-	        	make.Binary(LT, make.Binary(PLUS, make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
-    					names.fromString("length")), make.Binary(MINUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
-    		            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
-    		            		make.Literal(mdecl.params.length()+2+1));
 	        	copyBody.append(make.If(make.Binary(LT, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
 	            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), 
 	            		make.If(make.Binary(LT, make.Binary(PLUS, make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
@@ -920,6 +922,7 @@ public class Enter extends JCTree.Visitor {
 	            copyBody.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
 	            		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("lock")), 
 	            		List.<JCExpression>nil())));
+	            
 	            copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
 	            		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("unlock")), 
 	            		List.<JCExpression>nil())));
@@ -958,9 +961,6 @@ public class Enter extends JCTree.Visitor {
 	            definitions.add(methodCopy);
 	            definitions.add(mdecl);
         	}
-//        	definitions.add(make.Annotation(make.Ident(names.fromString("SuppressWarnings")), 
-//        			List.<JCExpression>of(make.Literal("\"unchecked\""))));
-        	
             MethodSymbol msym = new MethodSymbol(
                 PUBLIC,
                 names.fromString("run"),

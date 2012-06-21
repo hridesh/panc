@@ -2811,7 +2811,7 @@ public class Lower extends TreeTranslator {
     public void visitProcApply(JCProcInvocation tree){
     	Symbol meth = TreeInfo.symbol(tree.meth);
     	
-    	//check intra procedure calls
+    	//check intra module calls
     	if(meth.owner.toString().equals(outermostClassDef.sym.toString())&&
         		outermostClassDef.sym.isModule&&
         		(currentMethodSym.flags()&PRIVATE)!=0&&
