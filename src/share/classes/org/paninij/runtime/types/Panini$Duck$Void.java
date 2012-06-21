@@ -19,7 +19,7 @@
 
 package org.paninij.runtime.types;
 
-public class Panini$Duck$Void implements Panini$Duck {
+public class Panini$Duck$Void implements Panini$Duck<Void> {
 
 	public Panini$Duck$Void() {
 		super();
@@ -30,7 +30,7 @@ public class Panini$Duck$Void implements Panini$Duck {
 		return null;
 	}
 
-	public void paninifinish(Object t) {
+	public void paninifinish(Void t) {
 		future.set();
 	}
 

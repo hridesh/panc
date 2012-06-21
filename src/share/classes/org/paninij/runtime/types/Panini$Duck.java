@@ -20,9 +20,9 @@ package org.paninij.runtime.types;
 
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
-public interface Panini$Duck {
+public interface Panini$Duck<T> {
 	
-    public void paninifinish(Object t);
+    public void paninifinish(T t);
     
    	public static class DuckBarrier extends AbstractQueuedSynchronizer {
      public final void get() {
