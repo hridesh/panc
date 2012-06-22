@@ -85,11 +85,13 @@ public class ModuleInternal extends Internal
                 }
 
                 innerIfStatements.append(es(mm(id("size"))));
-                innerIfStatements.append(var(noMods, "d", PaniniConstants.DUCK_INTERFACE_NAME, cast(PaniniConstants.DUCK_INTERFACE_NAME, aindex(id("objects"), pp(id("head"))))));
+                innerIfStatements.append(var(noMods, "d", PaniniConstants.DUCK_INTERFACE_NAME+"$Void", cast(PaniniConstants.DUCK_INTERFACE_NAME+"$Void", aindex(id("objects"), pp(id("head"))))));
                 innerIfStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
                 innerIfStatements.append(es(apply("queueLock", "unlock")));
-
+//                innerIfStatements.append(es(apply("d", "panini$finish")));
                 innerIfStatements.append(es(apply(thist(), method.name.toString() + "$Original", args)));
+                innerIfStatements.append(es(apply("d", "panini$finish",
+                        args(nullv()))));
 
             } else if (restype.tag==TypeTags.CLASS) {
                 ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
