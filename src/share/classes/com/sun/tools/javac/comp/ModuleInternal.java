@@ -21,12 +21,15 @@ package com.sun.tools.javac.comp;
 
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
+import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCModuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCTypeParameter;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.*;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
@@ -60,12 +63,21 @@ public class ModuleInternal extends Internal
     public JCBlock generateComputeMethodBody(JCModuleDecl tree) {
         JCModifiers mods = mods(Flags.PROTECTED);
         JCModifiers noMods = mods(0);
+        
+
+        JCExpression sop = make.Ident(names.fromString("System"));
+    	sop = make.Select(sop, names.fromString("out"));
+    	sop = make.Select(sop, names.fromString("print"));
 
         ListBuffer<JCStatement> ifBody = new ListBuffer<JCStatement>();
 
+//        ifBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("After Lock")))));
+//        ifBody.append(es(apply("print")));
         ifBody.append(es(apply("queueLock", "lock")));
+//        ifBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("Before Lock")))));
         ifBody.append(es(mm(id("size"))));
         ifBody.append(var(noMods, "name", id("Object"), aindex(id("objects"), pp(id("head")))));
+//        ifBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("In if ")))));
         ifBody.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
 
         
@@ -116,14 +128,16 @@ public class ModuleInternal extends Internal
                 System.exit(5555);
             }
 
-            
+        	
+//        	innerIfStatements.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("Match found")))));
             ifBody.append(ifs(apply("name", "equals", lb(id(PaniniConstants.PANINI_METHOD_CONST + method.name.toString()))), body(innerIfStatements)));
 
         }
-
+//        ifBody.append(es(apply("print")));
         JCBlock b =  body(
             whilel(truev(),
                    body(
+//                	   make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("")))),
                        ifs(gt(select(thist(), "size"), intlit(0)),
                            body(ifBody
 /*
@@ -353,7 +367,7 @@ public class ModuleInternal extends Internal
 
 	public List<JCClassDecl> generateClassWrappers(JCModuleDecl tree, Env<AttrContext> env, Resolve rs) {
 		ListBuffer<JCClassDecl> classes = new ListBuffer<JCClassDecl>();
-		
+		Map<String, Integer> addedHere = new HashMap<String, Integer>();
 	  
 		for(JCMethodDecl method : tree.publicMethods){
 			Type restype = ((MethodType)method.sym.type).restype;
@@ -365,7 +379,10 @@ public class ModuleInternal extends Internal
                 c = (ClassSymbol)rs.findIdent(env, names.fromString(restype.toString()), TYP);
 			Iterator<Symbol> iter = c.members().getElements().iterator();
 			if(restype.tag==TypeTags.CLASS&&
-					rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME+"$"+restype.toString()), TYP).toString().equals("symbol not found error")) {
+					rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME+"$"+restype.toString()), TYP).toString().equals("symbol not found error")
+					&&!addedHere.containsKey(restype.toString())
+					) {
+				addedHere.put(restype.toString(), 0);
 				JCVariableDecl var = var(mods(PRIVATE), 
 						"wrapped", restype.toString(), nullv());
 				ListBuffer<JCTree> wrappedMethods= new ListBuffer<JCTree>();

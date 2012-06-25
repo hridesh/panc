@@ -21,7 +21,7 @@ package org.paninij.runtime;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class PaniniModule extends Thread {
-   protected volatile Object[] objects = new Object[10];
+   protected Object[] objects = new Object[10];
    protected volatile int head = 0, tail = 0, size = 0;
    protected final ReentrantLock queueLock = new ReentrantLock();
    

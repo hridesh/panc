@@ -2815,7 +2815,7 @@ public class Lower extends TreeTranslator {
     	if(meth.owner.toString().equals(outermostClassDef.sym.toString())&&
         		outermostClassDef.sym.isModule&&
         		(currentMethodSym.flags()&PRIVATE)!=0&&
-        		(meth.flags()&PUBLIC)!=0){
+        		(meth.flags()&PUBLIC)!=0&&tree.meth.getTag()!=SELECT){
         	JCIdent id = (JCIdent)tree.meth;
         	id.name = names.fromString(id.name.toString().concat("$Original"));
         }
