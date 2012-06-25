@@ -21,8 +21,8 @@ package org.paninij.runtime;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class PaniniModule extends Thread {
-   protected Object[] objects = new Object[10];
-   protected int head = 0, tail = 0, size = 0;
+   protected volatile Object[] objects = new Object[10];
+   protected volatile int head = 0, tail = 0, size = 0;
    protected final ReentrantLock queueLock = new ReentrantLock();
    
    protected void extendQueue() {
@@ -30,7 +30,7 @@ public abstract class PaniniModule extends Thread {
        Object[] newObjects = new Object[objects.length+10];
        System.arraycopy(objects, head, newObjects, 0, objects.length-head);
        System.arraycopy(objects, 0, newObjects, objects.length-head, tail);
-       head = 0; tail = objects.length;        
+       head = 0; tail = size;        
        objects = newObjects;
    }        
    
