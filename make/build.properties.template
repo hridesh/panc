@@ -29,6 +29,7 @@
 # Override this path as needed, either on the command line or in
 # one of the standard user build.properties files (see build.xml)
 
+# boot.java.home = /Library/Java/JavaVirtualMachines/1.7.0.jdk/Contents/Home
 # boot.java.home = /opt/jdk/1.6.0
 boot.java.home = /usr/lib/jvm/java-7-openjdk-i386
 boot.java = ${boot.java.home}/bin/java
