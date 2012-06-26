@@ -19,8 +19,8 @@ module Body (Body[] bodies, double x, double y, double vx, double vy, double m, 
     void calcNextV(IntC start) {
     	System.out.println("start calculating the next V");
         for (int i = start.value(); i < bodies.length; i++) {
-            double dx = x - bodies[i].x;
-            double dy = y - bodies[i].y;
+            double dx = x - bodies[i].getX().value();
+            double dy = y - bodies[i].getX().value();
 
             double dSquared = dx * dx + dy * dy;
             double distance = Math.sqrt(dSquared);

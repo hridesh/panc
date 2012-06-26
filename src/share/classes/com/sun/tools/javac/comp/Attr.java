@@ -778,6 +778,7 @@ public class Attr extends JCTree.Visitor {
         if (tree.needsDefaultRun){
         	List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree, env, rs);
         	enter.classEnter(wrapperClasses, env.outer);
+//        	System.out.println(wrapperClasses);
         	attribClassBody(env, tree.sym);
         	
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
@@ -2697,6 +2698,13 @@ public class Attr extends JCTree.Visitor {
         env.info.selectSuper = selectSuperPrev;
         result = checkId(tree, site, sym, env, resultInfo, varArgs);
         env.info.tvars = List.nil();
+        
+        // Panini code
+        if(tree.selected.type.tsym.isModule&&!tree.type.getKind().toString().equals("EXECUTABLE")
+        		&&env.enclClass.sym.isModule&&!tree.selected.toString().equals("this")){
+        	log.error(tree.pos, "invalid.access.of.modules.states");
+        }
+        // end Panini code
     }
     //where
         /** Determine symbol referenced by a Select expression,
