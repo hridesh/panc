@@ -23,19 +23,18 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 public interface Panini$Duck<T> {
 	
     public void panini$finish(T t);
+    public int panini$message$id(); 
     
    	public static class DuckBarrier extends AbstractQueuedSynchronizer {
-     public final void get() {
-     	try {
-    			acquireSharedInterruptibly(1);
-    		} catch (InterruptedException e) {
-    			// TODO: What should be the semantics here?
-    			e.printStackTrace();
-    		}          	
+     
+   		public final void get() {
+    			acquireShared(1);
      }
+     
    		public final void set() {
    			releaseShared(1);
    		}
+
    		protected boolean isSignalled() { return getState() != 0; }
 
      protected int tryAcquireShared(int ignore) {

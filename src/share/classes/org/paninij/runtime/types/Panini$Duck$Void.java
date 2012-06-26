@@ -21,8 +21,9 @@ package org.paninij.runtime.types;
 
 public class Panini$Duck$Void implements Panini$Duck<Void> {
 
-	public Panini$Duck$Void() {
+	public Panini$Duck$Void(int messageId) {
 		super();
+		this.messageId = messageId;
 	}
 
 	public Void value() {
@@ -34,6 +35,12 @@ public class Panini$Duck$Void implements Panini$Duck<Void> {
 		future.set();
 	}
 
-	private final DuckBarrier future = new DuckBarrier();
+	public int panini$message$id() {
+		return this.messageId;
+	}
 
+	private final DuckBarrier future = new DuckBarrier();
+	private final int messageId; 
+	@SuppressWarnings("unused")
+	private Panini$Duck$Void() { messageId = -1; }
 }

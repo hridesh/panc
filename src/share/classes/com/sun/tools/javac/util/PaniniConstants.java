@@ -35,5 +35,6 @@ public class PaniniConstants {
 	public final static String DUCK_INTERFACE_NAME = "Panini$Duck";
 	public final static String PANINI_FINISH = "panini$finish";
 	public final static String PANINI_MESSAGE = "panini$message";
-    public final static String PANINI_METHOD_CONST = "panini$methodConst$";
+ public final static String PANINI_METHOD_CONST = "panini$methodConst$";
+ public final static String PANINI_MESSAGE_ID = "panini$message$id";
 }
