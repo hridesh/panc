@@ -822,12 +822,10 @@ public class Enter extends JCTree.Visitor {
         		else if((mdecl.mods.flags & PRIVATE) ==0
         					&&(mdecl.mods.flags & PROTECTED) ==0){
     				mdecl.mods.flags |= PUBLIC;
-                    JCVariableDecl v = make.VarDef(make.Modifiers(PUBLIC | STATIC | FINAL), 
-                                                   names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString()),
-                                                   make.Ident(names.fromString("Integer")), 
-                                                   make.NewClass(null, List.<JCExpression>nil(), make.Ident(names.fromString("Integer")), 
-                                                		   List.<JCExpression>of(make.Literal(indexer++)), 
-                                                		   null));
+    				JCVariableDecl v = make.VarDef(make.Modifiers(PUBLIC | STATIC | FINAL),
+    						names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString()),
+    						make.TypeIdent(TypeTags.INT),
+    					    make.Literal(indexer++));
                     JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC),
                     		mdecl.name,
                     		mdecl.restype,
@@ -882,43 +880,41 @@ public class Enter extends JCTree.Visitor {
         if(!hasRun){
         	for(JCMethodDecl mdecl : tree.publicMethods){
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
-	        	copyBody.append(make.If(make.Binary(LT, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
-	            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), 
-	            		make.If(make.Binary(LT, make.Binary(PLUS, make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
-	        					names.fromString("length")), make.Binary(MINUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
-	        		            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
-	        		            		make.Literal(mdecl.params.length()+2)), 
-	        		            		make.If(make.Binary(NE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-	        		                					make.Literal(0)),
-	        		                			make.Exec(make.Apply(List.<JCExpression>nil(), 
-	        		                					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_EXTENDQUEUE)), 
-	        		                					List.<JCExpression>nil())), 
-	        		                			null),
-	    	            		null), 
-	    	            		make.If(make.Binary(LT, 
-	    	    	            		make.Binary(MINUS, 
-	    	    	            				make.Ident(names.fromString
-	    	    	            						(PaniniConstants.PANINI_MODULE_HEAD)), 
-	    	    	            						make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), make.Literal(mdecl.params.length()+2)), 
-	    	    	            						make.If(make.Binary(NE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-	    	    	            				    					make.Literal(0)),
-	    	    	            				    			make.Exec(make.Apply(List.<JCExpression>nil(), 
-	    	    	            				    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_EXTENDQUEUE)), 
-	    	    	            				    					List.<JCExpression>nil())), 
-	    	    	            				    			null), 
-	    	    	            		null)));
+//	        	copyBody.append(make.If(make.Binary(LT, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
+//	            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), 
+//	            		make.If(make.Binary(LT, make.Binary(PLUS, make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
+//	        					names.fromString("length")), make.Binary(MINUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
+//	        		            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
+//	        		            		make.Literal(mdecl.params.length()+2)), 
+//	        		            		make.If(make.Binary(NE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
+//	        		                					make.Literal(0)),
+//	        		                			make.Exec(make.Apply(List.<JCExpression>nil(), 
+//	        		                					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_EXTENDQUEUE)), 
+//	        		                					List.<JCExpression>nil())), 
+//	        		                			null),
+//	    	            		null), 
+//	    	            		make.If(make.Binary(LT, 
+//	    	    	            		make.Binary(MINUS, 
+//	    	    	            				make.Ident(names.fromString
+//	    	    	            						(PaniniConstants.PANINI_MODULE_HEAD)), 
+//	    	    	            						make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), make.Literal(mdecl.params.length()+2)), 
+//	    	    	            						make.If(make.Binary(NE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
+//	    	    	            				    					make.Literal(0)),
+//	    	    	            				    			make.Exec(make.Apply(List.<JCExpression>nil(), 
+//	    	    	            				    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_EXTENDQUEUE)), 
+//	    	    	            				    					List.<JCExpression>nil())), 
+//	    	    	            				    			null), 
+//	    	    	            		null)));
+	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("ensureSpace")), List.<JCExpression>of(make.Literal(mdecl.params.length()+1)))));
 	        	copyBody.append(make.Exec(make.Assign(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
 	        			make.Binary(PLUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-	        					make.Literal(mdecl.params.length()+2)))));
-	            copyBody.appendList(push(names.fromString(PaniniConstants.PANINI_METHOD_CONST+mdecl.name)));
+	        					make.Literal(mdecl.params.length()+1)))));
+	        	copyBody.appendList(push(names.fromString("d")));
 	            if(mdecl.params.length()!=0){
 	            	for(JCVariableDecl n : mdecl.params){
 	            		copyBody.appendList(push(n.name));
 	            	}
 	            }
-	         
-	            copyBody.appendList(push(names.fromString("d")));
-	            
 	            copyBody.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
 	            		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("lock")), 
 	            		List.<JCExpression>nil())));
@@ -932,7 +928,7 @@ public class Enter extends JCTree.Visitor {
 	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
 	            			make.NewClass(null, List.<JCExpression>nil(), 
 	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
-	            					List.<JCExpression>nil(), null)));
+	            					List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString()))), null)));
 	            	copyBody.append(make.Return(make.Ident(names.fromString("d"))));
 	            }
 	            else{
@@ -941,7 +937,7 @@ public class Enter extends JCTree.Visitor {
 	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$Void")), 
 	            			make.NewClass(null, List.<JCExpression>nil(), 
 	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$Void")), 
-	            					List.<JCExpression>nil(), null)));
+	            					List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString()))), null)));
 	            }
 	            ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
 	            for(JCVariableDecl v : mdecl.params){
@@ -1015,7 +1011,6 @@ public class Enter extends JCTree.Visitor {
     			make.Unary(POSTINC, 
     					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
     					make.Ident(n))));
-//    	stats.add(make.Exec(make.Unary(POSTINC, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)))));
     	stats.add(make.If(make.Binary(GE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
     			make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
     					names.fromString("length"))), 
@@ -1023,15 +1018,6 @@ public class Enter extends JCTree.Visitor {
     					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
     					make.Literal(0))), 
     			null));
-//    	stats.add(make.If(make.Binary(AND, 
-//    			make.Binary(EQ, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
-//    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), 
-//    			make.Binary(NE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-//    					make.Literal(0))),
-//    			make.Exec(make.Apply(List.<JCExpression>nil(), 
-//    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_EXTENDQUEUE)), 
-//    					List.<JCExpression>nil())), 
-//    			null));
     	return stats.toList();
     }
     

@@ -65,9 +65,9 @@ public class ModuleInternal extends Internal
         JCModifiers noMods = mods(0);
         
 
-        JCExpression sop = make.Ident(names.fromString("System"));
-    	sop = make.Select(sop, names.fromString("out"));
-    	sop = make.Select(sop, names.fromString("print"));
+//        JCExpression sop = make.Ident(names.fromString("System"));
+//    	sop = make.Select(sop, names.fromString("out"));
+//    	sop = make.Select(sop, names.fromString("print"));
 
         ListBuffer<JCStatement> ifBody = new ListBuffer<JCStatement>();
 
@@ -76,63 +76,59 @@ public class ModuleInternal extends Internal
         ifBody.append(es(apply("queueLock", "lock")));
 //        ifBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("Before Lock")))));
         ifBody.append(es(mm(id("size"))));
-        ifBody.append(var(noMods, "name", id("Object"), aindex(id("objects"), pp(id("head")))));
+        ifBody.append(var(noMods, "d", PaniniConstants.DUCK_INTERFACE_NAME, 
+				cast(PaniniConstants.DUCK_INTERFACE_NAME, aindex(id("objects"), pp(id("head"))))));
+//        ifBody.append(var(noMods, "name", id("Object"), aindex(id("objects"), pp(id("head")))));
 //        ifBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("In if ")))));
         ifBody.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
 
+        ListBuffer<JCCase> cases = new ListBuffer<JCCase>();
+        int varIndex =0;
         
         for (JCMethodDecl method : tree.publicMethods) {
+        	
             ListBuffer<JCStatement> innerIfStatements = new ListBuffer<JCStatement>();
+            ListBuffer<JCStatement> caseStatements = new ListBuffer<JCStatement>();
             Type restype = ((MethodType)method.sym.type).restype;
 
-
-            if (restype.tag==TypeTags.VOID) {
-                ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+        	if(restype.tag == TypeTags.VOID){
+        		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+        		
+        		for (int i = 0; i < method.params.size(); i++) {
+        			caseStatements.append(es(mm(id("size"))));                    
+        			caseStatements.append(var(noMods, "var"+varIndex, method.params.get(i).sym.type.toString(), cast(method.params.get(i).sym.type.toString(), aindex(id("objects"), pp(id("head"))))));
+                    caseStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
+                    args.append(id("var" + varIndex++));
+                }
+        	
+        		caseStatements.append(es(apply("queueLock", "unlock")));
+        		caseStatements.append(es(apply(thist(), method.name.toString() + "$Original", args)));
+        		caseStatements.append(es(apply("d", "panini$finish",
+                      args(nullv()))));
+        		caseStatements.append(break_());
+        		
+        	}else if(restype.tag == TypeTags.CLASS){
+        		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 
                 for (int i = 0; i < method.params.size(); i++) {
-                    innerIfStatements.append(es(mm(id("size"))));                    
-                    innerIfStatements.append(var(noMods, "var"+i, method.params.get(i).sym.type.toString(), cast(method.params.get(i).sym.type.toString(), aindex(id("objects"), pp(id("head"))))));
-                    innerIfStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
-                    args.append(id("var"+i));
+                	caseStatements.append(es(mm(id("size"))));                    
+                	caseStatements.append(var(noMods, "var"+varIndex, method.params.get(i).sym.type.toString(), cast(method.params.get(i).sym.type.toString(), aindex(id("objects"), pp(id("head"))))));
+                	caseStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
+                    args.append(id("var"+varIndex++));
                 }
-
-                innerIfStatements.append(es(mm(id("size"))));
-                innerIfStatements.append(var(noMods, "d", PaniniConstants.DUCK_INTERFACE_NAME+"$Void", cast(PaniniConstants.DUCK_INTERFACE_NAME+"$Void", aindex(id("objects"), pp(id("head"))))));
-                innerIfStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
-                innerIfStatements.append(es(apply("queueLock", "unlock")));
-//                innerIfStatements.append(es(apply("d", "panini$finish")));
-                innerIfStatements.append(es(apply(thist(), method.name.toString() + "$Original", args)));
-                innerIfStatements.append(es(apply("d", "panini$finish",
-                        args(nullv()))));
-
-            } else if (restype.tag==TypeTags.CLASS) {
-                ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
-
-                for (int i = 0; i < method.params.size(); i++) {
-                    innerIfStatements.append(es(mm(id("size"))));                    
-                    innerIfStatements.append(var(noMods, "var"+i, method.params.get(i).sym.type.toString(), cast(method.params.get(i).sym.type.toString(), aindex(id("objects"), pp(id("head"))))));
-                    innerIfStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
-                    args.append(id("var"+i));
-                }
-
-                innerIfStatements.append(es(mm(id("size"))));
-                innerIfStatements.append(var(noMods, "d", PaniniConstants.DUCK_INTERFACE_NAME, cast(PaniniConstants.DUCK_INTERFACE_NAME, aindex(id("objects"), pp(id("head"))))));
-                innerIfStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
-                innerIfStatements.append(es(apply("queueLock", "unlock")));
-
-                innerIfStatements.append(es(apply("d", "panini$finish",
+                caseStatements.append(es(apply("queueLock", "unlock")));
+                caseStatements.append(es(apply("d", "panini$finish",
                                                   args(apply(thist(), method.name.toString() + "$Original", args)))));
-
-            } else {
+                caseStatements.append(break_());
+        	}else {
                 System.out.println("Unsupported return type in a public module method. Can only be void or non-primitive.");
                 System.exit(5555);
-            }
-
-        	
-//        	innerIfStatements.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("Match found")))));
-            ifBody.append(ifs(apply("name", "equals", lb(id(PaniniConstants.PANINI_METHOD_CONST + method.name.toString()))), body(innerIfStatements)));
-
+            }        	
+        	cases.append(case_(id(PaniniConstants.PANINI_METHOD_CONST + method.name.toString()), caseStatements));
+//            ifBody.append(ifs(apply("name", "equals", lb(id(PaniniConstants.PANINI_METHOD_CONST + method.name.toString()))), body(innerIfStatements)));
         }
+        
+        ifBody.append(swtch(apply("d", PaniniConstants.PANINI_MESSAGE_ID), cases));
 //        ifBody.append(es(apply("print")));
         JCBlock b =  body(
             whilel(truev(),
@@ -385,6 +381,8 @@ public class ModuleInternal extends Internal
 				addedHere.put(restype.toString(), 0);
 				JCVariableDecl var = var(mods(PRIVATE), 
 						"wrapped", restype.toString(), nullv());
+				JCVariableDecl var2 = var(mods(PRIVATE|FINAL), 
+						"messageId", make.TypeIdent(TypeTags.INT), null);
 				ListBuffer<JCTree> wrappedMethods= new ListBuffer<JCTree>();
 				ListBuffer<JCTree> constructors= new ListBuffer<JCTree>();
 				while(iter.hasNext()){
@@ -430,15 +428,25 @@ public class ModuleInternal extends Internal
 								inits.add(intlit(0));
 							}
 						}
-						constructors.add(constructor(mods(PUBLIC), params(), 
+						constructors.add(
+								constructor(mods(PUBLIC), 
+										params(var(mods(0), "messageId", make.TypeIdent(TypeTags.INT))), 
 								body(es(make.Apply(List.<JCExpression>nil(), 
 										make.Ident(names._super), 
-										inits.toList())))));
+										inits.toList())
+										),
+										es(assign(select(thist(), "messageId"), id("messageId")))
+										)));
 					}
 				}
 				ListBuffer<JCVariableDecl> finishParams = new ListBuffer<JCVariableDecl>();
 				finishParams.add(var(mods(0),"t",restype.toString()));
 				
+				JCMethodDecl id = method(mods(PUBLIC),
+						names.fromString(PaniniConstants.PANINI_MESSAGE_ID),
+						make.TypeIdent(TypeTags.INT),
+						body(returnt(select(thist(), "messageId")))
+						);
 				
 				JCMethodDecl finish = method(mods(PUBLIC), 
 						names.fromString(PaniniConstants.PANINI_FINISH),
@@ -461,7 +469,7 @@ public class ModuleInternal extends Internal
 						List.<JCTypeParameter>nil(), 
 						extending, 
 						implement, 
-						defs(var, finish).appendList(constructors).appendList(wrappedMethods).toList()));
+						defs(var, var2, finish, id).appendList(constructors).appendList(wrappedMethods).toList()));
             }
 		}
         return classes.toList();
