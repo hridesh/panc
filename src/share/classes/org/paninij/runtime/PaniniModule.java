@@ -25,7 +25,7 @@ public abstract class PaniniModule extends Thread {
    protected volatile int head = 0, tail = 0, size = 0;
    protected final ReentrantLock queueLock = new ReentrantLock();
    
-   protected void extendQueue() {
+   protected final void extendQueue() {
        assert(size==objects.length);
        Object[] newObjects = new Object[objects.length+10];
        System.arraycopy(objects, head, newObjects, 0, objects.length-head);
@@ -33,7 +33,20 @@ public abstract class PaniniModule extends Thread {
        head = 0; tail = size;        
        objects = newObjects;
    }        
-   
+
+   /**
+    * Checks to ensure whether this module's queue can accomodate numElems 
+    * number of elements, and if not extends it.
+    * @param numElems 
+    */
+   protected final void ensureSpace(int numElems) {
+    if (head < tail) 
+    	if (objects.length + (head - tail) < numElems) 
+    		if (size != 0) extendQueue(); 
+    		else if (head - tail < numElems) 
+    			if (size != 0) extendQueue();
+   }
+
    protected final boolean empty() { return size==0; }
    
    protected final void print() { 
