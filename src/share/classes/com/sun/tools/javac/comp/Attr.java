@@ -786,6 +786,7 @@ public class Attr extends JCTree.Visitor {
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> submits = new ListBuffer<JCStatement>();
+    	ListBuffer<JCStatement> starts = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
     	Map<Name, Name> variables = new HashMap<Name, Name>();
     	Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
@@ -809,9 +810,9 @@ public class Attr extends JCTree.Visitor {
     				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
     						make.Select(make.Ident(mdecl.name), names.fromString("start")), 
     						List.<JCExpression>nil()));
-    		    	joins.append(joinAssign);
+    		    	starts.append(joinAssign);
     		    	if(c.hasRun){
-    		    		submits.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    		    		joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
     		    				make.Select(make.Ident(mdecl.name), 
     		    				names.fromString("join")), List.<JCExpression>nil())))), 
     		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
@@ -841,9 +842,9 @@ public class Attr extends JCTree.Visitor {
     				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
     						make.Select(make.Ident(mdecl.name), names.fromString("start")), 
     						List.<JCExpression>nil()));
-    		    	joins.append(joinAssign);
+    		    	starts.append(joinAssign);
     		    	if(c.hasRun){
-    		    		submits.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    		    		joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
     		    				make.Select(make.Ident(mdecl.name), 
     		    				names.fromString("join")), List.<JCExpression>nil())))), 
     		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
@@ -898,11 +899,11 @@ public class Attr extends JCTree.Visitor {
 	        				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
 	        						make.Select(make.Indexed(make.Ident(mdecl.name), make.Literal(j)), names.fromString("start")), 
 	        						List.<JCExpression>nil()));
-	        		    	joins.append(joinAssign);	        		    	
+	        		    	starts.append(joinAssign);	        		    	
     	    			}
     	    			if(c.hasRun){
     	    				for(int j = mat.amount; j>=0;j--){
-    	    					submits.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    	    					joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
             		    				make.Select(make.Indexed(make.Ident(mdecl.name), make.Literal(j)),
             		    				names.fromString("join")), List.<JCExpression>nil())))), 
             		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
@@ -1062,7 +1063,7 @@ public class Attr extends JCTree.Visitor {
     			tree.body);
     	maindecl.params = List.<JCVariableDecl>of(mainArg);
     	tree.defs = tree.defs.append(maindecl);
-    	maindecl.body.stats = decls.appendList(inits).appendList(assigns).appendList(joins).appendList(submits).toList();
+    	maindecl.body.stats = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
     	
     	tree.switchToClass();
     	System.out.println(tree);

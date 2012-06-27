@@ -881,48 +881,26 @@ public class Enter extends JCTree.Visitor {
         	for(JCMethodDecl mdecl : tree.publicMethods){
         		c.hasRun = false;
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
-//	        	copyBody.append(make.If(make.Binary(LT, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
-//	            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), 
-//	            		make.If(make.Binary(LT, make.Binary(PLUS, make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
-//	        					names.fromString("length")), make.Binary(MINUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
-//	        		            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
-//	        		            		make.Literal(mdecl.params.length()+2)), 
-//	        		            		make.If(make.Binary(NE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-//	        		                					make.Literal(0)),
-//	        		                			make.Exec(make.Apply(List.<JCExpression>nil(), 
-//	        		                					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_EXTENDQUEUE)), 
-//	        		                					List.<JCExpression>nil())), 
-//	        		                			null),
-//	    	            		null), 
-//	    	            		make.If(make.Binary(LT, 
-//	    	    	            		make.Binary(MINUS, 
-//	    	    	            				make.Ident(names.fromString
-//	    	    	            						(PaniniConstants.PANINI_MODULE_HEAD)), 
-//	    	    	            						make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), make.Literal(mdecl.params.length()+2)), 
-//	    	    	            						make.If(make.Binary(NE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-//	    	    	            				    					make.Literal(0)),
-//	    	    	            				    			make.Exec(make.Apply(List.<JCExpression>nil(), 
-//	    	    	            				    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_EXTENDQUEUE)), 
-//	    	    	            				    					List.<JCExpression>nil())), 
-//	    	    	            				    			null), 
-//	    	    	            		null)));
-	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("ensureSpace")), List.<JCExpression>of(make.Literal(mdecl.params.length()+1)))));
-	        	copyBody.append(make.Exec(make.Assign(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
+	        	ListBuffer<JCStatement> syncBody = new ListBuffer<JCStatement>();
+	        	syncBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("ensureSpace")), List.<JCExpression>of(make.Literal(mdecl.params.length()+1)))));
+	        	syncBody.append(make.Exec(make.Assign(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
 	        			make.Binary(PLUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
 	        					make.Literal(mdecl.params.length()+1)))));
-	        	copyBody.appendList(push(names.fromString("d")));
+	        	syncBody.appendList(push(names.fromString("d")));
 	            if(mdecl.params.length()!=0){
 	            	for(JCVariableDecl n : mdecl.params){
-	            		copyBody.appendList(push(n.name));
+	            		syncBody.appendList(push(n.name));
 	            	}
 	            }
-	            copyBody.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
-	            		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("lock")), 
-	            		List.<JCExpression>nil())));
+	            syncBody.append(make.If(make.Binary(EQ, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
+	            		make.Literal(mdecl.params.length()+1)), 
+	            		make.Exec(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("notifyAll")), List.<JCExpression>nil())),
+	            		null));
+	            copyBody.add(make.Synchronized(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), 
+	            		make.Block(0, syncBody.toList())));
 	            
-	            copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
-	            		make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("unlock")), 
-	            		List.<JCExpression>nil())));
+	            //change to notify
+	            
 	            if(!mdecl.restype.toString().equals("void")){
 	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
 	            			names.fromString("d"), 

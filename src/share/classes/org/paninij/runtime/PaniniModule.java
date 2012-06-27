@@ -124,13 +124,14 @@ public abstract class PaniniModule extends Thread {
   	 */
   	public final void shutdown () {
   		this.checkAccess();
-   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-1);
-    queueLock.lock();
-    ensureSpace(1);
-    size = size + 1;
-    objects[tail++] = d;
-    if (tail >= objects.length) tail = 0;
-    queueLock.unlock();
+	   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-1);
+	   	synchronized (queueLock) {
+	        ensureSpace(1);
+	        size = size + 1;
+	        objects[tail++] = d;
+	        if (tail >= objects.length) tail = 0;
+	        if (size == 1) queueLock.notifyAll();
+	    }
   	}
   	
   	/**

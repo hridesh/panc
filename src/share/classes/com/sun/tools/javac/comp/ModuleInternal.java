@@ -77,12 +77,12 @@ public class ModuleInternal extends Internal
 //        ifBody.append(es(apply("print")));
         ifBody.append(es(apply("queueLock", "lock")));
 //        ifBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("Before Lock")))));
-        ifBody.append(es(mm(id("size"))));
+//        ifBody.append(es(mm(id("size"))));
         ifBody.append(var(noMods, "d", PaniniConstants.DUCK_INTERFACE_NAME, 
-				cast(PaniniConstants.DUCK_INTERFACE_NAME, aindex(id("objects"), pp(id("head"))))));
+				apply(PaniniConstants.PANINI_GET_NEXT_DUCK)));
 //        ifBody.append(var(noMods, "name", id("Object"), aindex(id("objects"), pp(id("head")))));
 //        ifBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("In if ")))));
-        ifBody.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
+//        ifBody.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
 
         ListBuffer<JCCase> cases = new ListBuffer<JCCase>();
         int varIndex =0;
@@ -166,8 +166,8 @@ public class ModuleInternal extends Internal
             whilel(nott(id(PaniniConstants.PANINI_TERMINATE)),
                    body(
 //                	   make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("")))),
-                       ifs(gt(select(thist(), "size"), intlit(0)),
-                           body(ifBody
+//                       ifs(gt(select(thist(), "size"), intlit(0)),
+                           body(ifBody)
 /*
                                
 
@@ -176,9 +176,9 @@ public class ModuleInternal extends Internal
                                         aindex(id("objects"), pp(id("head")))))
                                    
 */                                 
-                                                                                                
-                               )
-                           )
+//                                                                                                
+//                               )
+//                           )
                        )
                 )
             );
