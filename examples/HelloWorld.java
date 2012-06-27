@@ -22,7 +22,7 @@ void printGreeting() { System.out.println("Hello World!"); }
 }
 
 module Greeter (Console c) {
- void run(){ c.printGreeting(); System.exit(0); }
+ void run(){ c.printGreeting(); }
 }
 
 system HelloWorld {
