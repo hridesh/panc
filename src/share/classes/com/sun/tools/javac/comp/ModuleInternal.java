@@ -152,6 +152,7 @@ public class ModuleInternal extends Internal
         
         ListBuffer<JCStatement> exitBody = new ListBuffer<JCStatement>();
         exitBody.append(es(assign(PaniniConstants.PANINI_TERMINATE, truev())));
+        exitBody.append(es(apply("queueLock", "unlock")));
         exitBody.append(break_());
         cases.append(case_(intlit(-2), exitBody));
         
