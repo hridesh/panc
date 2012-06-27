@@ -53,7 +53,7 @@ module Philosopher (Fork left, Fork right, String name) {
 	include bool;
 
 	void run() {
-		while (true) {
+		for (int count=3; count>0; count--) {
 			think();
 			tryEat();
 		}
