@@ -84,4 +84,32 @@ public abstract class PaniniModule extends Thread {
   			//TODO: What should be the semantics here? 
   		}
   	}  	
+  	
+  	/**
+  	 * Causes the current module to complete its remaining work and 
+  	 * then cease execution. 
+  	 */
+  	public final void shutdown () {
+   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-1);
+    queueLock.lock();
+    ensureSpace(1);
+    size = size + 1;
+    objects[tail++] = d;
+    if (tail >= objects.length) tail = 0;
+    queueLock.unlock();
+  	}
+  	
+  	/**
+  	 * Causes the current module to immediately cease execution. 
+  	 */
+  	public final void exit () {
+   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-2);
+    queueLock.lock();
+    ensureSpace(1);
+    size = size + 1;
+    objects[tail++] = d;
+    if (tail >= objects.length) tail = 0;
+    queueLock.unlock();
+  	}
+  	
 }
