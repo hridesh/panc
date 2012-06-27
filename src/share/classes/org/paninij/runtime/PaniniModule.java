@@ -86,10 +86,18 @@ public abstract class PaniniModule extends Thread {
   	}  	
   	
   	/**
-  	 * Causes the current module to complete its remaining work and 
-  	 * then cease execution. 
+  	 * Causes the current module to complete its remaining work and then cease execution.
+  	 * 
+  	 * Shutdown is allowed only if the client module has permission to modify this module.
+  	 * 
+  	 * If there is a security manager, its checkAccess method is called with this module 
+  	 * as its argument. This may result in throwing a SecurityException.
+  	 * 
+  	 * @throws SecurityException - if the client module is not allowed to access this module.
+  	 * 
   	 */
   	public final void shutdown () {
+  		this.checkAccess();
    	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-1);
     queueLock.lock();
     ensureSpace(1);
@@ -101,8 +109,17 @@ public abstract class PaniniModule extends Thread {
   	
   	/**
   	 * Causes the current module to immediately cease execution. 
+  	 * 
+  	 * Shutdown is allowed only if the client module has permission to modify this module.
+  	 * 
+  	 * If there is a security manager, its checkAccess method is called with this module 
+  	 * as its argument. This may result in throwing a SecurityException.
+  	 * 
+  	 * @throws SecurityException - if the client module is not allowed to access this module.
+  	 * 
   	 */
   	public final void exit () {
+  		this.checkAccess();
    	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-2);
     queueLock.lock();
     ensureSpace(1);
