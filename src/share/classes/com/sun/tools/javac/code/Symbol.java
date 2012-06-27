@@ -61,6 +61,7 @@ public abstract class Symbol implements Element {
 	public boolean isConfig;
 	public boolean isLibrary;
 	public boolean isModule;
+	public boolean hasRun;
 	// end Panini code
     /** The kind of this symbol.
      *  @see Kinds

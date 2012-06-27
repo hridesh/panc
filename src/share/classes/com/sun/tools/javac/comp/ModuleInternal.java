@@ -43,6 +43,8 @@ import javax.lang.model.type.TypeKind;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
+import static com.sun.tools.javac.tree.JCTree.Tag.GE;
+import static com.sun.tools.javac.tree.JCTree.Tag.POSTINC;
 
 public class ModuleInternal extends Internal
 {
@@ -128,10 +130,40 @@ public class ModuleInternal extends Internal
 //            ifBody.append(ifs(apply("name", "equals", lb(id(PaniniConstants.PANINI_METHOD_CONST + method.name.toString()))), body(innerIfStatements)));
         }
         
+        ListBuffer<JCStatement> shutDownBody = new ListBuffer<JCStatement>();
+        shutDownBody.append(ifs(gt(select(thist(), "size"), intlit(0)), 
+        		body(
+        				es(assign("size", make.Binary(JCTree.Tag.PLUS, id("size"), intlit(1)))),
+        				es(make.Assign(make.Indexed(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
+        		    			make.Unary(POSTINC, 
+        		    					id(PaniniConstants.PANINI_MODULE_TAIL))), 
+        		    					id("d"))),
+        		    			make.If(make.Binary(GE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
+        		    			    			make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
+        		    			    					names.fromString("length"))), 
+        		    			    			make.Exec(make.Assign(
+        		    			    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
+        		    			    					make.Literal(0))), 
+        		    			    			null),
+        		    			es(apply("queueLock", "unlock")),
+        		    			break_())
+        				));
+        cases.append(case_(intlit(-1), shutDownBody));
+        
+        ListBuffer<JCStatement> exitBody = new ListBuffer<JCStatement>();
+        exitBody.append(es(assign(PaniniConstants.PANINI_TERMINATE, truev())));
+        exitBody.append(break_());
+        cases.append(case_(intlit(-2), exitBody));
+        
         ifBody.append(swtch(apply("d", PaniniConstants.PANINI_MESSAGE_ID), cases));
 //        ifBody.append(es(apply("print")));
         JCBlock b =  body(
-            whilel(truev(),
+        		var(mods(0),
+        				PaniniConstants.PANINI_TERMINATE,
+        				make.TypeIdent(TypeTags.BOOLEAN),
+        				falsev()
+        				),
+            whilel(nott(id(PaniniConstants.PANINI_TERMINATE)),
                    body(
 //                	   make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("")))),
                        ifs(gt(select(thist(), "size"), intlit(0)),
@@ -364,7 +396,7 @@ public class ModuleInternal extends Internal
 	public List<JCClassDecl> generateClassWrappers(JCModuleDecl tree, Env<AttrContext> env, Resolve rs) {
 		ListBuffer<JCClassDecl> classes = new ListBuffer<JCClassDecl>();
 		Map<String, Integer> addedHere = new HashMap<String, Integer>();
-	  
+		
 		for(JCMethodDecl method : tree.publicMethods){
 			Type restype = ((MethodType)method.sym.type).restype;
 			
@@ -399,7 +431,7 @@ public class ModuleInternal extends Internal
 							JCMethodDecl value = method(mods(PUBLIC),
 									m.name,
 									make.Type(m.type.getReturnType()),
-									body(make.Try(body(sync(make.This(Type.noType),body(ifs(isNull("wrapped"),es(apply("wait")))))), catchers, null), returnt(apply("wrapped", m.name)))
+									body(make.Try(body(sync(make.This(Type.noType),body(whilel(isNull("wrapped"),es(apply("wait")))))), catchers, null), returnt(apply("wrapped", m.name)))
 									);
 							wrappedMethods.add(value);
 						}
@@ -413,7 +445,7 @@ public class ModuleInternal extends Internal
 							JCMethodDecl value = method(mods(PUBLIC),
 									m.name,
 									make.Type(m.type),
-									body(make.Try(body(sync(make.This(Type.noType),body(ifs(isNull("wrapped"),es(apply("wait")))))), catchers, null), es(apply("wrapped", m.name)))
+									body(make.Try(body(sync(make.This(Type.noType),body(whilel(isNull("wrapped"),es(apply("wait")))))), catchers, null), es(apply("wrapped", m.name)))
 									);
 							wrappedMethods.add(value);
 						}

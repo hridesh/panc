@@ -879,6 +879,7 @@ public class Enter extends JCTree.Visitor {
         }
         if(!hasRun){
         	for(JCMethodDecl mdecl : tree.publicMethods){
+        		c.hasRun = false;
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
 //	        	copyBody.append(make.If(make.Binary(LT, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
 //	            		make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), 
@@ -944,7 +945,7 @@ public class Enter extends JCTree.Visitor {
 	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
 	            }
 	            JCMethodDecl methodCopy = make.MethodDef(
-	            		make.Modifiers(PRIVATE), 
+	            		make.Modifiers(PRIVATE|FINAL), 
 	            		mdecl.name.append(names.fromString("$Original")), 
 	            		mdecl.restype, 
 	            		mdecl.typarams, 
@@ -953,12 +954,13 @@ public class Enter extends JCTree.Visitor {
 	            		mdecl.body, 
 	            		null);
 	            methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name, mdecl.restype.type, tree.sym);
+	            mdecl.mods.flags |= FINAL;
 	            mdecl.body = make.Block(0, copyBody.toList());
 	            definitions.add(methodCopy);
 	            definitions.add(mdecl);
         	}
             MethodSymbol msym = new MethodSymbol(
-                PUBLIC,
+                PUBLIC|FINAL,
                 names.fromString("run"),
                 new MethodType(
                     List.<Type>nil(),
@@ -981,6 +983,7 @@ public class Enter extends JCTree.Visitor {
             tree.computeMethod = m;
     	}
         else{
+        	c.hasRun = true;
         	for(JCMethodDecl d : tree.publicMethods){
         		definitions.add(d);
         	}

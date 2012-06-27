@@ -716,11 +716,6 @@ public class Attr extends JCTree.Visitor {
     }
     
     // Panini code
-    public void visitInclude(JCInclude tree){
-   
-    	
-    }
-    
     public List<JCStatement> transWiring(JCMethodInvocation mi, Map<Name, Name> variables){
     	if(variables.get(names
 				.fromString(mi.meth.toString()))==null){
@@ -778,12 +773,12 @@ public class Attr extends JCTree.Visitor {
         if (tree.needsDefaultRun){
         	List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree, env, rs);
         	enter.classEnter(wrapperClasses, env.outer);
-//        	System.out.println(wrapperClasses);
+        	System.out.println(wrapperClasses);
         	attribClassBody(env, tree.sym);
         	
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
         	}
-//        System.out.println(tree);
+        System.out.println(tree);
     }
 
     public void visitSystemDef(JCSystemDecl tree){
@@ -798,7 +793,7 @@ public class Attr extends JCTree.Visitor {
     		if(tree.body.stats.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.body.stats.get(i);
     			if(syms.modules.containsKey(names.fromString(mdecl.vartype.toString()))){
-    				ClassSymbol c = syms.modules.get(names.fromString(mdecl.vartype.toString()));    				
+    				ClassSymbol c = syms.modules.get(names.fromString(mdecl.vartype.toString()));
     				decls.add(mdecl);
     				JCNewClass newClass = make.at(mdecl.pos()).NewClass(null, null, 
     						make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
@@ -815,6 +810,25 @@ public class Attr extends JCTree.Visitor {
     						make.Select(make.Ident(mdecl.name), names.fromString("start")), 
     						List.<JCExpression>nil()));
     		    	joins.append(joinAssign);
+    		    	if(c.hasRun){
+    		    		make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    		    				make.Select(make.Ident(mdecl.name), 
+    		    				names.fromString("join")), List.<JCExpression>nil())))), 
+    		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
+    		    						names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
+    		    						null), make.Block(0, List.<JCStatement>nil()))), null);
+    		    		submits.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    		    				make.Select(make.Ident(mdecl.name), 
+    		    				names.fromString("join")), List.<JCExpression>nil())))), 
+    		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
+    		    						names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
+    		    						null), make.Block(0, List.<JCStatement>nil()))), null));
+    		    	}
+    		    	else
+    		    		submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    		    				make.Select(make.Ident(mdecl.name), 
+    		    				names.fromString("shutdown")), List.<JCExpression>nil())));
+    		    	
     		    	variables.put(mdecl.name, c.name);
     			}else if(syms.libclasses.containsKey(names.fromString(mdecl.vartype.toString()))){
     				ClassSymbol c = syms.libclasses.get(names.fromString(mdecl.vartype.toString()));
@@ -1020,9 +1034,10 @@ public class Attr extends JCTree.Visitor {
     			tree.body);
     	maindecl.params = List.<JCVariableDecl>of(mainArg);
     	tree.defs = tree.defs.append(maindecl);
-    	maindecl.body.stats = decls.appendList(inits).appendList(assigns).appendList(submits).appendList(joins).toList();
+    	maindecl.body.stats = decls.appendList(inits).appendList(assigns).appendList(joins).appendList(submits).toList();
     	
     	tree.switchToClass();
+    	System.out.println(tree);
     	memberEnter.memberEnter(maindecl, env);
     }
     

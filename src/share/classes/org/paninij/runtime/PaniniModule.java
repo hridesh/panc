@@ -58,6 +58,7 @@ public abstract class PaniniModule extends Thread {
   	 * 
   	 * @return the first available duck in the module's queue.
   	 */
+   @SuppressWarnings("rawtypes")
   	protected final Panini$Duck get$Next$Duck() {
   			nomessages: while (this.size <= 0) 
   				try {
@@ -143,6 +144,7 @@ public abstract class PaniniModule extends Thread {
   	 * @throws SecurityException - if the client module is not allowed to access this module.
   	 * 
   	 */
+  	@SuppressWarnings("rawtypes")
   	public final void exit () {
   		this.checkAccess();
    	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-2);
