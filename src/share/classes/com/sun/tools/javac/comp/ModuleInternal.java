@@ -127,7 +127,6 @@ public class ModuleInternal extends Internal
                 System.exit(5555);
             }        	
         	cases.append(case_(id(PaniniConstants.PANINI_METHOD_CONST + method.name.toString()), caseStatements));
-//            ifBody.append(ifs(apply("name", "equals", lb(id(PaniniConstants.PANINI_METHOD_CONST + method.name.toString()))), body(innerIfStatements)));
         }
         
         ListBuffer<JCStatement> shutDownBody = new ListBuffer<JCStatement>();
@@ -157,7 +156,6 @@ public class ModuleInternal extends Internal
         cases.append(case_(intlit(-2), exitBody));
         
         ifBody.append(swtch(apply("d", PaniniConstants.PANINI_MESSAGE_ID), cases));
-//        ifBody.append(es(apply("print")));
         JCBlock b =  body(
         		var(mods(0),
         				PaniniConstants.PANINI_TERMINATE,
@@ -166,8 +164,6 @@ public class ModuleInternal extends Internal
         				),
             whilel(nott(id(PaniniConstants.PANINI_TERMINATE)),
                    body(
-//                	   make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("")))),
-//                       ifs(gt(select(thist(), "size"), intlit(0)),
                            body(ifBody)
 /*
                                

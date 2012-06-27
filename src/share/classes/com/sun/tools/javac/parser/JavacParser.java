@@ -1597,17 +1597,17 @@ public class JavacParser implements Parser {
     // Panini code
     /** BracketsOpt = {"[" "]"}
      */
-    private JCExpression configBracketsOpt(JCExpression t) {
+    private JCExpression systemBracketsOpt(JCExpression t) {
         if (token.kind == LBRACKET) {
             int pos = token.pos;
             nextToken();
-            t = configBracketsOptCont(t, pos);
+            t = systemBracketsOptCont(t, pos);
             F.at(pos);
         }
         return t;
     }
 
-        private JCArrayTypeTree configBracketsOptCont(JCExpression t, int pos) {
+        private JCArrayTypeTree systemBracketsOptCont(JCExpression t, int pos) {
             if (token.kind == RBRACKET) {
                 accept(RBRACKET);
                 t = bracketsOpt(t);
@@ -1839,9 +1839,9 @@ public class JavacParser implements Parser {
 
     // Panini code
     
-    JCBlock configBlock(int pos, long flags) {
+    JCBlock systemBlock(int pos, long flags) {
         accept(LBRACE);
-        List<JCStatement> stats = configStatements();
+        List<JCStatement> stats = systemStatements();
         JCBlock t = F.at(pos).Block(flags, stats);
         while (token.kind == CASE || token.kind == DEFAULT) {
             syntaxError("orphaned", token.kind);
@@ -1854,8 +1854,8 @@ public class JavacParser implements Parser {
         return toP(t);
     }
     
-    public JCBlock configBlock(){
-    		return configBlock(token.pos, 0);
+    public JCBlock systemBlock(){
+    		return systemBlock(token.pos, 0);
     }
     
     // end Panini code
@@ -1872,10 +1872,10 @@ public class JavacParser implements Parser {
      *                  = { FINAL | '@' Annotation } Type VariableDeclarators ";"
      */
     // Panini code
-    List<JCStatement> configStatements(){
+    List<JCStatement> systemStatements(){
     	ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
         while (true) {
-            List<JCStatement> stat = configStatement();
+            List<JCStatement> stat = systemStatement();
             if (stat.isEmpty()) {
                 return stats.toList();
             } else {
@@ -1884,7 +1884,7 @@ public class JavacParser implements Parser {
                 }
                 for(JCStatement s : stat){
                 	if(s.getTag() == FORLOOP)
-                		reportSyntaxError(s.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.config");
+                		reportSyntaxError(s.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.system");
                 }
                 stats.addAll(stat);
             }
@@ -1942,11 +1942,11 @@ public class JavacParser implements Parser {
     }
     // Panini code
     @SuppressWarnings("fallthrough")
-    List<JCStatement> configStatement(){
+    List<JCStatement> systemStatement(){
     	if(token.kind != FOR &&((token.kind.tag != Token.Tag.NAMED && (token.kind != RBRACE))
                                 || token.kind == ASSERT || token.kind == ENUM 
                                 || token.kind == SUPER	|| token.kind == THIS)){
-			reportSyntaxError(token.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.config");
+			reportSyntaxError(token.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.system");
 			//Other errors (e.g.: void x;) are suppressed by the rest of the code
 		}
 //todo: skip to anchor on error(?)
@@ -2017,7 +2017,7 @@ public class JavacParser implements Parser {
                 JCModifiers mods = F.at(Position.NOPOS).Modifiers(0);
                 F.at(pos);
                 ListBuffer<JCStatement> stats =
-                    configVariableDeclarators(mods, t, new ListBuffer<JCStatement>());
+                    systemVariableDeclarators(mods, t, new ListBuffer<JCStatement>());
                 // A "LocalVariableDeclarationStatement" subsumes the terminating semicolon
                 storeEnd(stats.elems.last(), token.endPos);
                 accept(SEMI);
@@ -2668,11 +2668,11 @@ public class JavacParser implements Parser {
     // Panini code
     /** VariableDeclarators = VariableDeclarator { "," VariableDeclarator }
      */
-    public <T extends ListBuffer<? super JCVariableDecl>> T configVariableDeclarators(JCModifiers mods,
+    public <T extends ListBuffer<? super JCVariableDecl>> T systemVariableDeclarators(JCModifiers mods,
                                                                          JCExpression type,
                                                                          T vdefs)
     {
-        return configVariableDeclaratorsRest(token.pos, mods, type, ident(), false, null, vdefs);
+        return systemVariableDeclaratorsRest(token.pos, mods, type, ident(), false, null, vdefs);
     }
 
         /** VariableDeclaratorsRest = VariableDeclaratorRest { "," VariableDeclarator }
@@ -2681,7 +2681,7 @@ public class JavacParser implements Parser {
      *  @param reqInit  Is an initializer always required?
      *  @param dc       The documentation comment for the variable declarations, or null.
      */
-    <T extends ListBuffer<? super JCVariableDecl>> T configVariableDeclaratorsRest(int pos,
+    <T extends ListBuffer<? super JCVariableDecl>> T systemVariableDeclaratorsRest(int pos,
                                                                      JCModifiers mods,
                                                                      JCExpression type,
                                                                      Name name,
@@ -2689,12 +2689,12 @@ public class JavacParser implements Parser {
                                                                      String dc,
                                                                      T vdefs)
     {
-        vdefs.append(configVariableDeclaratorRest(pos, mods, type, name, reqInit, dc));
+        vdefs.append(systemVariableDeclaratorRest(pos, mods, type, name, reqInit, dc));
         while (token.kind == COMMA) {
             // All but last of multiple declarators subsume a comma
             storeEnd((JCTree)vdefs.elems.last(), token.endPos);
             nextToken();
-            vdefs.append(configVariableDeclarator(mods, type, reqInit, dc));
+            vdefs.append(systemVariableDeclarator(mods, type, reqInit, dc));
         }
         return vdefs;
     }
@@ -2702,7 +2702,7 @@ public class JavacParser implements Parser {
         /** VariableDeclarator = Ident VariableDeclaratorRest
      *  ConstantDeclarator = Ident ConstantDeclaratorRest
      */
-    JCVariableDecl configVariableDeclarator(JCModifiers mods, JCExpression type, boolean reqInit, String dc) {
+    JCVariableDecl systemVariableDeclarator(JCModifiers mods, JCExpression type, boolean reqInit, String dc) {
         return variableDeclaratorRest(token.pos, mods, type, ident(), reqInit, dc);
     }
 
@@ -2712,9 +2712,9 @@ public class JavacParser implements Parser {
      *  @param reqInit  Is an initializer always required?
      *  @param dc       The documentation comment for the variable declarations, or null.
      */
-    JCVariableDecl configVariableDeclaratorRest(int pos, JCModifiers mods, JCExpression type, Name name,
+    JCVariableDecl systemVariableDeclaratorRest(int pos, JCModifiers mods, JCExpression type, Name name,
                                   boolean reqInit, String dc) {
-        type = configBracketsOpt(type);
+        type = systemBracketsOpt(type);
         JCExpression init = null;
         if (token.kind == EQ) {
             nextToken();
@@ -2927,8 +2927,8 @@ public class JavacParser implements Parser {
      	accept(IDENTIFIER);
      	int pos = token.pos;
      	Name name = ident();
-     	JCBlock body = configBlock();
-     	JCSystemDecl result = toP(F.at(pos).ConfigDef(mod, name, body));
+     	JCBlock body = systemBlock();
+     	JCSystemDecl result = toP(F.at(pos).SystemDef(mod, name, body));
      	attach(result, dc);
      	inModule = false;
      	return result;
@@ -2953,7 +2953,11 @@ public class JavacParser implements Parser {
      		nextToken();
      		parseType();
      	}
-     	List<JCVariableDecl> params = formalParameters();
+ 		List<JCVariableDecl> params; 
+     	if(token.kind == LPAREN)
+     		params = formalParameters();
+     	else
+     		params = List.<JCVariableDecl>nil();
      	List<JCExpression> implementing = List.nil();
          if (token.kind == IMPLEMENTS) {
         	 log.error(token.pos, "module.implement.error");

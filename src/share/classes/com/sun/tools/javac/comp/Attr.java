@@ -741,33 +741,6 @@ public class Attr extends JCTree.Visitor {
 		}
 		return assigns.toList();
     }
-    
-    public List<JCStatement> push(Name n){
-    	ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
-    	stats.add(make.Exec(make.Assign(make.Indexed(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
-    			make.Unary(POSTINC, 
-    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
-    					make.Ident(n))));
-//    	stats.add(make.Exec(make.Unary(POSTINC, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)))));
-    	stats.add(make.If(make.Binary(GE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
-    			make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
-    					names.fromString("length"))), 
-    			make.Exec(make.Assign(
-    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
-    					make.Literal(0))), 
-    			null));
-//    	stats.add(make.If(make.Binary(AND, 
-//    			make.Binary(EQ, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_HEAD)), 
-//    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL))), 
-//    			make.Binary(NE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-//    					make.Literal(0))),
-//    			make.Exec(make.Apply(List.<JCExpression>nil(), 
-//    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_EXTENDQUEUE)), 
-//    					List.<JCExpression>nil())), 
-//    			null));
-    	return stats.toList();
-    }
-    
 
     public void visitModuleDef(JCModuleDecl tree){
         if (tree.needsDefaultRun){
@@ -909,12 +882,6 @@ public class Attr extends JCTree.Visitor {
             		    						names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
             		    						null), make.Block(0, List.<JCStatement>nil()))), null));
     	    				}
-//        		    		submits.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-//        		    				make.Select(make.Ident(mdecl.name), 
-//        		    				names.fromString("join")), List.<JCExpression>nil())))), 
-//        		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-//        		    						names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-//        		    						null), make.Block(0, List.<JCStatement>nil()))), null));
         		    	}
         		    	else
         		    		for(int j=0; j<mat.amount;j++){
