@@ -20,6 +20,8 @@
 package org.paninij.runtime;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.paninij.runtime.types.Panini$Duck;
+
 public abstract class PaniniModule extends Thread {
    protected Object[] objects = new Object[10];
    protected volatile int head = 0, tail = 0, size = 0;
@@ -46,6 +48,29 @@ public abstract class PaniniModule extends Thread {
     		else if (head - tail < numElems) 
     			if (size != 0) extendQueue();
    }
+
+  	/**
+  	 * Extracts and returns the first duck from the module's queue. 
+  	 * This method blocks if there are no ducks in the queue.
+  	 * 
+  	 * precondition: it is assumed that the lock queueLock is held before
+  	 *               calling this method.
+  	 * 
+  	 * @return the first available duck in the module's queue.
+  	 */
+  	protected final Panini$Duck get$Next$Duck() {
+  			nomessages: while (this.size <= 0) 
+  				try {
+  					synchronized(queueLock) { queueLock.wait(); }
+  				} catch (InterruptedException e) {
+  					continue nomessages;
+  				}
+
+  			size--;
+  			Panini$Duck d = (Panini$Duck) objects[head++];
+  			if (head >= objects.length) head = 0;
+  			return d;
+  	}
 
    protected final boolean empty() { return size==0; }
    
