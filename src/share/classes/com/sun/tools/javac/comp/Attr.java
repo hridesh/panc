@@ -773,12 +773,11 @@ public class Attr extends JCTree.Visitor {
         if (tree.needsDefaultRun){
         	List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree, env, rs);
         	enter.classEnter(wrapperClasses, env.outer);
-        	System.out.println(wrapperClasses);
         	attribClassBody(env, tree.sym);
         	
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
         	}
-        System.out.println(tree);
+//        System.out.println(tree);
     }
 
     public void visitSystemDef(JCSystemDecl tree){
@@ -1066,7 +1065,6 @@ public class Attr extends JCTree.Visitor {
     	maindecl.body.stats = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
     	
     	tree.switchToClass();
-    	System.out.println(tree);
     	memberEnter.memberEnter(maindecl, env);
     }
     
