@@ -811,12 +811,6 @@ public class Attr extends JCTree.Visitor {
     						List.<JCExpression>nil()));
     		    	joins.append(joinAssign);
     		    	if(c.hasRun){
-    		    		make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-    		    				make.Select(make.Ident(mdecl.name), 
-    		    				names.fromString("join")), List.<JCExpression>nil())))), 
-    		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-    		    						names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-    		    						null), make.Block(0, List.<JCStatement>nil()))), null);
     		    		submits.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
     		    				make.Select(make.Ident(mdecl.name), 
     		    				names.fromString("join")), List.<JCExpression>nil())))), 
@@ -848,6 +842,18 @@ public class Attr extends JCTree.Visitor {
     						make.Select(make.Ident(mdecl.name), names.fromString("start")), 
     						List.<JCExpression>nil()));
     		    	joins.append(joinAssign);
+    		    	if(c.hasRun){
+    		    		submits.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    		    				make.Select(make.Ident(mdecl.name), 
+    		    				names.fromString("join")), List.<JCExpression>nil())))), 
+    		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
+    		    						names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
+    		    						null), make.Block(0, List.<JCStatement>nil()))), null));
+    		    	}
+    		    	else
+    		    		submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    		    				make.Select(make.Ident(mdecl.name), 
+    		    				names.fromString("shutdown")), List.<JCExpression>nil())));
     		    	variables.put(mdecl.name, c.name);
     			}
     			else{
@@ -894,6 +900,28 @@ public class Attr extends JCTree.Visitor {
 	        						List.<JCExpression>nil()));
 	        		    	joins.append(joinAssign);	        		    	
     	    			}
+    	    			if(c.hasRun){
+    	    				for(int j = mat.amount; j>=0;j--){
+    	    					submits.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+            		    				make.Select(make.Indexed(make.Ident(mdecl.name), make.Literal(j)),
+            		    				names.fromString("join")), List.<JCExpression>nil())))), 
+            		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
+            		    						names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
+            		    						null), make.Block(0, List.<JCStatement>nil()))), null));
+    	    				}
+//        		    		submits.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+//        		    				make.Select(make.Ident(mdecl.name), 
+//        		    				names.fromString("join")), List.<JCExpression>nil())))), 
+//        		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
+//        		    						names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
+//        		    						null), make.Block(0, List.<JCStatement>nil()))), null));
+        		    	}
+        		    	else
+        		    		for(int j=0; j<mat.amount;j++){
+        		    		submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+        		    				make.Select(make.Indexed(make.Ident(mdecl.name), make.Literal(j)), 
+        		    				names.fromString("shutdown")), List.<JCExpression>nil())));
+        		    		}
         		    	variables.put(mdecl.name, c.name);
         		    	modArrays.put(mdecl.name, mat.amount);
     				}
