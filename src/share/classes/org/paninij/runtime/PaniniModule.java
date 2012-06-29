@@ -64,10 +64,10 @@ public abstract class PaniniModule extends Thread {
   	 * @return the first available duck in the module's queue.
   	 */
    @SuppressWarnings("rawtypes")
-  	protected final Panini$Duck get$Next$Duck() {
+  	protected final synchronized Panini$Duck get$Next$Duck() {
   			nomessages: while (this.size <= 0) 
-  				try {
-  					synchronized(queueLock) { queueLock.wait(); }
+  				try {	
+  					wait(); 
   				} catch (InterruptedException e) {
   					continue nomessages;
   				}
@@ -128,15 +128,9 @@ public abstract class PaniniModule extends Thread {
   	 * 
   	 */
   	public final void shutdown () {
-  		this.checkAccess();
+  		 this.checkAccess();
 	   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-1);
-	   	synchronized (queueLock) {
-	        ensureSpace(1);
-	        size = size + 1;
-	        objects[tail++] = d;
-	        if (tail >= objects.length) tail = 0;
-	        if (size == 1) queueLock.notifyAll();
-	    }
+	   	push(d);
   	}
   	
   	/**
@@ -150,31 +144,22 @@ public abstract class PaniniModule extends Thread {
   	 * @throws SecurityException - if the client module is not allowed to access this module.
   	 * 
   	 */
-  	@SuppressWarnings("rawtypes")
   	public final void exit () {
-  		this.checkAccess();
+  		 this.checkAccess();
 	   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-2);
-	   	synchronized (queueLock) {
-	        ensureSpace(1);
-	        size = size + 1;
-	        objects[tail++] = d;
-	        if (tail >= objects.length) tail = 0;
-	        if (size == 1) queueLock.notifyAll();
-	   	}
+	   	push(d);
   	}
    /**
     * Pushes a single object on this module's queue.
     * @param o - Object to be stored.
     */
-   protected final void push(Object o) {
-   	queueLock.lock();
+   protected final synchronized void push(Object o) {
    	ensureSpace(1);
    	size = size + 1;
    	objects[tail++] = o;
    	if (tail >= objects.length)
    		tail = 0;
-   	if(size==1) synchronized (queueLock) { queueLock.notifyAll(); }
-   	queueLock.unlock();
+   	if(size==1) notifyAll();
    }
 
    /**
@@ -182,8 +167,7 @@ public abstract class PaniniModule extends Thread {
     * @param o1 - first object to be stored. 
     * @param o2 - second object to be stored.
     */
-   protected final void push(Object o1, Object o2) {
-   	queueLock.lock();
+   protected final synchronized void push(Object o1, Object o2) {
    	ensureSpace(2);
    	size = size + 2;
    	objects[tail++] = o1;
@@ -192,8 +176,7 @@ public abstract class PaniniModule extends Thread {
    	objects[tail++] = o2;
    	if (tail >= objects.length)
    		tail = 0;
-   	if(size==2) synchronized (queueLock) { queueLock.notifyAll(); }
-   	queueLock.unlock();
+   	if(size==2) notifyAll();
    }
 
    /**
@@ -202,8 +185,7 @@ public abstract class PaniniModule extends Thread {
     * @param o2 - second object to be stored.
     * @param o3 - third object to be stored.
     */
-   protected final void push(Object o1, Object o2, Object o3) {
-   	queueLock.lock();
+   protected final synchronized void push(Object o1, Object o2, Object o3) {
    	ensureSpace(3);
    	size = size + 3;
    	objects[tail++] = o1;
@@ -215,16 +197,14 @@ public abstract class PaniniModule extends Thread {
    	objects[tail++] = o3;
    	if (tail >= objects.length)
    		tail = 0;
-   	if(size==3) synchronized (queueLock) { queueLock.notifyAll(); }
-   	queueLock.unlock();
+   	if(size==3) notifyAll();
    }
 
    /**
     * Pushes multiple objects on this module's queue.
     * @param items - list of objects to be stored. 
     */
-   protected final void push(Object... items) {
-   	queueLock.lock();
+   protected final synchronized void push(Object... items) {
    	int numItems = items.length;
    	ensureSpace(numItems);
    	size = size + numItems;
@@ -233,8 +213,7 @@ public abstract class PaniniModule extends Thread {
    		if (tail >= objects.length)
    			tail = 0;
    	}
-   	if(size==numItems) synchronized (queueLock) { queueLock.notifyAll(); }
-   	queueLock.unlock();
+   	if(size==numItems) notifyAll(); 
    }
 
 }
