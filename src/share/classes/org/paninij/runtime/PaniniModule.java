@@ -215,7 +215,7 @@ public abstract class PaniniModule extends Thread {
    	objects[tail++] = o3;
    	if (tail >= objects.length)
    		tail = 0;
-   	if(size==2) synchronized (queueLock) { queueLock.notifyAll(); }
+   	if(size==3) synchronized (queueLock) { queueLock.notifyAll(); }
    	queueLock.unlock();
    }
 
