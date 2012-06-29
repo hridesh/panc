@@ -75,7 +75,6 @@ public class ModuleInternal extends Internal
 
 //        ifBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("After Lock")))));
 //        ifBody.append(es(apply("print")));
-        ifBody.append(es(apply("queueLock", "lock")));
 //        ifBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), sop, List.<JCExpression>of(make.Literal("Before Lock")))));
 //        ifBody.append(es(mm(id("size"))));
         ifBody.append(var(noMods, "d", PaniniConstants.DUCK_INTERFACE_NAME, 
@@ -96,14 +95,11 @@ public class ModuleInternal extends Internal
         	if(restype.tag == TypeTags.VOID){
         		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
         		
-        		for (int i = 0; i < method.params.size(); i++) {
-        			caseStatements.append(es(mm(id("size"))));                    
-        			caseStatements.append(var(noMods, "var"+varIndex, method.params.get(i).sym.type.toString(), cast(method.params.get(i).sym.type.toString(), aindex(id("objects"), pp(id("head"))))));
-                    caseStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
+        		for (int i = 0; i < method.params.size(); i++) {              
+        			caseStatements.append(var(noMods, "var"+varIndex, method.params.get(i).sym.type.toString(), cast(method.params.get(i).sym.type.toString(), aindex(apply("d", "args"), intc(i)))));
                     args.append(id("var" + varIndex++));
                 }
         	
-        		caseStatements.append(es(apply("queueLock", "unlock")));
         		caseStatements.append(es(apply(thist(), method.name.toString() + "$Original", args)));
         		caseStatements.append(es(apply("d", "panini$finish",
                       args(nullv()))));
@@ -112,13 +108,10 @@ public class ModuleInternal extends Internal
         	}else if(restype.tag == TypeTags.CLASS){
         		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 
-                for (int i = 0; i < method.params.size(); i++) {
-                	caseStatements.append(es(mm(id("size"))));                    
-                	caseStatements.append(var(noMods, "var"+varIndex, method.params.get(i).sym.type.toString(), cast(method.params.get(i).sym.type.toString(), aindex(id("objects"), pp(id("head"))))));
-                	caseStatements.append(ifs(geq(id("head"), select("objects", "length")), es(assign("head", intlit(0)))));
+                for (int i = 0; i < method.params.size(); i++) {                
+                	caseStatements.append(var(noMods, "var"+varIndex, method.params.get(i).sym.type.toString(), cast(method.params.get(i).sym.type.toString(), aindex(apply("d", "args"), intc(i)))));
                     args.append(id("var"+varIndex++));
                 }
-                caseStatements.append(es(apply("queueLock", "unlock")));
                 caseStatements.append(es(apply("d", "panini$finish",
                                                   args(apply(thist(), method.name.toString() + "$Original", args)))));
                 caseStatements.append(break_());
@@ -132,26 +125,25 @@ public class ModuleInternal extends Internal
         ListBuffer<JCStatement> shutDownBody = new ListBuffer<JCStatement>();
         shutDownBody.append(ifs(gt(select(thist(), "size"), intlit(0)), 
         		body(
-        				es(assign("size", make.Binary(JCTree.Tag.PLUS, id("size"), intlit(1)))),
-        				es(make.Assign(make.Indexed(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
-        		    			make.Unary(POSTINC, 
-        		    					id(PaniniConstants.PANINI_MODULE_TAIL))), 
-        		    					id("d"))),
-        		    			make.If(make.Binary(GE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
-        		    			    			make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
-        		    			    					names.fromString("length"))), 
-        		    			    			make.Exec(make.Assign(
-        		    			    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
-        		    			    					make.Literal(0))), 
-        		    			    			null),
-        		    			es(apply("queueLock", "unlock")),
+        				es(make.Apply(List.<JCExpression>nil(), id("push"), List.<JCExpression>of(id("d")))),
+//        				es(assign("size", make.Binary(JCTree.Tag.PLUS, id("size"), intlit(1)))),
+//        				es(make.Assign(make.Indexed(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
+//        		    			make.Unary(POSTINC, 
+//        		    					id(PaniniConstants.PANINI_MODULE_TAIL))), 
+//        		    					id("d"))),
+//        		    			make.If(make.Binary(GE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
+//        		    			    			make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
+//        		    			    					names.fromString("length"))), 
+//        		    			    			make.Exec(make.Assign(
+//        		    			    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
+//        		    			    					make.Literal(0))), 
+//        		    			    			null),
         		    			break_())
         				));
         cases.append(case_(intlit(-1), shutDownBody));
         
         ListBuffer<JCStatement> exitBody = new ListBuffer<JCStatement>();
         exitBody.append(es(assign(PaniniConstants.PANINI_TERMINATE, truev())));
-        exitBody.append(es(apply("queueLock", "unlock")));
         exitBody.append(break_());
         cases.append(case_(intlit(-2), exitBody));
         

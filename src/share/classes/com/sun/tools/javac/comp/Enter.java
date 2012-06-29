@@ -524,7 +524,6 @@ public class Enter extends JCTree.Visitor {
     }
     
     public void visitSystemDef(JCSystemDecl tree){
-//    	addDuck();
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
         ClassSymbol c;
@@ -801,7 +800,7 @@ public class Enter extends JCTree.Visitor {
         		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
         		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
             		MethodSymbol msym = new MethodSymbol(
-            				PUBLIC,
+            				PUBLIC|FINAL,
             				names.fromString("run"),
             				new MethodType(
             						List.<Type>nil(),
@@ -881,25 +880,33 @@ public class Enter extends JCTree.Visitor {
         	for(JCMethodDecl mdecl : tree.publicMethods){
         		c.hasRun = false;
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
-	        	ListBuffer<JCStatement> syncBody = new ListBuffer<JCStatement>();
-	        	syncBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("ensureSpace")), List.<JCExpression>of(make.Literal(mdecl.params.length()+1)))));
-	        	syncBody.append(make.Exec(make.Assign(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-	        			make.Binary(PLUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-	        					make.Literal(mdecl.params.length()+1)))));
-	        	syncBody.appendList(push(names.fromString("d")));
-	            if(mdecl.params.length()!=0){
-	            	for(JCVariableDecl n : mdecl.params){
-	            		syncBody.appendList(push(n.name));
-	            	}
-	            }
-	            syncBody.append(make.If(make.Binary(EQ, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-	            		make.Literal(mdecl.params.length()+1)), 
-	            		make.Exec(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("notifyAll")), List.<JCExpression>nil())),
-	            		null));
-	            copyBody.add(make.Synchronized(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), 
-	            		make.Block(0, syncBody.toList())));
+	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("push")), List.<JCExpression>of(make.Ident(names.fromString("d"))))));
+//	        	ListBuffer<JCStatement> syncBody = new ListBuffer<JCStatement>();
+//	        	syncBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("ensureSpace")), List.<JCExpression>of(make.Literal(mdecl.params.length()+1)))));
+//	        	syncBody.append(make.Exec(make.Assign(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
+//	        			make.Binary(PLUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
+//	        					make.Literal(mdecl.params.length()+1)))));
+//	        	syncBody.appendList(push(names.fromString("d")));
+//	            if(mdecl.params.length()!=0){
+//	            	for(JCVariableDecl n : mdecl.params){
+//	            		syncBody.appendList(push(n.name));
+//	            	}
+//	            }
+//	            syncBody.append(make.If(make.Binary(EQ, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
+//	            		make.Literal(mdecl.params.length()+1)), 
+//	            		make.Exec(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("notifyAll")), List.<JCExpression>nil())),
+//	            		null));
+//	            copyBody.add(make.Synchronized(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), 
+//	            		make.Block(0, syncBody.toList())));
 	            
 	            //change to notify
+	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
+	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+	        	args.add(make.Ident(names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString())));
+	            for(JCVariableDecl v : mdecl.params){
+	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
+	            	args.append(make.Ident(v.name));
+	            }
 	            
 	            if(!mdecl.restype.toString().equals("void")){
 	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
@@ -907,7 +914,7 @@ public class Enter extends JCTree.Visitor {
 	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
 	            			make.NewClass(null, List.<JCExpression>nil(), 
 	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
-	            					List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString()))), null)));
+	            					args.toList(), null)));
 	            	copyBody.append(make.Return(make.Ident(names.fromString("d"))));
 	            }
 	            else{
@@ -916,12 +923,9 @@ public class Enter extends JCTree.Visitor {
 	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$Void")), 
 	            			make.NewClass(null, List.<JCExpression>nil(), 
 	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$Void")), 
-	            					List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString()))), null)));
+	            					args.toList(), null)));
 	            }
-	            ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
-	            for(JCVariableDecl v : mdecl.params){
-	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
-	            }
+	            
 	            JCMethodDecl methodCopy = make.MethodDef(
 	            		make.Modifiers(PRIVATE|FINAL), 
 	            		mdecl.name.append(names.fromString("$Original")), 
@@ -950,7 +954,7 @@ public class Enter extends JCTree.Visitor {
                 );
 			JCMethodDecl m = make.MethodDef(msym,
                                             make.Block(0, List.<JCStatement>nil()));
-			m.mods = make.Modifiers(PUBLIC, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("SuppressWarnings")), 
+			m.mods = make.Modifiers(PUBLIC|FINAL, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("SuppressWarnings")), 
         			List.<JCExpression>of(make.Literal("unchecked")))));
             m.params = List.<JCVariableDecl>nil();
             m.sym = msym;
