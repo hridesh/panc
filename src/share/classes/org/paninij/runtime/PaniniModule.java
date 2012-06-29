@@ -162,4 +162,79 @@ public abstract class PaniniModule extends Thread {
 	        if (size == 1) queueLock.notifyAll();
 	   	}
   	}
+   /**
+    * Pushes a single object on this module's queue.
+    * @param o - Object to be stored.
+    */
+   protected final void push(Object o) {
+   	queueLock.lock();
+   	ensureSpace(1);
+   	size = size + 1;
+   	objects[tail++] = o;
+   	if (tail >= objects.length)
+   		tail = 0;
+   	if(size==1) synchronized (queueLock) { queueLock.notifyAll(); }
+   	queueLock.unlock();
+   }
+
+   /**
+    * Pushes two objects on this module's queue.
+    * @param o1 - first object to be stored. 
+    * @param o2 - second object to be stored.
+    */
+   protected final void push(Object o1, Object o2) {
+   	queueLock.lock();
+   	ensureSpace(2);
+   	size = size + 2;
+   	objects[tail++] = o1;
+   	if (tail >= objects.length)
+   		tail = 0;
+   	objects[tail++] = o2;
+   	if (tail >= objects.length)
+   		tail = 0;
+   	if(size==2) synchronized (queueLock) { queueLock.notifyAll(); }
+   	queueLock.unlock();
+   }
+
+   /**
+    * Pushes three objects on this module's queue.
+    * @param o1 - first object to be stored. 
+    * @param o2 - second object to be stored.
+    * @param o3 - third object to be stored.
+    */
+   protected final void push(Object o1, Object o2, Object o3) {
+   	queueLock.lock();
+   	ensureSpace(3);
+   	size = size + 3;
+   	objects[tail++] = o1;
+   	if (tail >= objects.length)
+   		tail = 0;
+   	objects[tail++] = o2;
+   	if (tail >= objects.length)
+   		tail = 0;
+   	objects[tail++] = o3;
+   	if (tail >= objects.length)
+   		tail = 0;
+   	if(size==2) synchronized (queueLock) { queueLock.notifyAll(); }
+   	queueLock.unlock();
+   }
+
+   /**
+    * Pushes multiple objects on this module's queue.
+    * @param items - list of objects to be stored. 
+    */
+   protected final void push(Object... items) {
+   	queueLock.lock();
+   	int numItems = items.length;
+   	ensureSpace(numItems);
+   	size = size + numItems;
+   	for(Object o: items) {
+   		objects[tail++] = o;
+   		if (tail >= objects.length)
+   			tail = 0;
+   	}
+   	if(size==numItems) synchronized (queueLock) { queueLock.notifyAll(); }
+   	queueLock.unlock();
+   }
+
 }
