@@ -24,8 +24,18 @@ public class Panini$Duck$Void implements Panini$Duck<Void> {
 	public Panini$Duck$Void(int messageId) {
 		super();
 		this.messageId = messageId;
+		args = null;
 	}
 
+	private final Object[] args; 
+	public Panini$Duck$Void(int messageId, Object...args) {
+		super();
+		this.messageId = messageId;
+		this.args = args;
+	}
+	
+	public Object[] args() { return args; }
+	
 	public Void value() {
 		future.get();
 		return null;
@@ -42,5 +52,5 @@ public class Panini$Duck$Void implements Panini$Duck<Void> {
 	private final DuckBarrier future = new DuckBarrier();
 	private final int messageId; 
 	@SuppressWarnings("unused")
-	private Panini$Duck$Void() { messageId = -1; }
+	private Panini$Duck$Void() { messageId = -1; args = null; }
 }

@@ -24,7 +24,8 @@ public interface Panini$Duck<T> {
 	
     public void panini$finish(T t);
     public int panini$message$id(); 
-    
+   	public Object[] args();
+
    	public static class DuckBarrier extends AbstractQueuedSynchronizer {
      
    		public final void get() {
