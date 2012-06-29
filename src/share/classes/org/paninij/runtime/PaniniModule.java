@@ -23,15 +23,19 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.paninij.runtime.types.Panini$Duck;
 
 public abstract class PaniniModule extends Thread {
-   protected Object[] objects = new Object[10];
-   protected volatile int head = 0, tail = 0, size = 0;
+   protected volatile Object[] objects = new Object[10];
+   protected volatile int head = 0, tail=0, size =0;
    protected final ReentrantLock queueLock = new ReentrantLock();
    
    protected final void extendQueue() {
-       assert(size==objects.length);
+       assert(tail>=objects.length);
        Object[] newObjects = new Object[objects.length+10];
-       System.arraycopy(objects, head, newObjects, 0, objects.length-head);
-       System.arraycopy(objects, 0, newObjects, objects.length-head, tail);
+       if(tail<=head){
+	       System.arraycopy(objects, head, newObjects, 0, objects.length-head);
+		   System.arraycopy(objects, 0, newObjects, objects.length-head, tail);
+       }
+       else
+    	   System.arraycopy(objects, head, newObjects, 0, tail-head);
        head = 0; tail = size;        
        objects = newObjects;
    }        
@@ -42,11 +46,12 @@ public abstract class PaniniModule extends Thread {
     * @param numElems 
     */
    protected final void ensureSpace(int numElems) {
-    if (head < tail) 
-    	if (objects.length + (head - tail) < numElems) 
-    		if (size != 0) extendQueue(); 
-    		else if (head - tail < numElems) 
-    			if (size != 0) extendQueue();
+	    if (head < tail) {
+	    	if (objects.length + (head - tail) < numElems) 
+	    		if (size != 0) extendQueue();
+	    }
+	    else if (head - tail < numElems) 
+	    			if (size != 0) extendQueue();
    }
 
   	/**
@@ -148,13 +153,13 @@ public abstract class PaniniModule extends Thread {
   	@SuppressWarnings("rawtypes")
   	public final void exit () {
   		this.checkAccess();
-   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-2);
-    queueLock.lock();
-    ensureSpace(1);
-    size = size + 1;
-    objects[tail++] = d;
-    if (tail >= objects.length) tail = 0;
-    queueLock.unlock();
+	   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-2);
+	   	synchronized (queueLock) {
+	        ensureSpace(1);
+	        size = size + 1;
+	        objects[tail++] = d;
+	        if (tail >= objects.length) tail = 0;
+	        if (size == 1) queueLock.notifyAll();
+	   	}
   	}
-  	
 }
