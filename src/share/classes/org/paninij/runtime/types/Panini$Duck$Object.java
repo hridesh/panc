@@ -19,13 +19,14 @@
 
 package org.paninij.runtime.types;
 
-public class Panini$Duck$Object implements Panini$Duck<Object> {
+public class Panini$Duck$Object extends Object implements Panini$Duck<Object> {
 
 	public Panini$Duck$Object(int messageId) {
 		super();
 		this.messageId = messageId;
 	}
 
+	@Override
 	public final boolean equals(Object obj) {
 		if(value == null) get();
 		value.getClass(); 
@@ -37,11 +38,13 @@ public class Panini$Duck$Object implements Panini$Duck<Object> {
 		return value.getClass();
 	}
 
+	@Override
 	public final int hashCode() {
 		if(value == null) get();
 		return value.hashCode();
 	}
 
+	@Override
 	public final String toString() {
 		if(value == null) get();
 		return value.toString();
@@ -71,7 +74,6 @@ public class Panini$Duck$Object implements Panini$Duck<Object> {
 		return this.messageId;
 	}
 
-	protected final DuckBarrier future = new DuckBarrier();
 	private final int messageId;
 
 	@SuppressWarnings("unused")
@@ -79,5 +81,5 @@ public class Panini$Duck$Object implements Panini$Duck<Object> {
 		messageId = -1;
 	}
 	
-	// TODO: semantics for wait, notify(), notifyAll
+	// TODO: semantics for wait(), wait(long), notify(), notifyAll
 }
