@@ -24,6 +24,5 @@ package org.paninij.lang;
  * @param <OWNER> - The owner module of an instance of this class.
  * @since 1.0
  */
-public class Object <OWNER> {
- //TODO: to be implemented.
+public class Object <OWNER> extends java.lang.Object {
 }
