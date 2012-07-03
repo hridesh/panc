@@ -746,6 +746,7 @@ public class Attr extends JCTree.Visitor {
         if (tree.needsDefaultRun){
         	List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree, env, rs);
         	enter.classEnter(wrapperClasses, env.outer);
+//        	System.out.println(wrapperClasses);
         	attribClassBody(env, tree.sym);
         	
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
@@ -3478,6 +3479,7 @@ public class Attr extends JCTree.Visitor {
                 }
                 // end Panini code
                 attribClassBody(env, c);
+//                System.out.println(env.tree);
                 chk.checkDeprecatedAnnotation(env.tree.pos(), c);
             } finally {
                 log.useSource(prev);

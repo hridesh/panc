@@ -911,18 +911,18 @@ public class Enter extends JCTree.Visitor {
 	            if(!mdecl.restype.toString().equals("void")){
 	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
 	            			names.fromString("d"), 
-	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
+	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
 	            			make.NewClass(null, List.<JCExpression>nil(), 
-	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString())), 
+	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
 	            					args.toList(), null)));
 	            	copyBody.append(make.Return(make.Ident(names.fromString("d"))));
 	            }
 	            else{
 	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
 	            			names.fromString("d"), 
-	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$Void")), 
+	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
 	            			make.NewClass(null, List.<JCExpression>nil(), 
-	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$Void")), 
+	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
 	            					args.toList(), null)));
 	            }
 	            
