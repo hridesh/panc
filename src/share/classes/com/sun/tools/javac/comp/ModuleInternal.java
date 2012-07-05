@@ -97,8 +97,8 @@ public class ModuleInternal extends Internal
         		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
         		
         		for (int i = 0; i < method.params.size(); i++) {
-                	caseStatements.append(var(noMods, "var"+varIndex, method.params.get(i).sym.type.toString(), 
-                			cast(method.params.get(i).sym.type.toString(), 
+        			caseStatements.append(var(noMods, "var"+varIndex, method.params.get(i).vartype, 
+                			cast(method.params.get(i).vartype, 
                 			make.Select(cast(PaniniConstants.DUCK_INTERFACE_NAME+"$"+method.restype.toString()+"$"+tree.name.toString(), id("d")),method.params.get(i).name.append(names.fromString("$")).append(method.name)))));
                     args.append(id("var"+varIndex++));
                 }
