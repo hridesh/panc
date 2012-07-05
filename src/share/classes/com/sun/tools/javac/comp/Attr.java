@@ -751,7 +751,18 @@ public class Attr extends JCTree.Visitor {
         	
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
         	}
+        for(JCTree def : tree.defs){
+        	if(def.getTag() == Tag.METHODDEF){
+        		for(JCVariableDecl param : ((JCMethodDecl)def).params){
+        			if(param.type.tsym.isModule&&!((JCMethodDecl)def).name.toString().contains("$Original")){
+        				log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.name);
+        			}
+        		}
+        		
+        	}
+        }
 //        System.out.println(tree);
+        
     }
 
     public void visitSystemDef(JCSystemDecl tree){
