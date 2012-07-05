@@ -409,7 +409,8 @@ public class ModuleInternal extends Internal
     				JCVariableDecl var2 = var(mods(PRIVATE|FINAL), 
     						"messageId", make.TypeIdent(TypeTags.INT), null);
     				ListBuffer<JCTree> wrappedMethods= new ListBuffer<JCTree>();
-            		
+    				boolean addedConstructors = false;
+    				ListBuffer<JCExpression> inits = new ListBuffer<JCExpression>();
     				while(iter.hasNext()){
     					Symbol s = iter.next();
     					if(s.getKind()==ElementKind.METHOD){
@@ -446,7 +447,7 @@ public class ModuleInternal extends Internal
     					else if (s.getKind()==ElementKind.CONSTRUCTOR){
     						
     						MethodSymbol m = (MethodSymbol)s;
-    						ListBuffer<JCExpression> inits = new ListBuffer<JCExpression>();
+    						
     						ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
     						params.add(var(mods(0), "messageId", make.TypeIdent(TypeTags.INT)));
     						
@@ -457,15 +458,18 @@ public class ModuleInternal extends Internal
     								inits.add(intlit(0));
     							}
     						}
-    						constructors.add(
-    								constructor(mods(PUBLIC), 
-    										params(var(mods(0), "messageId", make.TypeIdent(TypeTags.INT))), 
-    								body(es(make.Apply(List.<JCExpression>nil(), 
-    										make.Ident(names._super), 
-    										inits.toList())
-    										),
-    										es(assign(select(thist(), "messageId"), id("messageId")))
-    										)));
+    						if(!addedConstructors){
+								constructors.add(
+										constructor(mods(PUBLIC), 
+												params(var(mods(0), "messageId", make.TypeIdent(TypeTags.INT))), 
+										body(es(make.Apply(List.<JCExpression>nil(), 
+												make.Ident(names._super), 
+												inits.toList())
+												),
+												es(assign(select(thist(), "messageId"), id("messageId")))
+												)));
+								addedConstructors = true;
+    						}
     					}
     				}
     				ListBuffer<JCVariableDecl> finishParams = new ListBuffer<JCVariableDecl>();
@@ -505,6 +509,9 @@ public class ModuleInternal extends Internal
     				if(!method.params.isEmpty()){
     					ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
     					ListBuffer<JCVariableDecl> consParams = new ListBuffer<JCVariableDecl>();
+    					if(addedConstructors){
+    						consBody.add(es(make.Apply(List.<JCExpression>nil(), id(names._super), inits.toList())));
+    					}
     					consParams.add(var(mods(0), "messageId", make.TypeIdent(TypeTags.INT)));
     					consBody.add(es(assign(select(thist(), "messageId"), id("messageId"))));
     					
@@ -532,6 +539,27 @@ public class ModuleInternal extends Internal
 	            		if(!hasDuplicate(wrappedClass, method.params, method.name)){
 	            			ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
 	    					ListBuffer<JCVariableDecl> consParams = new ListBuffer<JCVariableDecl>();
+	    					
+	    					boolean hasConstructor = false;
+	    					ListBuffer<JCExpression> inits = new ListBuffer<JCExpression>();
+	    					while(iter.hasNext()){
+	        					Symbol s = iter.next();
+	        					if(s.getKind() == ElementKind.CONSTRUCTOR){
+	        						MethodSymbol m = (MethodSymbol)s;
+	        						for(VarSymbol v : m.params()){
+	        							if(v.type.toString().equals("boolean"))
+	        								inits.add(falsev());
+	        							else if (v.type.isPrimitive()){
+	        								inits.add(intlit(0));
+	        							}
+	        						}	        					
+	        						hasConstructor = true;
+	        						break;
+	        					}
+	    					}
+	    					if(hasConstructor)
+	    						consBody.add(es(make.Apply(List.<JCExpression>nil(), id(names._super), inits.toList())));
+	    					
 	    					consParams.add(var(mods(0), "messageId", make.TypeIdent(TypeTags.INT)));
 	    					consBody.add(es(assign(select(thist(), "messageId"), id("messageId"))));
 	    					
