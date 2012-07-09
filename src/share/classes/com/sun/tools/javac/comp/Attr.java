@@ -748,9 +748,10 @@ public class Attr extends JCTree.Visitor {
         	enter.classEnter(wrapperClasses, env.outer);
 //        	System.out.println(wrapperClasses);
         	attribClassBody(env, tree.sym);
-        	
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
         	}
+        else
+        	attribClassBody(env, tree.sym);
         for(JCTree def : tree.defs){
         	if(def.getTag() == Tag.METHODDEF){
         		for(JCVariableDecl param : ((JCMethodDecl)def).params){

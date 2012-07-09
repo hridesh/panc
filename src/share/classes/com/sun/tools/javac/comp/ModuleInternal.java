@@ -19,7 +19,6 @@
 
 package com.sun.tools.javac.comp;
 
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.IntType;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
@@ -35,12 +34,10 @@ import java.util.Map;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.TypeTags;
-import com.sun.tools.javac.comp.Resolve.SymbolNotFoundError;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.PaniniConstants;
 
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.type.TypeKind;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
@@ -436,7 +433,7 @@ public class ModuleInternal extends Internal
     			    							List.<JCStatement>of(make.Exec
     			    									(make.Apply(null, make.Ident
     			    											(m.name), List.<JCExpression>nil()))))));
-    							JCMethodDecl value = method(mods(PUBLIC),
+    							JCMethodDecl value = method(mods(PUBLIC|FINAL),
     									m.name,
     									make.Type(syms.voidType),
     									body(make.Try(body(sync(make.This(Type.noType),body(whilel(isNull("wrapped"),es(apply("wait")))))), catchers, null), es(apply("wrapped", m.name)))
