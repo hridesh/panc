@@ -30,6 +30,13 @@ module Barber(WaitingRoom r, boolean isSleeping) {
         isSleeping = false;
         System.out.println("Barber Woke up");
         work(c);
+        Customer n = r.whosNext();
+        while (n!=null) {
+            work(n);
+            n = r.whosNext();
+        }
+        sleep();
+        
     }
           
     void sleep(){
@@ -39,16 +46,7 @@ module Barber(WaitingRoom r, boolean isSleeping) {
           
     void work(Customer c){
         System.out.println("Barber working on customer " + c.getID());  
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) { e.printStackTrace(); }
-        checkRoom();
-    }
-          
-    void checkRoom(){
-        Customer c = r.whosNext();
-        if(c!=null) work(c);
-        else sleep();
+        yield();
     }
           
     BooleanC isSleeping(){
@@ -84,44 +82,27 @@ module WaitingRoom(int cap) {
   
 module Customers(Barber b, WaitingRoom r) {
     include customer;
-  
     int idCounter = 0;
   
-    private void newCustomer() {
-        hairCut(new Customer(r.incIdCount().value()));
-    }
-  
     void run() {
-        newCustomer();
+        while (true) {
+            Customer c = new Customer(r.incIdCount().value());
+            System.out.println("Customer " + c.getID() + " wants haircut");
+            if (!b.isSleeping().value()) {
+                trySit(c);
+            } else {
+                System.out.println("Customer is waking barber up");
+                b.wake(c);
+            }
+            yield(1000);
+        }
     }
   
-    private void hairCut(Customer c){
-        System.out.println("Customer " + c.getID() + " wants haircut");
-        if(!b.isSleeping().value()){
-            if(!r.sit(c).value()) {
-                System.out.println("Waiting room is full, so " + c.getID() + " leaving");
-                leave();
-            } else {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) { e.printStackTrace(); }
-                newCustomer();
-            }
+    void trySit(Customer c) {
+        System.out.println("Barber is busy, trying to sit down");
+        if(!r.sit(c).value()) {
+            System.out.println("Waiting room is full, so leaving");
         }
-        else{
-            b.wake(c);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) { e.printStackTrace(); }
-            newCustomer();
-        }               
-    }
-          
-    private void leave(){
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) { e.printStackTrace(); }
-        newCustomer();
     }
 }
   
