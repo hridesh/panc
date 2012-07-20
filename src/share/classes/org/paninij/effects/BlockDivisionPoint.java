@@ -39,4 +39,6 @@ import com.sun.source.util.SimpleTreeVisitor;
 
 public class BlockDivisionPoint {
     public JCBlock insertStatementsAtPoint(JCBlock original, List<JCStatement> s) { return original; }
+    int point;
+
 }

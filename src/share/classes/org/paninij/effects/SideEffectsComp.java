@@ -38,7 +38,10 @@ import com.sun.source.util.SimpleTreeVisitor;
 
 
 public class SideEffectsComp {
-    public EffectSet methodEffectsBeforePoint(JCMethodDecl m, BlockDivisionPoint p) { return new EffectSet(); }
+    public EffectSet methodEffectsBeforePoint(JCMethodDecl m, BlockDivisionPoint p) { 
+        
+return new EffectSet(); 
+    }
     public EffectSet methodEffectsAfterPoint(JCMethodDecl m, BlockDivisionPoint p) { return new EffectSet(); }
     public EffectSet moduleMessageEffects(JCModuleDecl m, int i) { return new EffectSet(); }
 }

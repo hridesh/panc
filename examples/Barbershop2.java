@@ -20,6 +20,12 @@ library customer {
         public Customer(int id) { this.id = id; }
         public int getID() { return id; }
     }
+
+    class MaybeCustomer {
+        private Customer c;
+        public MaybeCustomer(Customer c) { this.c = c; }
+        public Customer getCustomer() { return c; }
+    }
 }
   
 module Barber(WaitingRoom r, boolean isSleeping) {
@@ -30,11 +36,11 @@ module Barber(WaitingRoom r, boolean isSleeping) {
         isSleeping = false;
         System.out.println("Barber Woke up");
         work(c);
-        Customer n = r.whosNext();
-        while (n!=null) {
-            work(n);
-            n = r.whosNext();
-        }
+         Customer n = r.whosNext().getCustomer();
+         while (n!=null) {
+             work(n);
+             n = r.whosNext().getCustomer();
+         }
         sleep();
         
     }
@@ -75,8 +81,8 @@ module WaitingRoom(int cap) {
             return new BooleanC(false);
     }
           
-    Customer whosNext() {
-        return queue.poll();
+    MaybeCustomer whosNext() {
+        return new MaybeCustomer(queue.poll());
     }
 }
   

@@ -19,7 +19,39 @@
 
 package org.paninij.effects;
 
+import java.util.HashSet;
 
-public class EffectSet {
+    abstract class Effect {}
+    class EmptyEffect extends Effect {}
+    class FieldReadEffect extends Effect {
+        String clss; int field; public FieldReadEffect(String clss, int field) { this.clss = clss; this.field = field; }
+    }
+    class FieldWriteEffect extends Effect {
+        String clss; int field; public FieldWriteEffect(String clss, int field) { this.clss = clss; this.field = field; }
+    }
+    class OpenEffect extends Effect {
+        int field; int method; EffectSet otherEffects; public OpenEffect(int field, int method, EffectSet otherEffects)
+        { this.field = field; this.method = method; this.otherEffects = otherEffects; }
+    }
+    class BottomEffect extends Effect {}
+
+
+public class EffectSet extends HashSet<Effect> {
+    public boolean add(Effect e) {
+        // if (e instanceof OpenEffect) {
+        //     OpenEffect oe = (OpenEffect) e;
+        //     openEffects.add(oe);
+        // }
+        return super.add(e);
+    }
+
+    boolean intersects(EffectSet es) {
+        for (Effect e : es) {
+            if ((contains(e) && !(e instanceof EmptyEffect)) || e instanceof BottomEffect) return true;
+        }
+        return false;
+    }
+
     public boolean doesInterfere(EffectSet before, EffectSet after) { return true; }
+    static final long serialVersionUID = 42L;
 }

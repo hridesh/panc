@@ -453,7 +453,7 @@ public class ModuleInternal extends Internal
     								inits.add(falsev());
     							else if (v.type.isPrimitive()){
     								inits.add(intlit(0));
-    							}
+    							} else inits.add(nullv());
     						}
     						if(!addedConstructors){
 								constructors.add(
