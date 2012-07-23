@@ -37,11 +37,12 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
 
-public class SideEffectsComp {
+public class SideEffectsComp extends TreeScanner<EffectSet, Void> {
     public EffectSet methodEffectsBeforePoint(JCMethodDecl m, BlockDivisionPoint p) { 
-        
-return new EffectSet(); 
+        return scan(m, null);
     }
     public EffectSet methodEffectsAfterPoint(JCMethodDecl m, BlockDivisionPoint p) { return new EffectSet(); }
     public EffectSet moduleMessageEffects(JCModuleDecl m, int i) { return new EffectSet(); }
+
+    
 }

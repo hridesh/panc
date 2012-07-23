@@ -38,7 +38,29 @@ import com.sun.source.util.SimpleTreeVisitor;
 
 
 public class BlockDivisionPoint {
-    public JCBlock insertStatementsAtPoint(JCBlock original, List<JCStatement> s) { return original; }
     int point;
+    bool inLoop;
+    JCBlock block;
+    protected TreeMaker make;
+
+    public BlockDivisionPoint(TreeMaker make) {
+        this.make = make;
+    }
+
+    public JCBlock insertStatementsAtPoint(JCBlock original, List<JCStatement> s) { return original; }
+
+
+    public JCTree statementsBefore() {
+        return make0().Block(0, new BlockDivisionPointScanner() {
+            public void scan(JCTree tree) {
+                super.scan(tree);
+                
+            }
+        }.scan(block));
+    }
+
+    protected TreeMaker make0() {
+        return make.at(Position.NOPOS);
+    }
 
 }
