@@ -20,20 +20,26 @@
 package org.paninij.effects;
 
 import java.util.HashSet;
+import com.sun.tools.javac.code.Symbol.*;
 
-    abstract class Effect {}
-    class EmptyEffect extends Effect {}
-    class FieldReadEffect extends Effect {
-        String clss; int field; public FieldReadEffect(String clss, int field) { this.clss = clss; this.field = field; }
-    }
-    class FieldWriteEffect extends Effect {
-        String clss; int field; public FieldWriteEffect(String clss, int field) { this.clss = clss; this.field = field; }
-    }
-    class OpenEffect extends Effect {
-        int field; int method; EffectSet otherEffects; public OpenEffect(int field, int method, EffectSet otherEffects)
-        { this.field = field; this.method = method; this.otherEffects = otherEffects; }
-    }
-    class BottomEffect extends Effect {}
+
+abstract class Effect {}
+class EmptyEffect extends Effect {}
+class FieldReadEffect extends Effect {
+    VarSymbol field; public FieldReadEffect(VarSymbol field) { this.field = field; }
+}
+class FieldWriteEffect extends Effect {
+    VarSymbol field; public FieldWriteEffect(VarSymbol field) { this.field = field; }
+}
+class OpenEffect extends Effect {
+    MethodSymbol method; EffectSet otherEffects; 
+    public OpenEffect(MethodSymbol method) { this.method = method; this.otherEffects = new EffectSet(); }
+}
+class MethodEffect extends Effect {
+    MethodSymbol method; 
+    public MethodEffect(MethodSymbol method) { this.method = method; }
+}
+class BottomEffect extends Effect {}
 
 
 public class EffectSet extends HashSet<Effect> {

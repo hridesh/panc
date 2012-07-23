@@ -69,7 +69,7 @@ public class Interleaving {
     }
 
     public void insertInterleavingAtPoint(JCModuleDecl module, JCMethodDecl method, BlockDivisionPoint p) {
-        EffectSet before = sideEffectsComp.methodEffectsBeforePoint(method, p); 
+        EffectSet before = sideEffectsComp.methodEffectsBeforePoint(p); 
         EffectSet after = sideEffectsComp.methodEffectsAfterPoint(method, p); 
         
         ListBuffer<Integer> safeMessages = new ListBuffer<Integer>();
