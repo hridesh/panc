@@ -20,4 +20,4 @@ if NOT "%BCP%"=="" set BCP=-Xbootclasspath/p:%BCP%
 
 
 rem "java" "${bcp:+-Xbootclasspath/p:"$bcp"}" ${ea} ${javaOpts} -jar "${mylib}/javac.jar" ${toolOpts}
-java %JAVA_OPTS% -cp "%PANC_HOME%\lib\ptolemy_rt.jar";. %TOOL_OPTS%
+java %JAVA_OPTS% -cp "%PANC_HOME%\lib\panini_rt.jar";. %TOOL_OPTS%
