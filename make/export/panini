@@ -1,0 +1,11 @@
+#!/bin/bash
+
+mydir=`dirname $0`
+case `uname -s` in
+    CYGWIN*)
+      mydir=`cygpath -m $mydir`
+      ;;
+esac
+export PANC_HOME=$mydir/../
+
+java -cp $PANC_HOME/lib/panini_rt.jar:. ${@}
