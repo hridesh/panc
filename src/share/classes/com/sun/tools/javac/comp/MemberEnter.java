@@ -529,8 +529,12 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
 
     // process the non-static imports and the static imports of types.
     public void visitImport(JCImport tree) {
-        JCFieldAccess imp = (JCFieldAccess)tree.qualid;
-        Name name = TreeInfo.name(imp);
+    	if(tree.qualid.getTag() == Tag.IDENT){
+    		log.error("library.not.found", tree.qualid.toString());
+    		System.exit(444);
+    	}
+    	JCFieldAccess imp = (JCFieldAccess)tree.qualid;
+    	Name name = TreeInfo.name(imp);
 
         // Create a local environment pointing to this tree to disable
         // effects of other imports in Resolve.findGlobalType
