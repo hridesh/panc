@@ -38,13 +38,38 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
 
-class BlockDivisionPointScanner extends TreeScanner {
+class BDPEffectsAfterScanner extends TreeScanner {
     int point;
-    boolean inLoop;
-    
+    JCTree loopBody;
+    BlockDivisionPoint bdp;
+    EffectSet effects;
+    boolean lhs, ignore;
+
+    public EffectSet effectsBefore(BlockDivisionPoint bdp) {
+        this.bdp = bdp;
+        effects = new EffectSet();
+        loopBody = null;
+        point = 0;
+        lhs = true; ignore = false;
+        
+        scan(bdp.block);
+
+        return effects;
+    }
+      
     public void visitProcApply(JCProcInvocation tree) {
         point++;
-        visitApply(tree);
+
+        Symbol sym = TreeInfo.symbol(tree.meth);
+        effects.add(new OpenEffect((MethodSymbol)sym));
+
+        boolean oi = ignore;
+        ignore = true;
+        scan(tree.typeargs);
+        scan(tree.meth);
+        ignore = oi;
+        scan(tree.args);
+        
     }
     
     public void visitFree(JCFree tree){
@@ -54,15 +79,20 @@ class BlockDivisionPointScanner extends TreeScanner {
     
     public void visitClassDef(JCClassDecl tree) {
         point++;
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.mods);
         scan(tree.typarams);
         scan(tree.extending);
         scan(tree.implementing);
         scan(tree.defs);
+        ignore = oi;
     }
 
     public void visitMethodDef(JCMethodDecl tree) {
         point++;
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.mods);
         scan(tree.restype);
         scan(tree.typarams);
@@ -74,8 +104,11 @@ class BlockDivisionPointScanner extends TreeScanner {
 
     public void visitVarDef(JCVariableDecl tree) {
         point++;
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.mods);
         scan(tree.vartype);
+        ignore = oi;
         scan(tree.init);
     }
 
@@ -89,42 +122,42 @@ class BlockDivisionPointScanner extends TreeScanner {
     }
 
     public void visitDoLoop(JCDoWhileLoop tree) {
-        boolean b = inLoop;
-        inLoop = true;
+        JCTree b = loopBody;
+        loopBody = tree.body;
         point++;
         scan(tree.body);
         scan(tree.cond);
-        inLoop = b;
+        loopBody = b;
     }
 
     public void visitWhileLoop(JCWhileLoop tree) {
-        boolean b = inLoop;
-        inLoop = true;
+        JCTree b = loopBody;
+        b = tree.body;
         point++;
         scan(tree.cond);
         scan(tree.body);
-        inLoop = b;
+        loopBody = b;
     }
 
     public void visitForLoop(JCForLoop tree) {
-        boolean b = inLoop;
-        inLoop = true;
+        JCTree b = loopBody;
+        b = tree.body;
         point++;
         scan(tree.init);
         scan(tree.cond);
         scan(tree.step);
         scan(tree.body);
-        inLoop = b;
+        loopBody = b;
     }
 
     public void visitForeachLoop(JCEnhancedForLoop tree) {
-        boolean b = inLoop;
-        inLoop = true;
+        JCTree b = loopBody;
+        b = tree.body;
         point++;
         scan(tree.var);
         scan(tree.expr);
         scan(tree.body);
-        inLoop = b;
+        loopBody = b;
     }
 
     public void visitLabelled(JCLabeledStatement tree) {
@@ -209,13 +242,25 @@ class BlockDivisionPointScanner extends TreeScanner {
 
     public void visitApply(JCMethodInvocation tree) {
         point++;
+        
+        if (bdp.point>=point) {
+            Symbol sym = TreeInfo.symbol(tree.meth);
+            effects.add(new MethodEffect((MethodSymbol)sym));
+        }
+
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.typeargs);
         scan(tree.meth);
+        ignore = oi;
         scan(tree.args);
     }
 
     public void visitNewClass(JCNewClass tree) {
         point++;
+
+        if (bdp.point>=point)
+            effects.add(new MethodEffect((MethodSymbol)tree.constructor));
         scan(tree.encl);
         scan(tree.clazz);
         scan(tree.typeargs);
@@ -243,13 +288,19 @@ class BlockDivisionPointScanner extends TreeScanner {
 
     public void visitAssign(JCAssign tree) {
         point++;
+        boolean ol = lhs;
+        lhs = true;
         scan(tree.lhs);
+        lhs = ol;
         scan(tree.rhs);
     }
 
     public void visitAssignop(JCAssignOp tree) {
         point++;
+        boolean ol = lhs;
+        lhs = true;
         scan(tree.lhs);
+        lhs = ol;
         scan(tree.rhs);
     }
 
@@ -266,14 +317,20 @@ class BlockDivisionPointScanner extends TreeScanner {
 
     public void visitTypeCast(JCTypeCast tree) {
         point++;
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.clazz);
+        ignore = oi;
         scan(tree.expr);
     }
 
     public void visitTypeTest(JCInstanceOf tree) {
         point++;
         scan(tree.expr);
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.clazz);
+        ignore = oi;
     }
 
     public void visitIndexed(JCArrayAccess tree) {
@@ -284,6 +341,12 @@ class BlockDivisionPointScanner extends TreeScanner {
 
     public void visitSelect(JCFieldAccess tree) {
         point++;
+        if (!ignore && bdp.point>=point) {
+            if (lhs)
+                effects.add(new FieldWriteEffect((VarSymbol)tree.sym));
+            else
+                effects.add(new FieldReadEffect((VarSymbol)tree.sym));
+        }
         scan(tree.selected);
     }
 
@@ -295,6 +358,14 @@ class BlockDivisionPointScanner extends TreeScanner {
 
     public void visitIdent(JCIdent tree) {
         point++;
+        if (!ignore && tree.sym.owner instanceof ClassSymbol && bdp.point>=point) {
+            if (tree.sym instanceof VarSymbol) {
+                if (lhs) 
+                    effects.add(new FieldWriteEffect((VarSymbol)tree.sym));
+                else 
+                    effects.add(new FieldReadEffect((VarSymbol)tree.sym));
+            }
+        }
     }
 
     public void visitLiteral(JCLiteral tree) {
@@ -307,31 +378,46 @@ class BlockDivisionPointScanner extends TreeScanner {
 
     public void visitTypeArray(JCArrayTypeTree tree) {
         point++;
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.elemtype);
+        ignore = oi;
     }
 
     public void visitTypeApply(JCTypeApply tree) {
         point++;
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.clazz);
+        ignore = oi;
         scan(tree.arguments);
     }
 
     public void visitTypeUnion(JCTypeUnion tree) {
         point++;
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.alternatives);
+        ignore = oi;
     }
 
     public void visitTypeParameter(JCTypeParameter tree) {
         point++;
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.bounds);
+        ignore = oi;
     }
 
     @Override
     public void visitWildcard(JCWildcard tree) {
         point++;
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.kind);
         if (tree.inner != null)
             scan(tree.inner);
+        ignore = oi;
     }
 
     @Override
@@ -341,13 +427,19 @@ class BlockDivisionPointScanner extends TreeScanner {
 
     public void visitModifiers(JCModifiers tree) {
         point++;
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.annotations);
+        ignore = oi;
     }
 
     public void visitAnnotation(JCAnnotation tree) {
         point++;
+        boolean oi = ignore;
+        ignore = true;
         scan(tree.annotationType);
         scan(tree.args);
+        ignore = oi;
     }
 
     public void visitErroneous(JCErroneous tree) {
@@ -361,7 +453,7 @@ class BlockDivisionPointScanner extends TreeScanner {
     }
 
     public void visitTree(JCTree tree) {
-        point++;
         Assert.error();
     }
+
 }        
