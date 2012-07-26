@@ -14,6 +14,8 @@ cp -r ../dist panc/lib/dist
 cp -r ../licenses panc/licenses
 cp export/panc.sh panc/bin/panc
 cp export/panc.bat panc/bin/
+cp export/panini panc/bin/
+cp export/panini.bat panc/bin/
 cp export/panini_rt.jar panc/lib/
 cp export/javac panc/lib/dist/bootstrap/bin/
 cp export/panini-mode.el panc/editors/
