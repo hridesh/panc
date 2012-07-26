@@ -2,6 +2,7 @@ package org.paninij.effects;
 
 import java.util.ArrayList;
 import com.sun.tools.javac.tree.*;
+import com.sun.tools.javac.tree.JCTree.*;
 
 public class ASTChainNode {
 	public JCTree tree;
@@ -28,4 +29,42 @@ public class ASTChainNode {
 		}
 		return false;
 	}
+
+    public void connectToEndNodesOf(ASTChainNode n) {
+        for (ASTChainNode endNode : n.endNodes) {
+            endNode.next.add(this);
+            this.previous.add(endNode);
+        }
+    }
+
+    public void connectToStartNodesOf(ASTChainNode n) {
+        for (ASTChainNode startNode : n.startNodes) {
+            startNode.previous.add(this);
+            this.next.add(startNode);
+        }
+    }
+
+    public void connectStartNodesToEndNodesOf(ASTChainNode n) {
+        for (ASTChainNode endNode : n.endNodes) {
+            for (ASTChainNode startNode : startNodes) {
+                endNode.next.add(startNode);
+                startNode.previous.add(endNode);
+            }
+        }
+    }
+
+    public void connectStartNodesToContinuesOf(ASTChainNode n) {
+        for (ASTChainNode endNode : n.excEndNodes) {
+            if (endNode.tree instanceof JCBreak) {
+                throw new Error("should not reach JCBreak");
+            } else if (endNode.tree instanceof JCContinue) {
+                endNode.next.addAll(n.startNodes);
+                for (ASTChainNode startNode : n.startNodes) {
+                    startNode.previous.add(endNode);
+                }
+            } else if (endNode.tree instanceof JCReturn) {
+            } else if (endNode.tree instanceof JCThrow) {
+            } else throw new Error("this shouldn't happen");
+        }
+    }
 }

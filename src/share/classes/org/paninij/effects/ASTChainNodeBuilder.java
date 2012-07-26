@@ -127,21 +127,24 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		ASTChainNode node = new ASTChainNode(tree);
 
         ArrayList<ASTChainNode> finalEndNodes = new ArrayList<ASTChainNode>();
+        ArrayList<ASTChainNode> finalExcEndNodes = new ArrayList<ASTChainNode>();
 		tree.body.accept(this);
 
-		ArrayList<ASTChainNode> currentStartNodes = new ArrayList<ASTChainNode>(this.currentStartNodes);
-		ArrayList<ASTChainNode> currentEndNodes = new ArrayList<ASTChainNode>(this.currentEndNodes);
-		ArrayList<ASTChainNode> currentExcEndNodes = new ArrayList<ASTChainNode>(this.currentExcEndNodes);
-        ArrayList<ASTChainNode> breaks = getBreaks(currentExcEndNodes);
-        currentEndNodes.addAll(breaks); currentExcEndNodes.removeAll(breaks);
+		ArrayList<ASTChainNode> bodyStartNodes = new ArrayList<ASTChainNode>(this.currentStartNodes);
+		ArrayList<ASTChainNode> bodyEndNodes = new ArrayList<ASTChainNode>(this.currentEndNodes);
+		ArrayList<ASTChainNode> bodyExcEndNodes = new ArrayList<ASTChainNode>(this.currentExcEndNodes);
+        ArrayList<ASTChainNode> breaks = getBreaks(bodyExcEndNodes);
+        bodyEndNodes.addAll(breaks); bodyExcEndNodes.removeAll(breaks);
 
 		tree.cond.accept(this);
-		finalEndNodes.addAll(currentEndNodes);
+		finalEndNodes.addAll(bodyEndNodes);
 		finalEndNodes.addAll(this.currentEndNodes);
-
-		this.currentStartNodes = currentStartNodes;
+        finalExcEndNodes.addAll(bodyExcEndNodes);
+        finalExcEndNodes.addAll(this.currentExcEndNodes);
+        
+		this.currentStartNodes = bodyStartNodes;
 		this.currentEndNodes = finalEndNodes;
-		this.currentExcEndNodes = currentExcEndNodes;
+		this.currentExcEndNodes = finalExcEndNodes;
 
         node.startNodes = this.currentStartNodes;
         node.endNodes = this.currentEndNodes;
@@ -154,18 +157,28 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		ASTChainNode node = new ASTChainNode(tree);
 
         tree.cond.accept(this);
-		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
+		ArrayList<ASTChainNode> condStartNodes = this.currentStartNodes;
+		ArrayList<ASTChainNode> condEndNodes = this.currentEndNodes;
+        ArrayList<ASTChainNode> condExcEndNodes = this.currentExcEndNodes;
 
 		tree.body.accept(this);
-		ArrayList<ASTChainNode> currentEndNodes = new ArrayList<ASTChainNode>(this.currentEndNodes);
-		ArrayList<ASTChainNode> currentExcEndNodes = new ArrayList<ASTChainNode>(this.currentExcEndNodes);
+		ArrayList<ASTChainNode> bodyEndNodes = new ArrayList<ASTChainNode>(this.currentEndNodes);
+		ArrayList<ASTChainNode> bodyExcEndNodes = new ArrayList<ASTChainNode>(this.currentExcEndNodes);
 
-        ArrayList<ASTChainNode> breaks = getBreaks(currentExcEndNodes);
-        currentEndNodes.addAll(breaks); currentExcEndNodes.removeAll(breaks);
+        ArrayList<ASTChainNode> breaks = getBreaks(bodyExcEndNodes);
+        bodyEndNodes.addAll(breaks); bodyExcEndNodes.removeAll(breaks);
 
-		this.currentStartNodes = currentStartNodes;
-		this.currentEndNodes = currentEndNodes;
-		this.currentExcEndNodes = currentExcEndNodes;
+        ArrayList<ASTChainNode> finalEndNodes = new ArrayList<ASTChainNode>();
+        ArrayList<ASTChainNode> finalExcEndNodes = new ArrayList<ASTChainNode>();
+        finalEndNodes.addAll(bodyEndNodes);
+        finalEndNodes.addAll(condEndNodes);
+        finalExcEndNodes.addAll(bodyExcEndNodes);
+        finalExcEndNodes.addAll(condExcEndNodes);
+        
+
+		this.currentStartNodes = condStartNodes;
+		this.currentEndNodes = finalEndNodes;
+		this.currentExcEndNodes = finalExcEndNodes;
 
         node.startNodes = this.currentStartNodes;
         node.endNodes = this.currentEndNodes;
