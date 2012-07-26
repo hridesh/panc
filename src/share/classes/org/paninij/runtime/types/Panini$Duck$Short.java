@@ -26,7 +26,7 @@ public class Panini$Duck$Short implements Panini$Duck<Short> {
 		this.messageId = messageId;
 	}
 		
-	public Short value() {
+	public short value() {
 		if(!available) get();
 		return this.value;
 	}
