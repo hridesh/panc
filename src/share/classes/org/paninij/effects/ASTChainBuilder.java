@@ -39,8 +39,8 @@ import com.sun.source.util.SimpleTreeVisitor;
 
 
 class ASTChainBuilder {
-    private static ASTChainNodeBuilder nodeBuilder;
-    private static ASTChainNodeConnector nodeConnector;
+    private static ASTChainNodeBuilder nodeBuilder = new ASTChainNodeBuilder();
+    private static ASTChainNodeConnector nodeConnector = new ASTChainNodeConnector();
 
     public static ASTChain buildChain(JCMethodDecl m) {
         ASTChain chain = new ASTChain();

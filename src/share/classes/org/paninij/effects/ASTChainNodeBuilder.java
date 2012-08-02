@@ -51,6 +51,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
         this.chain = chain;
         
         scan(m.body);
+        chain.startNode = chain.nodeForTree(m.body);
     }
 
     public void visitTopLevel(JCCompilationUnit that)    { Assert.error(); }
@@ -776,7 +777,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 			finalExcEndNodes.addAll(this.currentExcEndNodes);
 			this.currentExcEndNodes = finalExcEndNodes;
             
-		} else throw new Error("block should not be empty");
+		} //else throw new Error("block should not be empty");
     }
 
     public void visitParallelStatements(List<? extends JCTree> statements) {
@@ -804,7 +805,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 			finalExcEndNodes.addAll(this.currentExcEndNodes);
 			this.currentEndNodes = finalEndNodes;
 			this.currentExcEndNodes = finalExcEndNodes;
-		} else throw new Error("block should not be empty");
+		} //else throw new Error("block should not be empty");
 	}
 
     public static ArrayList<ASTChainNode> getBreaks(ArrayList<ASTChainNode> nodes) {

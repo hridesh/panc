@@ -20,12 +20,25 @@ import com.sun.source.util.SimpleTreeVisitor;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-public class ASTChain {
-    private HashMap<JCTree, ASTChainNode> nodes = new HashMap<JCTree, ASTChainNode>();
-    public ASTChainNode startNode;
-    public LinkedList<ASTChainNode> nodesInOrder = new LinkedList<ASTChainNode>();
+public class ASTChainPrinter {
 
-    public ASTChainNode nodeForTree(JCTree tree) { return nodes.get(tree); }
-    
-    public void add(ASTChainNode n) { nodes.put(n.tree, n); nodesInOrder.add(n); };
+    public void printChain(ASTChain chain) {
+        LinkedList<ASTChainNode> nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
+        
+        System.out.println("digraph G {");
+
+        while (!nodesToProcess.isEmpty()) {
+            ASTChainNode node = nodesToProcess.poll();
+            
+            for (ASTChainNode next : node.next) {
+                System.out.println(nodeText(node) + " -> " + nodeText(next));
+            }
+        }
+
+        System.out.println("}");
+    }
+
+    public String nodeText(ASTChainNode node) {
+        return "\"" + node.id + " " + node.tree.toString().replace("\"", "\\\"") + "\"";
+    }
 }

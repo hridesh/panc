@@ -50,7 +50,7 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
-import org.paninij.Interleaving;
+import org.paninij.effects.*;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -1119,6 +1119,11 @@ public class Attr extends JCTree.Visitor {
         	catch(ClassCastException e){
         	}
         }
+        // uncomment this to print CFGs for module procedures
+/*        if (tree.name.toString().contains("$Original")) { 
+            MethodEffectsComp effects = new MethodEffectsComp();
+            effects.computeEffectsForMethod(tree);
+            }*/
         // end Panini code
 
         Lint lint = env.info.lint.augment(m.attributes_field, m.flags());
