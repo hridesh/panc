@@ -1119,11 +1119,6 @@ public class Attr extends JCTree.Visitor {
         	catch(ClassCastException e){
         	}
         }
-        // uncomment this to print CFGs for module procedures
-/*        if (tree.name.toString().contains("$Original")) { 
-            MethodEffectsComp effects = new MethodEffectsComp();
-            effects.computeEffectsForMethod(tree);
-            }*/
         // end Panini code
 
         Lint lint = env.info.lint.augment(m.attributes_field, m.flags());
@@ -1255,6 +1250,14 @@ public class Attr extends JCTree.Visitor {
         finally {
             chk.setLint(prevLint);
             chk.setMethod(prevMethod);
+
+            // Panini code
+            // uncomment this to print CFGs for module procedures
+            if (tree.name.toString().contains("$Original")) { 
+                MethodEffectsComp effects = new MethodEffectsComp();
+                effects.computeEffectsForMethod(tree);
+            }
+            // end Panini code
         }
     }
 

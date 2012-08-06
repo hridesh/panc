@@ -44,9 +44,10 @@ public class AliasingComp extends JCTree.Visitor {
     private HashMap<ASTChainNode, EffectSet> effectsSoFar;
     private HeapRepresentation visitResult;
 
-    public void fillInAliasingInfo(JCMethodDecl m) {
-        ASTChain chain = ASTChainBuilder.buildChain(m);
+    public void fillInAliasingInfo(ASTChain chain) {
         nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
+
+        HeapRepresentation result = new HeapRepresentation();
 
         while (!nodesToProcess.isEmpty()) {
             ASTChainNode node = nodesToProcess.poll();
@@ -62,7 +63,11 @@ public class AliasingComp extends JCTree.Visitor {
                 nodesToProcess.addAll(node.next);
             }
             node.heapRepresentation = newNodeHR;
+            
+            result = result.union(newNodeHR);
         }
+
+        chain.endHeapRepresentation = result;
     }
 
     public HeapRepresentation computeHeapRepresentationForTree(JCTree tree) {
@@ -76,7 +81,7 @@ public class AliasingComp extends JCTree.Visitor {
         for (JCExpression arg : tree.args) {
             if (arg instanceof JCIdent) {
                 // if a local variable is passed to a method, we stop assuming we know anything about its aliasing
-                visitResult.add(((JCIdent)arg).sym, UnknownHeapLocation.instance);                
+                visitResult.add(((JCIdent)arg).sym, UnknownHeapLocation.instance); 
             }
         }
     }

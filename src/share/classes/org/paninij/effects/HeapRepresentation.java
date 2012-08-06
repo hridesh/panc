@@ -54,7 +54,7 @@ class UnknownHeapLocation extends HeapLocation {
 }
 
 public class HeapRepresentation {
-    private HashMap<Symbol, HeapLocation> locations;
+    private HashMap<Symbol, HeapLocation> locations = new HashMap<Symbol, HeapLocation>();
     
     public HeapLocation locationForSymbol(Symbol s) {
         HeapLocation l = locations.get(s);
