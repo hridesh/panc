@@ -36,11 +36,11 @@ module Barber(WaitingRoom r, boolean isSleeping) {
         isSleeping = false;
         System.out.println("Barber Woke up");
         work(c);
-         Customer n = r.whosNext().getCustomer();
-         while (n!=null) {
-             work(n);
-             n = r.whosNext().getCustomer();
-         }
+        Customer n = r.whosNext().getCustomer();
+        while (n!=null) {
+            work(n);
+            n = r.whosNext().getCustomer();
+        }
         sleep();
         
     }

@@ -40,41 +40,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 
-public class MethodEffectsComp extends JCTree.Visitor {
+public class MethodEffectsSub extends JCTree.Visitor {
     private LinkedList<ASTChainNode> nodesToProcess;
     private EffectSet visitResult;
     private ASTChainNode currentNode;
     private ASTChain chain;
+    HashMap<JCMethodDecl, EffectSet> methodEffects;
 
-    public EffectSet computeEffectsForMethod(JCMethodDecl m) {
-        chain = ASTChainBuilder.buildChain(m);
-        new AliasingComp().fillInAliasingInfo(chain);
-        System.out.println(m);
-        new ASTChainPrinter().printChain(chain);
-        nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
-
-        while (!nodesToProcess.isEmpty()) {
-            ASTChainNode node = nodesToProcess.poll();
-
-            EffectSet newNodeEffects = new EffectSet();
-            for (ASTChainNode prev : node.previous) { 
-                newNodeEffects.addAll(prev.effects);
-            }
-            
-            newNodeEffects.addAll(computeEffectsForNode(node));
-
-            if (!newNodeEffects.equals(node.effects)) {
-                nodesToProcess.addAll(node.next);
-            }
-            node.effects = newNodeEffects;
-        }
-
-        EffectSet union = new EffectSet();
-        for (ASTChainNode node : chain.nodesInOrder) {
-            union.addAll(node.effects);
-        }
-        System.out.println(union);
-        return union;
+    public void substituteMethodEffects(HashMap<JCMethodDecl, EffectSet> methodEffects) {
     }
 
     public EffectSet computeEffectsForNode(ASTChainNode node) {

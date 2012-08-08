@@ -491,6 +491,10 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentEndNodes.add(node);
 		currentExcEndNodes = emptyList;
         addNode(node);
+        System.out.println(tree);
+        System.out.println(TreeInfo.symbol(tree.meth));
+        if (TreeInfo.symbol(tree) != null) 
+            chain.callerMethods.add((MethodSymbol)TreeInfo.symbol(tree.meth));
     }
 
     public void visitNewClass(JCNewClass tree) {

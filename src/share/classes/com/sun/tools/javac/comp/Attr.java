@@ -764,6 +764,12 @@ public class Attr extends JCTree.Visitor {
         }
 //        System.out.println(tree);
         
+        // Panini code
+        // uncomment this to print CFGs and effect for module procedures
+        SideEffectsComp effects = new SideEffectsComp();
+        effects.computeEffects(tree);
+        // end Panini code
+
     }
 
     public void visitSystemDef(JCSystemDecl tree){
@@ -1250,14 +1256,6 @@ public class Attr extends JCTree.Visitor {
         finally {
             chk.setLint(prevLint);
             chk.setMethod(prevMethod);
-
-            // Panini code
-            // uncomment this to print CFGs for module procedures
-            if (tree.name.toString().contains("$Original")) { 
-                MethodEffectsComp effects = new MethodEffectsComp();
-                effects.computeEffectsForMethod(tree);
-            }
-            // end Panini code
         }
     }
 

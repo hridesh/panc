@@ -36,8 +36,41 @@ import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 import java.util.HashMap;
+import java.util.LinkedList;
+import static com.sun.tools.javac.code.Flags.*;
 
 
 public class SideEffectsComp {
-    
+    HashMap<JCMethodDecl, EffectSet> methodEffects = new HashMap<JCMethodDecl, EffectSet>();
+    MethodEffectsComp methodEffectsComp = new MethodEffectsComp();
+    MethodEffectsSub methodEffectsSub = new MethodEffectsSub();
+    private LinkedList<JCMethodDecl> methodsToProcess;
+
+    public void computeEffects(JCModuleDecl module) {
+        methodsToProcess = new LinkedList<JCMethodDecl>();
+        for(JCTree def : module.defs) {
+        	if(def.getTag() == Tag.METHODDEF) {
+                JCMethodDecl method = (JCMethodDecl)def;
+                if ((method.sym.flags() & PRIVATE) != 0) {
+                    methodsToProcess.offer(method);
+                }
+            }
+        }
+        
+        while (!methodsToProcess.isEmpty()) {
+            JCMethodDecl method = methodsToProcess.poll();
+
+            ASTChain chain = ASTChainBuilder.buildChain(method);
+            new AliasingComp().fillInAliasingInfo(chain);
+            new ASTChainPrinter().printChain(chain);
+            
+            for (MethodSymbol callerMethod : chain.callerMethods) {
+                methodsToProcess.offer(callerMethod.tree);
+            }
+            
+            methodEffects.put(method, methodEffectsComp.computeEffectsForMethod(chain, module.sym));
+        }
+
+        methodEffectsSub.substituteMethodEffects(methodEffects);
+    }
 }

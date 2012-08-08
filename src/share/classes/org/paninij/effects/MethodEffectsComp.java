@@ -45,12 +45,11 @@ public class MethodEffectsComp extends JCTree.Visitor {
     private EffectSet visitResult;
     private ASTChainNode currentNode;
     private ASTChain chain;
+    private Symbol moduleSym;
 
-    public EffectSet computeEffectsForMethod(JCMethodDecl m) {
-        chain = ASTChainBuilder.buildChain(m);
-        new AliasingComp().fillInAliasingInfo(chain);
-        System.out.println(m);
-        new ASTChainPrinter().printChain(chain);
+    public EffectSet computeEffectsForMethod(ASTChain chain, Symbol moduleSym) {
+        this.chain = chain;
+        this.moduleSym = moduleSym;
         nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
 
         while (!nodesToProcess.isEmpty()) {
@@ -88,7 +87,7 @@ public class MethodEffectsComp extends JCTree.Visitor {
     public void visitApply(JCMethodInvocation tree) { 
         System.out.println("meth " + tree);
         MethodSymbol sym = (MethodSymbol)TreeInfo.symbol(tree.meth);
-        if (sym.owner.isModule) {
+        if (sym.owner.isModule && sym.owner != moduleSym) {
             visitResult.add(new OpenEffect(sym));
         } else {
             visitResult.add(new MethodEffect(sym));
@@ -128,7 +127,7 @@ public class MethodEffectsComp extends JCTree.Visitor {
         }
     }
     public void visitProcApply(JCProcInvocation tree) { 
-        System.out.println("proc " + tree);
+        Assert.error();
     }
     public void visitFree(JCFree tree)	                 { visitTree(tree); }
     public void visitTree(JCTree tree)                   {}

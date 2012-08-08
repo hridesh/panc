@@ -1026,6 +1026,7 @@ public abstract class Symbol implements Element {
 
     	// Panini code
     	public boolean isProcedure;
+        public JCTree.JCMethodDecl tree;
     	// end Panini code
     	
         /** The code of the method. */
