@@ -49,7 +49,7 @@ public class Interleaving {
         new Context.Key<Interleaving>();
 
 
-    SideEffectsComp sideEffectsComp;
+    SystemEffectsComp sideEffectsComp;
 
     public static Interleaving instance(Context context) {
         Interleaving instance = context.get(mmiKey);

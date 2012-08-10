@@ -62,7 +62,10 @@ public abstract class Symbol implements Element {
 	public boolean isLibrary;
 	public boolean isModule;
 	public boolean hasRun;
+    public List<Symbol> modules; // for System symbols
+    public JCTree tree;
 	// end Panini code
+
     /** The kind of this symbol.
      *  @see Kinds
      */
@@ -692,7 +695,6 @@ public abstract class Symbol implements Element {
             return v.visitPackageSymbol(this, p);
         }
     }
-
     /** A class for class symbols
      */
     public static class ClassSymbol extends TypeSymbol implements TypeElement {

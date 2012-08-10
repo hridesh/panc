@@ -72,7 +72,6 @@ public class MethodEffectsComp extends JCTree.Visitor {
         for (ASTChainNode node : chain.nodesInOrder) {
             union.addAll(node.effects);
         }
-        System.out.println(union);
         return union;
     }
 
@@ -85,7 +84,6 @@ public class MethodEffectsComp extends JCTree.Visitor {
 
     public void visitReturn(JCReturn tree)               { visitTree(tree); }
     public void visitApply(JCMethodInvocation tree) { 
-        System.out.println("meth " + tree);
         MethodSymbol sym = (MethodSymbol)TreeInfo.symbol(tree.meth);
         if (sym.owner.isModule && sym.owner != moduleSym) {
             visitResult.add(new OpenEffect(sym));

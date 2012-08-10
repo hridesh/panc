@@ -2,14 +2,18 @@ module M (M2 m2) {
     boolean stuff = false;
     boolean isSleeping = false;
 
-    static class A {
-        public static void asdf() {}
+    class A {
+        int i = 0;
+        public void asdf() {
+            i = 1;
+            doSomething();
+        }
     }
 
     void doSomething() {
         boolean localVar = false;
         doSomething();
-        A.asdf();
+        new A().asdf();
         m2.doSomethingElse();
         isSleeping = stuff;
         localVar = isSleeping;
@@ -17,7 +21,11 @@ module M (M2 m2) {
 }
 
 module M2 () {
-    void doSomethingElse() {}
+    int j = 5;
+    void doSomethingElse() {
+        int i = 0;
+        j = 6;
+    }
 }
 
 system Test {

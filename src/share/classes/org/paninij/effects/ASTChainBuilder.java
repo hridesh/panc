@@ -42,9 +42,11 @@ class ASTChainBuilder {
     private static ASTChainNodeBuilder nodeBuilder = new ASTChainNodeBuilder();
     private static ASTChainNodeConnector nodeConnector = new ASTChainNodeConnector();
 
-    public static ASTChain buildChain(JCMethodDecl m) {
+    public static void setNames(Names n) { nodeBuilder.names = n; }
+
+    public static ASTChain buildChain(JCModuleDecl module, JCMethodDecl m) {
         ASTChain chain = new ASTChain();
-        nodeBuilder.buildNodes(m, chain);
+        nodeBuilder.buildNodes(module, m, chain);
         nodeConnector.connectNodes(m, chain);
         return chain;
     }

@@ -96,6 +96,7 @@ public class Attr extends JCTree.Visitor {
     final DeferredLintHandler deferredLintHandler;
     // Ptolemy code
     ModuleInternal moduleInternal;
+    SystemEffectsComp effects;
     // end Ptolemy code
 
     public static Attr instance(Context context) {
@@ -148,6 +149,7 @@ public class Attr extends JCTree.Visitor {
 
         // Panini code
         moduleInternal = new ModuleInternal(make, names, enter, memberEnter, syms);
+        effects = SystemEffectsComp.instance(context);
         // end Panini code
     }
 
@@ -762,14 +764,7 @@ public class Attr extends JCTree.Visitor {
         		
         	}
         }
-//        System.out.println(tree);
-        
-        // Panini code
-        // uncomment this to print CFGs and effect for module procedures
-        SideEffectsComp effects = new SideEffectsComp();
         effects.computeEffects(tree);
-        // end Panini code
-
     }
 
     public void visitSystemDef(JCSystemDecl tree){
@@ -1045,7 +1040,7 @@ public class Attr extends JCTree.Visitor {
     			throw new AssertionError("Invalid statement gone through the parser");
     		}
     	}
-    	
+
     	Type arrayType = new ArrayType(syms.stringType, syms.arrayClass);
         MethodSymbol msym = new MethodSymbol(
     			PUBLIC|STATIC,
@@ -1069,8 +1064,18 @@ public class Attr extends JCTree.Visitor {
     	maindecl.body.stats = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
     	
     	tree.switchToClass();
-//    	System.out.println(tree);
     	memberEnter.memberEnter(maindecl, env);
+
+        ListBuffer<Symbol> modules = new ListBuffer<Symbol>();
+        for (JCStatement v : decls) {
+            if (v.getTag() == VARDEF) {
+                JCVariableDecl varDecl = (JCVariableDecl)v;
+                ClassSymbol c = syms.modules.get(names.fromString(varDecl.vartype.toString()));
+                if (!modules.contains(c)) modules.append(c);
+            }
+        }
+        tree.sym.modules = modules.toList();
+        effects.substituteProcEffects(tree);
     }
     
     public void visitProcDef(JCProcDecl tree){

@@ -746,6 +746,7 @@ public class Enter extends JCTree.Visitor {
             }
         }
         tree.sym = c;
+        tree.sym.tree = tree;
 
         // Enter class into `compiled' table and enclosing scope.
         if (chk.compiled.get(c.flatname) != null) {

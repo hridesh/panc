@@ -31,6 +31,7 @@ import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.code.Type.*;
+import static com.sun.tools.javac.code.Flags.*;
 
 import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.MemberSelectTree;
@@ -41,13 +42,16 @@ import java.util.ArrayList;
 
 
 public class ASTChainNodeBuilder extends TreeScanner {
+    private JCModuleDecl module;
     private JCMethodDecl m;
     private ASTChain chain;
     private ArrayList<ASTChainNode> currentStartNodes, currentEndNodes, currentExcEndNodes;
 	private final ArrayList<ASTChainNode> emptyList = new ArrayList<ASTChainNode>(0);
     private boolean lhs = false;
+    public Names names;
 
-    public void buildNodes(JCMethodDecl m, ASTChain chain) {
+    public void buildNodes(JCModuleDecl module, JCMethodDecl m, ASTChain chain) {
+        this.module = module;
         this.m = m;
         this.chain = chain;
         
@@ -491,10 +495,18 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentEndNodes.add(node);
 		currentExcEndNodes = emptyList;
         addNode(node);
-        System.out.println(tree);
-        System.out.println(TreeInfo.symbol(tree.meth));
-        if (TreeInfo.symbol(tree) != null) 
-            chain.callerMethods.add((MethodSymbol)TreeInfo.symbol(tree.meth));
+        if (TreeInfo.symbol(tree.meth) != null) {
+            MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
+            if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isModule == true) {
+                if (methSym.owner == module.sym) {
+                    String methodName = TreeInfo.symbol(tree.meth).toString();
+                    methodName = methodName.substring(0, methodName.length()-2)+"$Original";
+                    chain.callerMethods.add((MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym);
+                }
+            } else
+                chain.callerMethods.add(methSym);
+
+        }
     }
 
     public void visitNewClass(JCNewClass tree) {

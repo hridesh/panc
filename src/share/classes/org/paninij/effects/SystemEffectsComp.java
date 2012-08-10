@@ -36,41 +36,42 @@ import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import static com.sun.tools.javac.code.Flags.*;
 
 
-public class SideEffectsComp {
-    HashMap<JCMethodDecl, EffectSet> methodEffects = new HashMap<JCMethodDecl, EffectSet>();
-    MethodEffectsComp methodEffectsComp = new MethodEffectsComp();
-    MethodEffectsSub methodEffectsSub = new MethodEffectsSub();
-    private LinkedList<JCMethodDecl> methodsToProcess;
+public class SystemEffectsComp {
+    protected static final Context.Key<SystemEffectsComp> secKey =
+        new Context.Key<SystemEffectsComp>();
+
+    public ModuleEffectsComp moduleEffectsComp;
+    private EffectsSub effectsSub;
+
+    public static SystemEffectsComp instance(Context context) {
+        SystemEffectsComp instance = context.get(secKey);
+        if (instance == null)
+            instance = new SystemEffectsComp(context);
+        return instance;
+    }
+
+    protected SystemEffectsComp(Context context) {
+        context.put(secKey, this);
+        moduleEffectsComp = ModuleEffectsComp.instance(context);
+        effectsSub = EffectsSub.instance(context);
+    }
 
     public void computeEffects(JCModuleDecl module) {
-        methodsToProcess = new LinkedList<JCMethodDecl>();
-        for(JCTree def : module.defs) {
-        	if(def.getTag() == Tag.METHODDEF) {
-                JCMethodDecl method = (JCMethodDecl)def;
-                if ((method.sym.flags() & PRIVATE) != 0) {
-                    methodsToProcess.offer(method);
-                }
-            }
-        }
-        
-        while (!methodsToProcess.isEmpty()) {
-            JCMethodDecl method = methodsToProcess.poll();
+        moduleEffectsComp.computeEffects(module);
 
-            ASTChain chain = ASTChainBuilder.buildChain(method);
-            new AliasingComp().fillInAliasingInfo(chain);
-            new ASTChainPrinter().printChain(chain);
-            
-            for (MethodSymbol callerMethod : chain.callerMethods) {
-                methodsToProcess.offer(callerMethod.tree);
-            }
-            
-            methodEffects.put(method, methodEffectsComp.computeEffectsForMethod(chain, module.sym));
-        }
+    }
 
-        methodEffectsSub.substituteMethodEffects(methodEffects);
+    public void substituteProcEffects(JCSystemDecl system) {
+        effectsSub.substituteProcEffects(moduleEffectsComp.methodEffects);
+
+/*        for (JCMethodDecl m : moduleEffectsComp.methodEffects.keySet()) {
+            System.out.println(m);
+            System.out.println(moduleEffectsComp.methodEffects.get(m));
+            }*/
     }
 }
