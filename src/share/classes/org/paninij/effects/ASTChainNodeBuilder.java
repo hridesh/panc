@@ -54,7 +54,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
         this.module = module;
         this.m = m;
         this.chain = chain;
-        
+
         scan(m.body);
         chain.startNode = chain.nodeForTree(m.body);
     }

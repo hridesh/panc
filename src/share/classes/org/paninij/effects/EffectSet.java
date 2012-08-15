@@ -22,7 +22,7 @@ package org.paninij.effects;
 import java.util.HashSet;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Symbol;
-
+import com.sun.tools.javac.util.*;
 
 abstract class Effect {}
 class EmptyEffect extends Effect {}
@@ -59,7 +59,7 @@ class OpenEffect extends Effect {
 }
 class MethodEffect extends Effect {
     MethodSymbol method; 
-    public MethodEffect(MethodSymbol method) { this.method = method; }
+    public MethodEffect(MethodSymbol method) { if (method==null) Assert.error(); this.method = method; }
     public String toString() { return "method: " + method; }
     public boolean equals(Object o) {
         if (!(o instanceof MethodEffect)) return false;

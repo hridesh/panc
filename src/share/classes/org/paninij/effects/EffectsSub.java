@@ -74,7 +74,7 @@ public class EffectsSub extends JCTree.Visitor {
 
         while (!methodsToProcess.isEmpty()) {
             JCMethodDecl method = methodsToProcess.poll();
-
+            System.out.println(method);
             EffectSet effects = methodEffects.get(method);
             EffectSet oldEffects = new EffectSet(effects);
             EffectSet toAdd = new EffectSet();
@@ -94,13 +94,14 @@ public class EffectsSub extends JCTree.Visitor {
                             MethodSymbol methSymOrig = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
                             toAdd.addAll(methodEffects.get(methSymOrig.tree));
                         } else {
+                            if (methSym.tree == null) continue;
                             toAdd.addAll(methodEffects.get(methSym.tree));
 
                         }
                         
                         if (method.sym.toString().contains("$Original")) {
                             String s = method.sym.toString();
-                            s = s.substring(0, s.length()-11);
+                            s = s.substring(0, s.indexOf("$"));
                             MethodSymbol ms = (MethodSymbol)((ClassSymbol)method.sym.owner).members_field.lookup(names.fromString(s)).sym;
                             toAdd.remove(new MethodEffect(ms));
                         } else {
@@ -113,6 +114,7 @@ public class EffectsSub extends JCTree.Visitor {
 
             if (!oldEffects.equals(effects)) {
                 for (MethodSymbol callerMethod : effects.chain.callerMethods) {
+                    if (callerMethod.tree == null) continue;
                     if (callerMethod != method.sym)
                         methodsToProcess.offer(callerMethod.tree);
                 }
@@ -154,6 +156,7 @@ public class EffectsSub extends JCTree.Visitor {
 
             if (!oldEffects.equals(effects)) {
                 for (MethodSymbol callerMethod : effects.chain.callerMethods) {
+                    if (callerMethod.tree == null) continue;
                     if (callerMethod != method.sym)
                         methodsToProcess.offer(callerMethod.tree);
                 }

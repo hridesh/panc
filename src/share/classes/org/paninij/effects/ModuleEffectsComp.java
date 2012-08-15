@@ -84,6 +84,7 @@ public class ModuleEffectsComp {
 //            new ASTChainPrinter().printChain(chain);
             
             for (MethodSymbol callerMethod : chain.callerMethods) {
+                if (callerMethod.tree == null) continue;
                 if (!visitedMethods.contains(callerMethod.tree))
                     methodsToProcess.offer(callerMethod.tree);
             }
