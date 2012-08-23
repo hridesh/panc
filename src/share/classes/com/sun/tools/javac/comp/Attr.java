@@ -51,6 +51,7 @@ import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
 import org.paninij.effects.*;
+import org.paninij.systemgraphs.*;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -97,6 +98,7 @@ public class Attr extends JCTree.Visitor {
     // Ptolemy code
     ModuleInternal moduleInternal;
     SystemEffectsComp effects;
+    SystemGraphsBuilder graphsBuilder;
     // end Ptolemy code
 
     public static Attr instance(Context context) {
@@ -150,6 +152,7 @@ public class Attr extends JCTree.Visitor {
         // Panini code
         moduleInternal = new ModuleInternal(make, names, enter, memberEnter, syms);
         effects = SystemEffectsComp.instance(context);
+        graphsBuilder = SystemGraphsBuilder.instance(context);
         // end Panini code
     }
 
@@ -767,7 +770,9 @@ public class Attr extends JCTree.Visitor {
         effects.computeEffects(tree);
     }
 
-    public void visitSystemDef(JCSystemDecl tree){
+    public void visitSystemDef(JCSystemDecl tree) {
+        tree.sym.graphs = graphsBuilder.buildGraphs(tree);
+        effects.substituteProcEffects(tree);
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
@@ -1075,7 +1080,6 @@ public class Attr extends JCTree.Visitor {
             }
         }
         tree.sym.modules = modules.toList();
-        effects.substituteProcEffects(tree);
     }
     
     public void visitProcDef(JCProcDecl tree){

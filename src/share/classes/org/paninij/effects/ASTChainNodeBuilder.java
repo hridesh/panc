@@ -38,7 +38,10 @@ import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
+import org.paninij.systemgraphs.SystemGraphs;
+
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 
 public class ASTChainNodeBuilder extends TreeScanner {
@@ -49,6 +52,15 @@ public class ASTChainNodeBuilder extends TreeScanner {
 	private final ArrayList<ASTChainNode> emptyList = new ArrayList<ASTChainNode>(0);
     private boolean lhs = false;
     public Names names;
+    public static class TodoItem {
+        public JCMethodInvocation tree;
+        public JCMethodDecl method;
+        public TodoItem(JCMethodInvocation tree, JCMethodDecl method) {
+            this.tree = tree;
+            this.method = method;
+        }
+    }
+    public static LinkedList<TodoItem> callGraphTodos = new LinkedList<TodoItem>();
 
     public void buildNodes(JCModuleDecl module, JCMethodDecl m, ASTChain chain) {
         this.module = module;
@@ -69,7 +81,6 @@ public class ASTChainNodeBuilder extends TreeScanner {
 	public void visitModifiers(JCModifiers that)         { Assert.error(); }
 	public void visitErroneous(JCErroneous that)         { Assert.error(); }
 	
-	/* the followings are about the types. */
 	public void visitTypeIdent(JCPrimitiveTypeTree that) { Assert.error(); }
 	public void visitTypeArray(JCArrayTypeTree that)     { Assert.error(); }
 	public void visitTypeApply(JCTypeApply that)         { Assert.error(); }
@@ -495,18 +506,32 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentEndNodes.add(node);
 		currentExcEndNodes = emptyList;
         addNode(node);
+        // building call graph
         if (TreeInfo.symbol(tree.meth) != null) {
             MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
-            if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isModule == true) {
+            if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isModule) {
+                VarSymbol moduleField = moduleField(tree);
                 if (methSym.owner == module.sym) {
                     String methodName = TreeInfo.symbol(tree.meth).toString();
                     methodName = methodName.substring(0, methodName.length()-2)+"$Original";
-                    chain.callerMethods.add((MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym);
-                }
-            } else
-                chain.callerMethods.add(methSym);
-
+                    MethodSymbol origMethSym = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
+                    m.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
+                                                                        moduleField));
+                    origMethSym.callerMethods.add(m.sym);
+                } else
+                    callGraphTodos.add(new TodoItem(tree, m));
+            } else {
+                m.sym.calledMethods.add(new MethodSymbol.MethodInfo(methSym));
+                methSym.callerMethods.add(m.sym);
+            }
         }
+    }
+
+    public static VarSymbol moduleField(JCMethodInvocation tree) {
+        if (tree.meth instanceof JCFieldAccess) 
+            if (((JCFieldAccess)tree.meth).selected instanceof JCIdent)
+                return (VarSymbol)TreeInfo.symbol(((JCFieldAccess)tree.meth).selected);
+        return null;
     }
 
     public void visitNewClass(JCNewClass tree) {

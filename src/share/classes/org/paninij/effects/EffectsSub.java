@@ -53,6 +53,7 @@ public class EffectsSub extends JCTree.Visitor {
     private ASTChain chain;
     HashMap<JCMethodDecl, EffectSet> methodEffects;
     private Names names;
+    public JCModuleDecl module; 
 
     public static EffectsSub instance(Context context) {
         EffectsSub instance = context.get(mesKey);
@@ -67,14 +68,13 @@ public class EffectsSub extends JCTree.Visitor {
     }
 
     public void substituteMethodEffects(HashMap<JCMethodDecl, EffectSet> methodEffects) {
-
         this.methodEffects = methodEffects;
 
         LinkedList<JCMethodDecl> methodsToProcess = new LinkedList<JCMethodDecl>(methodEffects.keySet());
 
         while (!methodsToProcess.isEmpty()) {
             JCMethodDecl method = methodsToProcess.poll();
-            System.out.println(method);
+
             EffectSet effects = methodEffects.get(method);
             EffectSet oldEffects = new EffectSet(effects);
             EffectSet toAdd = new EffectSet();
@@ -88,7 +88,7 @@ public class EffectsSub extends JCTree.Visitor {
 
                     it.remove();
                     if (methSym != method.sym) {
-                        if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isModule == true) {
+                        if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isModule) {
                             String methodName = methSym.toString();
                             methodName = methodName.substring(0, methodName.length()-2)+"$Original";
                             MethodSymbol methSymOrig = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
@@ -96,7 +96,6 @@ public class EffectsSub extends JCTree.Visitor {
                         } else {
                             if (methSym.tree == null) continue;
                             toAdd.addAll(methodEffects.get(methSym.tree));
-
                         }
                         
                         if (method.sym.toString().contains("$Original")) {
@@ -113,8 +112,12 @@ public class EffectsSub extends JCTree.Visitor {
             effects.addAll(toAdd);
 
             if (!oldEffects.equals(effects)) {
-                for (MethodSymbol callerMethod : effects.chain.callerMethods) {
+                for (MethodSymbol callerMethod : method.sym.callerMethods) {
                     if (callerMethod.tree == null) continue;
+                    System.out.println(callerMethod);
+                    System.out.println(callerMethod.ownerModule());
+                    System.out.println(module.sym);
+                    if (callerMethod.ownerModule() != module.sym) continue;
                     if (callerMethod != method.sym)
                         methodsToProcess.offer(callerMethod.tree);
                 }
@@ -145,7 +148,7 @@ public class EffectsSub extends JCTree.Visitor {
                     it.remove();
                     if (methSym != method.sym) {
                         String methodName = methSym.toString();
-                        methodName = methodName.substring(0, methodName.length()-2)+"$Original";
+                        methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
                         MethodSymbol methSymOrig = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
                         toAdd.addAll(methodEffects.get(methSymOrig.tree));
                         toAdd.remove(new OpenEffect(method.sym));
@@ -155,7 +158,7 @@ public class EffectsSub extends JCTree.Visitor {
             effects.addAll(toAdd);
 
             if (!oldEffects.equals(effects)) {
-                for (MethodSymbol callerMethod : effects.chain.callerMethods) {
+                for (MethodSymbol callerMethod : method.sym.callerMethods) {
                     if (callerMethod.tree == null) continue;
                     if (callerMethod != method.sym)
                         methodsToProcess.offer(callerMethod.tree);

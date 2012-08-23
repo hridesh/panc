@@ -23,7 +23,6 @@ import java.util.LinkedList;
 
 public class ASTChain {
     private HashMap<JCTree, ASTChainNode> nodes = new HashMap<JCTree, ASTChainNode>();
-    public HashSet<MethodSymbol> callerMethods = new HashSet<MethodSymbol>();
     public ASTChainNode startNode;
     public HeapRepresentation endHeapRepresentation;
     public LinkedList<ASTChainNode> nodesInOrder = new LinkedList<ASTChainNode>();

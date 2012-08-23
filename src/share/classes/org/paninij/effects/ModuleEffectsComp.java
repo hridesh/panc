@@ -69,7 +69,9 @@ public class ModuleEffectsComp {
         for(JCTree def : module.defs) {
         	if(def.getTag() == Tag.METHODDEF) {
                 JCMethodDecl method = (JCMethodDecl)def;
-                if ((method.sym.flags() & PRIVATE) != 0) {
+                if ((method.sym.flags() & PRIVATE) != 0 ||
+                    (method.sym.name.toString().equals("run") &&
+                     module.sym.hasRun)) {
                     methodsToProcess.offer(method);
                 }
             }
@@ -83,16 +85,20 @@ public class ModuleEffectsComp {
             new AliasingComp().fillInAliasingInfo(chain);
 //            new ASTChainPrinter().printChain(chain);
             
-            for (MethodSymbol callerMethod : chain.callerMethods) {
-                if (callerMethod.tree == null) continue;
-                if (!visitedMethods.contains(callerMethod.tree))
-                    methodsToProcess.offer(callerMethod.tree);
+            for (MethodSymbol.MethodInfo calledMethodInfo : method.sym.calledMethods) {
+                MethodSymbol calledMethod = calledMethodInfo.method;
+                if (calledMethod.tree == null) continue;
+                if (calledMethod.ownerModule() != null &&
+                    calledMethod.ownerModule() != module.sym) continue;
+                if (!visitedMethods.contains(calledMethod.tree))
+                    methodsToProcess.offer(calledMethod.tree);
             }
             EffectSet effects = methodEffectsComp.computeEffectsForMethod(chain, module.sym);
             effects.chain = chain;
             methodEffects.put(method, effects);
         }
-
+        
+        effectsSub.module = module;
         effectsSub.substituteMethodEffects(methodEffects);
     }
 }
