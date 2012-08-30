@@ -1081,8 +1081,9 @@
 	<target name="runtime" depends="build" description="Build the panini runtime">
 		<exec dir="make/" executable="./runtime.sh">
 		</exec>
-	</target>
+    </target>
 
+    <!-- Export the compiler and runtime -->
 	<target name="export" depends="build,runtime" description="Package the panini compiler and runtime for distribution.">
 	      <exec dir="make/" executable="./export.sh">
 	      </exec>
