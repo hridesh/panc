@@ -513,7 +513,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
                 VarSymbol moduleField = moduleField(tree);
                 if (methSym.owner == module.sym) {
                     String methodName = TreeInfo.symbol(tree.meth).toString();
-                    methodName = methodName.substring(0, methodName.length()-2)+"$Original";
+                    methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
                     MethodSymbol origMethSym = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
                     m.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
                                                                         moduleField));
@@ -529,8 +529,12 @@ public class ASTChainNodeBuilder extends TreeScanner {
 
     public static VarSymbol moduleField(JCMethodInvocation tree) {
         if (tree.meth instanceof JCFieldAccess) 
-            if (((JCFieldAccess)tree.meth).selected instanceof JCIdent)
-                return (VarSymbol)TreeInfo.symbol(((JCFieldAccess)tree.meth).selected);
+            if (((JCFieldAccess)tree.meth).selected instanceof JCIdent) {
+                VarSymbol s = (VarSymbol)TreeInfo.symbol(((JCFieldAccess)tree.meth).selected);
+                if (!s.name.toString().equals("this")) {
+                    return (VarSymbol)TreeInfo.symbol(((JCFieldAccess)tree.meth).selected);
+                }
+            }
         return null;
     }
 

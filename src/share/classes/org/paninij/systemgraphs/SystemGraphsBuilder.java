@@ -29,6 +29,7 @@ public class SystemGraphsBuilder extends TreeScanner {
     private Node currentModule;
 
     private HashMap<String, Node> moduleNames;
+    private HashSet<NodeMethod> finishedMethods;
 
     public static SystemGraphsBuilder instance(Context context) {
         SystemGraphsBuilder instance = context.get(sgbKey);
@@ -50,26 +51,23 @@ public class SystemGraphsBuilder extends TreeScanner {
         moduleNames = new HashMap<String, Node>();
         scan(system.body);
 
+        finishedMethods = new HashSet<NodeMethod>();
+
         for (Node module : moduleNames.values()) {
-            System.out.println("in " + module.sym);
             for (Symbol s : module.sym.members_field.getElements()) {
                 if (s instanceof MethodSymbol) {
                     MethodSymbol method = (MethodSymbol)s;
-                    System.out.println("traversing " + method);
                     if (method.name.toString().contains("$Original") ||
                         (method.name.toString().equals("run") &&
                          module.sym.hasRun)
                         ) {
-                        System.out.println("asdf");
                         currentModule = module;
                         traverseCallGraph(method);
-                        System.out.println("/asdf");
                     }
                 }
             }
         }
-
-//        System.out.println(graphs);
+        System.out.println(graphs);
         return graphs;
     }
 
@@ -85,18 +83,43 @@ public class SystemGraphsBuilder extends TreeScanner {
             origMethSym.callerMethods.add(t.method.sym);
         }
     }
+
+    private static class NodeMethod {
+        Node n; MethodSymbol m;
+        public NodeMethod(Node n, MethodSymbol m) { this.n = n; this.m = m; }
+        public boolean equals(Object o) {
+            if (o instanceof NodeMethod) {
+                NodeMethod nm = (NodeMethod)o;
+                return nm.n.equals(n) && nm.m.equals(m);
+            }
+            return false;
+        }
+    }
     
     public void traverseCallGraph(MethodSymbol method) {
-        System.out.println("called methods: " + method.calledMethods);
+        System.out.println(currentModule);
+        System.out.println(method);
+        if (finishedMethods.contains(new NodeMethod(currentModule, method))) return;
+        finishedMethods.add(new NodeMethod(currentModule, method));
         for (MethodSymbol.MethodInfo calledMethodInfo : method.calledMethods) {
+            System.out.println("383");
             if (calledMethodInfo.module != null) {
+                System.out.println("/");
+                System.out.println(calledMethodInfo.module.name.toString());
                 for (ConnectionEdge edge : graphs.forwardConnectionEdges.get(currentModule)) {
+                    System.out.println(edge.varName);
                     if (edge.varName.equals(calledMethodInfo.module.name.toString())) {
                         Node calledModule = edge.to;
-                        System.out.println("called method " + calledMethodInfo.method);
-                        System.out.println("called module " + calledModule);
+                        graphs.addProcEdge(currentModule, calledModule,
+                                           method, calledMethodInfo.method,
+                                           edge.varName);
                     }
                 }
+                System.out.println("\\");
+            } else {
+                // don't need to traverse module procedures, since
+                // they are starting points
+                traverseCallGraph(calledMethodInfo.method);
             }
         }
     }

@@ -45,6 +45,7 @@ public class SystemEffectsComp {
     protected static final Context.Key<SystemEffectsComp> secKey =
         new Context.Key<SystemEffectsComp>();
 
+    ReachedProcsComp reachedProcsComp;
     public ModuleEffectsComp moduleEffectsComp;
     private EffectsSub effectsSub;
 
@@ -57,21 +58,27 @@ public class SystemEffectsComp {
 
     protected SystemEffectsComp(Context context) {
         context.put(secKey, this);
+        reachedProcsComp = ReachedProcsComp.instance(context);
         moduleEffectsComp = ModuleEffectsComp.instance(context);
         effectsSub = EffectsSub.instance(context);
     }
 
     public void computeEffects(JCModuleDecl module) {
+        moduleDecls.add(module);
         moduleEffectsComp.computeEffects(module);
 
     }
 
+    LinkedList<JCModuleDecl> moduleDecls = new LinkedList<JCModuleDecl>();
+
     public void substituteProcEffects(JCSystemDecl system) {
         effectsSub.substituteProcEffects(moduleEffectsComp.methodEffects);
-
-        for (JCMethodDecl m : moduleEffectsComp.methodEffects.keySet()) {
+        for (JCModuleDecl module : moduleDecls) 
+            reachedProcsComp.computeReachedProcs(module);
+/*        for (JCMethodDecl m : moduleEffectsComp.methodEffects.keySet()) {
             System.out.println(m);
             System.out.println(moduleEffectsComp.methodEffects.get(m));
-        }
+            }*/
+
     }
 }

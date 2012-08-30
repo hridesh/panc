@@ -669,7 +669,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	
     }
     
-    public static class JCModuleArray extends JCArrayTypeTree implements ModuleArrayTree{
+    public static class JCModuleArray extends JCArrayTypeTree implements ModuleArrayTree {
 
     	public int amount;
     	
@@ -700,7 +700,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	
     }
     
-    public static class JCSystemDecl extends JCClassDecl implements SystemTree{
+    public static class JCSystemDecl extends JCClassDecl implements SystemTree {
     	public Name name;
     	public Kind kind;
     	public Tag tag;

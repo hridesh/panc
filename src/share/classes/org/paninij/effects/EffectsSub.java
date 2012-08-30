@@ -114,9 +114,6 @@ public class EffectsSub extends JCTree.Visitor {
             if (!oldEffects.equals(effects)) {
                 for (MethodSymbol callerMethod : method.sym.callerMethods) {
                     if (callerMethod.tree == null) continue;
-                    System.out.println(callerMethod);
-                    System.out.println(callerMethod.ownerModule());
-                    System.out.println(module.sym);
                     if (callerMethod.ownerModule() != module.sym) continue;
                     if (callerMethod != method.sym)
                         methodsToProcess.offer(callerMethod.tree);
@@ -146,13 +143,13 @@ public class EffectsSub extends JCTree.Visitor {
                     MethodSymbol methSym = me.method;
 
                     it.remove();
-                    if (methSym != method.sym) {
+/*                    if (methSym != method.sym) {
                         String methodName = methSym.toString();
                         methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
                         MethodSymbol methSymOrig = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
                         toAdd.addAll(methodEffects.get(methSymOrig.tree));
                         toAdd.remove(new OpenEffect(method.sym));
-                    }
+                        }*/
                 }
             }
             effects.addAll(toAdd);

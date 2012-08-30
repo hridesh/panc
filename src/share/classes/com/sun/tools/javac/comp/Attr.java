@@ -52,6 +52,7 @@ import com.sun.source.util.SimpleTreeVisitor;
 // Panini code
 import org.paninij.effects.*;
 import org.paninij.systemgraphs.*;
+import org.paninij.consistency.ConsistencyCheck;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -773,6 +774,12 @@ public class Attr extends JCTree.Visitor {
     public void visitSystemDef(JCSystemDecl tree) {
         tree.sym.graphs = graphsBuilder.buildGraphs(tree);
         effects.substituteProcEffects(tree);
+        ConsistencyCheck cc = 
+            new ConsistencyCheck(effects.moduleEffectsComp.methodEffects);
+        for (SystemGraphs.Node n :
+                 tree.sym.graphs.forwardConnectionEdges.keySet()) {
+            cc.checkConsistency(tree.sym.graphs, n);
+        }
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();

@@ -21,24 +21,36 @@ import java.util.HashSet;
 // edges, and one with inter-procedure calls as edges. Both graphs use
 // system-specified module instances as nodes.
 public class SystemGraphs {
-    static class Node { // a module instance
-        ClassSymbol sym; String name;
+    public static class Node { // a module instance
+        public ClassSymbol sym; public String name;
         public Node(ClassSymbol sym, String name) { this.sym = sym; this.name = name; }
         public String toString() { return sym + " " + name; }
     }
-    static class ProcEdge {
-        MethodSymbol caller, called;
-        Node from, to;
+    public static class ProcEdge {
+        public String varName;
+        public MethodSymbol caller, called;
+        public Node from, to;
+        public ProcEdge(Node from, Node to, 
+                        MethodSymbol caller,
+                        MethodSymbol called,
+                        String varName) {
+            this.from = from; this.to = to; 
+            this.caller = caller; this.called = called;
+            this.varName = varName;
+        }
+        public String toString() {
+            return from + " -> " + to + " [label=" + called + "]";
+        }
     }
-    static class ConnectionEdge {
-        String varName;
-        Node from, to;
+    public static class ConnectionEdge {
+        public String varName;
+        public Node from, to;
         public ConnectionEdge(Node from, Node to, String varName) { this.from = from; this.to = to; this.varName = varName; }
         public String toString() { return from + " -> " + to; }
     }
 
-    HashMap<Node, HashSet<ProcEdge>> forwardProcEdges = new HashMap<Node, HashSet<ProcEdge>>();
-    HashMap<Node, HashSet<ConnectionEdge>> forwardConnectionEdges = new HashMap<Node, HashSet<ConnectionEdge>>();
+    public HashMap<Node, HashSet<ProcEdge>> forwardProcEdges = new HashMap<Node, HashSet<ProcEdge>>();
+    public HashMap<Node, HashSet<ConnectionEdge>> forwardConnectionEdges = new HashMap<Node, HashSet<ConnectionEdge>>();
 
     public Node addModule(ClassSymbol sym, String name) {
         Node n = new Node(sym, name);
@@ -51,10 +63,16 @@ public class SystemGraphs {
         forwardConnectionEdges.get(from).add(new ConnectionEdge(from, to, name));
     }
 
+    public void addProcEdge(Node from, Node to, MethodSymbol caller, 
+                            MethodSymbol called, String varName) {
+        forwardProcEdges.get(from).add(new ProcEdge(from, to, caller, called, 
+                                                    varName));
+    }
+
     public String toString() {
         String returnValue = "digraph G {\n";
-        for (Collection<ConnectionEdge> edges : forwardConnectionEdges.values()) {
-            for (ConnectionEdge edge : edges) {
+        for (Collection<ProcEdge> edges : forwardProcEdges.values()) {
+            for (ProcEdge edge : edges) {
                 returnValue += edge + "\n";
             }
         }

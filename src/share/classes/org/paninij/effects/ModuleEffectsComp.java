@@ -45,9 +45,10 @@ public class ModuleEffectsComp {
     protected static final Context.Key<ModuleEffectsComp> secKey =
         new Context.Key<ModuleEffectsComp>();
 
-    HashMap<JCMethodDecl, EffectSet> methodEffects = new HashMap<JCMethodDecl, EffectSet>();
+    public HashMap<JCMethodDecl, EffectSet> methodEffects = new HashMap<JCMethodDecl, EffectSet>();
     MethodEffectsComp methodEffectsComp = new MethodEffectsComp();
     EffectsSub effectsSub;
+    ReachedProcsComp reachedProcsComp;
     private LinkedList<JCMethodDecl> methodsToProcess;
 
     public static ModuleEffectsComp instance(Context context) {
@@ -60,6 +61,7 @@ public class ModuleEffectsComp {
     protected ModuleEffectsComp(Context context) {
         context.put(secKey, this);
         effectsSub = EffectsSub.instance(context);
+        reachedProcsComp = ReachedProcsComp.instance(context);
         ASTChainBuilder.setNames(Names.instance(context));
     }
 
@@ -83,6 +85,7 @@ public class ModuleEffectsComp {
 
             ASTChain chain = ASTChainBuilder.buildChain(module, method);
             new AliasingComp().fillInAliasingInfo(chain);
+            reachedProcsComp.todoReachedProcs(module);
 //            new ASTChainPrinter().printChain(chain);
             
             for (MethodSymbol.MethodInfo calledMethodInfo : method.sym.calledMethods) {

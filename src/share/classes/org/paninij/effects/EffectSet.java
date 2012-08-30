@@ -79,12 +79,12 @@ class BottomEffect extends Effect {
 
 
 public class EffectSet extends HashSet<Effect> {
-    ASTChain chain;
+    public ASTChain chain;
 
     public EffectSet() { super(); }
     public EffectSet(EffectSet e) { super(e); }
 
-    boolean intersects(EffectSet es) {
+    public boolean intersects(EffectSet es) {
         for (Effect e : es) {
             if ((contains(e) && !(e instanceof EmptyEffect)) || e instanceof BottomEffect) return true;
         }

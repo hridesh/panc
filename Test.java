@@ -12,7 +12,7 @@ module M (M2 m2) {
 
     void doSomething() {
         boolean localVar = false;
-        doSomething();
+        this.doSomething();
         new A().asdf();
         m2.doSomethingElse();
         isSleeping = stuff;

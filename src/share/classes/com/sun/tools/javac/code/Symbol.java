@@ -1063,6 +1063,7 @@ public abstract class Symbol implements Element {
         }
         public HashSet<MethodSymbol> callerMethods = new HashSet<MethodSymbol>();
         public HashSet<MethodInfo> calledMethods = new HashSet<MethodInfo>();
+        public HashSet<MethodInfo> reachedProcs = new HashSet<MethodInfo>();
     	// end Panini code
     	
         /** The code of the method. */
