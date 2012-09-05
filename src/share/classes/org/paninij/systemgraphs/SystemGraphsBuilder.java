@@ -94,6 +94,9 @@ public class SystemGraphsBuilder extends TreeScanner {
             }
             return false;
         }
+        public int hashCode() {
+            return n.hashCode() + m.hashCode();
+        }
     }
     
     public void traverseCallGraph(MethodSymbol method) {

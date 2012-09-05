@@ -970,6 +970,27 @@ public class Enter extends JCTree.Visitor {
         	for(JCMethodDecl d : tree.publicMethods){
         		definitions.add(d);
         	}
+
+        	for(JCMethodDecl mdecl : tree.publicMethods){
+                ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
+	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+	        	args.add(make.Ident(names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString())));
+	            for(JCVariableDecl v : mdecl.params){
+	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
+	            	args.append(make.Ident(v.name));
+	            }
+	            JCMethodDecl methodCopy = make.MethodDef(
+	            		make.Modifiers(PRIVATE|FINAL), 
+	            		mdecl.name.append(names.fromString("$Original")), 
+	            		mdecl.restype,
+	            		mdecl.typarams, 
+	            		vars.toList(),
+	            		mdecl.thrown, 
+	            		mdecl.body,
+	            		null);
+	            methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name, mdecl.restype.type, tree.sym);
+	            definitions.add(methodCopy);
+        	}
         	//add from public methods
         }
     	List<JCVariableDecl> fields = tree.getParameters();
