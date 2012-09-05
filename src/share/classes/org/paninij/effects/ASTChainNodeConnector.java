@@ -88,7 +88,7 @@ public class ASTChainNodeConnector extends TreeScanner {
 	public void visitBlock(JCBlock tree) {
 		if(tree.stats.head != null) {
             visitList(tree.stats);
-		} //else throw new Error("block should not be empty");
+		} else throw new Error("block should not be empty");
 	}
 
 	public void visitDoLoop(JCDoWhileLoop tree) {

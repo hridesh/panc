@@ -176,10 +176,11 @@ public class TreeMaker implements JCTree.Factory {
     
     public JCModuleDecl ModuleDef(JCModifiers mods,
     		Name name, 
+    		List<JCTypeParameter> typeparam,
 			List<JCVariableDecl> params, 
 			List<JCExpression> implementing, 
 			List<JCTree> defs){
-    	JCModuleDecl tree = new JCModuleDecl(mods, name, params, implementing, defs);
+    	JCModuleDecl tree = new JCModuleDecl(mods, name, typeparam, params, implementing, defs);
     	tree.pos = pos;
     	return tree;
     }

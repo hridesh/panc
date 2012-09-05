@@ -489,6 +489,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 		JCModuleDecl t = (JCModuleDecl)node;
 		return M.at(t.pos).ModuleDef(t.getModifiers(),
 				t.getName(), 
+				t.getTypeParameters(),
 				t.getParameters(), 
 				t.getImplementsClause(),
 				t.getMembers());

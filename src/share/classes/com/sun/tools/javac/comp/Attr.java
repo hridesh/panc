@@ -50,7 +50,7 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
-import org.paninij.effects.*;
+import org.paninij.Interleaving;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -746,24 +746,44 @@ public class Attr extends JCTree.Visitor {
         if (tree.needsDefaultRun){
         	List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree, env, rs);
         	enter.classEnter(wrapperClasses, env.outer);
-//        	System.out.println(wrapperClasses);
         	attribClassBody(env, tree.sym);
             tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
         	}
         else
         	attribClassBody(env, tree.sym);
+        
         for(JCTree def : tree.defs){
         	if(def.getTag() == Tag.METHODDEF){
         		for(JCVariableDecl param : ((JCMethodDecl)def).params){
         			if(param.type.tsym.isModule&&!((JCMethodDecl)def).name.toString().contains("$Original")){
         				log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.name);
         			}
+//        			if(!param.vartype.type.isPrimitive()&&!param.vartype.toString().equals("String")){
+//        				TypeVar t = new TypeVar(names.fromString("OWNER"), ((JCMethodDecl)def).sym, syms.botType);
+//                        t.bound = syms.classType;
+//            			JCTypeApply typeApply =
+//            					make.TypeApply(param.vartype, List.<JCExpression>of(make.Ident(names.fromString("OWNER"))));
+//            			typeApply.type = t;
+//            			param.vartype =
+//            					typeApply;
+//        			}
         		}
         		
         	}
+        	else if(def.getTag() == Tag.VARDEF){
+        		if(((JCVariableDecl)def).vartype.type.tsym.isModule){
+        			TypeVar t = new TypeVar(names.fromString(((JCVariableDecl)def).vartype.toString()+"_"+((JCVariableDecl)def).name.toString()), tree.sym, syms.botType);
+                    t.bound = syms.classType;
+        			JCTypeApply typeApply =
+        					make.TypeApply(((JCVariableDecl)def).vartype, List.<JCExpression>of(make.Ident(names.fromString(((JCVariableDecl)def).vartype.toString()+"_"+((JCVariableDecl)def).name.toString()))));
+        			typeApply.type = t;
+        			((JCVariableDecl)def).vartype =
+        					typeApply;
+        		}
+        	}
+        	attribType(def, env);
         }
-//        System.out.println(tree);
-        
+        tree.switchToClass();
     }
 
     public void visitSystemDef(JCSystemDecl tree){
@@ -778,11 +798,28 @@ public class Attr extends JCTree.Visitor {
     	for(int i=0;i <tree.body.stats.length();i++){
     		if(tree.body.stats.get(i).getTag() == VARDEF){
     			JCVariableDecl vdecl = (JCVariableDecl)tree.body.stats.get(i);
+    			if(vdecl.vartype.getTag()==Tag.TYPEAPPLY){
+    				vdecl.vartype = ((JCTypeApply)vdecl.vartype).clazz;
+    			}
     			if(syms.modules.containsKey(names.fromString(vdecl.vartype.toString()))){
+    				JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), 
+    		    			List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
+    		    	enter.classEnter(typeInterface, env);
+    		    	tree.defs = tree.defs.append(typeInterface);
     				ClassSymbol c = syms.modules.get(names.fromString(vdecl.vartype.toString()));
+    				
+    				TypeVar t = new TypeVar(names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), tree.sym, syms.botType);
+                    t.bound = syms.classType;
+        			JCTypeApply typeApply =
+        					make.TypeApply(vdecl.vartype, List.<JCExpression>of(make.Ident(names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()))));
+        			typeApply.type = t;
+        			enter.classEnter(typeApply, env);
+        			vdecl.vartype =
+        					typeApply;
+        			
     				decls.add(vdecl);
     				JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
-    						make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
+    						vdecl.vartype, List.<JCExpression>nil(), null);
     				newClass.constructor = rs.resolveConstructor
     						(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
     				newClass.type = c.type;
@@ -809,10 +846,7 @@ public class Attr extends JCTree.Visitor {
     		    				make.Select(make.Ident(vdecl.name), 
     		    				names.fromString("shutdown")), List.<JCExpression>nil())));
     		    	
-    		    	JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), 
-    		    			List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
-    		    	enter.classEnter(typeInterface, env);
-    		    	tree.defs = tree.defs.append(typeInterface);
+    		    	
     		    	
     		    	variables.put(vdecl.name, c.name);
     			}else if(syms.libclasses.containsKey(names.fromString(vdecl.vartype.toString()))){
@@ -850,7 +884,6 @@ public class Attr extends JCTree.Visitor {
     		    			List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
     		    	enter.classEnter(typeInterface, env);
     		    	tree.defs = tree.defs.append(typeInterface);
-    		    	
     		    	variables.put(vdecl.name, c.name);
     			}
     			else{
@@ -935,6 +968,28 @@ public class Attr extends JCTree.Visitor {
     			if(((JCExpressionStatement)tree.body.stats.get(i)).expr.getTag()==APPLY){
 					JCMethodInvocation mi = (JCMethodInvocation) ((JCExpressionStatement) tree.body.stats
 							.get(i)).expr;
+					for(JCExpression exp : mi.args){
+
+						if(exp.getTag() == Tag.IDENT){
+							JCTypeApply type = null;
+							for(JCStatement stat : tree.body.stats){
+								if(stat.getTag() == VARDEF){
+									if(((JCVariableDecl)stat).name.toString().equals(((JCIdent)exp).name.toString())){
+										type = (JCTypeApply)((JCVariableDecl)stat).vartype;
+									}
+								}
+							}
+							for(JCStatement stat : tree.body.stats){
+								if(stat.getTag() == VARDEF){
+									if(((JCVariableDecl)stat).name.toString().equals(mi.meth.toString())){
+										((JCTypeApply)((JCVariableDecl)stat).vartype).arguments = 
+												((JCTypeApply)((JCVariableDecl)stat).vartype).arguments.append
+													(make.Ident(names.fromString(type.clazz.toString()+"_"+((JCIdent)exp).name.toString())));
+									}
+								}
+							}
+						}
+					}
 					try{
 						assigns.appendList(transWiring(mi, variables));
 					}catch (NullPointerException e){
@@ -943,6 +998,9 @@ public class Attr extends JCTree.Visitor {
     			}
     		}else if(tree.body.stats.get(i).getTag() == FOREACHLOOP){
     			JCEnhancedForLoop loop = (JCEnhancedForLoop) tree.body.stats.get(i);
+    			if(loop.var.vartype.getTag() == Tag.TYPEAPPLY){
+    				loop.var.vartype = ((JCTypeApply)loop.var.vartype).clazz;
+    			}
     			ClassSymbol c = syms.modules.get(names.fromString(loop.var.vartype.toString()));
 				if(c==null){
 				log.error(loop.pos(), "module.array.type.error", loop.var.vartype);
@@ -1063,12 +1121,14 @@ public class Attr extends JCTree.Visitor {
     	maindecl.body.stats = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
     	
     	tree.switchToClass();
-//    	System.out.println(tree);
     	memberEnter.memberEnter(maindecl, env);
     }
     
     public void visitProcDef(JCProcDecl tree){
-    	Type restype = ((MethodType)tree.sym.type).restype;
+    	Type restype;
+    	if(tree.sym.type.tag == TypeTags.METHOD)
+    		restype = ((MethodType)tree.sym.type).restype;
+    	else restype = ((ForAll)tree.sym.type).getReturnType();
     	if(restype.tsym.isModule||tree.sym.getReturnType().isPrimitive()||
     			tree.sym.getReturnType().toString().equals("java.lang.String"))
     	{
@@ -1076,6 +1136,20 @@ public class Attr extends JCTree.Visitor {
     		System.exit(1);
     	}
     	tree.switchToMethod();
+    }
+    
+    public void visitFree(JCFree tree){
+    	tree.toCast();
+//    	rs.findVar(env, names.fromString(tree.exp.toString()));
+    	Symbol returnType = rs.findVar(env, names.fromString(tree.exp.toString()));
+//    	List<Type> params = returnType.type.allparams();
+    	ListBuffer<JCExpression> params = new ListBuffer<JCExpression>();
+    	for(Type t : returnType.type.allparams()){
+    		params.append(make.Ident(names.fromString(t.toString())));
+    	}
+    	List<JCExpression> p = params.toList().tail.prepend(make.Ident(names.fromString("CLIENT")));
+    	tree.clazz = make.TypeApply(make.Ident(returnType.type.tsym), p);
+    	tree.accept(this);
     }
     // end Panini code
 
@@ -1119,11 +1193,6 @@ public class Attr extends JCTree.Visitor {
         	catch(ClassCastException e){
         	}
         }
-        // uncomment this to print CFGs for module procedures
-/*        if (tree.name.toString().contains("$Original")) { 
-            MethodEffectsComp effects = new MethodEffectsComp();
-            effects.computeEffectsForMethod(tree);
-            }*/
         // end Panini code
 
         Lint lint = env.info.lint.augment(m.attributes_field, m.flags());
@@ -1259,6 +1328,18 @@ public class Attr extends JCTree.Visitor {
     }
 
     public void visitVarDef(JCVariableDecl tree) {
+//    	if(tree.init !=null&&tree.init.getTag()==Tag.NEWCLASS){
+//    		if(((JCNewClass)tree.init).clazz.getTag()!=Tag.TYPEAPPLY&&!((JCNewClass)tree.init).toString().contains("Panini$Duck")&&!((JCNewClass)tree.init).toString().contains("DuckBarrier")){
+//    			TypeVar t = new TypeVar(names.fromString("OWNER"), env.info.scope.owner, syms.botType);
+//                t.bound = syms.classType;
+//    			JCTypeApply typeApply =
+//    					make.TypeApply(tree.vartype, List.<JCExpression>of(make.Ident(names.fromString("OWNER"))));
+//    			typeApply.type = t;
+//    			tree.vartype =
+//    					typeApply;
+//    			((JCNewClass)tree.init).clazz = typeApply;
+//    		}
+//    	}
         // Local variables have not been entered yet, so we need to do it now:
         if (env.info.scope.owner.kind == MTH) {
             if (tree.sym != null) {
@@ -3496,7 +3577,6 @@ public class Attr extends JCTree.Visitor {
                 }
                 // end Panini code
                 attribClassBody(env, c);
-//                System.out.println(env.tree);
                 chk.checkDeprecatedAnnotation(env.tree.pos(), c);
             } finally {
                 log.useSource(prev);

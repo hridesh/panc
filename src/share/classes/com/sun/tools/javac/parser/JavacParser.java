@@ -1092,6 +1092,17 @@ public class JavacParser implements Parser {
                 t = lambdaExpressionOrStatement(false, false, pos);
             } else {
                 t = toP(F.at(token.pos).Ident(ident()));
+                // Panini code
+                if(inModule){
+                	if(t.toString().equals("free")){
+                		pos = token.pos;
+                		JCTree exp = parseExpression();
+                		if(exp.getTag()==Tag.IDENT)
+                			t = toP(F.at(pos).Free((JCExpression)exp));
+                	}
+                	// TODO error message?
+                }
+            	// end Panini code
                 loop: while (true) {
                     pos = token.pos;
                     switch (token.kind) {
@@ -2648,6 +2659,19 @@ public class JavacParser implements Parser {
         else if (reqInit) syntaxError(token.pos, "expected", EQ);
         JCVariableDecl result =
             toP(F.at(pos).VarDef(mods, name, type, init));
+        // Panini code
+        if(inModule&&result.vartype.getKind()!=Kind.PRIMITIVE_TYPE
+        		&&result.vartype.getKind()!=Kind.ARRAY_TYPE){
+        	if(result.vartype.getKind()==Kind.PARAMETERIZED_TYPE){
+        		((JCTypeApply)result.vartype).arguments = ((JCTypeApply)result.vartype).arguments.prepend(F.Ident(names.fromString("OWNER"))); 
+        	}
+        	else
+        		result.vartype = F.TypeApply(result.vartype, List.<JCExpression>of(F.Ident(names.fromString("OWNER"))));
+        }
+        if(inModule&&result.init!=null)
+        	if(result.init.getTag() == Tag.NEWCLASS&&result.vartype.getKind()!=Kind.PRIMITIVE_TYPE)
+        		((JCNewClass)result.init).clazz = F.TypeApply(((JCNewClass)result.init).clazz, ((JCTypeApply)result.vartype).arguments); 
+        //end Panini code
         attach(result, dc);
         return result;
     }
@@ -2945,6 +2969,7 @@ public class JavacParser implements Parser {
      }
 
      JCStatement moduleDecl(JCModifiers mod, String dc){
+    	inModule = true;
      	accept(IDENTIFIER);
      	int pos = token.pos;
      	Name name = ident();
@@ -2953,11 +2978,18 @@ public class JavacParser implements Parser {
      		nextToken();
      		parseType();
      	}
+     	List<JCTypeParameter> types = List.<JCTypeParameter>of(F.at(pos).TypeParameter(names.fromString("OWNER"), List.<JCExpression>nil()));
  		List<JCVariableDecl> params; 
      	if(token.kind == LPAREN)
      		params = formalParameters();
      	else
      		params = List.<JCVariableDecl>nil();
+     	if(params.nonEmpty()){
+     		for(JCVariableDecl vdecl : params){
+     			if(vdecl.vartype.getKind()!=Kind.PRIMITIVE_TYPE&&!vdecl.vartype.toString().equals("String")&&!vdecl.vartype.toString().equals("Boolean"))
+     				types = types.append(F.TypeParameter(names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), List.<JCExpression>nil()));
+     		}
+     	}
      	List<JCExpression> implementing = List.nil();
          if (token.kind == IMPLEMENTS) {
         	 log.error(token.pos, "module.implement.error");
@@ -2966,8 +2998,9 @@ public class JavacParser implements Parser {
          }
      	List<JCTree> defs = classOrInterfaceBody(name, false);
      	JCModuleDecl result = 
-     			toP(F.at(pos).ModuleDef(mod, name, params, implementing, defs));
+     			toP(F.at(pos).ModuleDef(mod, name, types, params, implementing, defs));
      	attach(result, dc);
+     	inModule = false;
      	return result;
      }
      // end Panini code
@@ -3300,6 +3333,20 @@ public class JavacParser implements Parser {
             toP(F.at(pos).MethodDef(mods, name, type, typarams,
                                     params, thrown,
                                     body, defaultValue));
+        // Panini code
+        if(inModule){
+        	for(JCVariableDecl vdecl : result.params){
+        		if(vdecl.vartype.getKind()!= Kind.PRIMITIVE_TYPE&&!vdecl.vartype.toString().equals("String")
+        				&&vdecl.vartype.getKind()!=Kind.ARRAY_TYPE){
+        			vdecl.vartype = F.TypeApply(vdecl.vartype, List.<JCExpression>of(F.Ident(names.fromString("OWNER"))));
+        		}
+        	}
+        	result.typarams = result.typarams.append(F.TypeParameter(names.fromString("CLIENT"), List.<JCExpression>nil()));
+        	if(!result.restype.toString().equals("void")&&!result.restype.toString().equals("Boolean")&&!result.restype.toString().equals("String")&&!result.restype.toString().equals("Void")){
+        		result.restype = F.TypeApply(result.restype, List.<JCExpression>of(F.Ident(names.fromString("CLIENT"))));
+        	}
+        }
+        // end Panini code
         attach(result, dc);
         return result;
     }

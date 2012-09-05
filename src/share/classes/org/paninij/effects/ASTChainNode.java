@@ -6,23 +6,16 @@ import com.sun.tools.javac.tree.JCTree.*;
 
 public class ASTChainNode {
 	public JCTree tree;
-    public int id;
-    public static int counter = 0;
 	public ArrayList<ASTChainNode> next = new ArrayList<ASTChainNode>();
 	public ArrayList<ASTChainNode> previous = new ArrayList<ASTChainNode>();
     public ArrayList<ASTChainNode> startNodes = new ArrayList<ASTChainNode>();
     public ArrayList<ASTChainNode> endNodes = new ArrayList<ASTChainNode>();
     public ArrayList<ASTChainNode> excEndNodes = new ArrayList<ASTChainNode>();
-    
-    // effects of chain up to and including this node
-    public EffectSet effects = new EffectSet();
-
-    public HeapRepresentation heapRepresentation;
-    
+    boolean startNodesTainted = true;
+    boolean endNodesTainted = true;
 
 	public ASTChainNode(JCTree tree) {
 		this.tree = tree;
-        id = counter++;
 	}
 
 	public int hashCode() {

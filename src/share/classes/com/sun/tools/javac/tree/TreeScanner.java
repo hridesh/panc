@@ -91,7 +91,7 @@ public class TreeScanner extends Visitor {
     }
     
     public void visitFree(JCFree tree){
-    	scan(tree.exp);
+//    	scan(tree.exp);
     }
     
     public void visitInclude(JCInclude tree){

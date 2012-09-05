@@ -88,13 +88,14 @@ public class ModuleInternal extends Internal
         	
             ListBuffer<JCStatement> innerIfStatements = new ListBuffer<JCStatement>();
             ListBuffer<JCStatement> caseStatements = new ListBuffer<JCStatement>();
-            Type restype = ((MethodType)method.sym.type).restype;
+            Type restype = ((ForAll)method.sym.type).getReturnType();
 
         	if(restype.tag == TypeTags.VOID){
         		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
         		
         		for (int i = 0; i < method.params.size(); i++) {
-        			caseStatements.append(var(noMods, "var"+varIndex, method.params.get(i).vartype, 
+        			caseStatements.append(var(noMods, "var"+varIndex, method.params.get(i).vartype,
+//        			caseStatements.append(var(noMods, "var"+varIndex, make.TypeApply(method.params.get(i).vartype, List.<JCExpression>of(make.Wildcard(make.TypeBoundKind(BoundKind.UNBOUND), make.Ident(names._super)))), 
                 			cast(method.params.get(i).vartype, 
                 			make.Select(cast(PaniniConstants.DUCK_INTERFACE_NAME+"$"+method.restype.toString()+"$"+tree.name.toString(), id("d")),method.params.get(i).name.append(names.fromString("$")).append(method.name)))));
                     args.append(id("var"+varIndex++));
@@ -107,11 +108,10 @@ public class ModuleInternal extends Internal
         		
         	}else if(restype.tag == TypeTags.CLASS){
         		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
-
                 for (int i = 0; i < method.params.size(); i++) {
-                	caseStatements.append(var(noMods, "var"+varIndex, method.params.get(i).vartype, 
+                	caseStatements.append(var(noMods, "var"+varIndex, method.params.get(i).vartype,
                 			cast(method.params.get(i).vartype, 
-                			make.Select(cast(PaniniConstants.DUCK_INTERFACE_NAME+"$"+method.restype.toString()+"$"+tree.name.toString(), id("d")),method.params.get(i).name.append(names.fromString("$")).append(method.name)))));
+                			make.Select(cast(PaniniConstants.DUCK_INTERFACE_NAME+"$"+((JCTypeApply)method.restype).clazz.toString()+"$"+tree.name.toString(), id("d")),method.params.get(i).name.append(names.fromString("$")).append(method.name)))));
                     args.append(id("var"+varIndex++));
                 }
                 caseStatements.append(es(apply("d", "panini$finish",
@@ -175,36 +175,234 @@ public class ModuleInternal extends Internal
             );
         return b;
     }
+/*
+    public void generateInternalInterfaceDef(JCEventDecl tree, int pos) {
+        ListBuffer<JCTree> defs = new ListBuffer<JCTree>();
+
+        JCModifiers publicMods = mods(Flags.PUBLIC);
+        JCModifiers publicSyntheticMods = mods(Flags.PUBLIC);
+        JCModifiers privateMods = mods(Flags.PRIVATE);
+        JCModifiers noMods = mods(0);
+        JCModifiers publicInterfaceMods = mods(Flags.PUBLIC | Flags.INTERFACE);
+        JCModifiers publicFinalMods = mods(Flags.PUBLIC | Flags.FINAL);
+        JCModifiers publicStaticMods = mods(Flags.PUBLIC | Flags.STATIC);
+        JCModifiers privateStaticMods = mods(Flags.PRIVATE | Flags.STATIC);
+        JCModifiers privateStaticFinalMods = mods(Flags.PRIVATE | Flags.STATIC | Flags.FINAL);
+
+        int i = 1;
+        for (JCTree c : tree.getContextVariables()) {
+            JCVariableDecl contextVariable = (JCVariableDecl) c;
+            JCModifiers contextVariableMods = mods(Flags.PUBLIC, lb(ann(PtolemyConstants.CONTEXT_VARIABLE_ANN_TYPE_NAME,
+                                                                        args(assign("index", intc(i))))));
+
+            defs.append(method(contextVariableMods, contextVariable.getName().toString(), (JCExpression) contextVariable.getType()));
+            
+            i++;
+        }
+
+        defs.append(method(publicSyntheticMods, PtolemyConstants.INVOKE_METHOD_NAME, tree.getReturnType(), params(), throwing(id("Throwable"))));
+        
+
+        JCModifiers registerMods = mods(Flags.PUBLIC | Flags.STATIC | Flags.SYNCHRONIZED,
+                                        lb(ann(PtolemyConstants.IGNORE_REFINEMENT_CHECKING_ANN_TYPE_NAME)));
+        JCModifiers handlersChangedMods = mods(Flags.PRIVATE | Flags.STATIC | Flags.SYNCHRONIZED,
+                                        lb(ann(PtolemyConstants.IGNORE_REFINEMENT_CHECKING_ANN_TYPE_NAME)));
+        JCModifiers announceMods = mods(Flags.PUBLIC | Flags.STATIC,
+                                        lb(ann(PtolemyConstants.IGNORE_REFINEMENT_CHECKING_ANN_TYPE_NAME)));
+
+
+        //Handler interface    
+        defs.append(clazz(publicInterfaceMods, PtolemyConstants.EVENT_HANDLER_IFACE_NAME, defs(
+                              method(publicSyntheticMods, PtolemyConstants.EVENT_HANDLER_METHOD_NAME, tree.getReturnType(), params(
+                                         var(noMods, "next", id(tree.getSimpleName()))), throwing(
+                                             id("Throwable"))))));
+        
+        //EventFrame class
+        ListBuffer<JCTree> eventFrameDefs = defs(
+            var(publicStaticMods, PtolemyConstants.HANDLERS_LIST_NAME, ta(select("java.util.List"), typeargs(id(PtolemyConstants.EVENT_HANDLER_IFACE_NAME)))),
+            var(publicStaticMods, "cachedHandlerRecords", PtolemyConstants.EVENT_FRAME_TYPE_NAME),
+            // handlers changed method (helper for (un)register)
+            method(handlersChangedMods, PtolemyConstants.HANDLERS_CHANGED_METHOD_NAME, voidt(),
+                    params(),
+                    body(
+ 			           var(noMods, "i", select("java.util.Iterator"), apply(PtolemyConstants.HANDLERS_LIST_NAME, "iterator")),
+ 			           var(noMods, "newRecords", PtolemyConstants.EVENT_FRAME_TYPE_NAME, newt(PtolemyConstants.EVENT_FRAME_TYPE_NAME, args(id("i")))),
+ 			           es(apply("recordWriteLock", "lock")),
+ 			           tryt(body(es(assign("cachedHandlerRecords", id("newRecords")))),
+ 			                body(es(apply("recordWriteLock", "unlock")))))),
+            // register method
+            method(registerMods, PtolemyConstants.REGISTER_METHOD_NAME, PtolemyConstants.EVENT_HANDLER_IFACE_NAME,
+                   params(
+                       var(noMods, "h", PtolemyConstants.EVENT_HANDLER_IFACE_NAME)),
+                   body(
+                       ift(isNull(PtolemyConstants.HANDLERS_LIST_NAME), es(assign(PtolemyConstants.HANDLERS_LIST_NAME, apply("java.util.Collections", "synchronizedList", args(
+                                                                                                                                 newt(ta(select("java.util.ArrayList"), typeargs(id(PtolemyConstants.EVENT_HANDLER_IFACE_NAME))), args())))))),
+                       es(apply(PtolemyConstants.HANDLERS_LIST_NAME, "add", args(id("h")))),
+                       es(apply(PtolemyConstants.HANDLERS_CHANGED_METHOD_NAME)),
+                       returnt(id("h")))),
+            // unregister method
+            method(registerMods, PtolemyConstants.UNREGISTER_METHOD_NAME, PtolemyConstants.EVENT_HANDLER_IFACE_NAME,
+                   params(
+                       var(noMods, "h", PtolemyConstants.EVENT_HANDLER_IFACE_NAME)),
+                   body(
+                       ift(isNull(PtolemyConstants.HANDLERS_LIST_NAME), returnt(id("h"))),
+                       ift(nott(apply(PtolemyConstants.HANDLERS_LIST_NAME, "contains", args(id("h")))), returnt(id("h"))),
+                       es(apply(PtolemyConstants.HANDLERS_LIST_NAME, "remove", args(apply(PtolemyConstants.HANDLERS_LIST_NAME, "lastIndexOf", args(id("h")))))),
+                       ift(apply(PtolemyConstants.HANDLERS_LIST_NAME, "isEmpty"), body(es(assign("cachedHandlerRecords", nullt())), es(assign(PtolemyConstants.HANDLERS_LIST_NAME, nullt()))), es(apply(PtolemyConstants.HANDLERS_CHANGED_METHOD_NAME))),
+                       returnt(id("h")))),
+            var(privateStaticMods, "body", id(tree.getSimpleName())),
+            // announce method
+            method(announceMods, PtolemyConstants.ANNOUNCE_METHOD_NAME, tree.getReturnType(),
+                   params(
+                       var(noMods, "ev", id(tree.getSimpleName()))),
+                   throwing(id("Throwable")),
+                   body(
+                       var(noMods, "record", PtolemyConstants.EVENT_FRAME_TYPE_NAME),
+                       es(apply("recordReadLock", "lock")),
+                       tryt(body(es(assign("record", id("cachedHandlerRecords")))),
+                            body(es(apply("recordReadLock", "unlock")))),
+                       ift(notNull(select("record.nextRecord")),
+                           es(assign(select("EventFrame.body"), id("ev")))),
+                       isVoid(tree.getReturnType()) ? 
+                       es(apply("record.handler", PtolemyConstants.EVENT_HANDLER_METHOD_NAME, args(
+                                    id("record"))))
+                       :
+                       returnt(apply("record.handler", PtolemyConstants.EVENT_HANDLER_METHOD_NAME, args(
+                                         id("record")))))),
+            
+            // invoke method
+            method(publicMods, PtolemyConstants.INVOKE_METHOD_NAME, tree.getReturnType(),
+                   params(),
+                   throwing(id("Throwable")),
+                   body(
+                       ift(notNull(select("nextRecord.handler")),
+                           isVoid(tree.getReturnType()) ?
+                           body(
+                               es(apply("nextRecord.handler", PtolemyConstants.EVENT_HANDLER_METHOD_NAME, args(
+                                            id("nextRecord")))),
+                               returnt())
+                           :
+                           returnt(apply("nextRecord.handler", PtolemyConstants.EVENT_HANDLER_METHOD_NAME, args(
+                                             id("nextRecord"))))),
+                       isVoid(tree.getReturnType()) ?
+                       es(apply("EventFrame.body", PtolemyConstants.INVOKE_METHOD_NAME))
+                       :
+                       returnt(apply("EventFrame.body", PtolemyConstants.INVOKE_METHOD_NAME)))),
+            var(privateMods, "handler", PtolemyConstants.EVENT_HANDLER_IFACE_NAME),
+            var(privateMods, "nextRecord", PtolemyConstants.EVENT_FRAME_TYPE_NAME),
+            // constructor
+            constructor(privateMods, 
+                        params(
+                            var(noMods, "chain", select("java.util.Iterator"))),
+                        body(
+                            es(supert()),
+                            
+                            ift(apply("chain", "hasNext"), body(
+                                    es(assign("handler", cast(PtolemyConstants.EVENT_HANDLER_IFACE_NAME, apply("chain", "next")))),
+                                                      es(assign("nextRecord", newt(PtolemyConstants.EVENT_FRAME_TYPE_NAME, args(id("chain"))))),
+                                    returnt())),
+                            es(assign("nextRecord", nullt())))),
+            var(privateStaticFinalMods, "recordLock", select("java.util.concurrent.locks.ReentrantReadWriteLock"), newt(select("java.util.concurrent.locks.ReentrantReadWriteLock"))),
+            var(privateStaticFinalMods, "recordReadLock", select("java.util.concurrent.locks.Lock"), apply("recordLock", "readLock")),
+            var(privateStaticFinalMods, "recordWriteLock", select("java.util.concurrent.locks.Lock"), apply("recordLock", "writeLock")));
+        
+        for (JCTree c : tree.getContextVariables()) {
+            JCVariableDecl contextVariable = (JCVariableDecl) c;
+            JCModifiers contextVariableMods = mods(Flags.PUBLIC/* | Flags.SYNTHETIC//);
+            
+            eventFrameDefs.append(method(contextVariableMods, 
+                                         contextVariable.getName(), 
+                                         (JCExpression) contextVariable.getType(),
+                                         body(
+                                             returnt(apply("body", contextVariable.getName().toString())))));
+            
+        }
+
+        defs.append(clazz(publicFinalMods, PtolemyConstants.EVENT_FRAME_TYPE_NAME, 
+                          implementing(id(tree.getSimpleName())), eventFrameDefs));
+                          
+        
+        ListBuffer<JCTree> eventClosureDefs = new ListBuffer<JCTree>();
+        ListBuffer<JCVariableDecl> constructorParams = new ListBuffer<JCVariableDecl>();
+        ListBuffer<JCStatement> constructorBodyStatements = new ListBuffer<JCStatement>();
+
+        for (JCTree c : tree.getContextVariables()) {
+            JCVariableDecl contextVariable = (JCVariableDecl) c;
+            JCModifiers contextVariableMods = mods(Flags.PUBLIC | Flags.FINAL);
+
+            eventClosureDefs.append(var(privateMods, 
+                                        contextVariable.getName().toString(), 
+                                        (JCExpression) contextVariable.getType()));
+            
+            eventClosureDefs.append(method(contextVariableMods, 
+                                         contextVariable.getName(), 
+                                         (JCExpression) contextVariable.getType(),
+                                         body(
+                                             returnt(id(contextVariable.getName().toString())))));
+
+            constructorParams.append(var(noMods, 
+                                         contextVariable.getName().toString(), 
+                                         (JCExpression)contextVariable.getType()));
+            constructorBodyStatements.append(es(assign(select(thist(), 
+                                                              contextVariable.getName().toString()), 
+                                                       id(contextVariable.getName()))));
+        }
+
+        eventClosureDefs.append(method(publicMods, PtolemyConstants.INVOKE_METHOD_NAME, tree.getReturnType(),
+                                       params(),
+                                       isVoid(tree.getReturnType()) ?
+                                       body()
+                                       :
+                                       body(returnt(defaultt(tree.getReturnType())))));
+
+        eventClosureDefs.append(constructor(publicMods, constructorParams, body(constructorBodyStatements)));
+        
+
+        defs.append(clazz(publicStaticMods, PtolemyConstants.EVENT_CLOSURE_TYPE_NAME,
+                          implementing(id(tree.getSimpleName())), 
+                          eventClosureDefs));
+
+        JCModifiers internalMods = mods(tree.getModifiers().flags | Flags.INTERFACE, lb(
+                                            ann(PtolemyConstants.EVENT_TYPE_DECL_ANN_TYPE_NAME),
+                                            ann(PtolemyConstants.EVENT_CONTRACT_DECL_ANN_TYPE_NAME,
+                                                args(assign("assumesBlock", 
+                                                            tree.contract == null ?
+                                                            stringc("null")
+                                                            :
+                                                            stringc(tree.contract.assumesBlock.toString()))))));
+                
+        tree.mods = internalMods;
+        tree.defs = defs.toList();
+
+        /*JCClassDecl internalTree = make.at(pos).ClassDef(internalMods,
+                                                         tree.getSimpleName(), 
+                                                         List.<JCTypeParameter>nil(),
+                                                         null,
+                                                         List.<JCExpression>nil(),
+                                                         defs.toList());
+
+                                                         tree.internalInterface = internalTree; //
+    }*/
 
 	public List<JCClassDecl> generateClassWrappers(JCModuleDecl tree, Env<AttrContext> env, Resolve rs) {
 		ListBuffer<JCClassDecl> classes = new ListBuffer<JCClassDecl>();
 		Map<String, JCClassDecl> addedHere = new HashMap<String, JCClassDecl>();
 		
 		for(JCMethodDecl method : tree.publicMethods){
-			Type restype = ((MethodType)method.sym.type).restype;
+			Type restype = ((ForAll)method.sym.type).getReturnType();
 			ListBuffer<JCTree> constructors= new ListBuffer<JCTree>();
 			
 			ClassSymbol c;
             if(restype.toString().equals("void"))
                 c = (ClassSymbol)rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME+"$Void"), TYP);
-            else if (restype.isPrimitive()) {
-                System.out.println("\n\nNon-void primitive return types for module procedure calls are not yet supported.\n\n");
-                System.exit(10);
-                c = null;
-            } else
-                c = (ClassSymbol)restype.tsym;
-
-            if (c.type.isFinal()) {
-                System.out.println("\n\nFinal classes as return types for module procedure calls are not supported.\n\n");
-                System.exit(10);
-             
+            else{
+                c = (ClassSymbol)rs.findIdent(env, names.fromString(restype.tsym.toString()), TYP);
             }
-
             Iterator<Symbol> iter = c.members().getElements().iterator();
             if(restype.tag == TypeTags.CLASS){
             	if(!addedHere.containsKey(restype.toString())){
             		JCVariableDecl var = var(mods(PRIVATE), 
-    						"wrapped", restype.toString(), nullv());
+    						"wrapped", make.TypeApply(id(restype.tsym.toString()), List.<JCExpression>of(id("OWNER"))), nullv());
     				JCVariableDecl var2 = var(mods(PRIVATE|FINAL), 
     						"messageId", make.TypeIdent(TypeTags.INT), null);
     				ListBuffer<JCTree> wrappedMethods= new ListBuffer<JCTree>();
@@ -272,7 +470,7 @@ public class ModuleInternal extends Internal
     					}
     				}
     				ListBuffer<JCVariableDecl> finishParams = new ListBuffer<JCVariableDecl>();
-    				finishParams.add(var(mods(0),"t",restype.toString()));
+    				finishParams.add(var(mods(0),"t",make.TypeApply(id(restype.tsym.toString()), List.<JCExpression>of(id("OWNER")))));
     				
     				JCMethodDecl id = method(mods(PUBLIC|FINAL),
     						names.fromString(PaniniConstants.PANINI_MESSAGE_ID),
@@ -297,8 +495,8 @@ public class ModuleInternal extends Internal
     						implement = implementing(ta(id(PaniniConstants.DUCK_INTERFACE_NAME), args(id("Void")))).toList();
     					}
     					else{
-    						extending = id(restype.toString());
-    						implement = implementing(ta(id(PaniniConstants.DUCK_INTERFACE_NAME), args(id(restype.toString())))).toList();
+    						extending = make.TypeApply(id(restype.tsym.toString()), List.<JCExpression>of(id("OWNER")));
+    						implement = implementing(ta(id(PaniniConstants.DUCK_INTERFACE_NAME), args(make.TypeApply(id(restype.tsym.toString()), List.<JCExpression>of(id("OWNER")))))).toList();
     					}
     				}
     				
@@ -317,14 +515,15 @@ public class ModuleInternal extends Internal
     					for(JCVariableDecl par : method.params){
     						consParams.add(var(mods(0), par.name, par.vartype));
     						consBody.add(es(assign(select(thist(), par.name.append(names.fromString("$")).append(method.name).toString()), id(par.name))));
-    						variableFields.add(var(mods(PUBLIC), par.name.append(names.fromString("$")).append(method.name), par.vartype));
+	            				variableFields.add(var(mods(PUBLIC), par.name.append(names.fromString("$")).append(method.name), par.vartype));
     					}
     					constructors.add(constructor(mods(PUBLIC), consParams, body(consBody)));
     				}	
     				
+//    				System.out.println(restype.tsym);
     				JCClassDecl wrappedClass = make.ClassDef(mods(0), 
-    						names.fromString(PaniniConstants.DUCK_INTERFACE_NAME  + "$" + restype.toString() + "$" + tree.name.toString()), 
-    						List.<JCTypeParameter>nil(), 
+    						names.fromString(PaniniConstants.DUCK_INTERFACE_NAME  + "$" + restype.tsym.toString() + "$" + tree.name.toString()), 
+    						List.<JCTypeParameter>of(make.TypeParameter(names.fromString("OWNER"), List.<JCExpression>nil())), 
     						extending, 
     						implement, 
     						defs(var, var2, finish, id).appendList(variableFields).appendList(constructors).appendList(wrappedMethods).toList());
@@ -366,18 +565,11 @@ public class ModuleInternal extends Internal
 	    						consParams.add(var(mods(0), par.name, par.vartype));
 	    						consBody.add(es(assign(select(thist(), par.name.append(names.fromString("$")).append(method.name).toString()), id(par.name))));
 	    					}
-//	    					for(JCTree def : wrappedClass.defs){
-//	    						if(def.getTag()==Tag.METHODDEF&&((JCMethodDecl)def).name.equals(names.init)){
-//	    							for(JCTree var : variableFields){
-//	    								((JCMethodDecl)def).body.stats=((JCMethodDecl)def).body.stats.append(es(assign(((JCVariableDecl)var).name.toString(), nullv())));
-//	    							}
-//	    						}
-//	    					}
 		            		wrappedClass.defs = wrappedClass.defs
 		            				.append(constructor(mods(PUBLIC), consParams, body(consBody)));
 	            		}
 	            		for(JCVariableDecl par : method.params){
-    						variableFields.add(var(mods(PUBLIC), par.name.append(names.fromString("$")).append(method.name), par.vartype));
+	            				variableFields.add(var(mods(PUBLIC), par.name.append(names.fromString("$")).append(method.name), par.vartype));
     					}
 	            		wrappedClass.defs = wrappedClass.defs
 	            				.appendList(variableFields);
@@ -413,14 +605,14 @@ public class ModuleInternal extends Internal
     					for(JCVariableDecl par : method.params){
     						consParams.add(var(mods(0), par.name, par.vartype));
     						consBody.add(es(assign(select(thist(), par.name.append(names.fromString("$")).append(method.name).toString()), id(par.name))));
-    						variableFields.add(var(mods(PUBLIC), par.name.append(names.fromString("$")).append(method.name), par.vartype));
+	            				variableFields.add(var(mods(PUBLIC), par.name.append(names.fromString("$")).append(method.name), par.vartype));
     					}
     					constructors.add(constructor(mods(PUBLIC), consParams, body(consBody)));
     				}	
     				
     				JCClassDecl wrappedClass = make.ClassDef(mods(0), 
     						names.fromString(PaniniConstants.DUCK_INTERFACE_NAME  + "$" + restype.toString() + "$" + tree.name.toString()), 
-    						List.<JCTypeParameter>nil(), 
+    						List.<JCTypeParameter>of(make.TypeParameter(names.fromString("OWNER"), List.<JCExpression>nil())), 
     						null, 
     						implement, 
     						defs(messageId, duckBarrier).appendList(variableFields).appendList(wrappedMethods).appendList(constructors).toList());
@@ -445,7 +637,7 @@ public class ModuleInternal extends Internal
 		            				.append(constructor(mods(PUBLIC), consParams, body(consBody)));
 	            		}
 	            		for(JCVariableDecl par : method.params){
-    						variableFields.add(var(mods(PUBLIC), par.name.append(names.fromString("$")).append(method.name), par.vartype));
+	            				variableFields.add(var(mods(PUBLIC), par.name.append(names.fromString("$")).append(method.name), par.vartype));
     					}
 	            		wrappedClass.defs = wrappedClass.defs
 	            				.appendList(variableFields);

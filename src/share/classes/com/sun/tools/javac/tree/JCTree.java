@@ -815,10 +815,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	
     	public JCModuleDecl(JCModifiers mods,
     			Name name, 
+    			List<JCTypeParameter> typeparam,
     			List<JCVariableDecl> params, 
     			List<JCExpression> implementing,
     			List<JCTree> defs){
-    		super(mods, name, List.<JCTypeParameter>nil(), 
+    		super(mods, name, typeparam, 
     				null, List.<JCExpression>nil(), defs, null);
     		this.name = name;
     		this.params = params;
@@ -909,15 +910,20 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
     }
     
-    public static class JCFree extends JCExpression implements FreeTree{
+    public static class JCFree extends JCTypeCast implements FreeTree{
     	public JCExpression exp;
+    	Kind kind;
+    	Tag tag;
     	
     	public JCFree(JCExpression exp){
-    		this.exp = exp;
+    		super(null, exp);
+    		this. exp = exp;
+    		kind = Kind.FREE;
+    		tag = Tag.FREE;
     	}
     	
 		public Kind getKind() {
-			return Kind.FREE;
+			return kind;
 		}
 		
 		public JCExpression getExpression(){
@@ -925,15 +931,26 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
 		
 		public Tag getTag() {
-			return FREE;
+			return tag;
+		}
+		
+		public void toCast(){
+			kind = Kind.TYPE_CAST;
+			tag = Tag.TYPECAST;
 		}
 
 		@Override
-		public void accept(Visitor v) { v.visitFree(this);}
+		public void accept(Visitor v) {
+			if(kind == Kind.TYPE_CAST)
+				v.visitTypeCast(this);
+			else v.visitFree(this);
+			}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitFree(this, d);
+			if(kind == Kind.TYPE_CAST)
+				return v.visitTypeCast(this, d);
+			else return v.visitFree(this, d);
 		}
     }
     // end Panini code

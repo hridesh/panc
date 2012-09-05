@@ -39,5 +39,14 @@ import java.util.HashMap;
 
 
 public class SideEffectsComp {
+    BDPEffectsBeforeScanner effectsBefore = new BDPEffectsBeforeScanner();
+    HashMap<MethodSymbol, EffectSet> methodEffectSets;
+
+    public EffectSet methodEffectsBeforePoint(BlockDivisionPoint p) { 
+        return effectsBefore.effectsBefore(p);
+    }
+    public EffectSet methodEffectsAfterPoint(JCMethodDecl m, BlockDivisionPoint p) { return new EffectSet(); }
+    public EffectSet moduleMessageEffects(JCModuleDecl m, int i) { return new EffectSet(); }
+
     
 }

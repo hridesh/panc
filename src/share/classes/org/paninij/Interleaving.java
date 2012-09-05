@@ -69,7 +69,7 @@ public class Interleaving {
     }
 
     public void insertInterleavingAtPoint(JCModuleDecl module, JCMethodDecl method, BlockDivisionPoint p) {
-/*        EffectSet before = sideEffectsComp.methodEffectsBeforePoint(p); 
+        EffectSet before = sideEffectsComp.methodEffectsBeforePoint(p); 
         EffectSet after = sideEffectsComp.methodEffectsAfterPoint(method, p); 
         
         ListBuffer<Integer> safeMessages = new ListBuffer<Integer>();
@@ -83,7 +83,7 @@ public class Interleaving {
 
         List<JCStatement> interleavingStatements = generateInterleavingStatements(method, safeMessages.toList());
 
-        method.body = p.insertStatementsAtPoint(method.body, interleavingStatements);*/
+        method.body = p.insertStatementsAtPoint(method.body, interleavingStatements);
     }
     
     private final List<BlockDivisionPoint> computeInterleavingPoints(JCMethodDecl m) {
