@@ -45,7 +45,7 @@ module Worker (int num) {
 				_circleCount.incr(); 
 		}
 	}
-	Number getCircleCount() { return _circleCount; }
+	Number getCircleCount() { return free _circleCount; }
 }
 
 module Master (int totalCount, Worker[] workers) {
