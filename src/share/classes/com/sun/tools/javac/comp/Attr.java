@@ -952,6 +952,10 @@ public class Attr extends JCTree.Visitor {
     	    		    	enter.classEnter(typeInterface, env);
     	    		    	tree.defs = tree.defs.append(typeInterface);
     	    			}
+    	    			JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(mat.elemtype.toString()+"_"+vdecl.name.toString()), 
+	    		    			List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
+	    		    	enter.classEnter(typeInterface, env);
+	    		    	tree.defs = tree.defs.append(typeInterface);
     	    			
         		    	variables.put(vdecl.name, c.name);
         		    	modArrays.put(vdecl.name, mat.amount);
@@ -2839,10 +2843,10 @@ public class Attr extends JCTree.Visitor {
         env.info.tvars = List.nil();
         
         // Panini code
-        if(tree.selected.type.tsym.isModule&&!tree.type.getKind().toString().equals("EXECUTABLE")
-        		&&env.enclClass.sym.isModule&&!tree.selected.toString().equals("this")){
-        	log.error(tree.pos, "invalid.access.of.modules.states");
-        }
+//        if(tree.selected.type.tsym.isModule&&!tree.type.getKind().toString().equals("EXECUTABLE")
+//        		&&env.enclClass.sym.isModule&&!tree.selected.toString().equals("this")){
+//        	log.error(tree.pos, "invalid.access.of.modules.states");
+//        }
         // end Panini code
     }
     //where
