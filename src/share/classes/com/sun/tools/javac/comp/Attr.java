@@ -969,22 +969,34 @@ public class Attr extends JCTree.Visitor {
 					JCMethodInvocation mi = (JCMethodInvocation) ((JCExpressionStatement) tree.body.stats
 							.get(i)).expr;
 					for(JCExpression exp : mi.args){
-
 						if(exp.getTag() == Tag.IDENT){
 							JCTypeApply type = null;
 							for(JCStatement stat : tree.body.stats){
 								if(stat.getTag() == VARDEF){
 									if(((JCVariableDecl)stat).name.toString().equals(((JCIdent)exp).name.toString())){
-										type = (JCTypeApply)((JCVariableDecl)stat).vartype;
-									}
-								}
-							}
-							for(JCStatement stat : tree.body.stats){
-								if(stat.getTag() == VARDEF){
-									if(((JCVariableDecl)stat).name.toString().equals(mi.meth.toString())){
-										((JCTypeApply)((JCVariableDecl)stat).vartype).arguments = 
-												((JCTypeApply)((JCVariableDecl)stat).vartype).arguments.append
-													(make.Ident(names.fromString(type.clazz.toString()+"_"+((JCIdent)exp).name.toString())));
+										if(((JCVariableDecl)stat).vartype.getTag()==Tag.MODULEARRAY){
+											for(JCStatement stat2 : tree.body.stats){
+												if(stat2.getTag() == VARDEF){
+													if(((JCVariableDecl)stat2).name.toString().equals(mi.meth.toString())){
+														((JCTypeApply)((JCVariableDecl)stat2).vartype).arguments = 
+																((JCTypeApply)((JCVariableDecl)stat2).vartype).arguments.append
+																	(make.Ident(names.fromString(((JCModuleArray)((JCVariableDecl)stat).vartype).elemtype.toString()+
+																			"_"+((JCIdent)exp).name.toString())));
+													}
+												}
+											}
+										}else{
+											type = (JCTypeApply)((JCVariableDecl)stat).vartype;
+											for(JCStatement stat2 : tree.body.stats){
+												if(stat2.getTag() == VARDEF){
+													if(((JCVariableDecl)stat2).name.toString().equals(mi.meth.toString())){
+														((JCTypeApply)((JCVariableDecl)stat2).vartype).arguments = 
+																((JCTypeApply)((JCVariableDecl)stat2).vartype).arguments.append
+																	(make.Ident(names.fromString(type.clazz.toString()+"_"+((JCIdent)exp).name.toString())));
+													}
+												}
+											}
+										}
 									}
 								}
 							}
