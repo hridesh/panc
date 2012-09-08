@@ -72,6 +72,7 @@ public class SystemEffectsComp {
     LinkedList<JCModuleDecl> moduleDecls = new LinkedList<JCModuleDecl>();
 
     public void substituteProcEffects(JCSystemDecl system) {
+
         effectsSub.substituteProcEffects(moduleEffectsComp.methodEffects);
         for (JCModuleDecl module : moduleDecls) 
             reachedProcsComp.computeReachedProcs(module);

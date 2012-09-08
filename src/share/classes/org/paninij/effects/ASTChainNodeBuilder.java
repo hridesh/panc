@@ -198,7 +198,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		this.currentExcEndNodes = finalExcEndNodes;
 
 
-
+        addNode(node);
     }
 
     public void visitForLoop(JCForLoop tree) {

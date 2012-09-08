@@ -34,6 +34,9 @@ abstract class HeapLocation {
             return id==((HeapLocation)o).id;
         } else return false;
     }
+    public int hashCode() {
+        return id;
+    }
 
     public HeapLocation union(HeapLocation l) {
         if (equals(l)) return this;
@@ -75,5 +78,17 @@ public class HeapRepresentation {
         return result;
     }
 
+    public String toString() {
+        return locations.toString();
+    }
+
     public void add(Symbol s, HeapLocation l) { locations.put(s, l); }
+
+    public boolean equals(Object o) {
+        if (o instanceof HeapRepresentation) {
+            HeapRepresentation hr = (HeapRepresentation)o;
+            return locations.equals(hr.locations);
+        }
+        else return false;
+    }
 }
