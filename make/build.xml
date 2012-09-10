@@ -245,10 +245,11 @@
     />
 
     <target name="build-all-tools"
+    	
         depends="build-javac,build-javadoc,build-doclets,build-javah,build-javap"
     />
 
-    <target name="build-all-classes" depends="build-bootstrap-javac,-create-import-jdk-stubs">
+    <target name="build-all-classes" depends="build-bootstrap-javac,-create-import-jdk-stubs, -build-owner">
         <build-classes includes="${javac.includes} ${javadoc.includes} ${doclets.includes} ${javah.includes} ${javap.includes}"/>
     </target>
 
@@ -754,7 +755,7 @@
     <target name="-def-build-classes" depends="-def-pcompile">
         <macrodef name="build-classes">
             <attribute name="includes"/>
-            <attribute name="excludes" default="${exclude.files} **/package-info.java"/>
+            <attribute name="excludes" default="${exclude.files} **/package-info.java, , ${src.classes.dir}/org/paninij/OwnershipAdapter/**" />
             <attribute name="classes.dir" default="${build.classes.dir}"/>
             <attribute name="gensrc.dir" default="${build.gensrc.dir}"/>
             <attribute name="javac.bootclasspath" default="${build.bootstrap.dir}/classes"/>
@@ -795,7 +796,7 @@
                        includes="@{includes}"
                        excludes="@{excludes}"
                        sourcepath="@{sourcepath}"
-                       classpath="@{classpath}"
+                       classpath="@{classpath}, ${src.classes.dir}/org/paninij/OwnershipAdapter/asm-4.0.jar"
                        includeAntRuntime="no"
                        source="@{source}"
                        target="@{target}"
@@ -847,12 +848,13 @@
                 target="${boot.javac.target}"
                 gensrc.dir="${build.bootstrap.dir}/gensrc"
                 classes.dir="${build.bootstrap.dir}/classes"
+            	classpath="${src.classes.dir}/org/paninij/OwnershipAdapter/asm-4.0.jar"
                 javac.bootclasspath=""
                 bootclasspath.opt="-Xbootclasspath/p:${build.bootstrap.dir}/classes"
                 sourcepath=""
                 release="${bootstrap.release}"
                 full.version="${bootstrap.full.version}"
-                excludes="${bootstrap.exclude.files} **/package-info.java"/>
+                excludes="${bootstrap.exclude.files} **/package-info.java, ${src.classes.dir}/org/paninij/OwnershipAdapter/"/>
         </presetdef>
     </target>
 
@@ -874,7 +876,7 @@
                  classname="anttasks.CompilePropertiesTask"
                  classpath="${build.toolclasses.dir}/"/>
     </target>
-
+	
     <target name="-def-genstubs" depends="build-bootstrap-javac" if="require.import.jdk.stubs">
         <mkdir dir="${build.toolclasses.dir}"/>
         <javac fork="true"
@@ -1076,18 +1078,41 @@
         </macrodef>
     </target>
 	
-
-    <!-- Build the panini runtime -->
-	<target name="runtime" depends="build" description="Build the panini runtime">
+	<target name= "-build-owner">
+		<javac fork="true"
+	               source="${javac.source}"
+	               target="${javac.target}"
+	               executable="${boot.java.home}/bin/javac"
+	               srcdir="${src.classes.dir}/org/ownershipAdapter/"
+	               destdir="${dist.lib.dir}/"
+	               classpath="${src.classes.dir}/org/ownershipAdapter/asm-4.0.jar"
+	               bootclasspath="${boot.java.home}/jre/lib/rt.jar"
+	               includeantruntime="false">
+	            <compilerarg line="${javac.lint.opts}"/>
+		</javac>
+		<copy file="${boot.java.home}/jre/lib/rt.jar" tofile="${dist.lib.dir}/rt.jar"/>
+		<java fork="true"
+            jvm="${boot.java.home}/bin/java"
+            dir="${dist.lib.dir}/"
+            classpath="${dist.lib.dir};${src.classes.dir}/org/ownershipAdapter/asm-4.0.jar"
+            classname="OwnershipAdapter">
+            <arg value="rt.jar"/>
+        </java>
+		<copy file="${dist.lib.dir}/rt_transformed.jar" tofile="${dist.lib.dir}/rt.jar"/>
+		<delete file="${dist.lib.dir}/rt_transformed.jar"/>
+	</target>
+	
+	<target name="runtime" depends="build">
 		<exec dir="make/" executable="./runtime.sh">
 		</exec>
-    </target>
-
-    <!-- Export the compiler and runtime -->
-	<target name="export" depends="build,runtime" description="Package the panini compiler and runtime for distribution.">
+	</target>
+	
+	<target name="export" depends="build,runtime">
 	      <exec dir="make/" executable="./export.sh">
 	      </exec>
 	</target>
+	    
+	
 
 </project>
 
