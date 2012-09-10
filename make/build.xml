@@ -755,7 +755,7 @@
     <target name="-def-build-classes" depends="-def-pcompile">
         <macrodef name="build-classes">
             <attribute name="includes"/>
-            <attribute name="excludes" default="${exclude.files} **/package-info.java, , ${src.classes.dir}/org/paninij/OwnershipAdapter/**" />
+            <attribute name="excludes" default="${exclude.files} **/package-info.java"/>
             <attribute name="classes.dir" default="${build.classes.dir}"/>
             <attribute name="gensrc.dir" default="${build.gensrc.dir}"/>
             <attribute name="javac.bootclasspath" default="${build.bootstrap.dir}/classes"/>
@@ -848,13 +848,12 @@
                 target="${boot.javac.target}"
                 gensrc.dir="${build.bootstrap.dir}/gensrc"
                 classes.dir="${build.bootstrap.dir}/classes"
-            	classpath="${src.classes.dir}/org/paninij/OwnershipAdapter/asm-4.0.jar"
                 javac.bootclasspath=""
                 bootclasspath.opt="-Xbootclasspath/p:${build.bootstrap.dir}/classes"
                 sourcepath=""
                 release="${bootstrap.release}"
                 full.version="${bootstrap.full.version}"
-                excludes="${bootstrap.exclude.files} **/package-info.java, ${src.classes.dir}/org/paninij/OwnershipAdapter/"/>
+                excludes="${bootstrap.exclude.files} **/package-info.java org/paninij/OwnershipAdapter/** "/>
         </presetdef>
     </target>
 
