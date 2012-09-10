@@ -1085,7 +1085,7 @@
 	               executable="${boot.java.home}/bin/javac"
 	               srcdir="${src.classes.dir}/org/ownershipAdapter/"
 	               destdir="${dist.lib.dir}/"
-	               classpath="${src.classes.dir}/org/ownershipAdapter/asm-4.0.jar"
+	               classpath="${src.classes.dir}/org/o	wnershipAdapter/asm-4.0.jar"
 	               bootclasspath="${boot.java.home}/jre/lib/rt.jar"
 	               includeantruntime="false">
 	            <compilerarg line="${javac.lint.opts}"/>
@@ -1107,7 +1107,8 @@
 		</exec>
 	</target>
 	
-	<target name="export" depends="build,runtime">
+	<!-- Export the compiler and runtime -->
+	<target name="export" depends="build,runtime" description="Package the panini compiler and runtime for distribution.">
 	      <exec dir="make/" executable="./export.sh">
 	      </exec>
 	</target>
