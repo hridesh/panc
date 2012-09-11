@@ -249,8 +249,10 @@
         depends="build-javac,build-javadoc,build-doclets,build-javah,build-javap"
     />
 
-    <target name="build-all-classes" depends="build-bootstrap-javac,-create-import-jdk-stubs, -build-owner">
-        <build-classes includes="${javac.includes} ${javadoc.includes} ${doclets.includes} ${javah.includes} ${javap.includes}"/>
+    <target name="build-all-classes" depends="build-bootstrap-javac,-create-import-jdk-stubs, -apply-ownershiptool">
+        <build-classes 
+        	includes="${javac.includes} ${javadoc.includes} ${doclets.includes} ${javah.includes} ${javap.includes}"
+    		excludes="org/paninij/OwnershipAdapter/**"/>
     </target>
 
     <!-- clean -->
@@ -796,7 +798,7 @@
                        includes="@{includes}"
                        excludes="@{excludes}"
                        sourcepath="@{sourcepath}"
-                       classpath="@{classpath}, ${src.classes.dir}/org/paninij/OwnershipAdapter/asm-4.0.jar"
+                       classpath="@{classpath}"
                        includeAntRuntime="no"
                        source="@{source}"
                        target="@{target}"
@@ -1078,22 +1080,17 @@
     </target>
 	
 	<target name= "-build-owner">
-		<javac fork="true"
-	               source="${javac.source}"
-	               target="${javac.target}"
-	               executable="${boot.java.home}/bin/javac"
-	               srcdir="${src.classes.dir}/org/ownershipAdapter/"
-	               destdir="${dist.lib.dir}/"
-	               classpath="${src.classes.dir}/org/ownershipAdapter/asm-4.0.jar"
-	               bootclasspath="${boot.java.home}/jre/lib/rt.jar"
-	               includeantruntime="false">
-	            <compilerarg line="${javac.lint.opts}"/>
-		</javac>
+		<build-classes 
+			includes="org/paninij/OwnershipAdapter/**"
+			classpath="${src.classes.dir}/org/paninij/OwnershipAdapter/asm-4.0.jar"/>
+	</target>
+	
+	<target name= "-apply-ownershiptool" depends="-build-owner">
 		<copy file="${boot.java.home}/jre/lib/rt.jar" tofile="${dist.lib.dir}/rt.jar"/>
 		<java fork="true"
             jvm="${boot.java.home}/bin/java"
             dir="${dist.lib.dir}/"
-            classpath="${dist.lib.dir};${src.classes.dir}/org/ownershipAdapter/asm-4.0.jar"
+            classpath="${dist.lib.dir};${build.classes.dir};${src.classes.dir}/org/paninij/OwnershipAdapter/asm-4.0.jar"
             classname="OwnershipAdapter">
             <arg value="rt.jar"/>
         </java>
