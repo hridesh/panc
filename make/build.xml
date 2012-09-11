@@ -249,7 +249,7 @@
         depends="build-javac,build-javadoc,build-doclets,build-javah,build-javap"
     />
 
-    <target name="build-all-classes" depends="build-bootstrap-javac,-create-import-jdk-stubs, -apply-ownershiptool">
+    <target name="build-all-classes" depends="build-bootstrap-javac,-create-import-jdk-stubs, -build-owner">
         <build-classes 
         	includes="${javac.includes} ${javadoc.includes} ${doclets.includes} ${javah.includes} ${javap.includes}"
     		excludes="org/paninij/OwnershipAdapter/**"/>
@@ -1084,20 +1084,6 @@
 			includes="org/paninij/OwnershipAdapter/**"
 			classpath="${src.classes.dir}/org/paninij/OwnershipAdapter/asm-4.0.jar"/>
 	</target>
-	
-	<target name= "-apply-ownershiptool" depends="-build-owner">
-		<copy file="${boot.java.home}/jre/lib/rt.jar" tofile="${dist.lib.dir}/rt.jar"/>
-		<java fork="true"
-            jvm="${boot.java.home}/bin/java"
-            dir="${dist.lib.dir}/"
-            classpath="${dist.lib.dir};${build.classes.dir};${src.classes.dir}/org/paninij/OwnershipAdapter/asm-4.0.jar"
-            classname="OwnershipAdapter">
-            <arg value="rt.jar"/>
-        </java>
-		<copy file="${dist.lib.dir}/rt_transformed.jar" tofile="${dist.lib.dir}/rt.jar"/>
-		<delete file="${dist.lib.dir}/rt_transformed.jar"/>
-	</target>
-	
 	<target name="runtime" depends="build">
 		<exec dir="make/" executable="./runtime.sh">
 		</exec>
