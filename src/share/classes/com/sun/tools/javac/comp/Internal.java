@@ -532,6 +532,20 @@ public class Internal
         return make0().Binary(JCTree.Tag.GT, e, e1);
     }
 
+    // added by yuhenglong to implement the flag logic
+    protected JCBinary isFalse(String s) {
+        return make0().Binary(JCTree.Tag.EQ,
+        					  make0().Ident(names.fromString(s)),
+        					  make0().Literal(TypeTags.BOOLEAN, 0));
+    }
+
+    protected JCBinary isTrue(String s) {
+        return make0().Binary(JCTree.Tag.EQ,
+        					  make0().Ident(names.fromString(s)),
+        					  make0().Literal(TypeTags.BOOLEAN, true));
+    }
+    // added by yuhenglong done
+
     protected JCLiteral intlit(int i) {
         return make0().Literal(i);
     }
