@@ -2935,7 +2935,7 @@ public class JavacParser implements Parser {
      		params = List.<JCVariableDecl>nil();
 
      	JCBlock body = systemBlock();
-     	JCSystemDecl result = toP(F.at(pos).SystemDef(mod, name, body));
+     	JCSystemDecl result = toP(F.at(pos).SystemDef(mod, name, body, params));
      	attach(result, dc);
      	inModule = false;
      	return result;
