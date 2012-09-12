@@ -207,6 +207,15 @@ public class ModuleInternal extends Internal
     						"wrapped", restype.toString(), nullv());
     				JCVariableDecl var2 = var(mods(PRIVATE|FINAL), 
     						"messageId", make.TypeIdent(TypeTags.INT), null);
+
+    				// by yuhenglong to implement the flag logic.
+    				JCVariableDecl varRedeemed =
+    					var(mods(PRIVATE),
+    						PaniniConstants.REDEEMED,
+    						make.TypeIdent(TypeTags.BOOLEAN),
+    						make.Literal(TypeTags.BOOLEAN, 0));
+    				// by yuhenglong done.
+
     				ListBuffer<JCTree> wrappedMethods= new ListBuffer<JCTree>();
     				boolean addedConstructors = false;
     				ListBuffer<JCExpression> inits = new ListBuffer<JCExpression>();
@@ -221,10 +230,19 @@ public class ModuleInternal extends Internal
     			    							List.<JCStatement>of(make.Return
     			    									(make.Apply(null, make.Ident
     			    											(m.name), List.<JCExpression>nil()))))));
-    							JCMethodDecl value = method(mods(PUBLIC),
-    									m.name,
-    									make.Type(m.type.getReturnType()),
-    									body(make.Try(body(sync(make.This(Type.noType),body(whilel(isNull("wrapped"),es(apply("wait")))))), catchers, null), returnt(apply("wrapped", m.name)))
+    							JCMethodDecl value =
+    								method(mods(PUBLIC),
+    									   m.name,
+    									   make.Type(m.type.getReturnType()),
+    									   body(
+    									       make.Try(
+    									           body(sync(make.This(Type.noType),
+    									        		   body(whilel(
+    									        				   // changed by yuhenglong to implement the flag logic    									        				   
+    									        				   isFalse(PaniniConstants.REDEEMED),
+    									        				   // changed by yuhenglong to implement the flag logic		   
+    									        				   es(apply("wait")))))), catchers, null),
+    									        				   returnt(apply("wrapped", m.name)))
     									);
     							wrappedMethods.add(value);
     						}
@@ -238,7 +256,16 @@ public class ModuleInternal extends Internal
     							JCMethodDecl value = method(mods(PUBLIC|FINAL),
     									m.name,
     									make.Type(syms.voidType),
-    									body(make.Try(body(sync(make.This(Type.noType),body(whilel(isNull("wrapped"),es(apply("wait")))))), catchers, null), es(apply("wrapped", m.name)))
+    									body(
+    											make.Try(
+    													body(sync(
+    															make.This(Type.noType),
+    	    									        		   body(whilel(
+    	    									        				   // changed by yuhenglong to implement the flag logic
+    	    									        				   isFalse(PaniniConstants.REDEEMED),
+    	    									        				   // changed by yuhenglong to implement the flag logic
+    																	es(apply("wait")))))),
+    															catchers, null), es(apply("wrapped", m.name)))
     									);
     							wrappedMethods.add(value);
     						}
@@ -327,7 +354,13 @@ public class ModuleInternal extends Internal
     						List.<JCTypeParameter>nil(), 
     						extending, 
     						implement, 
-    						defs(var, var2, finish, id).appendList(variableFields).appendList(constructors).appendList(wrappedMethods).toList());
+    						defs(var,
+    							 var2,
+    							 // by yuhenglong to implement the flag logic.
+    							 varRedeemed,
+    							// by yuhenglong done.
+    							 finish,
+    							 id).appendList(variableFields).appendList(constructors).appendList(wrappedMethods).toList());
     				
     				classes.add(wrappedClass);
     				addedHere.put(restype.toString(), wrappedClass);

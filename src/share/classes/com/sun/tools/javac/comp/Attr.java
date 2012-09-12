@@ -768,7 +768,6 @@ public class Attr extends JCTree.Visitor {
         	}
         }
         effects.computeEffects(tree);
-
     }
 
 
@@ -797,289 +796,37 @@ public class Attr extends JCTree.Visitor {
     	for(int i=0;i <tree.body.stats.length();i++){
     		if(tree.body.stats.get(i).getTag() == VARDEF){
     			JCVariableDecl vdecl = (JCVariableDecl)tree.body.stats.get(i);
-    			if(syms.modules.containsKey(names.fromString(vdecl.vartype.toString()))){
-    				ClassSymbol c = syms.modules.get(names.fromString(vdecl.vartype.toString()));
-    				decls.add(vdecl);
-    				JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
-    						make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
-    				newClass.constructor = rs.resolveConstructor
-    						(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
-    				newClass.type = c.type;
-    				JCAssign newAssign = make.at(vdecl.pos()).Assign(make.Ident(vdecl.name),
-    						newClass);
-    				newAssign.type = vdecl.type;
-    				JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
-    				nameAssign.type = vdecl.type;
-    				inits.append(nameAssign);
-    				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-    						make.Select(make.Ident(vdecl.name), names.fromString("start")), 
-    						List.<JCExpression>nil()));
-    		    	starts.append(joinAssign);
-    		    	if(c.hasRun){
-    		    		joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-    		    				make.Select(make.Ident(vdecl.name), 
-    		    				names.fromString("join")), List.<JCExpression>nil())))), 
-    		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-    		    						names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-    		    						null), make.Block(0, List.<JCStatement>nil()))), null));
-    		    	}
-    		    	else
-    		    		submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
-    		    				make.Select(make.Ident(vdecl.name), 
-    		    				names.fromString("shutdown")), List.<JCExpression>nil())));
-    		    	
-    		    	JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), 
-    		    			List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
-    		    	enter.classEnter(typeInterface, env);
-    		    	tree.defs = tree.defs.append(typeInterface);
-    		    	
-    		    	variables.put(vdecl.name, c.name);
-    			}else if(syms.libclasses.containsKey(names.fromString(vdecl.vartype.toString()))){
-    				ClassSymbol c = syms.libclasses.get(names.fromString(vdecl.vartype.toString()));
-    				decls.add(vdecl);
-    				JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
-    						make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
-    				newClass.constructor = rs.resolveConstructor
-    						(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
-    				newClass.type = c.type;
-    				JCAssign newAssign = make.at(vdecl.pos()).Assign(make.Ident(vdecl.name),
-    						newClass);
-    				newAssign.type = vdecl.type;
-    				JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
-    				nameAssign.type = vdecl.type;
-    				inits.append(nameAssign);
-    				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-    						make.Select(make.Ident(vdecl.name), names.fromString("start")), 
-    						List.<JCExpression>nil()));
-    		    	starts.append(joinAssign);
-    		    	if(c.hasRun){
-    		    		joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-    		    				make.Select(make.Ident(vdecl.name), 
-    		    				names.fromString("join")), List.<JCExpression>nil())))), 
-    		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-    		    						names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-    		    						null), make.Block(0, List.<JCStatement>nil()))), null));
-    		    	}
-    		    	else
-    		    		submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
-    		    				make.Select(make.Ident(vdecl.name), 
-    		    				names.fromString("shutdown")), List.<JCExpression>nil())));
-    		    	
-    		    	JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), 
-    		    			List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
-    		    	enter.classEnter(typeInterface, env);
-    		    	tree.defs = tree.defs.append(typeInterface);
-    		    	
-    		    	variables.put(vdecl.name, c.name);
-    			}
+    			if(syms.modules.containsKey(names.fromString(vdecl.vartype.toString())))
+    				processModuleDef(tree, decls, inits, submits, starts, joins, variables, vdecl);
+    			else if(syms.libclasses.containsKey(names.fromString(vdecl.vartype.toString())))
+    				processLibModuleDef(tree, decls, inits, submits, starts, joins,	variables, vdecl);
     			else{
     				if(vdecl.vartype.getTag()==MODULEARRAY){
-    					JCModuleArray mat = (JCModuleArray)vdecl.vartype;
-    					ClassSymbol c = syms.modules.get(names.fromString(mat.elemtype.toString()));
-    					if(c==null){
-    					log.error(vdecl.pos(), "module.array.type.error", mat.elemtype);
-    					}
-    					JCNewArray s= make.NewArray(make.Ident(c.type.tsym), 
-    							List.<JCExpression>of(make.Literal(mat.amount)), null);
-    					JCVariableDecl newArray = 
-    					make.VarDef(make.Modifiers(0), 
-    							vdecl.name, make.TypeArray(make.Ident(c.type.tsym)), s);
-    					decls.add(newArray);
-    	    			ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
-    	    			JCVariableDecl arraycache = make.VarDef(make.Modifiers(0), 
-    	    					names.fromString("index$"), 
-    	    					make.TypeIdent(INT), 
-    	    					make.Literal(0));
-    	    			JCBinary cond = make.Binary(LT, make.Ident(names.fromString("index$")),
-    	    							make.Select(make.Ident(vdecl.name), 
-    	    									names.fromString("length")));
-    	    			JCUnary unary = make.Unary(PREINC, make.Ident(names.fromString("index$")));
-    	    			JCExpressionStatement step = 
-    							make.Exec(unary);
-    	    			JCNewClass newClass = make.NewClass(null, null, 
-    							make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
-    					newClass.constructor = rs.resolveConstructor
-    							(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
-    					newClass.type = c.type;
-    	    			loopBody.add(make.Exec(make.Assign(
-    	    					make.Indexed(make.Ident(vdecl.name), make.Ident(names.fromString("index$"))), 
-    	    					newClass)));
-    	    			JCForLoop floop = 
-    	    					make.ForLoop(List.<JCStatement>of(arraycache), 
-    	    							cond, 
-    	    							List.of(step), 
-    	    							make.Block(0, loopBody.toList()));
-    	    			assigns.append(floop);
-    	    			for(int j=0;j<mat.amount;j++){
-	        				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-	        						make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("start")), 
-	        						List.<JCExpression>nil()));
-	        		    	starts.append(joinAssign);	        		    	
-    	    			}
-    	    			if(c.hasRun){
-    	    				for(int j = mat.amount; j>=0;j--){
-    	    					joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-            		    				make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
-            		    				names.fromString("join")), List.<JCExpression>nil())))), 
-            		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-            		    						names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-            		    						null), make.Block(0, List.<JCStatement>nil()))), null));
-    	    				}
-        		    	}
-        		    	else
-        		    		for(int j=0; j<mat.amount;j++){
-        		    		submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
-        		    				make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), 
-        		    				names.fromString("shutdown")), List.<JCExpression>nil())));
-        		    		}
-    	    			for(int j = 0; j<mat.amount; j++){
-    	    				JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j), 
-    	    		    			List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
-    	    		    	enter.classEnter(typeInterface, env);
-    	    		    	tree.defs = tree.defs.append(typeInterface);
-    	    			}
-    	    			
-        		    	variables.put(vdecl.name, c.name);
-        		    	modArrays.put(vdecl.name, mat.amount);
+    					processModuleArray(tree, decls, assigns, submits, starts, joins,	variables, modArrays, vdecl);
     				}
     				else{
     					if(vdecl.vartype.getTag()==TYPEIDENT ||vdecl.vartype.toString().equals("String")){
-		    				vdecl.mods.flags |=FINAL;
-		    				decls.add(vdecl);
-    					}else
+    						vdecl.mods.flags |=FINAL;
+    						decls.add(vdecl);
+    					} else
     						log.error(vdecl.pos(), "only.primitive.types.or.strings.allowed");
     				}
     			}
-    		}else if(tree.body.stats.get(i).getTag() == EXEC){
+    		} else if(tree.body.stats.get(i).getTag() == EXEC){
     			if(((JCExpressionStatement)tree.body.stats.get(i)).expr.getTag()==APPLY){
-					JCMethodInvocation mi = (JCMethodInvocation) ((JCExpressionStatement) tree.body.stats
-							.get(i)).expr;
-					try{
-						assigns.appendList(transWiring(mi, variables));
-					}catch (NullPointerException e){
-						log.error(mi.pos(), "only.module.types.allowed");
-					}
+    				processModuleWiring(tree, assigns, variables, i);
     			}
-    		}else if(tree.body.stats.get(i).getTag() == FOREACHLOOP){
-    			JCEnhancedForLoop loop = (JCEnhancedForLoop) tree.body.stats.get(i);
-    			ClassSymbol c = syms.modules.get(names.fromString(loop.var.vartype.toString()));
-				if(c==null){
-				log.error(loop.pos(), "module.array.type.error", loop.var.vartype);
-				}
-				variables.put(loop.var.name, names.fromString(loop.var.vartype.toString()));
-				ClassSymbol d = syms.modules.get(variables.get(names.fromString(loop.expr.toString())));
-				if(d==null)
-					log.error(loop.expr.pos(), "symbol.not.found");
-				if(!types.isSameType(c.type, d.type)){
-					log.error(loop.var.pos(),"expected", d.type);
-				}
-    			ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
-    			JCVariableDecl vdecl = make.at(loop.pos).VarDef(make.Modifiers(0), 
-    					loop.var.name,
-    					loop.var.vartype,
-    					make.Indexed(loop.expr, make.Ident(names.fromString("index$"))));
-    			loopBody.add(vdecl);
-    			
-    			JCVariableDecl arraycache = make.at(loop.pos).VarDef(make.Modifiers(0), 
-    					names.fromString("index$"), 
-    					make.TypeIdent(INT), 
-    					make.Literal(0));
-    			JCBinary cond = make.at(loop.pos).Binary(LT, make.Ident(names.fromString("index$")),
-    							make.Select(loop.expr, 
-    									names.fromString("length")));
-    			JCUnary unary = make.at(loop.pos).Unary(PREINC, make.Ident(names.fromString("index$")));
-    			JCExpressionStatement step = 
-						make.at(loop.pos).Exec(unary);
-    			if(loop.body.getTag() == Tag.BLOCK){
-    				JCBlock jb = (JCBlock)loop.body;
-    				for(JCStatement s : jb.stats){
-    					if(s.getTag()!=EXEC){
-    						log.error(s.pos(),"foreachloop.statement.error");
-    					}else if(((JCExpressionStatement)s).expr.getTag()!=APPLY){
-    						log.error(s.pos(),"foreachloop.statement.error");
-    					}
-    					JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)s).expr;
-    					loopBody.appendList(transWiring(mi,variables));
-    				}
-				}
-    			else{
-    				if(loop.body.getTag()!=EXEC){
-						log.error(loop.body.pos(),"foreachloop.statement.error");
-					}else if(((JCExpressionStatement)loop.body).expr.getTag()!=APPLY){
-						log.error(loop.body.pos(),"foreachloop.statement.error");
-					}
-    				JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)loop.body).expr;
-    				loopBody.appendList(transWiring(mi,variables));
-				}
-    			
-    			JCForLoop floop = 
-    					make.at(loop.pos).ForLoop(List.<JCStatement>of(arraycache), 
-    							cond, 
-    							List.of(step), 
-    							make.Block(0, loopBody.toList()));
-    			assigns.append(floop);
-    		}else if(tree.body.stats.get(i).getTag()==MAAPPLY){		
-    			JCModuleArrayCall mi = (JCModuleArrayCall) tree.body.stats
-						.get(i);
-    			if(!variables.containsKey(names
-								.fromString(mi.name.toString()))){
-    				log.error(mi.pos(), "symbol.not.found");
-    			}
-				ClassSymbol c = (ClassSymbol) rs
-						.findType(env, variables.get(names
-								.fromString(mi.name.toString())));
-				if(mi.index.getTag()!=Tag.LITERAL)
-					log.error(mi.index.pos(), "module.array.call.illegal.index");
-				JCLiteral ind = (JCLiteral)mi.index;
-				if((Integer)ind.value<0||(Integer)ind.value>=modArrays.get(names
-						.fromString(mi.name.toString())))
-				{
-					log.error(mi.index.pos(), "module.array.call.index.out.of.bound", ind.value, modArrays.get(names
-							.fromString(mi.name.toString())));
-				}
-				if (mi.arguments.length() != syms.moduleparams.get(c).length()) {
-					log.error(mi.pos(), "arguments.of.wiring.mismatch");
-				} else {
-					for (int j = 0; j < mi.arguments.length(); j++) {
-						JCAssign newAssign = make
-								.at(mi.pos())
-								.Assign(make.Select
-										(make.Indexed
-												(mi.indexed, 
-														mi.index),
-										syms.moduleparams.get(c).get(j)
-												.getName()), mi.arguments.get(j));
-						JCExpressionStatement assignAssign = make
-								.Exec(newAssign);
-						assigns.append(assignAssign);
-					}
-				}
-    		}else{
+    		}else if(tree.body.stats.get(i).getTag() == FOREACHLOOP)
+    			processForEachLoop(tree, assigns, variables, i);
+    		else if(tree.body.stats.get(i).getTag()==MAAPPLY)
+    			processModuleArrayWiring(tree, assigns, variables, modArrays, i);
+    		else  			
     			throw new AssertionError("Invalid statement gone through the parser");
-    		}
     	}
 
-    	Type arrayType = new ArrayType(syms.stringType, syms.arrayClass);
-        MethodSymbol msym = new MethodSymbol(
-    			PUBLIC|STATIC,
-    			names.fromString("main"),
-    			new MethodType(
-    					List.<Type>of(arrayType),
-    					syms.voidType,
-    					List.<Type>nil(),
-    					syms.methodClass
-    					),
-    			tree.sym
-    			);
-    	JCVariableDecl mainArg = make.Param(
-    			names.fromString("args"),
-    			arrayType,
-    			msym);
-    	JCMethodDecl maindecl = make.MethodDef(msym,
-    			tree.body);
-    	maindecl.params = List.<JCVariableDecl>of(mainArg);
-    	tree.defs = tree.defs.append(maindecl);
-    	maindecl.body.stats = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
+
+    	JCMethodDecl maindecl = addMainMethod(tree, decls, inits, assigns, submits, starts, joins);
+
     	
     	tree.switchToClass();
     	memberEnter.memberEnter(maindecl, env);
@@ -1098,6 +845,305 @@ public class Attr extends JCTree.Visitor {
         }
         tree.sym.modules = modules.toList();
     }
+
+				private JCMethodDecl addMainMethod(JCSystemDecl tree,
+						ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
+						ListBuffer<JCStatement> assigns, ListBuffer<JCStatement> submits,
+						ListBuffer<JCStatement> starts, ListBuffer<JCStatement> joins) {
+					Type arrayType = new ArrayType(syms.stringType, syms.arrayClass);
+    	MethodSymbol msym = new MethodSymbol(
+    			PUBLIC|STATIC,
+    			names.fromString("main"),
+    			new MethodType(
+    					List.<Type>of(arrayType),
+    					syms.voidType,
+    					List.<Type>nil(),
+    					syms.methodClass
+    					),
+    					tree.sym
+    			);
+    	JCVariableDecl mainArg = make.Param(
+    			names.fromString("args"),
+    			arrayType,
+    			msym);
+    	JCMethodDecl maindecl = make.MethodDef(msym, tree.body);
+    	maindecl.params = List.<JCVariableDecl>of(mainArg);
+    	tree.defs = tree.defs.append(maindecl);
+    	maindecl.body.stats = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
+        return maindecl;
+				}
+
+				private void processModuleWiring(JCSystemDecl tree,
+						ListBuffer<JCStatement> assigns, Map<Name, Name> variables, int i) {
+					JCMethodInvocation mi = (JCMethodInvocation) ((JCExpressionStatement) tree.body.stats
+							.get(i)).expr;
+					try{
+						assigns.appendList(transWiring(mi, variables));
+					}catch (NullPointerException e){
+						log.error(mi.pos(), "only.module.types.allowed");
+					}
+				}
+
+				private void processModuleArrayWiring(JCSystemDecl tree,
+						ListBuffer<JCStatement> assigns, Map<Name, Name> variables,
+						Map<Name, Integer> modArrays, int i) {
+					JCModuleArrayCall mi = (JCModuleArrayCall) tree.body.stats
+							.get(i);
+					if(!variables.containsKey(names
+							.fromString(mi.name.toString()))){
+						log.error(mi.pos(), "symbol.not.found");
+					}
+					ClassSymbol c = (ClassSymbol) rs
+							.findType(env, variables.get(names
+									.fromString(mi.name.toString())));
+					if(mi.index.getTag()!=Tag.LITERAL)
+						log.error(mi.index.pos(), "module.array.call.illegal.index");
+					JCLiteral ind = (JCLiteral)mi.index;
+					if((Integer)ind.value<0||(Integer)ind.value>=modArrays.get(names
+							.fromString(mi.name.toString())))
+					{
+						log.error(mi.index.pos(), "module.array.call.index.out.of.bound", ind.value, modArrays.get(names
+								.fromString(mi.name.toString())));
+					}
+					if (mi.arguments.length() != syms.moduleparams.get(c).length()) {
+						log.error(mi.pos(), "arguments.of.wiring.mismatch");
+					} else {
+						for (int j = 0; j < mi.arguments.length(); j++) {
+							JCAssign newAssign = make
+									.at(mi.pos())
+									.Assign(make.Select
+											(make.Indexed
+													(mi.indexed, 
+															mi.index),
+															syms.moduleparams.get(c).get(j)
+															.getName()), mi.arguments.get(j));
+							JCExpressionStatement assignAssign = make
+									.Exec(newAssign);
+							assigns.append(assignAssign);
+						}
+					}
+				}
+
+				private void processForEachLoop(JCSystemDecl tree,
+						ListBuffer<JCStatement> assigns, Map<Name, Name> variables, int i) {
+					JCEnhancedForLoop loop = (JCEnhancedForLoop) tree.body.stats.get(i);
+					ClassSymbol c = syms.modules.get(names.fromString(loop.var.vartype.toString()));
+					if(c==null){
+						log.error(loop.pos(), "module.array.type.error", loop.var.vartype);
+					}
+					variables.put(loop.var.name, names.fromString(loop.var.vartype.toString()));
+					ClassSymbol d = syms.modules.get(variables.get(names.fromString(loop.expr.toString())));
+					if(d==null)
+						log.error(loop.expr.pos(), "symbol.not.found");
+					if(!types.isSameType(c.type, d.type)){
+						log.error(loop.var.pos(),"expected", d.type);
+					}
+					ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
+					JCVariableDecl vdecl = make.at(loop.pos).VarDef(make.Modifiers(0), 
+							loop.var.name,
+							loop.var.vartype,
+							make.Indexed(loop.expr, make.Ident(names.fromString("index$"))));
+					loopBody.add(vdecl);
+
+					JCVariableDecl arraycache = make.at(loop.pos).VarDef(make.Modifiers(0), 
+							names.fromString("index$"), 
+							make.TypeIdent(INT), 
+							make.Literal(0));
+					JCBinary cond = make.at(loop.pos).Binary(LT, make.Ident(names.fromString("index$")),
+							make.Select(loop.expr, 
+									names.fromString("length")));
+					JCUnary unary = make.at(loop.pos).Unary(PREINC, make.Ident(names.fromString("index$")));
+					JCExpressionStatement step = 
+							make.at(loop.pos).Exec(unary);
+					if(loop.body.getTag() == Tag.BLOCK){
+						JCBlock jb = (JCBlock)loop.body;
+						for(JCStatement s : jb.stats){
+							if(s.getTag()!=EXEC){
+								log.error(s.pos(),"foreachloop.statement.error");
+							}else if(((JCExpressionStatement)s).expr.getTag()!=APPLY){
+								log.error(s.pos(),"foreachloop.statement.error");
+							}
+							JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)s).expr;
+							loopBody.appendList(transWiring(mi,variables));
+						}
+					}
+					else{
+						if(loop.body.getTag()!=EXEC){
+							log.error(loop.body.pos(),"foreachloop.statement.error");
+						}else if(((JCExpressionStatement)loop.body).expr.getTag()!=APPLY){
+							log.error(loop.body.pos(),"foreachloop.statement.error");
+						}
+						JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)loop.body).expr;
+						loopBody.appendList(transWiring(mi,variables));
+					}
+
+					JCForLoop floop = 
+							make.at(loop.pos).ForLoop(List.<JCStatement>of(arraycache), 
+									cond, 
+									List.of(step), 
+									make.Block(0, loopBody.toList()));
+					assigns.append(floop);
+				}
+
+				private void processModuleArray(JCSystemDecl tree,
+						ListBuffer<JCStatement> decls, ListBuffer<JCStatement> assigns,
+						ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
+						ListBuffer<JCStatement> joins, Map<Name, Name> variables,
+						Map<Name, Integer> modArrays, JCVariableDecl vdecl) {
+					JCModuleArray mat = (JCModuleArray)vdecl.vartype;
+					ClassSymbol c = syms.modules.get(names.fromString(mat.elemtype.toString()));
+					if(c==null){
+						log.error(vdecl.pos(), "module.array.type.error", mat.elemtype);
+					}
+					JCNewArray s= make.NewArray(make.Ident(c.type.tsym), 
+							List.<JCExpression>of(make.Literal(mat.amount)), null);
+					JCVariableDecl newArray = 
+							make.VarDef(make.Modifiers(0), 
+									vdecl.name, make.TypeArray(make.Ident(c.type.tsym)), s);
+					decls.add(newArray);
+					ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
+					JCVariableDecl arraycache = make.VarDef(make.Modifiers(0), 
+							names.fromString("index$"), 
+							make.TypeIdent(INT), 
+							make.Literal(0));
+					JCBinary cond = make.Binary(LT, make.Ident(names.fromString("index$")),
+							make.Select(make.Ident(vdecl.name), 
+									names.fromString("length")));
+					JCUnary unary = make.Unary(PREINC, make.Ident(names.fromString("index$")));
+					JCExpressionStatement step = 
+							make.Exec(unary);
+					JCNewClass newClass = make.NewClass(null, null, 
+							make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
+					newClass.constructor = rs.resolveConstructor
+							(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
+					newClass.type = c.type;
+					loopBody.add(make.Exec(make.Assign(
+							make.Indexed(make.Ident(vdecl.name), make.Ident(names.fromString("index$"))), 
+							newClass)));
+					JCForLoop floop = 
+							make.ForLoop(List.<JCStatement>of(arraycache), 
+									cond, 
+									List.of(step), 
+									make.Block(0, loopBody.toList()));
+					assigns.append(floop);
+					for(int j=0;j<mat.amount;j++){
+						JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+								make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("start")), 
+								List.<JCExpression>nil()));
+						starts.append(joinAssign);	        		    	
+					}
+					if(c.hasRun){
+						for(int j = mat.amount; j>=0;j--){
+							joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+									make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
+											names.fromString("join")), List.<JCExpression>nil())))), 
+											List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
+													names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
+													null), make.Block(0, List.<JCStatement>nil()))), null));
+						}
+					}
+					else
+						for(int j=0; j<mat.amount;j++){
+							submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+									make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), 
+											names.fromString("shutdown")), List.<JCExpression>nil())));
+						}
+					for(int j = 0; j<mat.amount; j++){
+						JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j), 
+								List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
+						enter.classEnter(typeInterface, env);
+						tree.defs = tree.defs.append(typeInterface);
+					}
+
+					variables.put(vdecl.name, c.name);
+					modArrays.put(vdecl.name, mat.amount);
+				}
+
+				private void processLibModuleDef(JCSystemDecl tree,
+						ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
+						ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
+						ListBuffer<JCStatement> joins, Map<Name, Name> variables,
+						JCVariableDecl vdecl) {
+					ClassSymbol c = syms.libclasses.get(names.fromString(vdecl.vartype.toString()));
+					decls.add(vdecl);
+					JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
+							make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
+					newClass.constructor = rs.resolveConstructor
+							(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
+					newClass.type = c.type;
+					JCAssign newAssign = make.at(vdecl.pos()).Assign(make.Ident(vdecl.name),
+							newClass);
+					newAssign.type = vdecl.type;
+					JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
+					nameAssign.type = vdecl.type;
+					inits.append(nameAssign);
+					JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+							make.Select(make.Ident(vdecl.name), names.fromString("start")), 
+							List.<JCExpression>nil()));
+					starts.append(joinAssign);
+					if(c.hasRun){
+						joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+								make.Select(make.Ident(vdecl.name), 
+										names.fromString("join")), List.<JCExpression>nil())))), 
+										List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
+												names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
+												null), make.Block(0, List.<JCStatement>nil()))), null));
+					}
+					else
+						submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+								make.Select(make.Ident(vdecl.name), 
+										names.fromString("shutdown")), List.<JCExpression>nil())));
+
+					JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), 
+							List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
+					enter.classEnter(typeInterface, env);
+					tree.defs = tree.defs.append(typeInterface);
+
+					variables.put(vdecl.name, c.name);
+				}
+
+				private void processModuleDef(JCSystemDecl tree,
+						ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
+						ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
+						ListBuffer<JCStatement> joins, Map<Name, Name> variables,
+						JCVariableDecl vdecl) {
+					ClassSymbol c = syms.modules.get(names.fromString(vdecl.vartype.toString()));
+					decls.add(vdecl);
+					JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
+							make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
+					newClass.constructor = rs.resolveConstructor
+							(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
+					newClass.type = c.type;
+					JCAssign newAssign = make.at(vdecl.pos()).Assign(make.Ident(vdecl.name),
+							newClass);
+					newAssign.type = vdecl.type;
+					JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
+					nameAssign.type = vdecl.type;
+					inits.append(nameAssign);
+					JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+							make.Select(make.Ident(vdecl.name), names.fromString("start")), 
+							List.<JCExpression>nil()));
+					starts.append(joinAssign);
+					if(c.hasRun){
+						joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+								make.Select(make.Ident(vdecl.name), 
+										names.fromString("join")), List.<JCExpression>nil())))), 
+										List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
+												names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
+												null), make.Block(0, List.<JCStatement>nil()))), null));
+					}
+					else
+						submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+								make.Select(make.Ident(vdecl.name), 
+										names.fromString("shutdown")), List.<JCExpression>nil())));
+
+					JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), 
+							List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
+					enter.classEnter(typeInterface, env);
+					tree.defs = tree.defs.append(typeInterface);
+
+					variables.put(vdecl.name, c.name);
+				}
     
     public void visitProcDef(JCProcDecl tree){
     	Type restype = ((MethodType)tree.sym.type).restype;

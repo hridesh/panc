@@ -475,7 +475,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     
 	public JCTree visitSystem(SystemTree node, P p) {
 		JCSystemDecl t = (JCSystemDecl)node;
-		return M.at(t.pos).SystemDef(t.getModifiers(), t.getName(), t.getBody());
+		return M.at(t.pos).SystemDef(t.getModifiers(), t.getName(), t.getBody(), t.getParams());
 	}
 
 	@Override

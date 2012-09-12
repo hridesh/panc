@@ -705,12 +705,14 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	public Kind kind;
     	public Tag tag;
     	public JCBlock body;
+    	public List<JCVariableDecl> params;
     	
-    	public JCSystemDecl(JCModifiers mods, Name name, JCBlock body){
+    	public JCSystemDecl(JCModifiers mods, Name name, JCBlock body, List<JCVariableDecl> params){
     		super(mods, name, List.<JCTypeParameter>nil(), 
     				null, List.<JCExpression>nil(), List.<JCTree>nil(), null);
     		this.body = body;
     		this.name = name;
+    		this.params = params; 
     		kind = Kind.SYSTEM;
     		tag = Tag.SYSTEMDEF;
     	}
@@ -742,6 +744,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		
 		public Tag getTag() {
 			return tag;
+		}
+		
+		public List<JCVariableDecl> getParams() {
+			return params;
 		}
 
 		@Override

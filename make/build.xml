@@ -1076,17 +1076,18 @@
         </macrodef>
     </target>
 	
-	<target name="runtime" depends="build">
+
+    <!-- Build the panini runtime -->
+	<target name="runtime" depends="build" description="Build the panini runtime">
 		<exec dir="make/" executable="./runtime.sh">
 		</exec>
-	</target>
-	
-	<target name="export" depends="build,runtime">
+    </target>
+
+    <!-- Export the compiler and runtime -->
+	<target name="export" depends="build,runtime" description="Package the panini compiler and runtime for distribution.">
 	      <exec dir="make/" executable="./export.sh">
 	      </exec>
 	</target>
-	    
-	
 
 </project>
 

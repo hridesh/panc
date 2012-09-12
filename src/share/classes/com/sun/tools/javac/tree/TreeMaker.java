@@ -162,8 +162,8 @@ public class TreeMaker implements JCTree.Factory {
         return tree;
     }
     
-    public JCSystemDecl SystemDef(JCModifiers mods, Name name, JCBlock body){
-    	JCSystemDecl tree = new JCSystemDecl(mods, name, body);
+    public JCSystemDecl SystemDef(JCModifiers mods, Name name, JCBlock body, List<JCVariableDecl> params){
+    	JCSystemDecl tree = new JCSystemDecl(mods, name, body, params);
     	tree.pos = pos;
     	return tree;
     }
