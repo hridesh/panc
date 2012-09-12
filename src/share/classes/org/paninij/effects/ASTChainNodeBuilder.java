@@ -46,6 +46,7 @@ import java.util.LinkedList;
 
 public class ASTChainNodeBuilder extends TreeScanner {
     private JCModuleDecl module;
+    private JCLibraryDecl library;
     private JCMethodDecl m;
     private ASTChain chain;
     private ArrayList<ASTChainNode> currentStartNodes, currentEndNodes, currentExcEndNodes;
@@ -70,6 +71,17 @@ public class ASTChainNodeBuilder extends TreeScanner {
         scan(m.body);
         chain.startNode = chain.nodeForTree(m.body);
     }
+
+    public void buildNodes(JCLibraryDecl library, JCMethodDecl m, ASTChain chain) {
+        this.module = null;
+        this.library = library;
+        this.m = m;
+        this.chain = chain;
+
+        scan(m.body);
+        chain.startNode = chain.nodeForTree(m.body);
+    }
+
 
     public void visitTopLevel(JCCompilationUnit that)    { Assert.error(); }
 	public void visitImport(JCImport that)               { Assert.error(); }
@@ -507,20 +519,28 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentExcEndNodes = emptyList;
         addNode(node);
         // building call graph
-        if (TreeInfo.symbol(tree.meth) != null) {
-            MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
-            if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isModule) {
-                VarSymbol moduleField = moduleField(tree);
-                if (methSym.owner == module.sym) {
-                    String methodName = TreeInfo.symbol(tree.meth).toString();
-                    methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
-                    MethodSymbol origMethSym = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
-                    m.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
-                                                                        moduleField));
-                    origMethSym.callerMethods.add(m.sym);
-                } else
-                    callGraphTodos.add(new TodoItem(tree, m));
-            } else {
+        if (module != null) { // is a module
+            if (TreeInfo.symbol(tree.meth) != null) {
+                MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
+                if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isModule) {
+                    VarSymbol moduleField = moduleField(tree);
+                    if (methSym.owner == module.sym) {
+                        String methodName = TreeInfo.symbol(tree.meth).toString();
+                        methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
+                        MethodSymbol origMethSym = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
+                        m.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
+                                                                            moduleField));
+                        origMethSym.callerMethods.add(m.sym);
+                    } else
+                        callGraphTodos.add(new TodoItem(tree, m));
+                } else {
+                    m.sym.calledMethods.add(new MethodSymbol.MethodInfo(methSym));
+                    methSym.callerMethods.add(m.sym);
+                }
+            }
+        } else { // is a library
+            if (TreeInfo.symbol(tree.meth) != null) { 
+                MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
                 m.sym.calledMethods.add(new MethodSymbol.MethodInfo(methSym));
                 methSym.callerMethods.add(m.sym);
             }

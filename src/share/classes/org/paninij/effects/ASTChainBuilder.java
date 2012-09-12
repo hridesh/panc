@@ -51,4 +51,11 @@ class ASTChainBuilder {
         return chain;
     }
 
+    public static ASTChain buildChain(JCLibraryDecl library, JCMethodDecl m) {
+        ASTChain chain = new ASTChain();
+        nodeBuilder.buildNodes(library, m, chain);
+        nodeConnector.connectNodes(m, chain);
+        return chain;
+    }
+
 }        

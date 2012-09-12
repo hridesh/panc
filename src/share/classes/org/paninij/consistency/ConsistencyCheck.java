@@ -90,7 +90,6 @@ public class ConsistencyCheck {
         HashSet<NodeMethod> visitedModules = new HashSet<NodeMethod>();
         visitedModules.add(new NodeMethod(module, method));
         for (ProcEdge edge : edgesFromProc(module, method)) {
-            System.out.println(": " + edge);
             HashSet<NodeMethod> subVisitedModules = checkMethodConsistency(edge.to,
                                                                            edge.called);
             HashSet<NodeMethod> intersect = nmsIntersect(visitedModules, 

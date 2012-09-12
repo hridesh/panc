@@ -48,6 +48,9 @@ public class MethodEffectsComp extends JCTree.Visitor {
     private Symbol moduleSym;
 
     public EffectSet computeEffectsForMethod(ASTChain chain, Symbol moduleSym) {
+        new ASTChainPrinter().printChain(chain);
+        System.out.println(moduleSym);
+
         this.chain = chain;
         this.moduleSym = moduleSym;
         nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
@@ -85,11 +88,19 @@ public class MethodEffectsComp extends JCTree.Visitor {
     public void visitReturn(JCReturn tree)               { visitTree(tree); }
     public void visitApply(JCMethodInvocation tree) { 
         MethodSymbol sym = (MethodSymbol)TreeInfo.symbol(tree.meth);
-        if (sym.owner.isModule && sym.owner != moduleSym) {
-            visitResult.add(new OpenEffect(sym));
+        if (moduleSym != null) { // otherwise this is in a library
+            if (sym.owner.isModule && sym.owner != moduleSym) {
+                visitResult.add(new OpenEffect(sym));
+            } else if (sym.ownerModule() != moduleSym) {
+                System.out.println("LIBRARY CALL: " + tree);
+//                visitResult.add(new LibMethodEffect(sym));
+            } else {
+                visitResult.add(new MethodEffect(sym));
+            }
         } else {
             visitResult.add(new MethodEffect(sym));
         }
+
     }
     public void visitAssign(JCAssign tree)               { visitTree(tree); }
     public void visitAssignop(JCAssignOp tree)           { visitTree(tree); }
@@ -104,13 +115,14 @@ public class MethodEffectsComp extends JCTree.Visitor {
             if (tree.sym != null) {
                 if (currentNode.lhs) {
                     visitResult.add(new FieldWriteEffect(tree.sym));
-                } else { 
+                } else {
                     visitResult.add(new FieldReadEffect(tree.sym));             
                 }
             }
         }
     }
-    public void visitIdent(JCIdent tree) { 
+    public void visitIdent(JCIdent tree) {
+        System.out.println(tree);
         if (tree.sym.getKind() == ElementKind.FIELD) {
             if (!tree.sym.name.toString().equals("this")) {
                 if (!(chain.endHeapRepresentation.locationForSymbol(tree.sym)

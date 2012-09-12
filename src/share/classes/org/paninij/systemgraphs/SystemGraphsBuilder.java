@@ -105,12 +105,8 @@ public class SystemGraphsBuilder extends TreeScanner {
         if (finishedMethods.contains(new NodeMethod(currentModule, method))) return;
         finishedMethods.add(new NodeMethod(currentModule, method));
         for (MethodSymbol.MethodInfo calledMethodInfo : method.calledMethods) {
-            System.out.println("383");
             if (calledMethodInfo.module != null) {
-                System.out.println("/");
-                System.out.println(calledMethodInfo.module.name.toString());
                 for (ConnectionEdge edge : graphs.forwardConnectionEdges.get(currentModule)) {
-                    System.out.println(edge.varName);
                     if (edge.varName.equals(calledMethodInfo.module.name.toString())) {
                         Node calledModule = edge.to;
                         graphs.addProcEdge(currentModule, calledModule,
@@ -118,7 +114,6 @@ public class SystemGraphsBuilder extends TreeScanner {
                                            edge.varName);
                     }
                 }
-                System.out.println("\\");
             } else {
                 // don't need to traverse module procedures, since
                 // they are starting points

@@ -114,7 +114,8 @@ public class EffectsSub extends JCTree.Visitor {
             if (!oldEffects.equals(effects)) {
                 for (MethodSymbol callerMethod : method.sym.callerMethods) {
                     if (callerMethod.tree == null) continue;
-                    if (callerMethod.ownerModule() != module.sym) continue;
+                    if (module != null) // otherwise a library
+                        if (callerMethod.ownerModule() != module.sym) continue;
                     if (callerMethod != method.sym)
                         methodsToProcess.offer(callerMethod.tree);
                 }
@@ -150,6 +151,44 @@ public class EffectsSub extends JCTree.Visitor {
                         toAdd.addAll(methodEffects.get(methSymOrig.tree));
                         toAdd.remove(new OpenEffect(method.sym));
                         }*/
+                }
+            }
+            effects.addAll(toAdd);
+
+            if (!oldEffects.equals(effects)) {
+                for (MethodSymbol callerMethod : method.sym.callerMethods) {
+                    if (callerMethod.tree == null) continue;
+                    if (callerMethod != method.sym)
+                        methodsToProcess.offer(callerMethod.tree);
+                }
+            }
+        }
+    }
+
+    public void substituteLibEffects(HashMap<JCMethodDecl, EffectSet> methodEffects) {
+
+        this.methodEffects = methodEffects;
+
+        LinkedList<JCMethodDecl> methodsToProcess = new LinkedList<JCMethodDecl>(methodEffects.keySet());
+
+        while (!methodsToProcess.isEmpty()) {
+            JCMethodDecl method = methodsToProcess.poll();
+
+            EffectSet effects = methodEffects.get(method);
+            EffectSet oldEffects = new EffectSet(effects);
+            EffectSet toAdd = new EffectSet();
+
+            Iterator<Effect> it = effects.iterator();
+            while (it.hasNext()) {
+                Effect e = it.next();
+                if (e instanceof LibMethodEffect) {
+                    LibMethodEffect me = (LibMethodEffect)e;
+                    MethodSymbol methSym = me.method;
+
+                    it.remove();
+                    toAdd.addAll(methodEffects.get(methSym.tree));
+                    toAdd.remove(new LibMethodEffect(method.sym));
+                
                 }
             }
             effects.addAll(toAdd);

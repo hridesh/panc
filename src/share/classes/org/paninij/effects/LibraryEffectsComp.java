@@ -41,66 +41,62 @@ import java.util.LinkedList;
 import static com.sun.tools.javac.code.Flags.*;
 
 
-public class ModuleEffectsComp {
-    protected static final Context.Key<ModuleEffectsComp> secKey =
-        new Context.Key<ModuleEffectsComp>();
+public class LibraryEffectsComp extends TreeScanner {
+    protected static final Context.Key<LibraryEffectsComp> lecKey =
+        new Context.Key<LibraryEffectsComp>();
 
-    public HashMap<JCMethodDecl, EffectSet> methodEffects = new HashMap<JCMethodDecl, EffectSet>();
+    public HashMap<JCMethodDecl, EffectSet> methodEffects;
     MethodEffectsComp methodEffectsComp = new MethodEffectsComp();
     EffectsSub effectsSub;
     ReachedProcsComp reachedProcsComp;
     private LinkedList<JCMethodDecl> methodsToProcess;
 
-    public static ModuleEffectsComp instance(Context context) {
-        ModuleEffectsComp instance = context.get(secKey);
+    public static LibraryEffectsComp instance(Context context) {
+        LibraryEffectsComp instance = context.get(lecKey);
         if (instance == null)
-            instance = new ModuleEffectsComp(context);
+            instance = new LibraryEffectsComp(context);
         return instance;
     }
 
-    protected ModuleEffectsComp(Context context) {
-        context.put(secKey, this);
+    protected LibraryEffectsComp(Context context) {
+        context.put(lecKey, this);
         effectsSub = EffectsSub.instance(context);
         reachedProcsComp = ReachedProcsComp.instance(context);
         ASTChainBuilder.setNames(Names.instance(context));
     }
 
-    public void computeEffects(JCModuleDecl module) {
+    public void computeEffects(JCLibraryDecl library) {
         methodsToProcess = new LinkedList<JCMethodDecl>();
         HashSet<JCMethodDecl> visitedMethods = new HashSet<JCMethodDecl>();
-        for(JCTree def : module.defs) {
-        	if(def.getTag() == Tag.METHODDEF) {
-                JCMethodDecl method = (JCMethodDecl)def;
-                if ((method.sym.flags() & PRIVATE) != 0 ||
-                    (method.sym.name.toString().equals("run") &&
-                     module.sym.hasRun)) {
-                    methodsToProcess.offer(method);
-                }
-            }
-        }
+        scan(library.defs);
         
         while (!methodsToProcess.isEmpty()) {
             JCMethodDecl method = methodsToProcess.poll();
             visitedMethods.add(method);
 
-            ASTChain chain = ASTChainBuilder.buildChain(module, method);
+            ASTChain chain = ASTChainBuilder.buildChain(library, method);
             new AliasingComp().fillInAliasingInfo(chain);
-            reachedProcsComp.todoReachedProcs(module);
-//            new ASTChainPrinter().printChain(chain);
+//            reachedProcsComp.todoReachedProcs(module); library methods can't reach procs
             
             for (MethodSymbol.MethodInfo calledMethodInfo : method.sym.calledMethods) {
                 MethodSymbol calledMethod = calledMethodInfo.method;
                 if (calledMethod.tree == null) continue;
-                if (calledMethod.ownerModule() != module.sym) continue; // null means library symbol
+//                if (calledMethod.ownerModule() != module.sym) continue; // null means library symbol
                 if (!visitedMethods.contains(calledMethod.tree))
                     methodsToProcess.offer(calledMethod.tree);
             }
-            EffectSet effects = methodEffectsComp.computeEffectsForMethod(chain, module.sym);
+            EffectSet effects = methodEffectsComp.computeEffectsForMethod(chain, null);
             effects.chain = chain;
             methodEffects.put(method, effects);
         }
         
-        effectsSub.module = module;
+        effectsSub.module = null;
         effectsSub.substituteMethodEffects(methodEffects);
+    }
+
+    public void visitMethodDef(JCMethodDecl tree) {
+        if ((tree.sym.flags() & PRIVATE) == 0) {
+            methodsToProcess.offer(tree);
+        }
     }
 }

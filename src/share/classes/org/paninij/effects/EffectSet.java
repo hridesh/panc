@@ -24,7 +24,12 @@ import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.util.*;
 
-abstract class Effect {}
+import org.paninij.systemgraphs.SystemGraphs.*;
+
+
+abstract class Effect {
+    public Node module;
+}
 class EmptyEffect extends Effect {}
 class FieldReadEffect extends Effect {
     Symbol field; public FieldReadEffect(Symbol field) { this.field = field; }
@@ -64,6 +69,17 @@ class MethodEffect extends Effect {
     public boolean equals(Object o) {
         if (!(o instanceof MethodEffect)) return false;
         MethodEffect oe = (MethodEffect)o;
+        return this.method == oe.method;
+    }
+    public int hashCode() { return method.hashCode(); }
+}
+class LibMethodEffect extends Effect {
+    MethodSymbol method; 
+    public LibMethodEffect(MethodSymbol method) { if (method==null) Assert.error(); this.method = method; }
+    public String toString() { return "method: " + method; }
+    public boolean equals(Object o) {
+        if (!(o instanceof LibMethodEffect)) return false;
+        LibMethodEffect oe = (LibMethodEffect)o;
         return this.method == oe.method;
     }
     public int hashCode() { return method.hashCode(); }

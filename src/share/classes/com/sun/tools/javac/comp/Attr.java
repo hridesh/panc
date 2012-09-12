@@ -771,9 +771,15 @@ public class Attr extends JCTree.Visitor {
 
     }
 
+
     public void visitSystemDef(JCSystemDecl tree) {
+/*        for (JCLibraryDecl l : syms.libraries.values()) {
+            effects.computeEffects(l);
+            }*/
+
         tree.sym.graphs = graphsBuilder.buildGraphs(tree);
         effects.substituteProcEffects(tree);
+//        effects.substituteLibEffects(tree);
         ConsistencyCheck cc = 
             new ConsistencyCheck(effects.moduleEffectsComp.methodEffects);
         for (SystemGraphs.Node n :
@@ -1083,6 +1089,10 @@ public class Attr extends JCTree.Visitor {
             if (v.getTag() == VARDEF) {
                 JCVariableDecl varDecl = (JCVariableDecl)v;
                 ClassSymbol c = syms.modules.get(names.fromString(varDecl.vartype.toString()));
+                if (varDecl.vartype.toString().contains("[]")) {
+                    System.out.println("\n\n\nConsistency checker doesn't yet support module arrays. Exiting now.\n\n\n");
+                    System.exit(5);
+                }
                 if (!modules.contains(c)) modules.append(c);
             }
         }

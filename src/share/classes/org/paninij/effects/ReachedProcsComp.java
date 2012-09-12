@@ -21,7 +21,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import static com.sun.tools.javac.code.Flags.*;
 
-
+// computes each method's reached (possibly) intermodule procedure calls 
 public class ReachedProcsComp {
      protected static final Context.Key<ReachedProcsComp> rpcKey =
         new Context.Key<ReachedProcsComp>();

@@ -17,7 +17,7 @@
  * Contributor(s): 
  */
 
-//library bool {
+library bool {
 	interface BooleanI {
 		public boolean value();
 	}
@@ -29,10 +29,10 @@
 
 		public boolean value() { return v; }
 	}
-//}
+}
 
 module Fork () {
-//	include bool;
+	include bool;
 
 	boolean isTaken = false;
 
@@ -50,7 +50,7 @@ module Fork () {
 
 
 module Philosopher (Fork left, Fork right, String name) {
-//	include bool;
+	include bool;
 
 	void run() {
 		for (int count=3; count>0; count--) {
