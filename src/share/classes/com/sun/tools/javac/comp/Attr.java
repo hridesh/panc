@@ -805,17 +805,16 @@ public class Attr extends JCTree.Visitor {
     			throw new AssertionError("Invalid statement gone through the parser");
     	}
 
-    	JCMethodDecl maindecl = addMainMethod(tree, decls, inits, assigns, submits, starts, joins);
+    	List<JCStatement> mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
+    	JCMethodDecl maindecl = addMainMethod(tree.sym, tree.body, mainStmts);
+    	tree.defs = tree.defs.append(maindecl);
 
     	tree.switchToClass();
     	//    	System.out.println(tree);
     	memberEnter.memberEnter(maindecl, env);
     }
 
-				private JCMethodDecl addMainMethod(JCSystemDecl tree,
-						ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
-						ListBuffer<JCStatement> assigns, ListBuffer<JCStatement> submits,
-						ListBuffer<JCStatement> starts, ListBuffer<JCStatement> joins) {
+				private JCMethodDecl addMainMethod(final ClassSymbol containingClass, final JCBlock methodBody, final List<JCStatement> mainStmts) {
 					Type arrayType = new ArrayType(syms.stringType, syms.arrayClass);
     	MethodSymbol msym = new MethodSymbol(
     			PUBLIC|STATIC,
@@ -826,16 +825,12 @@ public class Attr extends JCTree.Visitor {
     					List.<Type>nil(),
     					syms.methodClass
     					),
-    					tree.sym
+    					containingClass
     			);
-    	JCVariableDecl mainArg = make.Param(
-    			names.fromString("args"),
-    			arrayType,
-    			msym);
-    	JCMethodDecl maindecl = make.MethodDef(msym, tree.body);
+    	JCVariableDecl mainArg = make.Param( names.fromString("args"), arrayType, msym);
+    	JCMethodDecl maindecl = make.MethodDef(msym, methodBody);
     	maindecl.params = List.<JCVariableDecl>of(mainArg);
-    	tree.defs = tree.defs.append(maindecl);
-    	maindecl.body.stats = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
+    	maindecl.body.stats = mainStmts;
 					return maindecl;
 				}
 
