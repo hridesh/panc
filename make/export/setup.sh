@@ -7,6 +7,5 @@ else
 	cp $JAVA_HOME/jre/lib/rt.jar ../lib/rt.jar
 	cd ../lib
 	java -cp .:./org/paninij/OwnershipAdapter/:./org/paninij/OwnershipAdapter/asm-4.0.jar  org.paninij.OwnershipAdapter.OwnershipAdapter ./rt.jar 
-	cp ./rt_transformed.jar ./rt.jar
-	rm ./rt_transformed.jar
+	rm ./rt_jar
 fi

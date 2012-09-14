@@ -952,10 +952,10 @@ public class Enter extends JCTree.Visitor {
                     ),
                 tree.sym
                 );
-			JCMethodDecl m = make.MethodDef(msym,
-                                            make.Block(0, List.<JCStatement>nil()));
-			m.mods = make.Modifiers(PUBLIC|FINAL, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("SuppressWarnings")), 
-        			List.<JCExpression>of(make.Literal("unchecked")))));
+			JCMethodDecl m = make.MethodDef(msym, make.Block(0, List.<JCStatement>nil()));
+			m.mods = make.Modifiers(PUBLIC|FINAL);
+//			m.mods = make.Modifiers(PUBLIC|FINAL, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("SuppressWarnings")), 
+//        			List.<JCExpression>of(make.Literal("unchecked")))));
             m.params = List.<JCVariableDecl>nil();
             m.sym = msym;
             memberEnter.memberEnter(m, localEnv);

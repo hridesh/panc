@@ -2669,8 +2669,13 @@ public class JavacParser implements Parser {
         		result.vartype = F.TypeApply(result.vartype, List.<JCExpression>of(F.Ident(names.fromString("OWNER"))));
         }
         if(inModule&&result.init!=null)
-        	if(result.init.getTag() == Tag.NEWCLASS&&result.vartype.getKind()!=Kind.PRIMITIVE_TYPE)
-        		((JCNewClass)result.init).clazz = F.TypeApply(((JCNewClass)result.init).clazz, ((JCTypeApply)result.vartype).arguments); 
+        	if(result.init.getTag() == Tag.NEWCLASS&&result.vartype.getKind()!=Kind.PRIMITIVE_TYPE){
+        		if(((JCNewClass)result.init).clazz.getTag()==Tag.TYPEAPPLY){
+        			((JCNewClass)result.init).clazz = F.TypeApply(((JCTypeApply)((JCNewClass)result.init).clazz).clazz, ((JCTypeApply)result.vartype).arguments);
+        		}
+        		else
+        			((JCNewClass)result.init).clazz = F.TypeApply(((JCNewClass)result.init).clazz, ((JCTypeApply)result.vartype).arguments);
+        	}
         //end Panini code
         attach(result, dc);
         return result;
@@ -2987,7 +2992,10 @@ public class JavacParser implements Parser {
      	if(params.nonEmpty()){
      		for(JCVariableDecl vdecl : params){
      			if(vdecl.vartype.getKind()!=Kind.PRIMITIVE_TYPE&&!vdecl.vartype.toString().equals("String")&&!vdecl.vartype.toString().equals("Boolean"))
-     				types = types.append(F.TypeParameter(names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), List.<JCExpression>nil()));
+//     				if(vdecl.vartype.toString().contains("[]")){
+//     					types = types.append(F.TypeParameter(names.fromString(vdecl.vartype.toString().replace("[]", "")+"_"+vdecl.name.toString()), List.<JCExpression>nil()));
+//     				}else
+     					types = types.append(F.TypeParameter(names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), List.<JCExpression>nil()));
      		}
      	}
      	List<JCExpression> implementing = List.nil();

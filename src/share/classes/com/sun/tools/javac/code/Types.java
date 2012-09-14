@@ -2650,7 +2650,12 @@ public class Types {
         if (cl == null) {
             Type st = supertype(t);
             if (!t.isCompound()) {
-                if (st.tag == CLASS) {
+            	// Panini code
+            	if(t.toString().contains("java.lang.Object")){
+            		cl = List.of(t);
+            	}
+            	//end Panini code
+            	else if (st.tag == CLASS) {
                     cl = insert(closure(st), t);
                 } else if (st.tag == TYPEVAR) {
                     cl = closure(st).prepend(t);

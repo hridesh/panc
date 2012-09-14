@@ -1,18 +1,20 @@
+package org.paninij.OwnershipAdapter;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.zip.CRC32;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -24,6 +26,7 @@ import org.objectweb.asm.Opcodes;
 
 public class OwnershipAdapter extends ClassLoader{
 	static boolean inJar = false;
+	
 	protected boolean loadJar(final String name) throws IOException{
 		Hashtable<String, Long> sizes = new Hashtable<String, Long>(); 
 		try{
@@ -38,12 +41,15 @@ public class OwnershipAdapter extends ClassLoader{
 			System.err.println(name+ " not found.");
 			return false;
 		}
-		ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(name.substring(0, name.length()-4)+"_transformed.jar"));
-		ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(name)));
-		ZipEntry entry = null;
-		while((entry = zis.getNextEntry())!=null){
+		JarOutputStream zos = new JarOutputStream(new FileOutputStream(name.substring(0, name.length()-4)+"_transformed.jar"));
+		JarInputStream zis = new JarInputStream(new BufferedInputStream(new FileInputStream(name)));
+		JarEntry entry = null;
+		
+		while((entry = zis.getNextJarEntry())!=null){
 			if(entry.isDirectory()){
-				zos.putNextEntry(entry);
+				JarEntry je = new JarEntry(entry.getName());
+				System.out.println(je.getName());
+				zos.putNextEntry(je);
 				zos.closeEntry();
 			}
 			else if(!entry.getName().endsWith(".class")){
@@ -51,6 +57,8 @@ public class OwnershipAdapter extends ClassLoader{
 				if(size == -1){
 					size = sizes.get(entry.getName()).longValue();
 				}
+				JarEntry je = new JarEntry(entry.getName());
+				zos.putNextEntry(je);
 				byte[] b = new byte[(int)size];
 				int rb=0;
 	             int chunk=0;
@@ -89,7 +97,6 @@ public class OwnershipAdapter extends ClassLoader{
 	            ClassVisitor cv = new ClassOwnershipAdapter(cw, inJar, name);
 	            cr.accept(cv, 0);
 	            outputClass = cw.toByteArray();
-	            
 	            zip(zos, entry, outputClass);
 			}
 		}
@@ -110,6 +117,7 @@ public class OwnershipAdapter extends ClassLoader{
 		try {
 			zos.putNextEntry(newEntry);
 			zos.write(b);
+			zos.flush();
 			zos.closeEntry();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -185,7 +193,10 @@ class ClassOwnershipAdapter extends ClassVisitor {
     	System.out.println("Transforming "+name+".class.");
     	String sign;
 		int index =0;
-    	if(signature == null){
+		if(name.equals("java/lang/Object")){
+			sign = "<OWNER:Ljava/lang/Object;>L;";
+		}
+		else if(signature == null){
     		sign = "<OWNER:Ljava/lang/Object;>";
 			sign = sign + "L"+ superName + "<TOWNER;>;";
     		for(int i=0;i<interfaces.length;i++){
@@ -240,12 +251,16 @@ class ClassOwnershipAdapter extends ClassVisitor {
             final Object value)
 	{
 		String sign=signature;
-		if(signature!=null){
-				sign = (signature.substring(0, signature.indexOf('<')+1)+"TOWNER;"+signature.substring(signature.indexOf('<')+1));
-		}
-		else{
-			if(desc.startsWith("L")){
-				sign = desc.substring(0, desc.length()-1)+"<TOWNER;>;";
+		
+		if((access&Opcodes.ACC_STATIC)==0){
+			
+			if(signature!=null){
+					sign = (signature.substring(0, signature.indexOf('<')+1)+"TOWNER;"+signature.substring(signature.indexOf('<')+1));
+			}
+			else{
+				if(desc.startsWith("L")){
+					sign = desc.substring(0, desc.length()-1)+"<TOWNER;>;";
+				}
 			}
 		}
 		return cv.visitField(access, name, desc, sign, value);
@@ -265,40 +280,42 @@ class ClassOwnershipAdapter extends ClassVisitor {
     		String resType = desc.substring(desc.indexOf(')')+1,desc.length());
     		String rpArg="";
     		String rpRes=resType;
-    		if(signature==null){
-				rpArg = ArgumentTransform(argument);
-    			if(resType.startsWith("L"))
-    				rpRes = resType.substring(0, resType.length()-1) + "<TOWNER;>;";
+    		if((access&Opcodes.ACC_STATIC)==0){
+	    		if(signature==null){
+					rpArg = ArgumentTransform(argument);
+	    			if(resType.startsWith("L"))
+	    				rpRes = resType.substring(0, resType.length()-1) + "<TOWNER;>;";
+	    		}
+	    		else{
+	    			int index =0;
+	    			resType = signature.substring(signature.indexOf(")")+1);
+	    			if(signature.startsWith("<")){
+	    				rpType = signature.substring(0, signature.indexOf(">")+1);
+	    			}
+	    			//Argument Parsing
+	    			rpArg = "";
+	    			index += rpType.length();
+	    			String signatureArgument = signature.substring(signature.indexOf('(')+1, signature.indexOf(')'));
+	    			if(!signatureArgument.equals("")){
+		    			rpArg = ArgumentTransform(signatureArgument);
+	    			}
+	    			
+	    			//Return Type Parsing
+	    			rpRes = resType;
+	    			if(resType.startsWith("L")){
+	    				String signatureRestype;
+	    				signatureRestype = signature.substring(signature.indexOf(")")+1);
+	    				index = 0;
+	    				index += resType.length()-1;
+	    				if(resType.contains("<")){
+	    					rpRes = resType.substring(0, resType.indexOf("<"))+"<TOWNER;"+ signatureRestype.substring(resType.indexOf("<")+1);
+	    				}
+	    				else
+	    					rpRes = resType.substring(0, resType.length()-1)+"<TOWNER;>;";
+	    			}
+	    		}
+	    		rpSignature = rpType + "("+rpArg+")"+rpRes;
     		}
-    		else{
-    			int index =0;
-    			resType = signature.substring(signature.indexOf(")")+1);
-    			if(signature.startsWith("<")){
-    				rpType = signature.substring(0, signature.indexOf(">")+1);
-    			}
-    			//Argument Parsing
-    			rpArg = "";
-    			index += rpType.length();
-    			String signatureArgument = signature.substring(signature.indexOf('(')+1, signature.indexOf(')'));
-    			if(!signatureArgument.equals("")){
-	    			rpArg = ArgumentTransform(signatureArgument);
-    			}
-    			
-    			//Return Type Parsing
-    			rpRes = resType;
-    			if(resType.startsWith("L")){
-    				String signatureRestype;
-    				signatureRestype = signature.substring(signature.indexOf(")")+1);
-    				index = 0;
-    				index += resType.length()-1;
-    				if(signatureRestype.charAt(index)=='<'){
-    					rpRes = resType.substring(0, resType.length()-1)+"<TOWNER;"+ signatureRestype.substring(index+1);
-    				}
-    				else
-    					rpRes = resType.substring(0, resType.length()-1)+"<TOWNER;>;";
-    			}
-    		}
-    		rpSignature = rpType + "("+rpArg+")"+rpRes;
             return cv.visitMethod(access, name, desc, rpSignature, exceptions);
         }
     
