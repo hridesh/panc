@@ -1011,12 +1011,8 @@ public class Attr extends JCTree.Visitor {
 									make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), 
 											names.fromString("shutdown")), List.<JCExpression>nil())));
 						}
-					for(int j = 0; j<mat.amount; j++){
-						JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j), 
-								List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
-						enter.classEnter(typeInterface, env);
-						tree.defs = tree.defs.append(typeInterface);
-					}
+					for(int j = 0; j<mat.amount; j++)
+						tree.defs = tree.defs.append(createOwnerInterface(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j));
 
 					variables.put(vdecl.name, c.name);
 					modArrays.put(vdecl.name, mat.amount);
@@ -1057,10 +1053,8 @@ public class Attr extends JCTree.Visitor {
 								make.Select(make.Ident(vdecl.name), 
 										names.fromString("shutdown")), List.<JCExpression>nil())));
 
-					JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), 
-							List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
-					enter.classEnter(typeInterface, env);
-					tree.defs = tree.defs.append(typeInterface);
+					tree.defs = tree.defs.append(
+							createOwnerInterface(vdecl.vartype.toString()+"_"+vdecl.name.toString()));
 
 					variables.put(vdecl.name, c.name);
 				}
@@ -1100,14 +1094,26 @@ public class Attr extends JCTree.Visitor {
 								make.Select(make.Ident(vdecl.name), 
 										names.fromString("shutdown")), List.<JCExpression>nil())));
 
-					JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), 
-							List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
-					enter.classEnter(typeInterface, env);
-					tree.defs = tree.defs.append(typeInterface);
+					tree.defs = tree.defs.append(
+							createOwnerInterface(
+									vdecl.vartype.toString()+"_"+vdecl.name.toString()));
 
 					variables.put(vdecl.name, c.name);
 				}
+
+				private JCClassDecl createOwnerInterface(final String interfaceName) {
+					JCClassDecl typeInterface = 
+							make.ClassDef(
+									make.Modifiers(PUBLIC|INTERFACE|SYNTHETIC), 
+									names.fromString(interfaceName), 
+							List.<JCTypeParameter>nil(), null, 
+							List.<JCExpression>nil(), 
+							List.<JCTree>nil());
+					enter.classEnter(typeInterface, env);
+					return typeInterface;
+				}
     
+				
     public void visitProcDef(JCProcDecl tree){
     	Type restype = ((MethodType)tree.sym.type).restype;
     	if(restype.tsym.isModule||tree.sym.getReturnType().isPrimitive()||
