@@ -22,6 +22,7 @@
  * 
  * For a detailed explanation see comments following this code.
  */
+
 import java.io.*;
 
 module Reader(Bucket[] buckets) {
@@ -44,11 +45,15 @@ module Reader(Bucket[] buckets) {
 module Bucket(Printer p) {
 		long count = 0;
 		void bump() { count++; }
-		void finish(int index) { p.print("" + index + ":" + count); }
+		void finish(int index) { System.out.println(count);p.print(index, count); }
 }
 
 module Printer() { 
-	void print(String output) { System.out.println(output); }
+	void print(int index, long count) { 
+		System.out.print(index);
+		System.out.print(": ");
+		System.out.println(count);
+		}
 }
 
 system Histogram {

@@ -54,7 +54,8 @@ module Master (int totalCount, Worker[] workers) {
 		for(Worker w : workers) w.compute(); 
 		for(Worker w: workers) totalCircleCount += w.getCircleCount().value(); 
 		double pi = 4.0 * totalCircleCount / totalCount;
-		System.out.println("Pi : " + pi);
+		System.out.print("Pi : ");
+		System.out.println(pi);
 	}
 }
 

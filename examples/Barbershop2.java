@@ -51,7 +51,8 @@ module Barber(WaitingRoom r, boolean isSleeping) {
     }
           
     void work(Customer c){
-        System.out.println("Barber working on customer " + c.getID());  
+        System.out.print("Barber working on customer ");
+        System.out.println(c.getID());  
         yield();
     }
           
@@ -74,7 +75,9 @@ module WaitingRoom(int cap) {
     BooleanC sit(Customer c){
         if (queue.size()<cap) {
             queue.offer(c);
-            System.out.println("Customer " + c.getID() + " Sitting in waiting room");
+            System.out.print("Customer ");
+            System.out.print(c.getID());
+            System.out.println(" Sitting in waiting room");
             return new BooleanC(true);
         }
         else
@@ -93,7 +96,9 @@ module Customers(Barber b, WaitingRoom r) {
     void run() {
         while (true) {
             Customer c = new Customer(r.incIdCount().value());
-            System.out.println("Customer " + c.getID() + " wants haircut");
+            System.out.print("Customer ");
+            System.out.print(c.getID());
+            System.out.println(" wants haircut");
             if (!b.isSleeping().value()) {
                 trySit(c);
             } else {
