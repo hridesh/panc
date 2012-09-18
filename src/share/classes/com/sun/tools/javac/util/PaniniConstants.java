@@ -40,6 +40,7 @@ public class PaniniConstants {
 	public final static String PANINI_METHOD_CONST = "panini$methodConst$";
 	public final static String PANINI_MESSAGE_ID = "panini$message$id";
 
-	// The following is added by yuhenglong to implement the flag in the duck.
+	// To implement the flag in the duck.
 	public final static String REDEEMED = "redeemed";
+	public final static String VALUE = "value";
 }

@@ -84,8 +84,7 @@ public class ModuleInternal extends Internal
         ListBuffer<JCCase> cases = new ListBuffer<JCCase>();
         int varIndex =0;
         
-        for (JCMethodDecl method : tree.publicMethods) {
-        	
+        for (JCMethodDecl method : tree.publicMethods) {        	
             ListBuffer<JCStatement> innerIfStatements = new ListBuffer<JCStatement>();
             ListBuffer<JCStatement> caseStatements = new ListBuffer<JCStatement>();
             Type restype = ((MethodType)method.sym.type).restype;
@@ -208,18 +207,18 @@ public class ModuleInternal extends Internal
     				JCVariableDecl var2 = var(mods(PRIVATE|FINAL), 
     						"messageId", make.TypeIdent(TypeTags.INT), null);
 
-    				// by yuhenglong to implement the flag logic.
+    				// to implement the flag logic.
+    				// private boolean redeemed = false;
     				JCVariableDecl varRedeemed =
     					var(mods(PRIVATE),
     						PaniniConstants.REDEEMED,
     						make.TypeIdent(TypeTags.BOOLEAN),
     						make.Literal(TypeTags.BOOLEAN, 0));
-    				// by yuhenglong done.
 
     				ListBuffer<JCTree> wrappedMethods= new ListBuffer<JCTree>();
     				boolean addedConstructors = false;
     				ListBuffer<JCExpression> inits = new ListBuffer<JCExpression>();
-    				while(iter.hasNext()){
+    				while(iter.hasNext()) {
     					Symbol s = iter.next();
     					if(s.getKind()==ElementKind.METHOD){
     						MethodSymbol m = (MethodSymbol)s;
@@ -238,15 +237,14 @@ public class ModuleInternal extends Internal
     									       make.Try(
     									           body(sync(make.This(Type.noType),
     									        		   body(whilel(
-    									        				   // changed by yuhenglong to implement the flag logic    									        				   
-    									        				   isFalse(PaniniConstants.REDEEMED),
-    									        				   // changed by yuhenglong to implement the flag logic		   
+    									        				   // Test whether the duck is ready.
+    									        				   //  while (redeemed == false) wait();
+    									        				   isFalse(PaniniConstants.REDEEMED),		   
     									        				   es(apply("wait")))))), catchers, null),
     									        				   returnt(apply("wrapped", m.name)))
     									);
     							wrappedMethods.add(value);
-    						}
-    						else{
+    						} else {
     							List<JCCatch> catchers = List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), names.fromString("e"), 
     			    					make.Ident(names.fromString("InterruptedException")), null), 
     			    					make.Block(0, 
@@ -261,9 +259,9 @@ public class ModuleInternal extends Internal
     													body(sync(
     															make.This(Type.noType),
     	    									        		   body(whilel(
-    	    									        				   // changed by yuhenglong to implement the flag logic
+    	    									        				   // Test whether the duck is ready.
+    	    									        				   // while (redeemed == false) wait();
     	    									        				   isFalse(PaniniConstants.REDEEMED),
-    	    									        				   // changed by yuhenglong to implement the flag logic
     																	es(apply("wait")))))),
     															catchers, null), es(apply("wrapped", m.name)))
     									);
@@ -271,7 +269,6 @@ public class ModuleInternal extends Internal
     						}
     					}
     					else if (s.getKind()==ElementKind.CONSTRUCTOR){
-    						
     						MethodSymbol m = (MethodSymbol)s;
     						
     						ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
@@ -311,7 +308,11 @@ public class ModuleInternal extends Internal
     						names.fromString(PaniniConstants.PANINI_FINISH),
     						make.Type(syms.voidType),
     						finishParams,
-    						body(sync(thist(), body(es(assign("wrapped", id("t"))), es(apply("notifyAll")))))
+    						body(sync(thist(),
+    								  // The duck is ready.
+    								  body(es(assign("wrapped", id("t"))),
+    									   es(assign("redeemed", truev())),
+    									   es(apply("notifyAll")))))
     						);
     				JCExpression extending;
     				List<JCExpression> implement;
@@ -356,16 +357,14 @@ public class ModuleInternal extends Internal
     						implement, 
     						defs(var,
     							 var2,
-    							 // by yuhenglong to implement the flag logic.
     							 varRedeemed,
-    							// by yuhenglong done.
     							 finish,
     							 id).appendList(variableFields).appendList(constructors).appendList(wrappedMethods).toList());
     				
     				classes.add(wrappedClass);
     				addedHere.put(restype.toString(), wrappedClass);
-            	}else{
-            		if(!method.params.isEmpty()){
+            	} else {
+            		if(!method.params.isEmpty()) {
             			ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
 	            		JCClassDecl wrappedClass = addedHere.get(restype.toString());
 	            		if(!hasDuplicate(wrappedClass, method.params, method.name)){
@@ -384,7 +383,7 @@ public class ModuleInternal extends Internal
 	        							else if (v.type.isPrimitive()){
 	        								inits.add(intlit(0));
 	        							}
-	        						}	        					
+	        						}
 	        						hasConstructor = true;
 	        						break;
 	        					}
@@ -415,26 +414,92 @@ public class ModuleInternal extends Internal
 	            		wrappedClass.defs = wrappedClass.defs
 	            				.appendList(variableFields);
             		}
-            	}
-            	
-            }else if (restype.toString().equals("void")){
+            	}	
+            } else if (restype.toString().equals("void")) {
             	if(!addedHere.containsKey(restype.toString())){
     				JCExpression extending;
     				List<JCExpression> implement;
     				ListBuffer<JCTree> wrappedMethods= new ListBuffer<JCTree>();
     				
     				JCVariableDecl messageId = var(mods(PRIVATE|FINAL), "messageId", make.TypeIdent(TypeTags.INT));
-    				JCVariableDecl duckBarrier = var(mods(PROTECTED|FINAL), "future", id("DuckBarrier"), newt(id("DuckBarrier")));
+
+    				// a flag which indicates whether the future is ready.
+    				// private boolean redeemed = false;
+    				JCVariableDecl varRedeemed =
+    					var(mods(PRIVATE),
+    						PaniniConstants.REDEEMED,
+    						make.TypeIdent(TypeTags.BOOLEAN),
+    						make.Literal(TypeTags.BOOLEAN, 0));
+
     				wrappedMethods.add(constructor(mods(PUBLIC), params(var(mods(0), "messageId", make.TypeIdent(TypeTags.INT))), 
     						body(es(supert()), es(assign(select(thist(), "messageId"), id("messageId"))))));
-    				wrappedMethods.add(method(mods(PUBLIC|FINAL), "value", id("Void"), params(), body(es(apply("future", "get")), returnt(nullv()))));
-    				wrappedMethods.add(method(mods(PUBLIC|FINAL), PaniniConstants.PANINI_FINISH, voidt(), params(var(mods(0), "t", id("Void"))), body(es(apply("future", "set")))));
+
+    				// Code to be generated for the flag logic.
+    				// public final Void value() {
+    			    //    try {
+    	            //      synchronized (this) {
+    	            //        while (redeemed == false) wait(); // --- New
+    	            //      }
+    	            //    } catch (InterruptedException e) {
+    	            //      return value();
+    	            //    }
+    			    //    return null;
+    			    // }
+					List<JCCatch> catchers =
+						List.<JCCatch>of(
+    						make.Catch(
+    							make.VarDef(make.Modifiers(0),
+    								names.fromString("e"), 
+    								make.Ident(
+    									names.fromString("InterruptedException")),
+    								null), 
+    							make.Block(
+    								0,
+    								List.<JCStatement>of(
+    									make.Return(
+    										make.Apply(
+    											null,
+    											make.Ident(
+    												names.fromString(
+    													PaniniConstants.VALUE)),
+    											List.<JCExpression>nil()))))));
+    				wrappedMethods.add(method(mods(PUBLIC|FINAL),
+    								   "value",
+    								   id("Void"),
+    								   params(),
+    								   body(make.Try(
+    										   body(sync(
+													make.This(Type.noType),
+									        		   body(whilel(
+									        				   // Test whether the duck is ready.
+									        				   isFalse(PaniniConstants.REDEEMED),
+															es(apply("wait")))))),
+													catchers, null),
+											returnt(nullv()))));
+
+    				// Code to be generated for the flag logic.
+    				// public final void panini$finish(Void t) {
+    			    //     synchronized (this) {
+    	            //       redeemed = true;
+    	            //       notifyAll();
+    	            //     }
+    			    // }
+    				wrappedMethods.add(
+    						method(mods(PUBLIC|FINAL),
+    						PaniniConstants.PANINI_FINISH,
+    						voidt(),
+    						params(var(mods(0), "t", id("Void"))),
+    						body(sync(thist(),
+  								  // The duck is ready.
+  								  body(es(assign("redeemed", truev())),
+  									   es(apply("notifyAll")))))
+    							));
+
     				wrappedMethods.add(method(mods(PUBLIC|FINAL), PaniniConstants.PANINI_MESSAGE_ID, make.TypeIdent(TypeTags.INT), params(), body(returnt(select(thist(), "messageId")))));
     				
     				extending = id(PaniniConstants.DUCK_INTERFACE_NAME+"$Void");
     				implement = implementing(ta(id(PaniniConstants.DUCK_INTERFACE_NAME), args(id("Void")))).toList();
-    				
-    				
+
     				ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
     				
     				if(!method.params.isEmpty()){
@@ -449,18 +514,18 @@ public class ModuleInternal extends Internal
     						variableFields.add(var(mods(PUBLIC), par.name.append(names.fromString("$")).append(method.name), par.vartype));
     					}
     					constructors.add(constructor(mods(PUBLIC), consParams, body(consBody)));
-    				}	
-    				
+    				}
+
     				JCClassDecl wrappedClass = make.ClassDef(mods(0), 
     						names.fromString(PaniniConstants.DUCK_INTERFACE_NAME  + "$" + restype.toString() + "$" + tree.name.toString()), 
     						List.<JCTypeParameter>nil(), 
     						null, 
     						implement, 
-    						defs(messageId, duckBarrier).appendList(variableFields).appendList(wrappedMethods).appendList(constructors).toList());
+    						defs(messageId, varRedeemed).appendList(variableFields).appendList(wrappedMethods).appendList(constructors).toList());
     				
     				classes.add(wrappedClass);
     				addedHere.put(restype.toString(), wrappedClass);
-            	}else{
+            	} else {
             		if(!method.params.isEmpty()){
             			ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
 	            		JCClassDecl wrappedClass = addedHere.get(restype.toString());
