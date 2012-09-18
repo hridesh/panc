@@ -19,7 +19,11 @@ cp export/panc.bat panc/bin/
 cp export/setup.sh panc/bin/setup.sh
 cp export/panini panc/bin/
 cp export/panini.bat panc/bin/
+cp export/panp panc/bin/
+cp export/panp.bat panc/bin/
 cp export/panini_rt.jar panc/lib/
+cp export/profile.jar panc/lib/
+cp export/profile.properties panc/lib/
 cp export/javac panc/lib/dist/bootstrap/bin/
 cp export/panini-mode.el panc/editors/
 cp export/panini.vim panc/editors/

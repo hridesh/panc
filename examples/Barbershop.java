@@ -27,9 +27,7 @@ module Barber(WaitingRoom r, boolean isSleeping) {
           
     void work(){
         System.out.println("Barber working");
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) { e.printStackTrace(); }
+        yield(1000);
     }
           
     BooleanC isSleeping(){
@@ -71,11 +69,8 @@ module Customers(Barber b, WaitingRoom r) {
                 System.out.println("Customer is waking barber up");
                 b.wake();
             }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) { e.printStackTrace(); }
+            yield(1000);
         }
-          
     }
   
     void trySit(){

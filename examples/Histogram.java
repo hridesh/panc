@@ -25,11 +25,19 @@
 
 import java.io.*;
 
-module Reader(Bucket[] buckets) {
+module Reader(String[] args, Bucket[] buckets) {
+	
 	void run() {
+	 if(args.length == 0) process("shaks12.txt");
+	 else 
+	 	for(String fileName : args) 
+	 		process(fileName);
+	}
+
+	private void process(String fileName) {
   try {
-    FileInputStream stream =	new FileInputStream(new File("shaks12.txt"));
-    System.out.println("READER: input file successfully opened. Processing the complete works of William Shakespeare...");
+    FileInputStream stream =	new FileInputStream(new File(fileName));
+    System.out.println("READER: input file " + fileName + " successfully opened. Starting processing ...");
     int r;
     while ((r = stream.read()) != -1) {
  			 buckets[(char) r].bump();
@@ -40,6 +48,7 @@ module Reader(Bucket[] buckets) {
 			buckets[i].finish(i); 
   System.out.println("READER: work complete.");
 	}
+
 }
 
 module Bucket(Printer p) {
@@ -56,10 +65,10 @@ module Printer() {
 		}
 }
 
-system Histogram {
+system Histogram (String[] args){
 	Reader r; Bucket buckets[128]; Printer p;
 
-	r(buckets);
+	r(args, buckets);
 	for(Bucket b : buckets) {
 	    b(p);
 	}

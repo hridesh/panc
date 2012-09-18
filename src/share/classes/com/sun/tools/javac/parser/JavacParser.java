@@ -2956,8 +2956,19 @@ public class JavacParser implements Parser {
      	accept(IDENTIFIER);
      	int pos = token.pos;
      	Name name = ident();
+
+     	List<JCVariableDecl> params; 
+     	if(token.kind == LPAREN)
+     		params = formalParameters();
+     	else
+     		params = List.<JCVariableDecl>nil();
+     	
+     	if(params.length() > 1 
+     			|| (params.length() == 1 && !params.get(0).getType().toString().equals("String[]")) )
+     		log.error(token.pos, "system.argument.illegal");
+
      	JCBlock body = systemBlock();
-     	JCSystemDecl result = toP(F.at(pos).SystemDef(mod, name, body));
+     	JCSystemDecl result = toP(F.at(pos).SystemDef(mod, name, body, params));
      	attach(result, dc);
      	inModule = false;
      	return result;
