@@ -65,19 +65,22 @@ public abstract class PaniniModule extends Thread {
   	 */
    @SuppressWarnings("rawtypes")
   	protected final synchronized Panini$Duck get$Next$Duck() {
-  			nomessages: while (this.size <= 0) 
-  				try {	
-  					wait(); 
-  				} catch (InterruptedException e) {
-  					continue nomessages;
-  				}
-
+   		if(this.size <= 0) blockModule();
   			size--;
   			Panini$Duck d = (Panini$Duck) objects[head++];
   			if (head >= objects.length) head = 0;
   			return d;
   	}
 
+   private final void blockModule() {
+ 			nomessages: while (this.size <= 0) 
+ 				try {	
+ 					wait(); 
+ 				} catch (InterruptedException e) {
+ 					continue nomessages;
+ 				}
+   }
+   
    protected final boolean empty() { return size==0; }
    
    protected final void print() { 
