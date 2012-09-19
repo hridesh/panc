@@ -2084,7 +2084,7 @@ public class JavacParser implements Parser {
         case IDENTIFIER:
     		if(token.name().toString().equals("include")){
     			nextToken();
-    			JCExpression exp = parseExpression();
+    			JCExpression exp = qualident();
     			return List.<JCStatement>of(F.at(pos).Include(exp));
     		}
             // end Panini code
