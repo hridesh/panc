@@ -618,64 +618,6 @@ public class Enter extends JCTree.Visitor {
     public void visitLibraryDef(JCLibraryDecl tree){
     	ClassSymbol c;
     	PackageSymbol packge = (PackageSymbol)env.info.scope.owner;
-        ListBuffer<JCTree> interfaces = new ListBuffer<JCTree>();
-        
-    	for(int i=0;i<tree.defs.length();i++){
-	    	if(tree.defs.get(i).getTag()==CLASSDEF){
-	    		JCClassDecl jcClass = (JCClassDecl)tree.defs.get(i);
-	    		if((jcClass.mods.flags & INTERFACE)!=0){
-	    			ListBuffer<JCTree> defs = new ListBuffer<JCTree>();
-	    			ListBuffer<JCExpression> implement = new ListBuffer<JCExpression>();
-	    			implement.add(make.Ident(jcClass.name));
-	    			implement.add(make.TypeApply(make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME)), List.<JCExpression>of(make.Ident(jcClass.name))));
-	    			defs.add(make.VarDef(make.Modifiers(PRIVATE), 
-	    					names.fromString("wrapped"), 
-	    					make.Ident(jcClass.name), null));
-	    			ListBuffer<JCStatement> valueBody = new ListBuffer<JCStatement>();
-	    			
-	    			List<JCCatch> catchers = List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), names.fromString("e"), 
-	    					make.Ident(names.fromString("InterruptedException")), null), 
-	    					make.Block(0, 
-	    							List.<JCStatement>of(make.Return
-	    									(make.Apply(null, make.Ident
-	    											(names.fromString("value")), List.<JCExpression>nil()))))));
-	    			ListBuffer<JCStatement> tryBody = new ListBuffer<JCStatement>();
-	    			tryBody.add(make.If(make.Binary(EQ, 
-	    					make.Ident(names.fromString("wrapped")), make.Literal(TypeTags.BOT, null)), 
-	    					make.Exec(make.Apply(null, 
-	    							make.Ident(names.fromString("wait")), List.<JCExpression>nil())), 
-	    					null));
-	    			tryBody.add(make.Return(make.Apply(null, make.Select(make.Ident(names.fromString("wrapped")), names.fromString("value")), List.<JCExpression>nil())));
-	    			valueBody.add(make.Synchronized(make.This(Type.noType), 
-	    					make.Block(0, List.<JCStatement>of(make.Try(make.Block(0, tryBody.toList()), 
-	    							catchers, null)))));
-	    			defs.add(make.MethodDef(make.Modifiers(PUBLIC), 
-	    					names.fromString("value"), 
-	    					make.Type(syms.booleanType), 
-	    					List.<JCTypeParameter>nil(), 
-	    					List.<JCVariableDecl>nil(), 
-	    					List.<JCExpression>nil(), 
-	    					make.Block(0, valueBody.toList()), 
-	    					null));
-	    			defs.add(make.MethodDef(make.Modifiers(PUBLIC),
-	    					names.fromString(PaniniConstants.PANINI_FINISH), 
-	    					make.Type(syms.voidType), 
-	    					List.<JCTypeParameter>nil(), 
-	    					List.<JCVariableDecl>of(
-	    							make.VarDef(make.Modifiers(0), 
-	    									names.fromString("t"), 
-	    									make.Ident(jcClass.name), null)), 
-	    									List.<JCExpression>nil(), 
-	    									make.Block(0, List.<JCStatement>of(make.Exec(make.Assign
-	    											(make.Ident(names.fromString("wrapped")), make.Ident(names.fromString("t")))))), 
-	    									null));
-	    			interfaces.add(make.ClassDef(make.Modifiers(0), 
-	    					names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" +jcClass.name.toString()), 
-	    					jcClass.getTypeParameters(), jcClass.extending, implement.toList(), 
-	    					defs.toList()));
-	    		}
-	    	}
-    	}
         c = reader.enterClass(tree.name, packge);
         syms.libraries.put(c.flatname, tree);
 //        tree.defs = tree.defs.appendList(interfaces);

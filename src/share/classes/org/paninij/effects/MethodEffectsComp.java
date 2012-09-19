@@ -93,7 +93,7 @@ public class MethodEffectsComp extends JCTree.Visitor {
                 visitResult.add(new OpenEffect(sym));
             } else if (sym.ownerModule() != moduleSym) {
                 System.out.println("LIBRARY CALL: " + tree);
-//                visitResult.add(new LibMethodEffect(sym));
+                visitResult.add(new LibMethodEffect(sym));
             } else {
                 visitResult.add(new MethodEffect(sym));
             }
