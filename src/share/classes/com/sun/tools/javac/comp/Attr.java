@@ -814,7 +814,7 @@ public class Attr extends JCTree.Visitor {
     	tree.defs = tree.defs.append(maindecl);
 
     	tree.switchToClass();
-    	//    	System.out.println(tree);
+//    	    	System.out.println(tree);
     	memberEnter.memberEnter(maindecl, env);
     }
 
@@ -1024,38 +1024,7 @@ public class Attr extends JCTree.Visitor {
 						ListBuffer<JCStatement> joins, Map<Name, Name> variables,
 						JCVariableDecl vdecl) {
 					ClassSymbol c = syms.libclasses.get(names.fromString(vdecl.vartype.toString()));
-					decls.add(vdecl);
-					JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
-							make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
-					newClass.constructor = rs.resolveConstructor
-							(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
-					newClass.type = c.type;
-					JCAssign newAssign = make.at(vdecl.pos()).Assign(make.Ident(vdecl.name),
-							newClass);
-					newAssign.type = vdecl.type;
-					JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
-					nameAssign.type = vdecl.type;
-					inits.append(nameAssign);
-					JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-							make.Select(make.Ident(vdecl.name), names.fromString("start")), 
-							List.<JCExpression>nil()));
-					starts.append(joinAssign);
-					if(c.hasRun){
-						joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-								make.Select(make.Ident(vdecl.name), 
-										names.fromString("join")), List.<JCExpression>nil())))), 
-										List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-												names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-												null), make.Block(0, List.<JCStatement>nil()))), null));
-					}
-					else
-						submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
-								make.Select(make.Ident(vdecl.name), 
-										names.fromString("shutdown")), List.<JCExpression>nil())));
-
-					tree.defs = tree.defs.append(
-							createOwnerInterface(vdecl.vartype.toString()+"_"+vdecl.name.toString()));
-
+					inits.append(vdecl);
 					variables.put(vdecl.name, c.name);
 				}
 
