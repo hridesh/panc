@@ -790,9 +790,9 @@ public class Attr extends JCTree.Visitor {
     			Name vdeclTypeName = names.fromString(vdecl.vartype.toString());
     			if(vdecl.vartype.getTag()==Tag.TYPEAPPLY)
     				vdecl.vartype = ((JCTypeApply)vdecl.vartype).clazz;
-    			if(syms.modules.containsKey(vdeclTypeName))
+    			if(syms.modules.containsKey(names.fromString(vdecl.vartype.toString())))
     				processModuleDef(tree, decls, inits, submits, starts, joins, variables, vdecl);
-    			else if(syms.libclasses.containsKey(vdeclTypeName))
+    			else if(syms.libclasses.containsKey(names.fromString(vdecl.vartype.toString())))
     				processLibModuleDef(tree, decls, inits, submits, starts, joins,	variables, vdecl);
     			else{
     				if(vdecl.vartype.getTag()==MODULEARRAY){
@@ -1119,11 +1119,13 @@ public class Attr extends JCTree.Visitor {
 						ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
 						ListBuffer<JCStatement> joins, Map<Name, Name> variables,
 						JCVariableDecl vdecl) {
-					tree.defs = tree.defs.append(
-							createOwnerInterface(
-									vdecl.vartype.toString()+"_"+vdecl.name.toString()));
-					ClassSymbol c = syms.modules.get(names.fromString(vdecl.vartype.toString()));
-					TypeVar t = new TypeVar(names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), tree.sym, syms.botType);
+					JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), 
+    		    			List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
+    		    	enter.classEnter(typeInterface, env);
+    		    	tree.defs = tree.defs.append(typeInterface);
+    				ClassSymbol c = syms.modules.get(names.fromString(vdecl.vartype.toString()));
+    				
+    				TypeVar t = new TypeVar(names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), tree.sym, syms.botType);
                     t.bound = syms.classType;
         			JCTypeApply typeApply =
         					make.TypeApply(vdecl.vartype, List.<JCExpression>of(make.Ident(names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()))));
@@ -1131,35 +1133,36 @@ public class Attr extends JCTree.Visitor {
         			enter.classEnter(typeApply, env);
         			vdecl.vartype =
         					typeApply;
-					decls.add(vdecl);
-					JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
-							make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
-					newClass.constructor = rs.resolveConstructor
-							(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
-					newClass.type = c.type;
-					JCAssign newAssign = make.at(vdecl.pos()).Assign(make.Ident(vdecl.name),
-							newClass);
-					newAssign.type = vdecl.type;
-					JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
-					nameAssign.type = vdecl.type;
-					inits.append(nameAssign);
-					JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-							make.Select(make.Ident(vdecl.name), names.fromString("start")), 
-							List.<JCExpression>nil()));
-					starts.append(joinAssign);
-					if(c.hasRun){
-						joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-								make.Select(make.Ident(vdecl.name), 
-										names.fromString("join")), List.<JCExpression>nil())))), 
-										List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-												names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-												null), make.Block(0, List.<JCStatement>nil()))), null));
-					}
-					else
-						submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
-								make.Select(make.Ident(vdecl.name), 
-										names.fromString("shutdown")), List.<JCExpression>nil())));
-					variables.put(vdecl.name, c.name);
+        			
+    				decls.add(vdecl);
+    				JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
+    						vdecl.vartype, List.<JCExpression>nil(), null);
+    				newClass.constructor = rs.resolveConstructor
+    						(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
+    				newClass.type = c.type;
+    				JCAssign newAssign = make.at(vdecl.pos()).Assign(make.Ident(vdecl.name),
+    						newClass);
+    				newAssign.type = vdecl.type;
+    				JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
+    				nameAssign.type = vdecl.type;
+    				inits.append(nameAssign);
+    				JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+    						make.Select(make.Ident(vdecl.name), names.fromString("start")), 
+    						List.<JCExpression>nil()));
+    		    	starts.append(joinAssign);
+    		    	if(c.hasRun){
+    		    		joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    		    				make.Select(make.Ident(vdecl.name), 
+    		    				names.fromString("join")), List.<JCExpression>nil())))), 
+    		    				List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
+    		    						names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
+    		    						null), make.Block(0, List.<JCStatement>nil()))), null));
+    		    	}
+    		    	else
+    		    		submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    		    				make.Select(make.Ident(vdecl.name), 
+    		    				names.fromString("shutdown")), List.<JCExpression>nil())));
+    		    	variables.put(vdecl.name, c.name);
 				}
 
 				private JCClassDecl createOwnerInterface(final String interfaceName) {
@@ -1173,10 +1176,26 @@ public class Attr extends JCTree.Visitor {
 					enter.classEnter(typeInterface, env);
 					return typeInterface;
 				}
-    
+				
+    public void visitFree(JCFree tree){
+    	tree.toCast();
+//			    	rs.findVar(env, names.fromString(tree.exp.toString()));
+    	Symbol returnType = rs.findVar(env, names.fromString(tree.exp.toString()));
+//			    	List<Type> params = returnType.type.allparams();
+    	ListBuffer<JCExpression> params = new ListBuffer<JCExpression>();
+    	for(Type t : returnType.type.allparams()){
+    		params.append(make.Ident(names.fromString(t.toString())));
+    	}
+    	List<JCExpression> p = params.toList().tail.prepend(make.Ident(names.fromString("CLIENT")));
+    	tree.clazz = make.TypeApply(make.Ident(returnType.type.tsym), p);
+    	tree.accept(this);
+    }
 				
     public void visitProcDef(JCProcDecl tree){
-    	Type restype = ((MethodType)tree.sym.type).restype;
+    	Type restype;
+    	if(tree.sym.type.tag == TypeTags.METHOD)
+    		restype = ((MethodType)tree.sym.type).restype;
+    	else restype = ((ForAll)tree.sym.type).getReturnType();
     	if(restype.tsym.isModule||tree.sym.getReturnType().isPrimitive()||
     			tree.sym.getReturnType().toString().equals("java.lang.String"))
     	{
