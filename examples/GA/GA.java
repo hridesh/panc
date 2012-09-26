@@ -16,10 +16,9 @@
  *
  * Contributor(s): Hridesh Rajan
  */
+import AILib.*;
 
 module CrossOver (float probability, int max) {
-	include AILib;
-
 	Generation compute(Generation g) {
 		int genSize = g.size();		
 		Generation g1 = new Generation(g);
@@ -29,11 +28,9 @@ module CrossOver (float probability, int max) {
 		}
 		return g1;
 	}
-
 }
 
 module Mutation (float probability, int max) {
- 	include AILib; 
 
 	Generation mutate(Generation g) {
 		int genSize = g.size();
@@ -47,7 +44,6 @@ module Mutation (float probability, int max) {
 }
 
 module Fittest {
-	include AILib;
 	Generation last;
 	
 	void check(Generation g) {
@@ -61,7 +57,7 @@ module Fittest {
 }
 
 module Logger {
-	include AILib; 
+	include AILib;
 	void logit(Generation g) {
 		logGeneration(g);
 	}
