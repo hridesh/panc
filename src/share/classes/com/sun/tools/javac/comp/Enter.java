@@ -798,11 +798,13 @@ public class Enter extends JCTree.Visitor {
         			definitions.add(mdecl);
         	}
         	else if(tree.defs.get(i).getTag() == INCLUDE){
-    			JCInclude inc = (JCInclude)tree.defs.get(i);
-    			if(inc.lib.getTag()==SELECT){
-	    			JCImport imp = make.Import(inc.lib, false);
-	    			env.toplevel.defs = env.toplevel.defs.prepend(imp);
-    			}
+//    			JCInclude inc = (JCInclude)tree.defs.get(i);
+//    			if(inc.lib.getTag()==SELECT){
+//    				JCExpression lib = make.Select(inc.lib,  names.asterisk);
+//	    			JCImport imp = make.Import(lib, false);
+//	    			env.toplevel.defs = env.toplevel.defs.prepend(imp);
+//    			}
+//    			tree.includedLibraries = tree.includedLibraries.append(inc.lib); 
     		}else if(tree.defs.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
     			if(mdecl.mods.flags!=0)
@@ -820,25 +822,6 @@ public class Enter extends JCTree.Visitor {
         		c.hasRun = false;
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
 	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("push")), List.<JCExpression>of(make.Ident(names.fromString("d"))))));
-//	        	ListBuffer<JCStatement> syncBody = new ListBuffer<JCStatement>();
-//	        	syncBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("ensureSpace")), List.<JCExpression>of(make.Literal(mdecl.params.length()+1)))));
-//	        	syncBody.append(make.Exec(make.Assign(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-//	        			make.Binary(PLUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-//	        					make.Literal(mdecl.params.length()+1)))));
-//	        	syncBody.appendList(push(names.fromString("d")));
-//	            if(mdecl.params.length()!=0){
-//	            	for(JCVariableDecl n : mdecl.params){
-//	            		syncBody.appendList(push(n.name));
-//	            	}
-//	            }
-//	            syncBody.append(make.If(make.Binary(EQ, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-//	            		make.Literal(mdecl.params.length()+1)), 
-//	            		make.Exec(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("notifyAll")), List.<JCExpression>nil())),
-//	            		null));
-//	            copyBody.add(make.Synchronized(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), 
-//	            		make.Block(0, syncBody.toList())));
-	            
-	            //change to notify
 	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
 	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 	        	args.add(make.Ident(names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString())));
