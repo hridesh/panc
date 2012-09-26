@@ -342,14 +342,15 @@ public class ModuleInternal extends Internal {
 		boolean addedConstructors = false;
 		ListBuffer<JCExpression> inits = new ListBuffer<JCExpression>();
 		while (iter.hasNext()) {
+			inits = new ListBuffer<JCExpression>();
 			Symbol s = iter.next();
 			if (s.getKind() == ElementKind.METHOD) {
 				MethodSymbol m = (MethodSymbol) s;
 				JCMethodDecl value; 
 				if (!m.type.getReturnType().toString().equals("void"))
-					value = createFutureGetMethod(m.type.getReturnType(), m.name);
+					value = createFutureGetMethod(m, m.name);
 				else 
-					value = createVoidFutureGetMethod(m.name);
+					value = createVoidFutureGetMethod(m, m.name);
 				wrappedMethods.add(value);
 			} else if (s.getKind() == ElementKind.CONSTRUCTOR) {
 				MethodSymbol m = (MethodSymbol) s;
@@ -399,8 +400,17 @@ public class ModuleInternal extends Internal {
 		ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
 
 		if (!method.params.isEmpty()) {
+			inits = new ListBuffer<JCExpression>();
 			ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
 			ListBuffer<JCVariableDecl> consParams = new ListBuffer<JCVariableDecl>();
+			for (JCVariableDecl v : method.params) {
+				if (v.vartype.toString().equals("boolean"))
+					inits.add(falsev());
+				else if (v.vartype.type.isPrimitive()) {
+					inits.add(intlit(0));
+				} else
+					inits.add(nullv());
+			}
 			if (addedConstructors) {
 				consBody.add(es(make.Apply(List.<JCExpression> nil(), id(names._super),
 						inits.toList())));
