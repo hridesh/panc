@@ -40,6 +40,7 @@ import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.PaniniConstants;
 
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.type.TypeKind;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
@@ -317,10 +318,23 @@ public class ModuleInternal extends Internal {
 		}
 		duckClass.defs = duckClass.defs.appendList(newFields);
 	}
+	
+	private String trim(String fullName){
+		int index =0;
+		while(fullName.indexOf(".", index+1)!=-1){
+			index = fullName.indexOf(".", index+1);
+		}
+		if(index ==0)
+			return fullName;
+		else{		
+			String rawClassName = fullName.toString().substring(index+1);
+			return rawClassName;
+		}
+	}
 
 	private JCClassDecl generateNewDuckClass(String classNameSuffix, JCMethodDecl method, ListBuffer<JCTree> constructors, Type restype, Iterator<Symbol> iter) {
-		
-		JCVariableDecl fieldWrapped = var(mods(PRIVATE), "wrapped", restype.toString(), nullv());
+		String rawClassName = trim(restype.toString());
+		JCVariableDecl fieldWrapped = var(mods(PRIVATE), "wrapped", rawClassName, nullv());
 		JCVariableDecl fieldMessageId = var(mods(PRIVATE | FINAL), "messageId", make.TypeIdent(TypeTags.INT), null);
 		JCVariableDecl fieldRedeemed = var(mods(PRIVATE), PaniniConstants.REDEEMED, make.TypeIdent(TypeTags.BOOLEAN), make.Literal(TypeTags.BOOLEAN, 0));
 
@@ -359,7 +373,7 @@ public class ModuleInternal extends Internal {
 		}
 
 		JCMethodDecl messageIdMethod = createPaniniMessageID();
-		JCMethodDecl finishMethod = createPaniniFinishMethod(restype);
+		JCMethodDecl finishMethod = createPaniniFinishMethod(rawClassName);
 
 		JCExpression extending;
 		List<JCExpression> implement;
@@ -375,10 +389,10 @@ public class ModuleInternal extends Internal {
 						ta(id(PaniniConstants.DUCK_INTERFACE_NAME), args(id("Void"))))
 						.toList();
 			} else {
-				extending = id(restype.toString());
+				extending = id(rawClassName);
 				implement = implementing(
 						ta(id(PaniniConstants.DUCK_INTERFACE_NAME),
-								args(id(restype.toString())))).toList();
+								args(id(rawClassName)))).toList();
 			}
 		}
 
@@ -410,7 +424,7 @@ public class ModuleInternal extends Internal {
 		JCClassDecl wrappedClass = make.ClassDef(
 				mods(0),
 				names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$"
-						+ restype.toString() + "$" + classNameSuffix),
+						+ rawClassName + "$" + classNameSuffix),
 						List.<JCTypeParameter> nil(), extending, implement,
 						defs(fieldWrapped, fieldMessageId, fieldRedeemed, finishMethod, messageIdMethod).appendList(variableFields)
 						.appendList(constructors).appendList(wrappedMethods).toList());
@@ -418,9 +432,9 @@ public class ModuleInternal extends Internal {
 		return wrappedClass;
 	}
 
-	private JCMethodDecl createPaniniFinishMethod(Type restype) {
+	private JCMethodDecl createPaniniFinishMethod(String restype) {
 		ListBuffer<JCVariableDecl> finishParams = new ListBuffer<JCVariableDecl>();
-		finishParams.add(var(mods(0), "t", restype.toString()));
+		finishParams.add(var(mods(0), "t", restype));
 		JCMethodDecl finishMethod = method(
 				mods(PUBLIC | FINAL),
 				names.fromString(PaniniConstants.PANINI_FINISH),
