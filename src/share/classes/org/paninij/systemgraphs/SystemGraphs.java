@@ -22,9 +22,13 @@ import java.util.HashSet;
 // system-specified module instances as nodes.
 public class SystemGraphs {
     public static class Node { // a module instance
-        public ClassSymbol sym; public String name;
-        public Node(ClassSymbol sym, String name) { this.sym = sym; this.name = name; }
-        public String toString() { return sym + " " + name; }
+        public ClassSymbol sym; public String name; public int index;
+        public Node(ClassSymbol sym, String name) { this.sym = sym; this.name = name; this.index = -1; }
+        public Node(ClassSymbol sym, String name, int index) { this.sym = sym; this.name = name; this.index = index; }
+        public String toString() { 
+            if (index==-1) return sym + " " + name;
+            else return sym + " " + name + "[" + index + "]";
+        }
     }
     public static class ProcEdge {
         public String varName;
@@ -39,14 +43,16 @@ public class SystemGraphs {
             this.varName = varName;
         }
         public String toString() {
-            return from + " -> " + to + " [label=" + called + "]";
+            return "\"" + from + "\" -> \"" + to + "\" [label=" + called + "]";
         }
     }
     public static class ConnectionEdge {
         public String varName;
+        public int index;
         public Node from, to;
-        public ConnectionEdge(Node from, Node to, String varName) { this.from = from; this.to = to; this.varName = varName; }
-        public String toString() { return from + " -> " + to; }
+        public ConnectionEdge(Node from, Node to, String varName) { this.from = from; this.to = to; this.varName = varName; index = -1;}
+        public ConnectionEdge(Node from, Node to, String varName, int index) { this.from = from; this.to = to; this.varName = varName; this.index = index;}
+        public String toString() { return "\"" + from + "\" -> \"" + to + "\""; }
     }
 
     public HashMap<Node, HashSet<ProcEdge>> forwardProcEdges = new HashMap<Node, HashSet<ProcEdge>>();
@@ -61,6 +67,10 @@ public class SystemGraphs {
 
     public void addConnectionEdge(Node from, Node to, String name) {
         forwardConnectionEdges.get(from).add(new ConnectionEdge(from, to, name));
+    }
+
+    public void addConnectionEdge(Node from, Node to, String name, int index) {
+        forwardConnectionEdges.get(from).add(new ConnectionEdge(from, to, name, index));
     }
 
     public void addProcEdge(Node from, Node to, MethodSymbol caller, 
