@@ -473,39 +473,78 @@ public class ModuleInternal extends Internal {
 						es(assign(select(thist(), "messageId"), id("messageId")))));
 	}
 
-	private JCMethodDecl createFutureGetMethod(Type returnType, Name method_name) {
-		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(
-				make.VarDef(make.Modifiers(0), names.fromString("e"),
-						make.Ident(names.fromString("InterruptedException")), null),
+	private JCMethodDecl createFutureGetMethod(MethodSymbol m, Name method_name) {
+		ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
+		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+		JCExpression restype = make.Type(m.type.getReturnType());
+		
+		// TODO correct type parameter replacements
+		if(m.type.getReturnType().getKind()==TypeKind.DECLARED){
+			if(m.type.getReturnType().toString().equals("java.lang.Object")){
+				restype = id(trim(((ClassType)m.owner.type).supertype_field.getTypeArguments().head.toString()));
+			}
+		}
+		
+		// TODO correct type parameter replacements
+		if(m.getParameters()!=null){
+			for(VarSymbol v:m.getParameters()){
+				if(v.type.toString().equals("java.lang.Object")){
+					params.add(var(mods(0), v.name, id(trim(((ClassType)m.owner.type).supertype_field.getTypeArguments().head.toString()))));
+				}else
+					params.add(make.VarDef(v, null));
+				args.add(id(v.name));
+			}
+		}
+		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
+				make.Modifiers(0), names.fromString("e"),
+				make.Ident(names.fromString("InterruptedException")), null),
 				make.Block(
 						0,
-						List.<JCStatement> of(make.Return(make.Apply(null,
-								make.Ident(method_name), List.<JCExpression> nil()))))));
+						List.<JCStatement> of(returnt(apply("wrapped", method_name.toString(), args))))));
 		JCMethodDecl value = method(
 				mods(PUBLIC),
 				method_name,
-				make.Type(returnType),
-				body(make.Try(body(sync(make.This(Type.noType), body(whilel(
-						isFalse(PaniniConstants.REDEEMED), es(apply("wait")))))), catchers,
-						null), returnt(apply("wrapped", method_name))));
+				restype,
+				params,
+				body(make.Try(
+						body(sync(
+								make.This(Type.noType),
+								body(whilel(isFalse(PaniniConstants.REDEEMED),
+										es(apply("wait")))))), catchers, null),
+						returnt(apply("wrapped", method_name.toString(), args))));
 		return value;
 	}
 
-	private JCMethodDecl createVoidFutureGetMethod(Name method_name) {
-		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(
-				make.VarDef(make.Modifiers(0), names.fromString("e"),
-						make.Ident(names.fromString("InterruptedException")), null),
+	private JCMethodDecl createVoidFutureGetMethod(MethodSymbol m, Name method_name) {
+		ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
+		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+		
+		// TODO correct type parameter replacements
+		if(m.getParameters()!=null){
+			for(VarSymbol v:m.getParameters()){
+				if(v.type.toString().equals("java.lang.Object")){
+					params.add(var(mods(0), v.name, id(trim(((ClassType)m.owner.type).supertype_field.getTypeArguments().head.toString()))));
+				}else
+					params.add(make.VarDef(v, null));
+				args.add(id(v.name));
+			}
+		}
+		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
+				make.Modifiers(0), names.fromString("e"),
+				make.Ident(names.fromString("InterruptedException")), null),
 				make.Block(0, List.<JCStatement> of(make.Exec(make.Apply(null,
-						make.Ident(method_name), List.<JCExpression> nil()))))));
+					make.Ident(method_name),
+					args.toList()))))));
 		JCMethodDecl delegate = method(
 				mods(PUBLIC | FINAL),
 				method_name,
 				make.Type(syms.voidType),
+				params,
 				body(make.Try(body(sync(make.This(Type.noType), body(whilel(
 				// Test whether the duck is ready.
 				// while (redeemed == false) wait();
 						isFalse(PaniniConstants.REDEEMED), es(apply("wait")))))), catchers,
-						null), es(apply("wrapped", method_name))));
+						null), es(apply("wrapped", method_name.toString(), args))));
 		return delegate;
 	}
 
