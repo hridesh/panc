@@ -86,8 +86,8 @@ public class ModuleInternal extends Internal {
 										cast(
 												PaniniConstants.DUCK_INTERFACE_NAME + "$"
 														+ method.restype.toString() + "$" + tree.name.toString(),
-												id("d")), method.params.get(i).name.append(names.fromString("$"))
-												.append(method.name)))));
+												id("d")), names.fromString(method.params.get(i).vartype.toString()+"$").append(method.params.get(i).name.append(names.fromString("$"))
+												.append(method.name))))));
 				args.append(id("var" + varIndex++));
 			}
 
@@ -103,8 +103,13 @@ public class ModuleInternal extends Internal {
 				System.exit(5555);
 			}
 			caseStatements.append(break_());
+			String constantName = PaniniConstants.PANINI_METHOD_CONST + method.name.toString();
+			if(method.params.nonEmpty())
+			for(JCVariableDecl param: method.params){
+				constantName = constantName + "$" + param.vartype.toString();
+			}
 			cases.append(case_(
-					id(PaniniConstants.PANINI_METHOD_CONST + method.name.toString()),
+					id(constantName),
 					caseStatements));
 		}
 

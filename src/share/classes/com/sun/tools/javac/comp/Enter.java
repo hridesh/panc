@@ -777,9 +777,14 @@ public class Enter extends JCTree.Visitor {
         		}
         		else if((mdecl.mods.flags & PRIVATE) ==0
         					&&(mdecl.mods.flags & PROTECTED) ==0){
+        			String constantName = PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString();
+            		if(mdecl.params.nonEmpty())
+            			for(JCVariableDecl param: mdecl.params){
+            				constantName = constantName + "$" + param.vartype.toString();
+            			}
     				mdecl.mods.flags |= PUBLIC;
     				JCVariableDecl v = make.VarDef(make.Modifiers(PUBLIC | STATIC | FINAL),
-    						names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString()),
+    						names.fromString(constantName),
     						make.TypeIdent(TypeTags.INT),
     					    make.Literal(indexer++));
                     JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC),
@@ -819,12 +824,17 @@ public class Enter extends JCTree.Visitor {
         }
         if(!hasRun){
         	for(JCMethodDecl mdecl : tree.publicMethods){
+        		String constantName = PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString();
+        		if(mdecl.params.nonEmpty())
+        			for(JCVariableDecl param: mdecl.params){
+        				constantName = constantName + "$" + param.vartype.toString();
+        			}
         		c.hasRun = false;
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
 	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("push")), List.<JCExpression>of(make.Ident(names.fromString("d"))))));
 	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
 	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
-	        	args.add(make.Ident(names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString())));
+	        	args.add(make.Ident(names.fromString(constantName)));
 	            for(JCVariableDecl v : mdecl.params){
 	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
 	            	args.append(make.Ident(v.name));
