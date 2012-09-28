@@ -241,15 +241,18 @@ public class ModuleInternal extends Internal {
 							consParams.add(var(mods(0), par.name, par.vartype));
 							consBody.add(es(assign(
 									select(thist(),
-											par.name.append(names.fromString("$")).append(method.name)
-													.toString()), id(par.name))));
+											names.fromString(par.vartype.toString() + "$")
+											.append(par.name.append(
+													names.fromString("$")).append(
+													method.name)).toString()), 
+									id(par.name))));
 							variableFields.add(var(mods(PUBLIC),
-									par.name.append(names.fromString("$")).append(method.name),
+									names.fromString(par.vartype.toString()+"$").append(par.name.append(names.fromString("$")).append(method.name)),
 									par.vartype));
 						}
 						constructors.add(constructor(mods(PUBLIC), consParams, body(consBody)));
 					}
-
+					
 					JCClassDecl wrappedClass = make.ClassDef(
 							mods(0),
 							names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$"
@@ -306,14 +309,17 @@ public class ModuleInternal extends Internal {
 				consParams.add(var(mods(0), par.name, par.vartype));
 				consBody.add(es(assign(
 						select(thist(),
-								par.name.append(names.fromString("$")).append(method.name)
-										.toString()), id(par.name))));
+								names.fromString(par.vartype.toString() + "$")
+										.append(par.name.append(
+												names.fromString("$")).append(
+												method.name)).toString()),
+						id(par.name))));
 			}
 			duckClass.defs = duckClass.defs.append(constructor(mods(PUBLIC), consParams, body(consBody)));
 		}
 		for (JCVariableDecl par : method.params) {
 			newFields.add(var(mods(PUBLIC),
-					par.name.append(names.fromString("$")).append(method.name),
+					names.fromString(par.vartype.toString()+"$").append(par.name.append(names.fromString("$")).append(method.name)),
 					par.vartype));
 		}
 		duckClass.defs = duckClass.defs.appendList(newFields);
