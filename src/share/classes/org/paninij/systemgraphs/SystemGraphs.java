@@ -65,6 +65,13 @@ public class SystemGraphs {
         return n;
     }
 
+    public Node addModule(ClassSymbol sym, String name, int i) {
+        Node n = new Node(sym, name, i);
+        forwardProcEdges.put(n, new HashSet<ProcEdge>());
+        forwardConnectionEdges.put(n, new HashSet<ConnectionEdge>());
+        return n;
+    }
+
     public void addConnectionEdge(Node from, Node to, String name) {
         forwardConnectionEdges.get(from).add(new ConnectionEdge(from, to, name));
     }
@@ -81,8 +88,8 @@ public class SystemGraphs {
 
     public String toString() {
         String returnValue = "digraph G {\n";
-        for (Collection<ProcEdge> edges : forwardProcEdges.values()) {
-            for (ProcEdge edge : edges) {
+        for (Collection<ConnectionEdge> edges : forwardConnectionEdges.values()) {
+            for (ConnectionEdge edge : edges) {
                 returnValue += edge + "\n";
             }
         }

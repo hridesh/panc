@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Collection;
 
 import org.paninij.effects.ASTChainNodeBuilder;
 import org.paninij.systemgraphs.SystemGraphs.*;
@@ -29,7 +30,7 @@ public class SystemGraphsBuilder extends TreeScanner {
     private SystemGraphs graphs;
     private Node currentModule;
 
-    static class ModuleNameMap extends HashMap<String, ArrayList<Node>> {
+    static class ModuleNameMap {
         HashMap<String, ArrayList<Node>> nodes = new HashMap<String, ArrayList<Node>>();
         public void put(String name, Node n) {
             ArrayList<Node> nodeArray = new ArrayList<Node>();
@@ -38,7 +39,7 @@ public class SystemGraphsBuilder extends TreeScanner {
         }
         public Node get(String name) {
             ArrayList<Node> nodeArray = nodes.get(name);
-            if (nodeArray.size() == 1) return nodeArray.get(1);
+            if (nodeArray.size() == 1) return nodeArray.get(0);
             else return null;
         }
 
@@ -48,6 +49,10 @@ public class SystemGraphsBuilder extends TreeScanner {
         public Node get(String name, int index) {
             ArrayList<Node> nodeArray = nodes.get(name);
             return nodeArray.get(index);
+        }
+
+        public int howMany(String name) {
+            return nodes.get(name).size();
         }
 
         public Collection<Node> allNodes() {
@@ -81,6 +86,7 @@ public class SystemGraphsBuilder extends TreeScanner {
         graphs = new SystemGraphs();
         moduleNames = new ModuleNameMap();
         scan(system.body);
+        System.out.println(graphs);
 
         finishedMethods = new HashSet<NodeMethod>();
 
@@ -98,7 +104,7 @@ public class SystemGraphsBuilder extends TreeScanner {
                 }
             }
         }
-        System.out.println(graphs);
+
         return graphs;
     }
 
@@ -131,8 +137,6 @@ public class SystemGraphsBuilder extends TreeScanner {
     }
     
     public void traverseCallGraph(MethodSymbol method) {
-        System.out.println(currentModule);
-        System.out.println(method);
         if (finishedMethods.contains(new NodeMethod(currentModule, method))) return;
         finishedMethods.add(new NodeMethod(currentModule, method));
         for (MethodSymbol.MethodInfo calledMethodInfo : method.calledMethods) {
@@ -160,6 +164,7 @@ public class SystemGraphsBuilder extends TreeScanner {
             JCModuleArray type = (JCModuleArray)tree.vartype;
             String moduleName = type.elemtype.toString();
             String varName = tree.name.toString();
+            System.out.println("array: " + varName);
             if(syms.modules.containsKey(names.fromString(moduleName))) {
                 ClassSymbol c = syms.modules.get(names.fromString(moduleName));
                 ArrayList<Node> nodes = new ArrayList<Node>(type.amount);
@@ -171,6 +176,7 @@ public class SystemGraphsBuilder extends TreeScanner {
         } else {
             String moduleName = tree.vartype.toString();
             String varName = tree.name.toString();
+            System.out.println(varName);
             if(syms.modules.containsKey(names.fromString(moduleName))) {
                 ClassSymbol c = syms.modules.get(names.fromString(moduleName));
                 moduleNames.put(varName, graphs.addModule(c, varName));
@@ -191,9 +197,43 @@ public class SystemGraphsBuilder extends TreeScanner {
         }
     }
 
-/*    public void visitForeachLoop(JCEnhancedForLoop tree) {
-
-      }*/
+    public void visitForeachLoop(JCEnhancedForLoop tree) {
+        final String varName = tree.var.name.toString();
+        final String moduleArrayName = tree.expr.toString();
+        if (moduleNames.howMany(moduleArrayName) == 0) {
+            System.out.println("Illegal foreach loop argument in system decl");
+            System.exit(1);
+        }
+        
+        for (int i = 0; i < moduleNames.howMany(moduleArrayName); i++) {
+            final Node module = moduleNames.get(moduleArrayName, i);
+            final int j = i;
+            new TreeScanner() {
+                public void visitApply(JCMethodInvocation tree) {
+                    String recipient = tree.meth.toString();
+                    Node module;
+                    System.out.println(recipient);
+                    if (recipient.equals(varName))
+                        module = moduleNames.get(moduleArrayName, j);
+                    else 
+                        module = moduleNames.get(recipient);
+                    for (int i = 0; i < tree.args.size(); i++) {
+                        JCExpression arg = tree.args.get(i);
+                        String name = ((JCModuleDecl)module.sym.tree).params.get(i).name.toString();
+                        if (arg.getTag()==Tag.IDENT) {
+                            Node argModule;
+                            if (arg.toString().equals(varName))
+                                argModule = moduleNames.get(moduleArrayName, j);
+                            else
+                                argModule = moduleNames.get(arg.toString());
+                            if (module != null)
+                                graphs.addConnectionEdge(module, argModule, name);
+                        }
+                    }
+                }
+            }.scan(tree.body);
+        }
+    }
     public void visitModuleArrayCall(JCModuleArrayCall tree) { 
         if(tree.index.getTag()!=Tag.LITERAL) { 
             System.out.println("Illegal module array call index");
@@ -202,6 +242,6 @@ public class SystemGraphsBuilder extends TreeScanner {
         JCLiteral indexExp = (JCLiteral)tree.index;
         int indexValue = (Integer)indexExp.value;
 
-        Node module = moduleNames.get(tree.meth.toString(), indexValue);
+        Node module = moduleNames.get(tree.name.toString(), indexValue);
     }
 }

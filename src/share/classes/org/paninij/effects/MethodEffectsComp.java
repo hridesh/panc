@@ -48,9 +48,6 @@ public class MethodEffectsComp extends JCTree.Visitor {
     private Symbol moduleSym;
 
     public EffectSet computeEffectsForMethod(ASTChain chain, Symbol moduleSym) {
-        new ASTChainPrinter().printChain(chain);
-        System.out.println(moduleSym);
-
         this.chain = chain;
         this.moduleSym = moduleSym;
         nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
@@ -92,7 +89,7 @@ public class MethodEffectsComp extends JCTree.Visitor {
             if (sym.owner.isModule && sym.owner != moduleSym) {
                 visitResult.add(new OpenEffect(sym));
             } else if (sym.ownerModule() != moduleSym) {
-                System.out.println("LIBRARY CALL: " + tree);
+//                System.out.println("LIBRARY CALL: " + tree);
                 visitResult.add(new LibMethodEffect(sym));
             } else {
                 visitResult.add(new MethodEffect(sym));
@@ -122,7 +119,6 @@ public class MethodEffectsComp extends JCTree.Visitor {
         }
     }
     public void visitIdent(JCIdent tree) {
-        System.out.println(tree);
         if (tree.sym.getKind() == ElementKind.FIELD) {
             if (!tree.sym.name.toString().equals("this")) {
                 if (!(chain.endHeapRepresentation.locationForSymbol(tree.sym)

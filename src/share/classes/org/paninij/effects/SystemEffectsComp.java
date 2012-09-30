@@ -91,13 +91,12 @@ public class SystemEffectsComp {
     }
 
     public void substituteLibEffects(JCSystemDecl system) {
-
         effectsSub.substituteLibEffects(moduleEffectsComp.methodEffects);
 
-        for (JCMethodDecl m : moduleEffectsComp.methodEffects.keySet()) {
+/*        for (JCMethodDecl m : moduleEffectsComp.methodEffects.keySet()) {
             System.out.println(m);
             System.out.println(moduleEffectsComp.methodEffects.get(m));
-        }
+            }*/
 
     }
 }
