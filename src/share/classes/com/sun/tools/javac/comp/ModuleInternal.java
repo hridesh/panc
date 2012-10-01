@@ -433,10 +433,10 @@ public class ModuleInternal extends Internal {
 				consParams.add(var(mods(0), par.name, par.vartype));
 				consBody.add(es(assign(
 						select(thist(),
-								par.name.append(names.fromString("$")).append(method.name)
-								.toString()), id(par.name))));
+								names.fromString(par.vartype.toString()+"$").append(par.name.append(names.fromString("$")).append(method.name)
+								).toString()), id(par.name))));
 				variableFields.add(var(mods(PUBLIC),
-						par.name.append(names.fromString("$")).append(method.name),
+						names.fromString(par.vartype.toString()+"$").append(par.name.append(names.fromString("$")).append(method.name)),
 						par.vartype));
 			}
 			constructors.add(constructor(mods(PUBLIC), consParams, body(consBody)));
@@ -596,7 +596,7 @@ public class ModuleInternal extends Internal {
 						for (JCVariableDecl var : v)
 							((JCMethodDecl) def).body.stats = ((JCMethodDecl) def).body.stats
 									.append(es(assign(
-											select(thist(), var.name.toString() + "$" + name.toString()),
+											select(thist(), var.vartype.toString() + "$" + var.name.toString() + "$" + name.toString()),
 											id(var.name.toString()))));
 					}
 				}
