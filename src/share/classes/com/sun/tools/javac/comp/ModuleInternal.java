@@ -66,7 +66,7 @@ public class ModuleInternal extends Internal {
 	public JCBlock generateComputeMethodBody(JCModuleDecl tree) {
 		JCModifiers noMods = mods(0);
 		ListBuffer<JCStatement> messageLoopBody = new ListBuffer<JCStatement>();
-		messageLoopBody.append(var(noMods, "d", PaniniConstants.DUCK_INTERFACE_NAME,
+		messageLoopBody.append(var(noMods, PaniniConstants.PANINI_DUCK_TYPE, PaniniConstants.DUCK_INTERFACE_NAME,
 				apply(PaniniConstants.PANINI_GET_NEXT_DUCK)));
 
 		ListBuffer<JCCase> cases = new ListBuffer<JCCase>();
@@ -86,7 +86,7 @@ public class ModuleInternal extends Internal {
 										cast(
 												PaniniConstants.DUCK_INTERFACE_NAME + "$"
 														+ method.restype.toString() + "$" + tree.name.toString(),
-												id("d")), names.fromString(method.params.get(i).vartype.toString()+"$").append(method.params.get(i).name.append(names.fromString("$"))
+												id(PaniniConstants.PANINI_DUCK_TYPE)), names.fromString(method.params.get(i).vartype.toString()+"$").append(method.params.get(i).name.append(names.fromString("$"))
 												.append(method.name))))));
 				args.append(id("var" + varIndex++));
 			}
@@ -94,9 +94,9 @@ public class ModuleInternal extends Internal {
 			Type returnType = ((MethodType) method.sym.type).restype;
 			if (returnType.tag == TypeTags.VOID) {
 				caseStatements.append(es(createOriginalCall(method, args)));
-				caseStatements.append(es(apply("d", "panini$finish", args(nullv()))));
+				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, "panini$finish", args(nullv()))));
 			} else if (returnType.tag == TypeTags.CLASS) {
-				caseStatements.append(es(apply("d", "panini$finish",
+				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, "panini$finish",
 						args(createOriginalCall(method, args)))));
 			} else {
 				System.out.println("Unsupported return type in a public module method. Can only be void or non-primitive.");
@@ -119,7 +119,7 @@ public class ModuleInternal extends Internal {
 		ListBuffer<JCStatement> exitBody = createTerminationLogic();
 		cases.append(case_(intlit(-2), exitBody));
 
-		messageLoopBody.append(swtch(apply("d", PaniniConstants.PANINI_MESSAGE_ID), cases));
+		messageLoopBody.append(swtch(apply(PaniniConstants.PANINI_DUCK_TYPE, PaniniConstants.PANINI_MESSAGE_ID), cases));
 		
 		JCBlock b = body(
 				var(mods(0), PaniniConstants.PANINI_TERMINATE,
@@ -138,7 +138,7 @@ public class ModuleInternal extends Internal {
 				gt(select(thist(), "size"), intlit(0)),
 				body(
 						es(make.Apply(List.<JCExpression> nil(), id("push"),
-								List.<JCExpression> of(id("d")))), break_())));
+								List.<JCExpression> of(id(PaniniConstants.PANINI_DUCK_TYPE)))), break_())));
 		return shutDownBody;
 	}
 

@@ -39,6 +39,7 @@ public class PaniniConstants {
 	public final static String PANINI_TERMINATE = "panini$terminate";
 	public final static String PANINI_METHOD_CONST = "panini$methodConst$";
 	public final static String PANINI_MESSAGE_ID = "panini$message$id";
+	public final static String PANINI_DUCK_TYPE = "panini$duck$future";
 
 	// To implement the flag in the duck.
 	public final static String REDEEMED = "redeemed";
