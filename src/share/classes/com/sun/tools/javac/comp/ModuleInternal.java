@@ -82,12 +82,11 @@ public class ModuleInternal extends Internal {
 						"var" + varIndex,
 						varType,
 						cast(varType,
-								make.Select(
+								select(
 										cast(
 												PaniniConstants.DUCK_INTERFACE_NAME + "$"
 														+ method.restype.toString() + "$" + tree.name.toString(),
-												id(PaniniConstants.PANINI_DUCK_TYPE)), names.fromString(method.params.get(i).vartype.toString()+"$").append(method.params.get(i).name.append(names.fromString("$"))
-												.append(method.name))))));
+														id(PaniniConstants.PANINI_DUCK_TYPE)), createFieldString(method.name.toString(), varType.toString(), method.params.get(i).name.toString(), method.params)))));
 				args.append(id("var" + varIndex++));
 			}
 
@@ -245,14 +244,10 @@ public class ModuleInternal extends Internal {
 						for (JCVariableDecl par : method.params) {
 							consParams.add(var(mods(0), par.name, par.vartype));
 							consBody.add(es(assign(
-									select(thist(),
-											names.fromString(par.vartype.toString() + "$")
-											.append(par.name.append(
-													names.fromString("$")).append(
-													method.name)).toString()), 
+									select(thist(), createFieldString(method.name, par, method.params)), 
 									id(par.name))));
 							variableFields.add(var(mods(PUBLIC),
-									names.fromString(par.vartype.toString()+"$").append(par.name.append(names.fromString("$")).append(method.name)),
+									names.fromString(createFieldString(method.name, par, method.params)),
 									par.vartype));
 						}
 						constructors.add(constructor(mods(PUBLIC), consParams, body(consBody)));
@@ -314,17 +309,14 @@ public class ModuleInternal extends Internal {
 				consParams.add(var(mods(0), par.name, par.vartype));
 				consBody.add(es(assign(
 						select(thist(),
-								names.fromString(par.vartype.toString() + "$")
-										.append(par.name.append(
-												names.fromString("$")).append(
-												method.name)).toString()),
+								createFieldString(method.name, par, method.params)),
 						id(par.name))));
 			}
 			duckClass.defs = duckClass.defs.append(constructor(mods(PUBLIC), consParams, body(consBody)));
 		}
 		for (JCVariableDecl par : method.params) {
 			newFields.add(var(mods(PUBLIC),
-					names.fromString(par.vartype.toString()+"$").append(par.name.append(names.fromString("$")).append(method.name)),
+					names.fromString(createFieldString(method.name, par, method.params)),
 					par.vartype));
 		}
 		duckClass.defs = duckClass.defs.appendList(newFields);
@@ -424,10 +416,9 @@ public class ModuleInternal extends Internal {
 				consParams.add(var(mods(0), par.name, par.vartype));
 				consBody.add(es(assign(
 						select(thist(),
-								names.fromString(par.vartype.toString()+"$").append(par.name.append(names.fromString("$")).append(method.name)
-								).toString()), id(par.name))));
+								createFieldString(method.name, par, method.params)), id(par.name))));
 				variableFields.add(var(mods(PUBLIC),
-						names.fromString(par.vartype.toString()+"$").append(par.name.append(names.fromString("$")).append(method.name)),
+						names.fromString(createFieldString(method.name, par, method.params)),
 						par.vartype));
 			}
 			constructors.add(constructor(mods(PUBLIC), consParams, body(consBody)));
@@ -587,12 +578,25 @@ public class ModuleInternal extends Internal {
 						for (JCVariableDecl var : v)
 							((JCMethodDecl) def).body.stats = ((JCMethodDecl) def).body.stats
 									.append(es(assign(
-											select(thist(), var.vartype.toString() + "$" + var.name.toString() + "$" + name.toString()),
+											select(thist(), createFieldString(((JCMethodDecl)def).name, var, v)),
 											id(var.name.toString()))));
 					}
 				}
 			}
 		}
 		return result;
+	}
+	
+	private String createFieldString(Name name, JCVariableDecl param, List<JCVariableDecl> params){
+		return createFieldString(name.toString(), param.vartype.toString(), param.name.toString(), params);
+	}
+	private String createFieldString(String name, String vartype, String paramName, List<JCVariableDecl> params){
+		String fieldName;
+		fieldName = vartype + "$" + paramName + "$" + name;
+		if(params.nonEmpty())
+		for(JCVariableDecl v : params){
+			fieldName = fieldName + "$" + v.vartype.toString();
+		}
+		return fieldName;
 	}
 }
