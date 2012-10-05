@@ -22,6 +22,8 @@ package com.sun.tools.javac.util;
 public class PaniniConstants {
 	public final static String PANINI = "Panini$";
 	public final static String PANINI_QUEUE = "PaniniModule";
+	public final static String PANINI_MODULE_SEQUENTIAL = "PaniniModuleSequential";
+	public final static String PANINI_MODULE_THREAD = "PaniniModuleThread";
 	public final static String PANINI_MODULE_OBJECTS = "objects";
 	public final static String PANINI_MODULE_HEAD = "head";
 	public final static String PANINI_MODULE_TAIL = "tail";

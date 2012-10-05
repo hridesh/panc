@@ -652,12 +652,7 @@ public class Enter extends JCTree.Visitor {
     	pid = make.Ident(names.fromString("org"));
     	pid = make.Select(pid, names.fromString("paninij"));
     	pid = make.Select(pid, names.fromString("runtime"));
-    	pid = make.Select(pid, names.fromString("PaniniModule"));
-    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
-    	pid = make.Ident(names.fromString("org"));
-    	pid = make.Select(pid, names.fromString("paninij"));
-    	pid = make.Select(pid, names.fromString("runtime"));
-    	pid = make.Select(pid, names.fromString("ModuleKind"));
+    	pid = make.Select(pid, names.asterisk);
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     	pid = make.Ident(names.fromString("org"));
     	pid = make.Select(pid, names.fromString("paninij"));
@@ -672,7 +667,6 @@ public class Enter extends JCTree.Visitor {
     	pid = make.Select(pid, names.fromString("Panini$Duck$Void"));
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     	
-    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_QUEUE));
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
         ClassSymbol c;
@@ -800,32 +794,13 @@ public class Enter extends JCTree.Visitor {
     }
     
     public ListBuffer<JCTree> translateSerialModule(JCModuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
+    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SEQUENTIAL));
         boolean hasRun = false;
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
         for(int i=0;i<tree.defs.length();i++){
         	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
         		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
-        		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
-            		MethodSymbol msym = new MethodSymbol(
-            				PUBLIC|FINAL,
-            				names.fromString("run"),
-            				new MethodType(
-            						List.<Type>nil(),
-            						syms.voidType,
-            						List.<Type>nil(),
-            						syms.methodClass
-            						),
-            						tree.sym
-            				);
-            		JCMethodDecl computeDecl = make.MethodDef(msym,
-            				mdecl.body);
-            		computeDecl.params = List.<JCVariableDecl>nil();
-            		memberEnter.memberEnter(computeDecl, localEnv);
-            		definitions.add(computeDecl);
-                    tree.computeMethod = computeDecl;
-            		hasRun=true;
-        		}
-        		else if((mdecl.mods.flags & PRIVATE) ==0
+        		if((mdecl.mods.flags & PRIVATE) ==0
         					&&(mdecl.mods.flags & PROTECTED) ==0){
                     JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC|Flags.SYNCHRONIZED),
                     		mdecl.name,
@@ -854,8 +829,8 @@ public class Enter extends JCTree.Visitor {
     			definitions.add(state);
     		}else definitions.add(tree.defs.get(i));
         }
-        if(hasRun)
-        	c.hasRun = true;
+        c.hasRun = false;
+        c.isSerial = true;
         for(JCMethodDecl d : tree.publicMethods){
     		definitions.add(d);
     	}
@@ -864,6 +839,7 @@ public class Enter extends JCTree.Visitor {
     }
     
     public ListBuffer<JCTree> translateActiveModule(JCModuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
+    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_THREAD));
     	int indexer = 0;
         boolean hasRun = false;
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();

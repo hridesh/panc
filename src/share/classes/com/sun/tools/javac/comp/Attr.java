@@ -1046,10 +1046,12 @@ public class Attr extends JCTree.Visitor {
 					JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
 					nameAssign.type = vdecl.type;
 					inits.append(nameAssign);
-					JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-							make.Select(make.Ident(vdecl.name), names.fromString("start")), 
-							List.<JCExpression>nil()));
-					starts.append(joinAssign);
+					if(!c.isSerial){
+						JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+								make.Select(make.Ident(vdecl.name), names.fromString("start")), 
+								List.<JCExpression>nil()));
+						starts.append(joinAssign);
+					}
 					if(c.hasRun){
 						joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
 								make.Select(make.Ident(vdecl.name), 
@@ -1058,7 +1060,7 @@ public class Attr extends JCTree.Visitor {
 												names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
 												null), make.Block(0, List.<JCStatement>nil()))), null));
 					}
-					else
+					else if (!c.isSerial)
 						submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
 								make.Select(make.Ident(vdecl.name), 
 										names.fromString("shutdown")), List.<JCExpression>nil())));

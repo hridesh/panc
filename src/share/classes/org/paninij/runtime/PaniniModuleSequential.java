@@ -18,8 +18,8 @@
  */
 
 package org.paninij.runtime;
-public interface PaniniModule{
-   
+
+public abstract class PaniniModuleSequential implements PaniniModule{
   	/**
   	 * Causes the current module to sleep (temporarily cease execution) 
   	 * for the specified number of milliseconds, subject to the precision 
@@ -30,7 +30,16 @@ public interface PaniniModule{
   	 * @throws IllegalArgumentException - if the value of millis is negative
   	 * 
   	 */
-  	public abstract void yield (long millis);  	
+  	public void yield (long millis) {
+  		if(millis < 0) throw new IllegalArgumentException();
+  		try {
+  			Thread.sleep(millis);
+  			//TODO: this may also be a good place to introduce interleaving.
+  		} catch (InterruptedException e) {
+  			e.printStackTrace();
+  			//TODO: What should be the semantics here? 
+  		}
+  	}  	
   	
   	/**
   	 * Causes the current module to complete its remaining work and then cease execution.
@@ -43,7 +52,8 @@ public interface PaniniModule{
   	 * @throws SecurityException - if the client module is not allowed to access this module.
   	 * 
   	 */
-  	public abstract void shutdown();
+  	public final void shutdown () {
+  	}
   	
   	/**
   	 * Causes the current module to immediately cease execution. 
@@ -56,5 +66,7 @@ public interface PaniniModule{
   	 * @throws SecurityException - if the client module is not allowed to access this module.
   	 * 
   	 */
-  	public abstract void exit ();
+  	public final void exit () {
+  	}
+
 }
