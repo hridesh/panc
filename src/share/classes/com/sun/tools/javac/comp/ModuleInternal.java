@@ -578,7 +578,7 @@ public class ModuleInternal extends Internal {
 						for (JCVariableDecl var : v)
 							((JCMethodDecl) def).body.stats = ((JCMethodDecl) def).body.stats
 									.append(es(assign(
-											select(thist(), createFieldString(((JCMethodDecl)def).name, var, v)),
+											select(thist(), createFieldString(name, var, v)),
 											id(var.name.toString()))));
 					}
 				}
