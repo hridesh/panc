@@ -1061,8 +1061,10 @@ public abstract class Symbol implements Element {
             }
 
         }
+        // built in ASTChainNodeBuilder
         public HashSet<MethodSymbol> callerMethods = new HashSet<MethodSymbol>();
         public HashSet<MethodInfo> calledMethods = new HashSet<MethodInfo>();
+        // built in ReachedProcsComp
         public HashSet<MethodInfo> reachedProcs = new HashSet<MethodInfo>();
     	// end Panini code
     	

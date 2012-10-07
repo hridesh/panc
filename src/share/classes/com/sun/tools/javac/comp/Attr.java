@@ -837,9 +837,10 @@ public class Attr extends JCTree.Visitor {
                 JCVariableDecl varDecl = (JCVariableDecl)v;
                 ClassSymbol c = syms.modules.get(names.fromString(varDecl.vartype.toString()));
                 if (varDecl.vartype.toString().contains("[]")) {
-                    System.out.println("\n\n\nConsistency checker doesn't yet support module arrays. Exiting now.\n\n\n");
-                    System.exit(5);
-                }
+//                    System.out.println("\n\n\nConsistency checker doesn't yet support module arrays. Exiting now.\n\n\n");
+//                    System.exit(5);
+                    c = syms.modules.get(names.fromString(varDecl.vartype.toString().substring(0, varDecl.vartype.toString().indexOf("["))));
+                    }
                 if (!modules.contains(c)) modules.append(c);
             }
         }

@@ -87,9 +87,17 @@ public class SystemGraphs {
     }
 
     public String toString() {
-        String returnValue = "digraph G {\n";
+        String returnValue = "digraph C {\n";
         for (Collection<ConnectionEdge> edges : forwardConnectionEdges.values()) {
             for (ConnectionEdge edge : edges) {
+                returnValue += edge + "\n";
+            }
+        }
+        returnValue += "}\n";
+
+        returnValue += "digraph P {\n";
+        for (Collection<ProcEdge> edges : forwardProcEdges.values()) {
+            for (ProcEdge edge : edges) {
                 returnValue += edge + "\n";
             }
         }

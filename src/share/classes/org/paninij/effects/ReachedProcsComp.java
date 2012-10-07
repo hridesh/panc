@@ -42,13 +42,15 @@ public class ReachedProcsComp {
         visitedMethods = new HashSet<MethodSymbol>();
     }
 
+    // For each procedure call/run method, traverse call graph and make todo queue.
+    // Called in ModuleEffectsComp
     public void todoReachedProcs(JCModuleDecl module) {
         for(JCTree def : module.defs) {
         	if(def.getTag() == Tag.METHODDEF) {
                 JCMethodDecl method = (JCMethodDecl)def;
                 if ((method.sym.flags() & PRIVATE) != 0 ||
                     (method.sym.name.toString().equals("run") &&
-                     module.sym.hasRun)) {
+                     module.sym.hasRun)) { // is a procedure call or the run method
                     methodsToProcess.add(method);
                     traverseCallGraph(method.sym);
                 }
@@ -56,6 +58,8 @@ public class ReachedProcsComp {
         }
     }
     
+    // Process the todo queue. 
+    // Called in Attr.visitSystemDef -> SystemEffectsComp.substituteProcEffects
     public void computeReachedProcs(JCModuleDecl module) {
         currentModule = module.sym;
 
@@ -79,13 +83,14 @@ public class ReachedProcsComp {
         }
     }
 
+    // traverses intramodule call graph, adding methods to a todo queue
     HashSet<MethodSymbol> visitedMethods = new HashSet<MethodSymbol>();
     private void traverseCallGraph(MethodSymbol method) {
         visitedMethods.add(method);
 
         for (MethodSymbol.MethodInfo calledMethodInfo : method.calledMethods) {
-            if (calledMethodInfo.method.tree == null) continue;
-            if (calledMethodInfo.module == null) {
+            if (calledMethodInfo.method.tree == null) continue; // why?
+            if (calledMethodInfo.module == null) { // keep on going if not a module call
                 if (!visitedMethods.contains(calledMethodInfo.method)) {
                     methodsToProcess.add(calledMethodInfo.method.tree);
                     traverseCallGraph(calledMethodInfo.method);

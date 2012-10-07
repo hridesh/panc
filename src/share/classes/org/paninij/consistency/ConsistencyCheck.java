@@ -100,7 +100,7 @@ public class ConsistencyCheck {
                     NodeMethod nm = new NodeMethod(null, null);
                     for (NodeMethod nm1 : intersect) nm = nm1;
                     System.out.println("potential consistency problem starting in " + currentMethod + " ending in " + nm.n + "'s " + nm.m);
-                    System.exit(1);
+//                    System.exit(1);
                 }
 
                 EffectSet effects = new EffectSet();
@@ -110,7 +110,7 @@ public class ConsistencyCheck {
                     System.out.println(e);
                     if (effects.intersects(e)) {
                         System.out.println("potential consistency problem starting in " + currentMethod + " ending in " + intersect);
-                        System.exit(1);
+//                        System.exit(1);
                     }
                 }
             }

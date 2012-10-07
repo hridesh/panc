@@ -86,7 +86,6 @@ public class SystemGraphsBuilder extends TreeScanner {
         graphs = new SystemGraphs();
         moduleNames = new ModuleNameMap();
         scan(system.body);
-        System.out.println(graphs);
 
         finishedMethods = new HashSet<NodeMethod>();
 
@@ -104,6 +103,8 @@ public class SystemGraphsBuilder extends TreeScanner {
                 }
             }
         }
+
+        System.out.println(graphs);
 
         return graphs;
     }
@@ -164,7 +165,6 @@ public class SystemGraphsBuilder extends TreeScanner {
             JCModuleArray type = (JCModuleArray)tree.vartype;
             String moduleName = type.elemtype.toString();
             String varName = tree.name.toString();
-            System.out.println("array: " + varName);
             if(syms.modules.containsKey(names.fromString(moduleName))) {
                 ClassSymbol c = syms.modules.get(names.fromString(moduleName));
                 ArrayList<Node> nodes = new ArrayList<Node>(type.amount);
@@ -176,7 +176,6 @@ public class SystemGraphsBuilder extends TreeScanner {
         } else {
             String moduleName = tree.vartype.toString();
             String varName = tree.name.toString();
-            System.out.println(varName);
             if(syms.modules.containsKey(names.fromString(moduleName))) {
                 ClassSymbol c = syms.modules.get(names.fromString(moduleName));
                 moduleNames.put(varName, graphs.addModule(c, varName));
@@ -212,7 +211,6 @@ public class SystemGraphsBuilder extends TreeScanner {
                 public void visitApply(JCMethodInvocation tree) {
                     String recipient = tree.meth.toString();
                     Node module;
-                    System.out.println(recipient);
                     if (recipient.equals(varName))
                         module = moduleNames.get(moduleArrayName, j);
                     else 
