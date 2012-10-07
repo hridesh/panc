@@ -47,7 +47,6 @@ public class SystemEffectsComp {
 
     ReachedProcsComp reachedProcsComp;
     public ModuleEffectsComp moduleEffectsComp;
-    public LibraryEffectsComp libraryEffectsComp;
     private EffectsSub effectsSub;
 
     public static SystemEffectsComp instance(Context context) {
@@ -61,8 +60,6 @@ public class SystemEffectsComp {
         context.put(secKey, this);
         reachedProcsComp = ReachedProcsComp.instance(context);
         moduleEffectsComp = ModuleEffectsComp.instance(context);
-        libraryEffectsComp = LibraryEffectsComp.instance(context);
-        libraryEffectsComp.methodEffects = moduleEffectsComp.methodEffects;
         effectsSub = EffectsSub.instance(context);
     }
 
@@ -72,10 +69,6 @@ public class SystemEffectsComp {
 
     }
 
-    public void computeEffects(JCLibraryDecl library) {
-        libraryEffectsComp.computeEffects(library);
-    }
-
     LinkedList<JCModuleDecl> moduleDecls = new LinkedList<JCModuleDecl>();
 
     public void substituteProcEffects(JCSystemDecl system) {
@@ -83,20 +76,10 @@ public class SystemEffectsComp {
         effectsSub.substituteProcEffects(moduleEffectsComp.methodEffects);
            for (JCModuleDecl module : moduleDecls) 
             reachedProcsComp.computeReachedProcs(module);
-           /*for (JCMethodDecl m : moduleEffectsComp.methodEffects.keySet()) {
-            System.out.println(m);
-            System.out.println(moduleEffectsComp.methodEffects.get(m));
-            }*/
-
-    }
-
-    public void substituteLibEffects(JCSystemDecl system) {
-        effectsSub.substituteLibEffects(moduleEffectsComp.methodEffects);
-
-/*        for (JCMethodDecl m : moduleEffectsComp.methodEffects.keySet()) {
-            System.out.println(m);
-            System.out.println(moduleEffectsComp.methodEffects.get(m));
-            }*/
+           for (JCMethodDecl m : moduleEffectsComp.methodEffects.keySet()) {
+               System.out.println(m);
+               System.out.println(moduleEffectsComp.methodEffects.get(m));
+           }
 
     }
 }

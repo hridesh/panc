@@ -91,7 +91,7 @@ public class ModuleEffectsComp {
             for (MethodSymbol.MethodInfo calledMethodInfo : method.sym.calledMethods) {
                 MethodSymbol calledMethod = calledMethodInfo.method;
                 if (calledMethod.tree == null) continue;
-                if (calledMethod.ownerModule() != module.sym) continue; // null means library symbol
+                //if (calledMethod.ownerModule() != module.sym) continue; // null means library symbol
                 if (!visitedMethods.contains(calledMethod.tree))
                     methodsToProcess.offer(calledMethod.tree);
             }

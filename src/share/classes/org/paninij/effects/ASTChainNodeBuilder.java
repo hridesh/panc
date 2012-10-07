@@ -507,7 +507,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
     public void visitApply(JCMethodInvocation tree) {
         ASTChainNode node = new ASTChainNode(tree);
 
-        tree.meth.accept(this);
+//        tree.meth.accept(this);
 
 		if(tree.args.isEmpty()) {
 			currentStartNodes = new ArrayList<ASTChainNode>(1);

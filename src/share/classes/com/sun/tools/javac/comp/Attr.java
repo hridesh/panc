@@ -100,6 +100,7 @@ public class Attr extends JCTree.Visitor {
     ModuleInternal moduleInternal;
     SystemEffectsComp effects;
     SystemGraphsBuilder graphsBuilder;
+    public static boolean doGraphs = false;
     // end Ptolemy code
 
     public static Attr instance(Context context) {
@@ -767,23 +768,21 @@ public class Attr extends JCTree.Visitor {
         		
         	}
         }
-        effects.computeEffects(tree);
+        if (doGraphs)
+            effects.computeEffects(tree);
     }
 
 
     public void visitSystemDef(JCSystemDecl tree) {
-/*        for (JCLibraryDecl l : syms.libraries.values()) {
-            effects.computeEffects(l);
-            }*/
-
-        tree.sym.graphs = graphsBuilder.buildGraphs(tree);
-        effects.substituteProcEffects(tree);
-//        effects.substituteLibEffects(tree);
-        ConsistencyCheck cc = 
-            new ConsistencyCheck(effects.moduleEffectsComp.methodEffects);
-        for (SystemGraphs.Node n :
-                 tree.sym.graphs.forwardConnectionEdges.keySet()) {
-            cc.checkConsistency(tree.sym.graphs, n);
+        if (doGraphs) {
+            tree.sym.graphs = graphsBuilder.buildGraphs(tree);
+            effects.substituteProcEffects(tree);
+            ConsistencyCheck cc = 
+                new ConsistencyCheck(effects.moduleEffectsComp.methodEffects);
+            for (SystemGraphs.Node n :
+                     tree.sym.graphs.forwardConnectionEdges.keySet()) {
+                cc.checkConsistency(tree.sym.graphs, n);
+            }
         }
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
@@ -830,21 +829,22 @@ public class Attr extends JCTree.Visitor {
     	
     	tree.switchToClass();
     	memberEnter.memberEnter(maindecl, env);
-
-        ListBuffer<Symbol> modules = new ListBuffer<Symbol>();
-        for (JCStatement v : decls) {
-            if (v.getTag() == VARDEF) {
-                JCVariableDecl varDecl = (JCVariableDecl)v;
-                ClassSymbol c = syms.modules.get(names.fromString(varDecl.vartype.toString()));
-                if (varDecl.vartype.toString().contains("[]")) {
+        if (doGraphs) {
+            ListBuffer<Symbol> modules = new ListBuffer<Symbol>();
+            for (JCStatement v : decls) {
+                if (v.getTag() == VARDEF) {
+                    JCVariableDecl varDecl = (JCVariableDecl)v;
+                    ClassSymbol c = syms.modules.get(names.fromString(varDecl.vartype.toString()));
+                    if (varDecl.vartype.toString().contains("[]")) {
 //                    System.out.println("\n\n\nConsistency checker doesn't yet support module arrays. Exiting now.\n\n\n");
 //                    System.exit(5);
-                    c = syms.modules.get(names.fromString(varDecl.vartype.toString().substring(0, varDecl.vartype.toString().indexOf("["))));
+                        c = syms.modules.get(names.fromString(varDecl.vartype.toString().substring(0, varDecl.vartype.toString().indexOf("["))));
                     }
-                if (!modules.contains(c)) modules.append(c);
+                    if (!modules.contains(c)) modules.append(c);
+                }
             }
+            tree.sym.modules = modules.toList();
         }
-        tree.sym.modules = modules.toList();
     }
 
 				private JCMethodDecl addMainMethod(JCSystemDecl tree,
