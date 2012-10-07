@@ -618,9 +618,24 @@ public class Enter extends JCTree.Visitor {
     public void visitLibraryDef(JCLibraryDecl tree){
     	ClassSymbol c;
     	PackageSymbol packge = (PackageSymbol)env.info.scope.owner;
-        c = reader.enterClass(tree.name, packge);
-        syms.libraries.put(c.flatname, tree);
-//        tree.defs = tree.defs.appendList(interfaces);
+    	for(JCTree statement :tree.defs){
+    		if(statement.getTag()==CLASSDEF){
+    			JCClassDecl cdecl = (JCClassDecl)statement;
+    			ClassSymbol cs;
+    	        cs = reader.enterClass(cdecl.name, packge);
+    	        cdecl.sym = cs;
+    	        syms.libclasses.put(cdecl.name, cs);
+    			classEnter(cdecl, env);
+    		}else if(statement.getTag() == INCLUDE){
+    			JCInclude inc = (JCInclude)statement;
+    			if(inc.lib.getTag()==SELECT){
+	    			JCImport imp = make.Import(inc.lib, false);
+	    			env.toplevel.defs = env.toplevel.defs.prepend(imp);
+    			}
+    		}
+		}
+//        c = reader.enterClass(tree.name, packge);
+        tree.switchToClass();
     }
     
     public void visitModuleDef(JCModuleDecl tree){
@@ -637,7 +652,7 @@ public class Enter extends JCTree.Visitor {
     	pid = make.Ident(names.fromString("org"));
     	pid = make.Select(pid, names.fromString("paninij"));
     	pid = make.Select(pid, names.fromString("runtime"));
-    	pid = make.Select(pid, names.fromString("PaniniModule"));
+    	pid = make.Select(pid, names.asterisk);
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     	pid = make.Ident(names.fromString("org"));
     	pid = make.Select(pid, names.fromString("paninij"));
@@ -652,7 +667,6 @@ public class Enter extends JCTree.Visitor {
     	pid = make.Select(pid, names.fromString("Panini$Duck$Void"));
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     	
-    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_QUEUE));
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
         ClassSymbol c;
@@ -734,8 +748,100 @@ public class Enter extends JCTree.Visitor {
         // completed later.
         if (!c.isLocal() && uncompleted != null) uncompleted.append(c);
 //      System.err.println("entering " + c.fullname + " in " + c.owner);//DEBUG
-
-        int indexer = 0;
+        
+        c.flags_field = processModuleAnnotations(tree, c);
+        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+        if((c.flags_field & SERIAL)!=0){
+        	definitions = translateSerialModule(tree, c, localEnv);
+        }
+        else if((c.flags_field & ACTIVE)!=0){
+        	definitions = translateActiveModule(tree, c, localEnv);
+        }
+        else //default action
+        	definitions = translateActiveModule(tree, c, localEnv);
+    	List<JCVariableDecl> fields = tree.getParameters();
+    	while(fields.nonEmpty()){
+    		definitions.prepend(make.VarDef(make.Modifiers(PUBLIC),
+    				fields.head.name,
+    				fields.head.vartype,
+    				null));
+    		fields = fields.tail;
+    	}
+    	
+    	tree.defs = definitions.toList();;
+        tree.sym = c;
+        c.isModule = true;
+        syms.modules.put(c.fullname, c);
+        syms.moduleparams.put(c, tree.params);
+        result = c.type;
+        classEnter(tree.defs, localEnv);
+        tree.switchToClass();
+    }
+    
+    public List<JCStatement> push(Name n){
+    	ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
+    	stats.add(make.Exec(make.Assign(make.Indexed(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
+    			make.Unary(POSTINC, 
+    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
+    					make.Ident(n))));
+    	stats.add(make.If(make.Binary(GE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
+    			make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
+    					names.fromString("length"))), 
+    			make.Exec(make.Assign(
+    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
+    					make.Literal(0))), 
+    			null));
+    	return stats.toList();
+    }
+    
+    public ListBuffer<JCTree> translateSerialModule(JCModuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
+    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SEQUENTIAL));
+        boolean hasRun = false;
+        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+        for(int i=0;i<tree.defs.length();i++){
+        	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
+        		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
+        		if((mdecl.mods.flags & PRIVATE) ==0
+        					&&(mdecl.mods.flags & PROTECTED) ==0){
+                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC|Flags.SYNCHRONIZED),
+                    		mdecl.name,
+                    		mdecl.restype,
+                    		mdecl.typarams,
+                    		mdecl.params,
+                    		mdecl.thrown,
+                    		mdecl.body,
+                    		null
+                    		);
+                    p.switchToMethod();
+                    tree.publicMethods = tree.publicMethods.append(p);
+        		}else 
+        			definitions.add(mdecl);
+        	}
+        	else if(tree.defs.get(i).getTag() == INCLUDE){
+    		}else if(tree.defs.get(i).getTag() == VARDEF){
+    			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
+    			if(mdecl.mods.flags!=0)
+    				log.error(mdecl.pos(), "illegal.state.modifiers");
+    			if(mdecl.init ==null)
+    				log.warning(mdecl.pos(), "state.not.initialized");
+    			mdecl.mods.flags |=PRIVATE;
+    			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, mdecl.vartype, mdecl.init);
+    			state.switchToVar();
+    			definitions.add(state);
+    		}else definitions.add(tree.defs.get(i));
+        }
+        c.hasRun = false;
+        c.isSerial = true;
+        for(JCMethodDecl d : tree.publicMethods){
+    		definitions.add(d);
+    	}
+        tree.needsDefaultRun = false;
+        return definitions;
+    }
+    
+    public ListBuffer<JCTree> translateActiveModule(JCModuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
+    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_THREAD));
+    	int indexer = 0;
         boolean hasRun = false;
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
         for(int i=0;i<tree.defs.length();i++){
@@ -763,9 +869,14 @@ public class Enter extends JCTree.Visitor {
         		}
         		else if((mdecl.mods.flags & PRIVATE) ==0
         					&&(mdecl.mods.flags & PROTECTED) ==0){
+        			String constantName = PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString();
+            		if(mdecl.params.nonEmpty())
+            			for(JCVariableDecl param: mdecl.params){
+            				constantName = constantName + "$" + param.vartype.toString();
+            			}
     				mdecl.mods.flags |= PUBLIC;
     				JCVariableDecl v = make.VarDef(make.Modifiers(PUBLIC | STATIC | FINAL),
-    						names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString()),
+    						names.fromString(constantName),
     						make.TypeIdent(TypeTags.INT),
     					    make.Literal(indexer++));
                     JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC),
@@ -784,29 +895,6 @@ public class Enter extends JCTree.Visitor {
         			definitions.add(mdecl);
         	}
         	else if(tree.defs.get(i).getTag() == INCLUDE){
-    			JCInclude inc = (JCInclude)tree.defs.get(i);
-    			if(syms.libraries.containsKey(names.fromString(inc.lib.toString()))){
-    				if(!syms.libraries.get(names.fromString(inc.lib.toString())).isIncluded()){
-    					JCLibraryDecl libdecl = syms.libraries.get(names.fromString(inc.lib.toString()));
-    					libdecl.switchIncluded();
-    					syms.libraries.put(names.fromString(inc.lib.toString()), libdecl);
-    					for(int j=0;j<libdecl.defs.length();j++){
-    						JCClassDecl cdecl = (JCClassDecl)libdecl.defs.get(j);
-    						env.toplevel.defs = env.toplevel.defs.append(cdecl);
-    						ClassSymbol cs;
-    				    	PackageSymbol packge = (PackageSymbol)env.info.scope.owner;
-    				        
-    				        cs = reader.enterClass(cdecl.name, packge);
-    				        cdecl.sym = cs;
-    				        syms.libclasses.put(cdecl.name, cs);
-    						classEnter(cdecl, env);
-    					}
-    				}
-    			}
-				else {
-	    			JCImport imp = make.Import(inc.lib, false);
-	    			env.toplevel.defs = env.toplevel.defs.prepend(imp);
-    			}
     		}else if(tree.defs.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
     			if(mdecl.mods.flags!=0)
@@ -821,31 +909,17 @@ public class Enter extends JCTree.Visitor {
         }
         if(!hasRun){
         	for(JCMethodDecl mdecl : tree.publicMethods){
+        		String constantName = PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString();
+        		if(mdecl.params.nonEmpty())
+        			for(JCVariableDecl param: mdecl.params){
+        				constantName = constantName + "$" + param.vartype.toString();
+        			}
         		c.hasRun = false;
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
-	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("push")), List.<JCExpression>of(make.Ident(names.fromString("d"))))));
-//	        	ListBuffer<JCStatement> syncBody = new ListBuffer<JCStatement>();
-//	        	syncBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("ensureSpace")), List.<JCExpression>of(make.Literal(mdecl.params.length()+1)))));
-//	        	syncBody.append(make.Exec(make.Assign(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-//	        			make.Binary(PLUS, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-//	        					make.Literal(mdecl.params.length()+1)))));
-//	        	syncBody.appendList(push(names.fromString("d")));
-//	            if(mdecl.params.length()!=0){
-//	            	for(JCVariableDecl n : mdecl.params){
-//	            		syncBody.appendList(push(n.name));
-//	            	}
-//	            }
-//	            syncBody.append(make.If(make.Binary(EQ, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_SIZE)), 
-//	            		make.Literal(mdecl.params.length()+1)), 
-//	            		make.Exec(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), names.fromString("notifyAll")), List.<JCExpression>nil())),
-//	            		null));
-//	            copyBody.add(make.Synchronized(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_QUEUELOCK)), 
-//	            		make.Block(0, syncBody.toList())));
-	            
-	            //change to notify
+	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("push")), List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))))));
 	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
 	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
-	        	args.add(make.Ident(names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString())));
+	        	args.add(make.Ident(names.fromString(constantName)));
 	            for(JCVariableDecl v : mdecl.params){
 	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
 	            	args.append(make.Ident(v.name));
@@ -853,16 +927,16 @@ public class Enter extends JCTree.Visitor {
 	            
 	            if(!mdecl.restype.toString().equals("void")){
 	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
-	            			names.fromString("d"), 
+	            			names.fromString(PaniniConstants.PANINI_DUCK_TYPE), 
 	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
 	            			make.NewClass(null, List.<JCExpression>nil(), 
 	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
 	            					args.toList(), null)));
-	            	copyBody.append(make.Return(make.Ident(names.fromString("d"))));
+	            	copyBody.append(make.Return(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))));
 	            }
 	            else{
 	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
-	            			names.fromString("d"), 
+	            			names.fromString(PaniniConstants.PANINI_DUCK_TYPE), 
 	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
 	            			make.NewClass(null, List.<JCExpression>nil(), 
 	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
@@ -939,39 +1013,25 @@ public class Enter extends JCTree.Visitor {
 
         	//add from public methods
         }
-    	List<JCVariableDecl> fields = tree.getParameters();
-    	while(fields.nonEmpty()){
-    		definitions.prepend(make.VarDef(make.Modifiers(PUBLIC),
-    				fields.head.name,
-    				fields.head.vartype,
-    				null));
-    		fields = fields.tail;
-    	}
-    	
-    	tree.defs = definitions.toList();;
-        tree.sym = c;
-        c.isModule = true;
-        syms.modules.put(c.fullname, c);
-        syms.moduleparams.put(c, tree.params);
-        result = c.type;
-        classEnter(tree.defs, localEnv);
-        tree.switchToClass();
+        return definitions;
     }
     
-    public List<JCStatement> push(Name n){
-    	ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
-    	stats.add(make.Exec(make.Assign(make.Indexed(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
-    			make.Unary(POSTINC, 
-    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)))), 
-    					make.Ident(n))));
-    	stats.add(make.If(make.Binary(GE, make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
-    			make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_OBJECTS)), 
-    					names.fromString("length"))), 
-    			make.Exec(make.Assign(
-    					make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TAIL)), 
-    					make.Literal(0))), 
-    			null));
-    	return stats.toList();
+    public long processModuleAnnotations(JCModuleDecl tree, ClassSymbol c){
+    	for(JCAnnotation annotation : tree.mods.annotations){
+    		if(annotation.annotationType.toString().equals("ModuleKind")){
+    			if(annotation.args.isEmpty())
+    				log.error(tree.pos(), "annotation.missing.default.value", annotation, "value");
+    			else if (annotation.args.size()!=1||annotation.args.head.getTag()!=ASSIGN)
+    				log.error(tree.pos(), "annotation.value.must.be.name.value");
+    			else if (((JCLiteral)((JCAssign)annotation.args.head).rhs).value.equals("SERIAL"))
+    				return c.flags_field |= SERIAL;
+    			else if (((JCLiteral)((JCAssign)annotation.args.head).rhs).value.equals("ACTIVE"))
+    				return c.flags_field |= ACTIVE;
+    			else
+    				log.error(tree.pos(), "annotation.value.not.allowable.type");
+    		}	
+    	}
+    	return c.flags_field;
     }
     
     // end Panini code

@@ -723,57 +723,58 @@ public class Attr extends JCTree.Visitor {
     }
     
     // Panini code
-    public List<JCStatement> transWiring(JCMethodInvocation mi, Map<Name, Name> variables){
+    private List<JCStatement> transWiring(final JCMethodInvocation mi, final Map<Name, Name> variables){
     	if(variables.get(names
-				.fromString(mi.meth.toString()))==null){
+    			.fromString(mi.meth.toString()))==null){
     		log.error(mi.pos(), "module.array.type.error", mi.meth);
     	}
     	ClassSymbol c = (ClassSymbol) rs
-				.findType(env, variables.get(names
-						.fromString(mi.meth.toString())));
+    			.findType(env, variables.get(names
+    					.fromString(mi.meth.toString())));
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
-		if (mi.args.length() != syms.moduleparams.get(c).length()) {
-			log.error(mi.pos(), "arguments.of.wiring.mismatch");
-		} else {
-			for (int j = 0; j < mi.args.length(); j++) {
-				JCAssign newAssign = make
-						.at(mi.pos())
-						.Assign(make.Select(mi.meth,
-								syms.moduleparams.get(c).get(j)
-										.getName()), mi.args.get(j));
-				JCExpressionStatement assignAssign = make
-						.Exec(newAssign);
-				assigns.append(assignAssign);
-			}
-		}
-		return assigns.toList();
+
+    	if (mi.args.length() != syms.moduleparams.get(c).length()) {
+    		log.error(mi.pos(), "arguments.of.wiring.mismatch");
+    	} else {
+    		for (int j = 0; j < mi.args.length(); j++) {
+    			JCAssign newAssign = make
+    					.at(mi.pos())
+    					.Assign(make.Select(mi.meth,
+    							syms.moduleparams.get(c).get(j)
+    							.getName()), mi.args.get(j));
+    			JCExpressionStatement assignAssign = make
+    					.Exec(newAssign);
+    			assigns.append(assignAssign);
+    		}
+    	}
+    	return assigns.toList();
     }
 
-    public void visitModuleDef(JCModuleDecl tree){
-        if (tree.needsDefaultRun){
-        	List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree, env, rs);
-        	enter.classEnter(wrapperClasses, env.outer);
-        	attribClassBody(env, tree.sym);
-            tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
-        	}
-        else
-        	attribClassBody(env, tree.sym);
-        for(JCTree def : tree.defs){
-        	if(def.getTag() == Tag.METHODDEF){
-        		for(JCVariableDecl param : ((JCMethodDecl)def).params){
-        			if(param.type.tsym.isModule&&!((JCMethodDecl)def).name.toString().contains("$Original")){
-        				log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.name);
-        			}
-        		}
-        		
-        	}
-        }
+    public final void visitModuleDef(final JCModuleDecl tree){
+    	if (tree.needsDefaultRun){
+    		List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree, env, rs);
+    		enter.classEnter(wrapperClasses, env.outer);
+    		//        	System.out.println(wrapperClasses);
+    		attribClassBody(env, tree.sym);
+    		tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
+    	}
+    	else
+    		attribClassBody(env, tree.sym);
+    	for(JCTree def : tree.defs){
+    		if(def.getTag() == Tag.METHODDEF){
+    			for(JCVariableDecl param : ((JCMethodDecl)def).params){
+    				if(param.type.tsym.isModule&&!((JCMethodDecl)def).name.toString().contains("$Original")){
+    					log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.name);
+    				}
+    			}
+
+    		}
+    	}
         if (doGraphs)
             effects.computeEffects(tree);
     }
 
-
-    public void visitSystemDef(JCSystemDecl tree) {
+    public final void visitSystemDef(final JCSystemDecl tree){
         if (doGraphs) {
             tree.sym.graphs = graphsBuilder.buildGraphs(tree);
             effects.substituteProcEffects(tree);
@@ -793,41 +794,47 @@ public class Attr extends JCTree.Visitor {
     	Map<Name, Name> variables = new HashMap<Name, Name>();
     	Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
     	for(int i=0;i <tree.body.stats.length();i++){
-    		if(tree.body.stats.get(i).getTag() == VARDEF){
-    			JCVariableDecl vdecl = (JCVariableDecl)tree.body.stats.get(i);
-    			if(syms.modules.containsKey(names.fromString(vdecl.vartype.toString())))
+    		JCStatement currentSystemStmt = tree.body.stats.get(i);
+    		Tag systemStmtKind = currentSystemStmt.getTag();
+    		if(systemStmtKind == VARDEF){
+    			JCVariableDecl vdecl = (JCVariableDecl) currentSystemStmt;
+    			Name vdeclTypeName = names.fromString(vdecl.vartype.toString());
+    			if(syms.modules.containsKey(vdeclTypeName))
     				processModuleDef(tree, decls, inits, submits, starts, joins, variables, vdecl);
-    			else if(syms.libclasses.containsKey(names.fromString(vdecl.vartype.toString())))
+    			else if(syms.libclasses.containsKey(vdeclTypeName))
     				processLibModuleDef(tree, decls, inits, submits, starts, joins,	variables, vdecl);
     			else{
     				if(vdecl.vartype.getTag()==MODULEARRAY){
     					processModuleArray(tree, decls, assigns, submits, starts, joins,	variables, modArrays, vdecl);
     				}
     				else{
-    					if(vdecl.vartype.getTag()==TYPEIDENT ||vdecl.vartype.toString().equals("String")){
+    					if(vdecl.vartype.getTag()==TYPEIDENT || vdecl.vartype.toString().equals("String")){
     						vdecl.mods.flags |=FINAL;
     						decls.add(vdecl);
     					} else
     						log.error(vdecl.pos(), "only.primitive.types.or.strings.allowed");
     				}
     			}
-    		} else if(tree.body.stats.get(i).getTag() == EXEC){
-    			if(((JCExpressionStatement)tree.body.stats.get(i)).expr.getTag()==APPLY){
-    				processModuleWiring(tree, assigns, variables, i);
+    		} else if(systemStmtKind == EXEC){
+    			JCExpressionStatement currentExprStmt = (JCExpressionStatement) currentSystemStmt;
+    			if(currentExprStmt.expr.getTag()==APPLY){
+    				processModuleWiring(currentExprStmt.expr, assigns, variables);
     			}
-    		}else if(tree.body.stats.get(i).getTag() == FOREACHLOOP)
-    			processForEachLoop(tree, assigns, variables, i);
-    		else if(tree.body.stats.get(i).getTag()==MAAPPLY)
-    			processModuleArrayWiring(tree, assigns, variables, modArrays, i);
+    		}else if(systemStmtKind == FOREACHLOOP)
+    			processForEachLoop((JCEnhancedForLoop) currentSystemStmt, assigns, variables);
+    		else if(systemStmtKind == MAAPPLY)
+    			processModuleArrayWiring((JCModuleArrayCall) currentSystemStmt, assigns, variables, modArrays);
     		else  			
     			throw new AssertionError("Invalid statement gone through the parser");
     	}
 
-
-    	JCMethodDecl maindecl = addMainMethod(tree, decls, inits, assigns, submits, starts, joins);
+    	List<JCStatement> mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
+    	JCMethodDecl maindecl = createMainMethod(tree.sym, tree.body, tree.params, mainStmts);
+    	tree.defs = tree.defs.append(maindecl);
 
     	
     	tree.switchToClass();
+
     	memberEnter.memberEnter(maindecl, env);
         if (doGraphs) {
             ListBuffer<Symbol> modules = new ListBuffer<Symbol>();
@@ -847,10 +854,7 @@ public class Attr extends JCTree.Visitor {
         }
     }
 
-				private JCMethodDecl addMainMethod(JCSystemDecl tree,
-						ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
-						ListBuffer<JCStatement> assigns, ListBuffer<JCStatement> submits,
-						ListBuffer<JCStatement> starts, ListBuffer<JCStatement> joins) {
+				private final JCMethodDecl createMainMethod(final ClassSymbol containingClass, final JCBlock methodBody, final List<JCVariableDecl> params, final List<JCStatement> mainStmts) {
 					Type arrayType = new ArrayType(syms.stringType, syms.arrayClass);
     	MethodSymbol msym = new MethodSymbol(
     			PUBLIC|STATIC,
@@ -861,23 +865,21 @@ public class Attr extends JCTree.Visitor {
     					List.<Type>nil(),
     					syms.methodClass
     					),
-    					tree.sym
+    					containingClass
     			);
-    	JCVariableDecl mainArg = make.Param(
-    			names.fromString("args"),
-    			arrayType,
-    			msym);
-    	JCMethodDecl maindecl = make.MethodDef(msym, tree.body);
-    	maindecl.params = List.<JCVariableDecl>of(mainArg);
-    	tree.defs = tree.defs.append(maindecl);
-    	maindecl.body.stats = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
-        return maindecl;
+    	JCMethodDecl maindecl = make.MethodDef(msym, methodBody);
+    	JCVariableDecl mainArg = null; 
+    	if(params.length() == 0) {
+    		mainArg = make.Param( names.fromString("args"), arrayType, msym);
+    		maindecl.params = List.<JCVariableDecl>of(mainArg);
+    	} else maindecl.params = params;
+    	
+    	maindecl.body.stats = mainStmts;
+					return maindecl;
 				}
 
-				private void processModuleWiring(JCSystemDecl tree,
-						ListBuffer<JCStatement> assigns, Map<Name, Name> variables, int i) {
-					JCMethodInvocation mi = (JCMethodInvocation) ((JCExpressionStatement) tree.body.stats
-							.get(i)).expr;
+				private void processModuleWiring(final JCExpression wiring, final ListBuffer<JCStatement> assigns, final Map<Name, Name> variables) {
+					JCMethodInvocation mi = (JCMethodInvocation) wiring;
 					try{
 						assigns.appendList(transWiring(mi, variables));
 					}catch (NullPointerException e){
@@ -885,11 +887,9 @@ public class Attr extends JCTree.Visitor {
 					}
 				}
 
-				private void processModuleArrayWiring(JCSystemDecl tree,
+				private void processModuleArrayWiring(JCModuleArrayCall mi,
 						ListBuffer<JCStatement> assigns, Map<Name, Name> variables,
-						Map<Name, Integer> modArrays, int i) {
-					JCModuleArrayCall mi = (JCModuleArrayCall) tree.body.stats
-							.get(i);
+						Map<Name, Integer> modArrays) {
 					if(!variables.containsKey(names
 							.fromString(mi.name.toString()))){
 						log.error(mi.pos(), "symbol.not.found");
@@ -925,9 +925,7 @@ public class Attr extends JCTree.Visitor {
 					}
 				}
 
-				private void processForEachLoop(JCSystemDecl tree,
-						ListBuffer<JCStatement> assigns, Map<Name, Name> variables, int i) {
-					JCEnhancedForLoop loop = (JCEnhancedForLoop) tree.body.stats.get(i);
+				private void processForEachLoop(JCEnhancedForLoop loop, ListBuffer<JCStatement> assigns, Map<Name, Name> variables) {
 					ClassSymbol c = syms.modules.get(names.fromString(loop.var.vartype.toString()));
 					if(c==null){
 						log.error(loop.pos(), "module.array.type.error", loop.var.vartype);
@@ -1049,12 +1047,8 @@ public class Attr extends JCTree.Visitor {
 									make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), 
 											names.fromString("shutdown")), List.<JCExpression>nil())));
 						}
-					for(int j = 0; j<mat.amount; j++){
-						JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j), 
-								List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
-						enter.classEnter(typeInterface, env);
-						tree.defs = tree.defs.append(typeInterface);
-					}
+					for(int j = 0; j<mat.amount; j++)
+						tree.defs = tree.defs.append(createOwnerInterface(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j));
 
 					variables.put(vdecl.name, c.name);
 					modArrays.put(vdecl.name, mat.amount);
@@ -1066,40 +1060,7 @@ public class Attr extends JCTree.Visitor {
 						ListBuffer<JCStatement> joins, Map<Name, Name> variables,
 						JCVariableDecl vdecl) {
 					ClassSymbol c = syms.libclasses.get(names.fromString(vdecl.vartype.toString()));
-					decls.add(vdecl);
-					JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
-							make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
-					newClass.constructor = rs.resolveConstructor
-							(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
-					newClass.type = c.type;
-					JCAssign newAssign = make.at(vdecl.pos()).Assign(make.Ident(vdecl.name),
-							newClass);
-					newAssign.type = vdecl.type;
-					JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
-					nameAssign.type = vdecl.type;
-					inits.append(nameAssign);
-					JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-							make.Select(make.Ident(vdecl.name), names.fromString("start")), 
-							List.<JCExpression>nil()));
-					starts.append(joinAssign);
-					if(c.hasRun){
-						joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-								make.Select(make.Ident(vdecl.name), 
-										names.fromString("join")), List.<JCExpression>nil())))), 
-										List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-												names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-												null), make.Block(0, List.<JCStatement>nil()))), null));
-					}
-					else
-						submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
-								make.Select(make.Ident(vdecl.name), 
-										names.fromString("shutdown")), List.<JCExpression>nil())));
-
-					JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), 
-							List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
-					enter.classEnter(typeInterface, env);
-					tree.defs = tree.defs.append(typeInterface);
-
+					inits.append(vdecl);
 					variables.put(vdecl.name, c.name);
 				}
 
@@ -1121,10 +1082,12 @@ public class Attr extends JCTree.Visitor {
 					JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
 					nameAssign.type = vdecl.type;
 					inits.append(nameAssign);
-					JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-							make.Select(make.Ident(vdecl.name), names.fromString("start")), 
-							List.<JCExpression>nil()));
-					starts.append(joinAssign);
+					if(!c.isSerial){
+						JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+								make.Select(make.Ident(vdecl.name), names.fromString("start")), 
+								List.<JCExpression>nil()));
+						starts.append(joinAssign);
+					}
 					if(c.hasRun){
 						joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
 								make.Select(make.Ident(vdecl.name), 
@@ -1133,19 +1096,31 @@ public class Attr extends JCTree.Visitor {
 												names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
 												null), make.Block(0, List.<JCStatement>nil()))), null));
 					}
-					else
+					else if (!c.isSerial)
 						submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
 								make.Select(make.Ident(vdecl.name), 
 										names.fromString("shutdown")), List.<JCExpression>nil())));
 
-					JCClassDecl typeInterface = make.ClassDef(make.Modifiers(PUBLIC|INTERFACE), names.fromString(vdecl.vartype.toString()+"_"+vdecl.name.toString()), 
-							List.<JCTypeParameter>nil(), null, List.<JCExpression>nil(), List.<JCTree>nil());
-					enter.classEnter(typeInterface, env);
-					tree.defs = tree.defs.append(typeInterface);
+					tree.defs = tree.defs.append(
+							createOwnerInterface(
+									vdecl.vartype.toString()+"_"+vdecl.name.toString()));
 
 					variables.put(vdecl.name, c.name);
 				}
+
+				private JCClassDecl createOwnerInterface(final String interfaceName) {
+					JCClassDecl typeInterface = 
+							make.ClassDef(
+									make.Modifiers(PUBLIC|INTERFACE|SYNTHETIC), 
+									names.fromString(interfaceName), 
+							List.<JCTypeParameter>nil(), null, 
+							List.<JCExpression>nil(), 
+							List.<JCTree>nil());
+					enter.classEnter(typeInterface, env);
+					return typeInterface;
+				}
     
+				
     public void visitProcDef(JCProcDecl tree){
     	Type restype = ((MethodType)tree.sym.type).restype;
     	if(restype.tsym.isModule||tree.sym.getReturnType().isPrimitive()||

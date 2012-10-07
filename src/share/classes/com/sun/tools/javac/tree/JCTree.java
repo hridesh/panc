@@ -767,14 +767,17 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
     }
     
-    public static class JCLibraryDecl extends JCStatement implements LibraryTree{
-    	public Name name;
-    	public List<JCTree> defs;
+    public static class JCLibraryDecl extends JCClassDecl implements LibraryTree{
     	boolean isIncluded;
+    	Kind kind;
+    	Tag tag;
     	public JCLibraryDecl(Name name, List<JCTree> defs){
+    		super(new JCModifiers(Flags.PUBLIC|Flags.FINAL|Flags.STATIC, List.<JCAnnotation>nil()), name, List.<JCTypeParameter>nil(), 
+    				null, List.<JCExpression>nil(), defs, null);
     		this.name = name;
-    		this.defs = defs;
     		this.isIncluded = false;
+    		kind = Kind.LIBRARY;
+    		tag = Tag.LIBRARYDEF;
     	}
 		public Kind getKind() {
 			return Kind.LIBRARY;
@@ -799,13 +802,31 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		public Tag getTag() {
 			return LIBRARYDEF;
 		}
+		
+		public void switchToClass(){
+			kind = Kind.CLASS;
+			tag = Tag.CLASSDEF;
+		}
+		
+		public void switchToModule(){
+			kind = Kind.LIBRARY;
+			tag = Tag.LIBRARYDEF;
+		}
 
 		@Override
-		public void accept(Visitor v) { v.visitLibraryDef(this);}
+		public void accept(Visitor v) {
+			if(tag != CLASSDEF)
+				v.visitLibraryDef(this);
+			else
+				v.visitClassDef(this);
+			}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitLibrary(this, d);
+			if(tag != CLASSDEF)
+				return v.visitLibrary(this, d);
+			else
+				return v.visitClass(this, d);
 		}
     }
     
