@@ -1,5 +1,5 @@
 
-library boolint {
+//library boolint {
     class BooleanC {
         boolean v;
         public BooleanC(boolean v) { this.v = v; }
@@ -11,10 +11,10 @@ library boolint {
         public IntC(int v) { this.v = v; }
         public int value() { return v; }
     }
-}
+//}
 
 
-library customer {
+//library customer {
     class Customer {
         private int id;
         public Customer(int id) { this.id = id; }
@@ -26,11 +26,11 @@ library customer {
         public MaybeCustomer(Customer c) { this.c = c; }
         public Customer getCustomer() { return c; }
     }
-}
+//}
   
 module Barber(WaitingRoom r, boolean isSleeping) {
-    include customer;
-    include boolint;
+//    include customer;
+//    include boolint;
           
     void wake(Customer c){
         isSleeping = false;
@@ -64,7 +64,7 @@ module Barber(WaitingRoom r, boolean isSleeping) {
 module WaitingRoom(int cap) {
     include java.util.Queue;
     include java.util.LinkedList;
-    include boolint;
+//    include boolint;
   
     Queue<Customer> queue = new LinkedList<Customer>();
     int idCounter = 0;
@@ -87,7 +87,7 @@ module WaitingRoom(int cap) {
 }
   
 module Customers(Barber b, WaitingRoom r) {
-    include customer;
+//    include customer;
     int idCounter = 0;
   
     void run() {

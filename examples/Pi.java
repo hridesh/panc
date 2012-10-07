@@ -24,17 +24,14 @@
  */
 import java.lang.Math;
 
-library Numbers {
 	class Number {
 		long value; 
 		Number (long value){ this.value = value; }
 		void incr() { value ++; }
 		long value() { return value; }
 	}
-}
 
 module Worker (int num) {
-	include Numbers; 
 	Number _circleCount = new Number(0);
 	void compute() { 
 		for(int j = 0; j < num; j++) { 
