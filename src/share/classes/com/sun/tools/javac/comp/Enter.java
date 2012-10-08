@@ -1021,19 +1021,32 @@ public class Enter extends JCTree.Visitor {
     public long processModuleAnnotations(JCModuleDecl tree, ClassSymbol c){
     	for(JCAnnotation annotation : tree.mods.annotations){
     		if(annotation.annotationType.toString().equals("ModuleKind")){
+    			Object arg = "";
     			if(annotation.args.isEmpty())
     				log.error(tree.pos(), "annotation.missing.default.value", annotation, "value");
-    			else if (annotation.args.size()!=1||annotation.args.head.getTag()!=ASSIGN)
-    				log.error(tree.pos(), "annotation.value.must.be.name.value");
-    			else if (((JCLiteral)((JCAssign)annotation.args.head).rhs).value.equals("SERIAL"))
-    				return c.flags_field |= SERIAL;
-    			else if (((JCLiteral)((JCAssign)annotation.args.head).rhs).value.equals("ACTIVE"))
-    				return c.flags_field |= ACTIVE;
-    			else
-    				log.error(tree.pos(), "annotation.value.not.allowable.type");
-    		}	
+    			else if (annotation.args.size()!=1||annotation.args.head.getTag()!=ASSIGN){
+    				if(annotation.args.head.getTag()==LITERAL)
+    					arg = ((JCLiteral)annotation.args.head).value;
+    				else
+    					log.error(tree.pos(), "annotation.value.must.be.name.value");
+    			}
+    			else 
+    				arg = ((JCLiteral)((JCAssign)annotation.args.head).rhs).value;
+    			
+    			return getModuleKind(arg, c, annotation);
+    		}
     	}
     	return c.flags_field;
+    }
+    
+    public long getModuleKind(Object kind, ClassSymbol c, JCAnnotation annotation){
+		if (kind.equals("SERIAL"))
+			return c.flags_field |= SERIAL;
+		else if (kind.equals("ACTIVE"))
+			return c.flags_field |= ACTIVE;
+		else
+			log.error(annotation.pos(), "annotation.value.not.allowable.type");
+		return c.flags_field;
     }
     
     // end Panini code
