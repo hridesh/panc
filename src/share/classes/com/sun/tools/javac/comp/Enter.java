@@ -801,7 +801,9 @@ public class Enter extends JCTree.Visitor {
         for(int i=0;i<tree.defs.length();i++){
         	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
         		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
-        		if((mdecl.mods.flags & PRIVATE) ==0
+        		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
+        			log.error(tree.pos(), "serialize.active.modules");
+        		}else if((mdecl.mods.flags & PRIVATE) ==0
         					&&(mdecl.mods.flags & PROTECTED) ==0){
                     JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC|Flags.SYNCHRONIZED),
                     		mdecl.name,
