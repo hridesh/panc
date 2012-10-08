@@ -1030,9 +1030,6 @@ public class Enter extends JCTree.Visitor {
     				else
     					log.error(tree.pos(), "annotation.value.must.be.name.value");
     			}
-    			else 
-    				arg = ((JCLiteral)((JCAssign)annotation.args.head).rhs).value;
-    			
     			return getModuleKind(arg, c, annotation);
     		}
     	}
