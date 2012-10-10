@@ -69,9 +69,20 @@ public abstract class PaniniModuleTask implements PaniniModule{
   	public final void exit () {
   	}
 
-  	public final void startModule(){
-    }
-    
-    public final void endModule(){
-    }
+  	public final void start(){
+  		containingPool = PaniniTaskPool.add(this);
+  }
+
+  	public final void join() throws java.lang.InterruptedException {
+  		containingPool.join(); // TODO: 
+  	}
+  	
+  	/***
+  	 * The method implemented by each concrete module with task-based 
+  	 * implementation.
+  	 * @return true, if the module has been terminated.
+  	 */
+  abstract protected boolean run(); 
+  PaniniModuleTask next;
+  PaniniTaskPool containingPool = null; 
 }
