@@ -30,7 +30,7 @@ public interface PaniniModule{
   	 * @throws IllegalArgumentException - if the value of millis is negative
   	 * 
   	 */
-  	public abstract void yield (long millis);  	
+  	public void yield (long millis);  	
   	
   	/**
   	 * Causes the current module to complete its remaining work and then cease execution.
@@ -43,7 +43,7 @@ public interface PaniniModule{
   	 * @throws SecurityException - if the client module is not allowed to access this module.
   	 * 
   	 */
-  	public abstract void shutdown();
+  	public void shutdown();
   	
   	/**
   	 * Causes the current module to immediately cease execution. 
@@ -56,8 +56,8 @@ public interface PaniniModule{
   	 * @throws SecurityException - if the client module is not allowed to access this module.
   	 * 
   	 */
-  	public abstract void exit ();
+  	public void exit ();
   	
-  	public abstract void startModule();
-  	public abstract void endModule();
+  	public void start();
+  	public void join() throws InterruptedException; 
 }
