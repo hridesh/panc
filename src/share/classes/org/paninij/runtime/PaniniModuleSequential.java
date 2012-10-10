@@ -69,9 +69,6 @@ public abstract class PaniniModuleSequential implements PaniniModule{
   	public final void exit () {
   	}
 
-  	public final void startModule(){
-    }
-    
-    public final void endModule(){
-    }
+  	public final void start(){} // TODO:
+  	public final void join() throws java.lang.InterruptedException {} // TODO:
 }
