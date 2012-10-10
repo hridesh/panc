@@ -3,10 +3,10 @@ package org.paninij.runtime;
 final class PaniniTaskPool extends Thread {
 		static final synchronized PaniniTaskPool add(PaniniModuleTask t) {
 			// TODO: see load balancing
+			_getInstance._add(t);
 			if (!_getInstance.isAlive()) {
 				_getInstance.start();
 			}
-			_getInstance._add(t);
 			return _getInstance;
 		}
 		static final synchronized void remove(PaniniTaskPool pool, PaniniModuleTask t) {
@@ -15,11 +15,32 @@ final class PaniniTaskPool extends Thread {
 		}
 		
 		private final synchronized void _add(PaniniModuleTask t){
-			// TODO: add to circular list.
+			if(_headNode==null){
+				_headNode = t;
+				t.next = t;
+			}else{
+				PaniniModuleTask current = _headNode;
+				while(current.next!=_headNode){
+					current = current.next;
+				}
+				current.next = t;
+				t.next = _headNode;
+			}
 		}
+		
 		private final synchronized void _remove(PaniniModuleTask t){
-			// TODO: remove from circular list.
+			PaniniModuleTask current = _headNode;
+			PaniniModuleTask previous = _headNode;
+			while(current!=t){
+				previous = current;
+				current = current.next;
+			}
+			if(previous == current)
+				_headNode =null;
+			else	
+				previous.next = current.next;
 		}
+		
 		private PaniniModuleTask _headNode = null; 
 		public void run() {
 			// Implementation relies upon at least one module being present 
