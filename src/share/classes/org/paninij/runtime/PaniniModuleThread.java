@@ -218,16 +218,5 @@ public abstract class PaniniModuleThread extends Thread implements PaniniModule{
    	}
    	if(size==numItems) notifyAll(); 
    }
-   
-   public final void startModule(){
-	   start();
-   }
-   
-   public final void endModule(){
-	   try {
-		   join();
-	   }catch (InterruptedException e){
-	   }
-   }
 
 }
