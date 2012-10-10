@@ -57,4 +57,7 @@ public interface PaniniModule{
   	 * 
   	 */
   	public abstract void exit ();
+  	
+  	public abstract void startModule();
+  	public abstract void endModule();
 }

@@ -19,7 +19,7 @@
 
 package org.paninij.runtime;
 
-public abstract class PaniniModuleSequential implements PaniniModule{
+public abstract class PaniniModuleTask implements PaniniModule{
   	/**
   	 * Causes the current module to sleep (temporarily cease execution) 
   	 * for the specified number of milliseconds, subject to the precision 

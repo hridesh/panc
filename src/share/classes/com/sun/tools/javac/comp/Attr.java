@@ -1027,18 +1027,15 @@ public class Attr extends JCTree.Visitor {
 					assigns.append(floop);
 					for(int j=0;j<mat.amount;j++){
 						JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-								make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("start")), 
+								make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("startModule")), 
 								List.<JCExpression>nil()));
 						starts.append(joinAssign);	        		    	
 					}
 					if(c.hasRun){
 						for(int j = mat.amount; j>=0;j--){
-							joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-									make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
-											names.fromString("join")), List.<JCExpression>nil())))), 
-											List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-													names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-													null), make.Block(0, List.<JCStatement>nil()))), null));
+							joins.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
+									make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("endModule")), 
+									List.<JCExpression>nil())));
 						}
 					}
 					else
@@ -1082,21 +1079,15 @@ public class Attr extends JCTree.Visitor {
 					JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
 					nameAssign.type = vdecl.type;
 					inits.append(nameAssign);
-					if(!c.isSerial){
-						JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-								make.Select(make.Ident(vdecl.name), names.fromString("start")), 
-								List.<JCExpression>nil()));
-						starts.append(joinAssign);
-					}
-					if(c.hasRun){
-						joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-								make.Select(make.Ident(vdecl.name), 
-										names.fromString("join")), List.<JCExpression>nil())))), 
-										List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-												names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-												null), make.Block(0, List.<JCStatement>nil()))), null));
-					}
-					else if (!c.isSerial)
+					JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
+							make.Select(make.Ident(vdecl.name), names.fromString("startModule")), 
+							List.<JCExpression>nil()));
+					starts.append(joinAssign);
+					if(c.hasRun)
+						joins.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+								make.Select(make.Ident(vdecl.name), names.fromString("endModule")), 
+								List.<JCExpression>nil())));
+					else
 						submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
 								make.Select(make.Ident(vdecl.name), 
 										names.fromString("shutdown")), List.<JCExpression>nil())));
