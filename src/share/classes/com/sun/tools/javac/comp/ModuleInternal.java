@@ -63,7 +63,7 @@ public class ModuleInternal extends Internal {
 		contractDefs = new ListBuffer<JCTree>();
 	}
 
-	public JCBlock generateComputeMethodBody(JCModuleDecl tree) {
+	public JCBlock generateThreadModuleComputeMethodBody(JCModuleDecl tree) {
 		JCModifiers noMods = mods(0);
 		ListBuffer<JCStatement> messageLoopBody = new ListBuffer<JCStatement>();
 		messageLoopBody.append(var(noMods, PaniniConstants.PANINI_DUCK_TYPE, PaniniConstants.DUCK_INTERFACE_NAME,
@@ -127,6 +127,76 @@ public class ModuleInternal extends Internal {
 		return b;
 	}
 
+	public JCBlock generateTaskModuleComputeMethodBody(JCModuleDecl tree) {
+		JCModifiers noMods = mods(0);
+		ListBuffer<JCStatement> messageLoopBody = new ListBuffer<JCStatement>();
+		
+
+		ListBuffer<JCCase> cases = new ListBuffer<JCCase>();
+		int varIndex = 0;
+
+		for (JCMethodDecl method : tree.publicMethods) {
+			ListBuffer<JCStatement> caseStatements = new ListBuffer<JCStatement>();
+			ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+			for (int i = 0; i < method.params.size(); i++) {
+				JCExpression varType = method.params.get(i).vartype;
+				caseStatements.append(var(
+						noMods,
+						"var" + varIndex,
+						varType,
+						cast(varType,
+								select(
+										cast(
+												PaniniConstants.DUCK_INTERFACE_NAME + "$"
+														+ method.restype.toString() + "$" + tree.name.toString(),
+														id(PaniniConstants.PANINI_DUCK_TYPE)), createFieldString(method.name.toString(), varType.toString(), method.params.get(i).name.toString(), method.params)))));
+				args.append(id("var" + varIndex++));
+			}
+
+			Type returnType = ((MethodType) method.sym.type).restype;
+			if (returnType.tag == TypeTags.VOID) {
+				caseStatements.append(es(createOriginalCall(method, args)));
+				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, "panini$finish", args(nullv()))));
+			} else if (returnType.tag == TypeTags.CLASS) {
+				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, "panini$finish",
+						args(createOriginalCall(method, args)))));
+			} else {
+				System.out.println("Unsupported return type in a public module method. Can only be void or non-primitive.");
+				System.exit(5555);
+			}
+			caseStatements.append(returnt(falsev()));
+			String constantName = PaniniConstants.PANINI_METHOD_CONST + method.name.toString();
+			if(method.params.nonEmpty())
+			for(JCVariableDecl param: method.params){
+				constantName = constantName + "$" + param.vartype.toString();
+			}
+			cases.append(case_(
+					id(constantName),
+					caseStatements));
+		}
+
+		cases.append(case_(intlit(-1), ifs(
+				gt(select(thist(), "size"), intlit(0)),
+				body(
+						es(make.Apply(List.<JCExpression> nil(), id("push"),
+								List.<JCExpression> of(id(PaniniConstants.PANINI_DUCK_TYPE)))), returnt(falsev())))));
+
+		cases.append(case_(intlit(-2), es(assign(PaniniConstants.PANINI_TERMINATE, truev())),
+		returnt(truev())));
+
+		messageLoopBody.append(swtch(apply(PaniniConstants.PANINI_DUCK_TYPE, PaniniConstants.PANINI_MESSAGE_ID), cases));
+		
+		JCBlock b = body(
+				var(mods(0), PaniniConstants.PANINI_TERMINATE,
+						make.TypeIdent(TypeTags.BOOLEAN), falsev()),
+						var(noMods, PaniniConstants.PANINI_DUCK_TYPE, PaniniConstants.DUCK_INTERFACE_NAME,
+								apply(PaniniConstants.PANINI_GET_NEXT_DUCK)),
+						ifs(isNull(PaniniConstants.PANINI_DUCK_TYPE), returnt(falsev()), body(messageLoopBody)),
+						returnt(falsev())
+				);
+		return b;
+	}
+	
 	private JCMethodInvocation createOriginalCall (final JCMethodDecl method, final ListBuffer<JCExpression> args) {
 		return apply(thist(), method.name.toString()	+ "$Original", args); 
 	}

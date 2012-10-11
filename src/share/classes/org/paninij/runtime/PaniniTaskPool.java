@@ -19,12 +19,8 @@ final class PaniniTaskPool extends Thread {
 				_headNode = t;
 				t.next = t;
 			}else{
-				PaniniModuleTask current = _headNode;
-				while(current.next!=_headNode){
-					current = current.next;
-				}
-				current.next = t;
-				t.next = _headNode;
+				t.next = _headNode.next;
+				_headNode.next = t;
 			}
 		}
 		

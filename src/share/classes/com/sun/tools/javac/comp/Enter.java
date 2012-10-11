@@ -757,6 +757,9 @@ public class Enter extends JCTree.Visitor {
         else if((c.flags_field & ACTIVE)!=0){
         	definitions = translateActiveModule(tree, c, localEnv);
         }
+        else if((c.flags_field & TASK)!=0){
+        	definitions = translateTaskModule(tree, c, localEnv);
+        }
         else //default action
         	definitions = translateActiveModule(tree, c, localEnv);
     	List<JCVariableDecl> fields = tree.getParameters();
@@ -833,7 +836,6 @@ public class Enter extends JCTree.Visitor {
     		}else definitions.add(tree.defs.get(i));
         }
         c.hasRun = false;
-        c.isSerial = true;
         for(JCMethodDecl d : tree.publicMethods){
     		definitions.add(d);
     	}
@@ -1018,6 +1020,166 @@ public class Enter extends JCTree.Visitor {
         return definitions;
     }
     
+    public ListBuffer<JCTree> translateTaskModule(JCModuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
+    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_MODULE_TASK));
+    	int indexer = 0;
+        boolean hasRun = false;
+        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+        for(int i=0;i<tree.defs.length();i++){
+        	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
+        		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
+        		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
+        			log.error(tree.pos(), "serialize.active.modules");
+        		}
+        		else if((mdecl.mods.flags & PRIVATE) ==0
+        					&&(mdecl.mods.flags & PROTECTED) ==0){
+        			String constantName = PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString();
+            		if(mdecl.params.nonEmpty())
+            			for(JCVariableDecl param: mdecl.params){
+            				constantName = constantName + "$" + param.vartype.toString();
+            			}
+    				mdecl.mods.flags |= PUBLIC;
+    				JCVariableDecl v = make.VarDef(make.Modifiers(PUBLIC | STATIC | FINAL),
+    						names.fromString(constantName),
+    						make.TypeIdent(TypeTags.INT),
+    					    make.Literal(indexer++));
+                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC),
+                    		mdecl.name,
+                    		mdecl.restype,
+                    		mdecl.typarams,
+                    		mdecl.params,
+                    		mdecl.thrown,
+                    		mdecl.body,
+                    		null
+                    		);
+                    p.switchToMethod();
+                    definitions.prepend(v);
+                    tree.publicMethods = tree.publicMethods.append(p);
+        		}else 
+        			definitions.add(mdecl);
+        	}
+        	else if(tree.defs.get(i).getTag() == INCLUDE){
+    		}else if(tree.defs.get(i).getTag() == VARDEF){
+    			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
+    			if(mdecl.mods.flags!=0)
+    				log.error(mdecl.pos(), "illegal.state.modifiers");
+    			if(mdecl.init ==null)
+    				log.warning(mdecl.pos(), "state.not.initialized");
+    			mdecl.mods.flags |=PRIVATE;
+    			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, mdecl.vartype, mdecl.init);
+    			state.switchToVar();
+    			definitions.add(state);
+    		}else definitions.add(tree.defs.get(i));
+        }
+        if(!hasRun){
+        	for(JCMethodDecl mdecl : tree.publicMethods){
+        		String constantName = PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString();
+        		if(mdecl.params.nonEmpty())
+        			for(JCVariableDecl param: mdecl.params){
+        				constantName = constantName + "$" + param.vartype.toString();
+        			}
+        		c.hasRun = false;
+	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
+	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("push")), List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))))));
+	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
+	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+	        	args.add(make.Ident(names.fromString(constantName)));
+	            for(JCVariableDecl v : mdecl.params){
+	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
+	            	args.append(make.Ident(v.name));
+	            }
+	            
+	            if(!mdecl.restype.toString().equals("void")){
+	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
+	            			names.fromString(PaniniConstants.PANINI_DUCK_TYPE), 
+	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
+	            			make.NewClass(null, List.<JCExpression>nil(), 
+	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
+	            					args.toList(), null)));
+	            	copyBody.append(make.Return(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))));
+	            }
+	            else{
+	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
+	            			names.fromString(PaniniConstants.PANINI_DUCK_TYPE), 
+	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
+	            			make.NewClass(null, List.<JCExpression>nil(), 
+	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
+	            					args.toList(), null)));
+	            }
+	            
+	            JCMethodDecl methodCopy = make.MethodDef(
+	            		make.Modifiers(PRIVATE|FINAL), 
+	            		mdecl.name.append(names.fromString("$Original")), 
+	            		mdecl.restype, 
+	            		mdecl.typarams, 
+	            		vars.toList(),
+	            		mdecl.thrown, 
+	            		mdecl.body, 
+	            		null);
+	            methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name, mdecl.restype.type, tree.sym);
+	            mdecl.mods.flags |= FINAL;
+	            mdecl.body = make.Block(0, copyBody.toList());
+	            definitions.add(methodCopy);
+	            definitions.add(mdecl);
+        	}
+            MethodSymbol msym = new MethodSymbol(
+                PUBLIC|FINAL,
+                names.fromString("run"),
+                new MethodType(
+                    List.<Type>nil(),
+                    syms.booleanType,
+                    List.<Type>nil(),
+                    syms.methodClass
+                    ),
+                tree.sym
+                );
+			JCMethodDecl m = make.MethodDef(msym,
+                                            make.Block(0, List.<JCStatement>nil()));
+			m.mods = make.Modifiers(PUBLIC|FINAL, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("SuppressWarnings")), 
+        			List.<JCExpression>of(make.Literal("unchecked")))));
+            m.params = List.<JCVariableDecl>nil();
+            m.sym = msym;
+            memberEnter.memberEnter(m, localEnv);
+            definitions.add(m);
+    		hasRun=true;
+            tree.needsDefaultRun = true;
+            tree.computeMethod = m;
+    	}
+        else{
+        	c.hasRun = true;
+        	for(JCMethodDecl d : tree.publicMethods){
+        		definitions.add(d);
+        	}
+
+        	for(JCMethodDecl mdecl : tree.publicMethods){
+                ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
+	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+	        	args.add(make.Ident(names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString())));
+	            for(JCVariableDecl v : mdecl.params){
+	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
+	            	args.append(make.Ident(v.name));
+	            }
+                TreeCopier<Void> tc = new TreeCopier<Void>(make);
+
+	            JCMethodDecl methodCopy = make.MethodDef(
+	            		make.Modifiers(PRIVATE|FINAL), 
+	            		mdecl.name.append(names.fromString("$Original")), 
+	            		tc.copy(mdecl.restype),
+	            		tc.copy(mdecl.typarams), 
+	            		tc.copy(vars.toList()),
+	            		tc.copy(mdecl.thrown), 
+	            		tc.copy(mdecl.body)
+,
+	            		null);
+	            methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name, mdecl.restype.type, tree.sym);
+	            definitions.add(methodCopy);
+        	}
+
+        	//add from public methods
+        }
+        return definitions;
+    }
+    
     public long processModuleAnnotations(JCModuleDecl tree, ClassSymbol c){
     	for(JCAnnotation annotation : tree.mods.annotations){
     		if(annotation.annotationType.toString().equals("ModuleKind")){
@@ -1041,6 +1203,8 @@ public class Enter extends JCTree.Visitor {
 			return c.flags_field |= SERIAL;
 		else if (kind.equals("ACTIVE"))
 			return c.flags_field |= ACTIVE;
+		else if (kind.equals("TASK"))
+			return c.flags_field |= TASK;
 		else
 			log.error(annotation.pos(), "annotation.value.not.allowable.type");
 		return c.flags_field;
