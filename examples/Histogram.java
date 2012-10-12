@@ -28,9 +28,10 @@ module Reader(String[] args, Bucket[] buckets) {
 	
 	void run() {
 	 if(args.length == 0) process("shaks12.txt");
-	 else 
-	 	for(String fileName : args) 
+	 else {
+	 	for(String fileName : args)
 	 		process(fileName);
+	 }
 	}
 
 	private void process(String fileName) {
@@ -50,12 +51,14 @@ module Reader(String[] args, Bucket[] buckets) {
 
 }
 
+@ModuleKind("TASK")
 module Bucket(Printer p) {
 		long count = 0;
 		void bump() { count++; }
 		void finish(int index) { p.print("" + index + ":" + count); }
 }
 
+@ModuleKind("SERIAL")
 module Printer() { 
 	void print(String output) { System.out.println(output); }
 }
