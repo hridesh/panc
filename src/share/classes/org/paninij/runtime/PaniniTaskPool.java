@@ -10,7 +10,7 @@ final class PaniniTaskPool extends Thread {
 			return _getInstance;
 		}
 		static final synchronized void remove(PaniniTaskPool pool, PaniniModuleTask t) {
-			// TODO: if last module, stop the execution of _getInstance.
+			// TODO: if last module, stop the execution of _getInstance. This is done in run() right now. Is that appropriate?
 			pool._remove(t);
 		}
 		
@@ -42,7 +42,10 @@ final class PaniniTaskPool extends Thread {
 			// Implementation relies upon at least one module being present 
 			PaniniModuleTask current = _headNode;
 			while(true){
-				current.run();
+				if(current.run() == true)
+					remove(_getInstance, current);
+				if(_headNode == null)
+					break;
 				synchronized(this) {
 					current = current.next; 
 				}
