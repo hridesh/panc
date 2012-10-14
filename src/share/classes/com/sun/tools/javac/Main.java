@@ -27,7 +27,6 @@ package com.sun.tools.javac;
 
 import java.io.PrintWriter;
 import java.lang.reflect.*;
-import com.sun.tools.javac.comp.Attr;
 
 
 /**
@@ -48,13 +47,6 @@ public class Main {
      * @param args   The command line parameters.
      */
     public static void main(String[] args) throws Exception {
-        if (args.length > 0 && args[0].equals("--graphs")) {
-            Attr.doGraphs = true;
-            String[] temp = new String[args.length-1];
-            System.arraycopy(args, 1, temp, 0, args.length-1);
-            args = temp;
-        }
-
       if (args.length > 0 && args[0].equals("-Xjdb")) {
         String[] newargs = new String[args.length + 2];
         Class<?> c = Class.forName("com.sun.tools.example.debug.tty.TTY");
