@@ -8,4 +8,22 @@ case `uname -s` in
 esac
 export PANC_HOME=$mydir/../
 
-java -cp $PANC_HOME/lib/panini_rt.jar:. -javaagent:$PANC_HOME/lib/profile.jar -Dprofile.properties=$PANC_HOME/lib/profile.properties ${@}
+# pass classpath argument through to inner java call
+CP=.
+NON_CP=""
+while [ $# -gt 0 ]
+do
+    ARG="$1"
+    case $ARG in
+        -cp)
+            CP=$CP:$2
+            shift 2
+            ;;
+        *)
+            NON_CP="$NON_CP $ARG"
+            shift
+            ;;
+    esac
+done
+
+java -cp $CP:$PANC_HOME/lib/panini_rt.jar -javaagent:$PANC_HOME/lib/profile.jar -Dprofile.properties=$PANC_HOME/lib/profile.properties $NON_CP
