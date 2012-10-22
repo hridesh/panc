@@ -866,7 +866,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
 		
 		public void switchToClass(){
-			kind = Kind.CLASS;
+			if((mods.flags & Flags.INTERFACE) !=0)
+				kind = Kind.INTERFACE;
+			else
+				kind = Kind.CLASS;
 			tag = Tag.CLASSDEF;
 		}
 		

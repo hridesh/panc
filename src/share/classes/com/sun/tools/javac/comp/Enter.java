@@ -639,6 +639,9 @@ public class Enter extends JCTree.Visitor {
     }
     
     public void visitModuleDef(JCModuleDecl tree){
+    	if((tree.mods.flags & Flags.INTERFACE) !=0){
+    		tree.needsDefaultRun= false;
+    	}
     	JCExpression pid = make.Ident(names.fromString("java"));
     	pid = make.Select(pid, names.fromString("util"));
     	pid = make.Select(pid, names.fromString("concurrent"));
@@ -749,31 +752,32 @@ public class Enter extends JCTree.Visitor {
         if (!c.isLocal() && uncompleted != null) uncompleted.append(c);
 //      System.err.println("entering " + c.fullname + " in " + c.owner);//DEBUG
         
-        c.flags_field = processModuleAnnotations(tree, c);
-        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
-        if((c.flags_field & SERIAL)!=0){
-        	definitions = translateSerialModule(tree, c, localEnv);
-        }
-        else if((c.flags_field & ACTIVE)!=0){
-        	definitions = translateActiveModule(tree, c, localEnv);
-        }
-        else if((c.flags_field & TASK)!=0){
-        	definitions = translateTaskModule(tree, c, localEnv);
-        }
-        else //default action
-        	definitions = translateActiveModule(tree, c, localEnv);
-    	List<JCVariableDecl> fields = tree.getParameters();
-    	while(fields.nonEmpty()){
-    		definitions.prepend(make.VarDef(make.Modifiers(PUBLIC),
-    				fields.head.name,
-    				fields.head.vartype,
-    				null));
-    		fields = fields.tail;
-    	}
-    	
-    	tree.defs = definitions.toList();;
-        tree.sym = c;
+        if((tree.mods.flags & Flags.INTERFACE) ==0){
+	        c.flags_field = processModuleAnnotations(tree, c);
+	        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+	        if((c.flags_field & SERIAL)!=0){
+	        	definitions = translateSerialModule(tree, c, localEnv);
+	        }
+	        else if((c.flags_field & ACTIVE)!=0){
+	        	definitions = translateActiveModule(tree, c, localEnv);
+	        }
+	        else if((c.flags_field & TASK)!=0){
+	        	definitions = translateTaskModule(tree, c, localEnv);
+	        }
+	        else //default action
+	        	definitions = translateActiveModule(tree, c, localEnv);
+	    	List<JCVariableDecl> fields = tree.getParameters();
+	    	while(fields.nonEmpty()){
+	    		definitions.prepend(make.VarDef(make.Modifiers(PUBLIC),
+	    				fields.head.name,
+	    				fields.head.vartype,
+	    				null));
+	    		fields = fields.tail;
+	    	}
+	    	tree.defs = definitions.toList();
+        }else c.hasRun = true;
         c.isModule = true;
+        tree.sym = c;
         syms.modules.put(c.fullname, c);
         syms.moduleparams.put(c, tree.params);
         result = c.type;
