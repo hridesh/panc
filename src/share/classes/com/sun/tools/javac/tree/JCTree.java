@@ -846,7 +846,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     			List<JCExpression> implementing,
     			List<JCTree> defs){
     		super(mods, name, List.<JCTypeParameter>nil(), 
-    				null, List.<JCExpression>nil(), defs, null);
+    				null, implementing, defs, null);
     		this.name = name;
     		this.params = params;
     		this.implementing = implementing;
