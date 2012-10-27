@@ -190,10 +190,10 @@ public class ModuleInternal extends Internal {
 				var(mods(0), PaniniConstants.PANINI_TERMINATE,
 						make.TypeIdent(TypeTags.BOOLEAN), falsev()),
 						var(noMods, PaniniConstants.PANINI_DUCK_TYPE, PaniniConstants.DUCK_INTERFACE_NAME,
-								apply(PaniniConstants.PANINI_GET_NEXT_DUCK)),
-						ifs(isNull(PaniniConstants.PANINI_DUCK_TYPE), returnt(falsev()), body(messageLoopBody)),
-						returnt(falsev())
+								apply(PaniniConstants.PANINI_GET_NEXT_DUCK))
 				);
+		b.stats = b.stats.appendList(messageLoopBody);
+		b.stats = b.stats.append(returnt(falsev()));
 		return b;
 	}
 	

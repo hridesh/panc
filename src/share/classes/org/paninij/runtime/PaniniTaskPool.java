@@ -42,10 +42,12 @@ final class PaniniTaskPool extends Thread {
 			// Implementation relies upon at least one module being present 
 			PaniniModuleTask current = _headNode;
 			while(true){
-				if(current.run() == true)
-					remove(_getInstance, current);
-				if(_headNode == null)
-					break;
+				if(current.size!=0){
+					if(current.run() == true)
+						remove(_getInstance, current);
+					if(_headNode == null)
+						break;
+				}
 				synchronized(this) {
 					current = current.next; 
 				}

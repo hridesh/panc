@@ -301,7 +301,8 @@ public class JavacParser implements Parser {
                	 // Panini code
                	 if(token.name().toString().equals("library")||
        			 token.name().toString().equals("system")||
-       			 token.name().toString().equals("module")) 
+       			 token.name().toString().equals("module")||
+       			token.name().toString().equals("signature"))
            		 return;
                	 // end Panini code
                    if (stopAtIdentifier)
@@ -2881,6 +2882,8 @@ public class JavacParser implements Parser {
          		return libraryDecl(mods, dc);
          	else if(token.name().toString().equals("module"))
          		return moduleDecl(mods, dc);
+         	else if(token.name().toString().equals("signature"))
+         		return signatureDecl(mods, dc);
          	else{
          		setErrorEndPos(token.pos);
          		return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.library.module.not.found")));
@@ -2970,17 +2973,39 @@ public class JavacParser implements Parser {
      	else
      		params = List.<JCVariableDecl>nil();
      	List<JCExpression> implementing = List.nil();
-         if (token.kind == IMPLEMENTS) {
-        	 log.error(token.pos, "module.implement.error");
-             nextToken();
-             implementing = typeList();
-         }
+        if (token.kind == IMPLEMENTS) {
+            nextToken();
+            implementing = typeList();
+        }
      	List<JCTree> defs = classOrInterfaceBody(name, false);
      	JCModuleDecl result = 
      			toP(F.at(pos).ModuleDef(mod, name, params, implementing, defs));
      	attach(result, dc);
      	return result;
      }
+     
+     JCStatement signatureDecl(JCModifiers mod, String dc){
+    	 mod.flags |= Flags.INTERFACE;
+      	accept(IDENTIFIER);
+      	int pos = token.pos;
+      	Name name = ident();
+      	if(token.kind == EXTENDS){
+      		log.error(token.pos, "module.extend.error");
+      		nextToken();
+      		parseType();
+      	}
+  		List<JCVariableDecl> params; 
+      	if(token.kind == LPAREN)
+      		params = formalParameters();
+      	else
+      		params = List.<JCVariableDecl>nil();
+      	List<JCExpression> implementing = List.nil();
+      	List<JCTree> defs = classOrInterfaceBody(name, true);
+      	JCModuleDecl result = 
+      			toP(F.at(pos).ModuleDef(mod, name, params, implementing, defs));
+      	attach(result, dc);
+      	return result;
+      }
      // end Panini code
 
     /** ClassDeclaration = CLASS Ident TypeParametersOpt [EXTENDS Type]

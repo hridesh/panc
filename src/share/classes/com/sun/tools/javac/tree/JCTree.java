@@ -846,7 +846,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     			List<JCExpression> implementing,
     			List<JCTree> defs){
     		super(mods, name, List.<JCTypeParameter>nil(), 
-    				null, List.<JCExpression>nil(), defs, null);
+    				null, implementing, defs, null);
     		this.name = name;
     		this.params = params;
     		this.implementing = implementing;
@@ -866,7 +866,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
 		
 		public void switchToClass(){
-			kind = Kind.CLASS;
+			if((mods.flags & Flags.INTERFACE) !=0)
+				kind = Kind.INTERFACE;
+			else
+				kind = Kind.CLASS;
 			tag = Tag.CLASSDEF;
 		}
 		
