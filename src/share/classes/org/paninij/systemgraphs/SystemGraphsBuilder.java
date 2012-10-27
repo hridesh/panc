@@ -116,6 +116,7 @@ public class SystemGraphsBuilder extends TreeScanner {
             String methodName = TreeInfo.symbol(t.tree.meth).toString();
             methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
             MethodSymbol origMethSym = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
+            System.out.println("todo " + origMethSym + " " + moduleField);
             t.method.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
                                                                        moduleField));
             origMethSym.callerMethods.add(t.method.sym);
@@ -148,6 +149,11 @@ public class SystemGraphsBuilder extends TreeScanner {
                         graphs.addProcEdge(currentModule, calledModule,
                                            method, calledMethodInfo.method,
                                            edge.varName);
+                    } else if (edge.to.sym.type.toString().equals(calledMethodInfo.module.type.toString())) {
+                        Node calledModule = edge.to;
+                        graphs.addProcEdge(currentModule, calledModule,
+                                           method, calledMethodInfo.method,
+                                           edge.varName, calledModule.index);
                     }
                 }
             } else {
@@ -183,15 +189,31 @@ public class SystemGraphsBuilder extends TreeScanner {
         }
     }
 
+    // processing module connection statements in the system def.
+    // Makes connection edges for each module connection described in
+    // the statement.
     public void visitApply(JCMethodInvocation tree) {
         Node module = moduleNames.get(tree.meth.toString());
+
         for (int i = 0; i < tree.args.size(); i++) {
             JCExpression arg = tree.args.get(i);
             String name = ((JCModuleDecl)module.sym.tree).params.get(i).name.toString();
-            if (arg.getTag()==Tag.IDENT) {
-                Node argModule = moduleNames.get(arg.toString());
-                if (module != null)
-                    graphs.addConnectionEdge(module, argModule, name);
+
+            if (arg.getTag()==Tag.IDENT) { // arg could just be some constant; don't need to look at those
+
+                int arraySize = moduleNames.howMany(arg.toString());
+                if (arraySize > 1) { // Connecting a module to an array of modules
+                    for (int j = 0; j < arraySize; j++) {
+                        Node argArrayModule = moduleNames.get(arg.toString(), j);
+                        graphs.addConnectionEdge(module, argArrayModule, name, j);
+                    }
+                } else {
+                    // possibly connecting a module to another single module 
+                    Node argModule = moduleNames.get(arg.toString());
+
+                    if (module != null)
+                        graphs.addConnectionEdge(module, argModule, name);
+                }
             }
         }
     }

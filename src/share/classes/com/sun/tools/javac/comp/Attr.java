@@ -783,10 +783,10 @@ public class Attr extends JCTree.Visitor {
             effects.substituteProcEffects(tree);
             ConsistencyCheck cc = 
                 new ConsistencyCheck(effects.moduleEffectsComp.methodEffects);
-            for (SystemGraphs.Node n :
+/*            for (SystemGraphs.Node n :
                      tree.sym.graphs.forwardConnectionEdges.keySet()) {
                 cc.checkConsistency(tree.sym.graphs, n);
-            }
+                }*/
         }
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
