@@ -419,10 +419,12 @@ public class ModuleInternal extends Internal {
 			if (s.getKind() == ElementKind.METHOD) {
 				MethodSymbol m = (MethodSymbol) s;
 				JCMethodDecl value; 
-				if (!m.type.getReturnType().toString().equals("void"))
-					value = createFutureGetMethod(m, m.name);
-				else 
-					value = createVoidFutureGetMethod(m, m.name);
+				if (!m.type.getReturnType().toString().equals("void")){
+					value = createFutureValueMethod(m, m.name);
+				}
+				else{ 
+					value = createVoidFutureValueMethod(m, m.name);
+				}
 				wrappedMethods.add(value);
 			} else if (s.getKind() == ElementKind.CONSTRUCTOR) {
 				MethodSymbol m = (MethodSymbol) s;
@@ -457,16 +459,21 @@ public class ModuleInternal extends Internal {
 					ta(id(PaniniConstants.DUCK_INTERFACE_NAME),
 							args(id(restype.toString()))), id(restype.toString())).toList();
 		} else {
+			JCMethodDecl get;
 			if (restype.toString().equals("void")) {
 				extending = id(PaniniConstants.DUCK_INTERFACE_NAME + "$Void");
 				implement = implementing(
 						ta(id(PaniniConstants.DUCK_INTERFACE_NAME), args(id("Void"))))
 						.toList();
+				get = createVoidFutureGetMethod();
+				wrappedMethods.add(get);
 			} else {
 				extending = id(rawClassName);
 				implement = implementing(
 						ta(id(PaniniConstants.DUCK_INTERFACE_NAME),
 								args(id(rawClassName)))).toList();
+				get = createFutureGetMethod(restype);
+				wrappedMethods.add(get);
 			}
 		}
 
@@ -536,7 +543,7 @@ public class ModuleInternal extends Internal {
 						es(assign(select(thist(), "messageId"), id("messageId")))));
 	}
 
-	private JCMethodDecl createFutureGetMethod(MethodSymbol m, Name method_name) {
+	private JCMethodDecl createFutureValueMethod(MethodSymbol m, Name method_name) {
 		ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
 		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 		JCExpression restype = make.Type(m.type.getReturnType());
@@ -578,7 +585,7 @@ public class ModuleInternal extends Internal {
 		return value;
 	}
 
-	private JCMethodDecl createVoidFutureGetMethod(MethodSymbol m, Name method_name) {
+	private JCMethodDecl createVoidFutureValueMethod(MethodSymbol m, Name method_name) {
 		ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
 		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 		
@@ -611,6 +618,54 @@ public class ModuleInternal extends Internal {
 		return delegate;
 	}
 
+	private JCMethodDecl createFutureGetMethod(Type restype) {
+		ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
+		
+		// TODO correct type parameter replacements
+		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
+				make.Modifiers(0), names.fromString("e"),
+				make.Ident(names.fromString("InterruptedException")), null),
+				make.Block(
+						0,
+						List.<JCStatement> of(returnt("wrapped")))));
+		JCMethodDecl value = method(
+				mods(PUBLIC),
+				"get",
+				id(trim(restype.toString())),
+				params,
+				body(make.Try(
+						body(sync(
+								make.This(Type.noType),
+								body(whilel(isFalse(PaniniConstants.REDEEMED),
+										es(apply("wait")))))), catchers, null),
+						returnt("wrapped")));
+		return value;
+	}
+
+	private JCMethodDecl createVoidFutureGetMethod() {
+ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
+		
+		// TODO correct type parameter replacements
+		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
+				make.Modifiers(0), names.fromString("e"),
+				make.Ident(names.fromString("InterruptedException")), null),
+				make.Block(
+						0,
+						List.<JCStatement> of(returnt(nullv())))));
+		JCMethodDecl value = method(
+				mods(PUBLIC),
+				"get",
+				id("Void"),
+				params,
+				body(make.Try(
+						body(sync(
+								make.This(Type.noType),
+								body(whilel(isFalse(PaniniConstants.REDEEMED),
+										es(apply("wait")))))), catchers, null),
+						returnt(nullv())));
+		return value;
+	}
+	
 	private ClassSymbol checkAndResolveReturnType(Env<AttrContext> env,	Resolve rs, Type restype) {
 		ClassSymbol c;
 		if (restype.toString().equals("void"))
