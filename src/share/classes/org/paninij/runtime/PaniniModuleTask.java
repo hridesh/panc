@@ -193,6 +193,10 @@ public abstract class PaniniModuleTask implements PaniniModule{
 		}
 		if(size==numItems) notifyAll(); 
 	}
+	
+	public final static void setSize(int size){
+		PaniniTaskPool.setSize(size);
+	}
 
 	public final void start(){
 		containingPool = PaniniTaskPool.add(this);

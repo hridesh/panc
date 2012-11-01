@@ -796,6 +796,8 @@ public class Attr extends JCTree.Visitor {
     	ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
     	Map<Name, Name> variables = new HashMap<Name, Name>();
     	Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
+    	
+    	processSystemAnnotation(tree, inits);
     	for(int i=0;i <tree.body.stats.length();i++){
     		JCStatement currentSystemStmt = tree.body.stats.get(i);
     		Tag systemStmtKind = currentSystemStmt.getTag();
@@ -855,6 +857,27 @@ public class Attr extends JCTree.Visitor {
             }
             tree.sym.modules = modules.toList();
         }
+    }
+    
+    private void processSystemAnnotation(JCSystemDecl tree, ListBuffer<JCStatement> stats){
+    	boolean sizeSet = false;
+    	for(JCAnnotation annotation : tree.mods.annotations){
+    		if(annotation.annotationType.toString().equals("Parallelism")){
+    			int arg = 0;
+    			if(annotation.args.isEmpty())
+    				log.error(tree.pos(), "annotation.missing.default.value", annotation, "value");
+    			else if (annotation.args.size()==1 && annotation.args.head.getTag()==ASSIGN){
+    				if(annotate.enterAnnotation(annotation, syms.annotationType, env).member(names.value).type==syms.intType)
+    					arg = (Integer)annotate.enterAnnotation(annotation, syms.annotationType, env).member(names.value).getValue();
+    				stats.add(make.Exec(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString("PaniniModuleTask")),
+    						names.fromString("setSize")), List.<JCExpression>of(make.Literal(arg)))));
+    				sizeSet = true;
+    			}
+    		}
+    	}
+    	if(!sizeSet)
+    		stats.add(make.Exec(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString("PaniniModuleTask")),
+					names.fromString("setSize")), List.<JCExpression>of(make.Literal(1)))));
     }
 
 				private final JCMethodDecl createMainMethod(final ClassSymbol containingClass, final JCBlock methodBody, final List<JCVariableDecl> params, final List<JCStatement> mainStmts) {

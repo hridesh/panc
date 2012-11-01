@@ -1,16 +1,28 @@
 package org.paninij.runtime;
 
 final class PaniniTaskPool extends Thread {
+		static final synchronized void setSize(int size){
+			poolSize = size;
+			_getInstance = new PaniniTaskPool[size];
+			for(int i=0;i<_getInstance.length;i++){
+				_getInstance[i] = new PaniniTaskPool();
+			}
+		}
+		
 		static final synchronized PaniniTaskPool add(PaniniModuleTask t) {
 			// TODO: see load balancing
-			_getInstance._add(t);
-			if (!_getInstance.isAlive()) {
-				_getInstance.start();
+			int currentPool = nextPool;
+			if(nextPool>=poolSize-1)
+				nextPool = 0;
+			else
+				nextPool++;
+			_getInstance[currentPool]._add(t);
+			if (!_getInstance[currentPool].isAlive()) {
+				_getInstance[currentPool].start();
 			}
-			return _getInstance;
+			return _getInstance[currentPool];
 		}
 		static final synchronized void remove(PaniniTaskPool pool, PaniniModuleTask t) {
-			// TODO: if last module, stop the execution of _getInstance. This is done in run() right now. Is that appropriate?
 			pool._remove(t);
 		}
 		
@@ -44,7 +56,7 @@ final class PaniniTaskPool extends Thread {
 			while(true){
 				if(current.size!=0){
 					if(current.run() == true)
-						remove(_getInstance, current);
+						remove(this, current);
 					if(_headNode == null)
 						break;
 				}
@@ -54,6 +66,8 @@ final class PaniniTaskPool extends Thread {
 			}
 		}
 		
-		private static final PaniniTaskPool _getInstance = new PaniniTaskPool(); 
-		private PaniniTaskPool(){}			
+		private static PaniniTaskPool[] _getInstance = new PaniniTaskPool[1]; 
+		private PaniniTaskPool(){}	
+		private static int poolSize = 1;
+		private static int nextPool = 0;;
 }
