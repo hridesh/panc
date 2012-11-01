@@ -860,24 +860,46 @@ public class Attr extends JCTree.Visitor {
     }
     
     private void processSystemAnnotation(JCSystemDecl tree, ListBuffer<JCStatement> stats){
-    	boolean sizeSet = false;
+    	boolean init = false;
     	for(JCAnnotation annotation : tree.mods.annotations){
     		if(annotation.annotationType.toString().equals("Parallelism")){
     			int arg = 0;
     			if(annotation.args.isEmpty())
     				log.error(tree.pos(), "annotation.missing.default.value", annotation, "value");
     			else if (annotation.args.size()==1 && annotation.args.head.getTag()==ASSIGN){
-    				if(annotate.enterAnnotation(annotation, syms.annotationType, env).member(names.value).type==syms.intType)
-    					arg = (Integer)annotate.enterAnnotation(annotation, syms.annotationType, env).member(names.value).getValue();
-    				stats.add(make.Exec(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString("PaniniModuleTask")),
-    						names.fromString("setSize")), List.<JCExpression>of(make.Literal(arg)))));
-    				sizeSet = true;
-    			}
-    		}
-    	}
-    	if(!sizeSet)
-    		stats.add(make.Exec(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString("PaniniModuleTask")),
-					names.fromString("setSize")), List.<JCExpression>of(make.Literal(1)))));
+					if (annotate.enterAnnotation(annotation,
+							syms.annotationType, env).member(names.value).type == syms.intType)
+						arg = (Integer) annotate
+								.enterAnnotation(annotation,
+										syms.annotationType, env)
+								.member(names.value).getValue();
+					stats.add(make.Try(make.Block(0, List.<JCStatement> of(make
+							.Exec(make.Apply(List.<JCExpression> nil(), make
+									.Select(make.Ident(names
+											.fromString("PaniniModuleTask")),
+											names.fromString("init")), List
+									.<JCExpression> of(make.Literal(arg)))))),
+							List.<JCCatch> of(make.Catch(make.VarDef(
+									make.Modifiers(0), names.fromString("e"),
+									make.Ident(names.fromString("Exception")),
+									null), make.Block(0,
+									List.<JCStatement> nil()))), null));
+					init = true;
+				}
+			}
+		}
+		if (!init)
+			stats.add(make.Try(make.Block(0, List.<JCStatement> of(make
+					.Exec(make.Apply(List.<JCExpression> nil(), make
+							.Select(make.Ident(names
+									.fromString("PaniniModuleTask")),
+									names.fromString("init")), List
+							.<JCExpression> of(make.Literal(1)))))),
+					List.<JCCatch> of(make.Catch(make.VarDef(
+							make.Modifiers(0), names.fromString("e"),
+							make.Ident(names.fromString("Exception")),
+							null), make.Block(0,
+							List.<JCStatement> nil()))), null));
     }
 
 				private final JCMethodDecl createMainMethod(final ClassSymbol containingClass, final JCBlock methodBody, final List<JCVariableDecl> params, final List<JCStatement> mainStmts) {

@@ -1,12 +1,17 @@
 package org.paninij.runtime;
 
 final class PaniniTaskPool extends Thread {
-		static final synchronized void setSize(int size){
+		
+		private static boolean initiated = false;
+		static final synchronized void init(int size) throws Exception{
+			if(initiated)
+				throw new Exception("Target already initialized");
 			poolSize = size;
 			_getInstance = new PaniniTaskPool[size];
 			for(int i=0;i<_getInstance.length;i++){
 				_getInstance[i] = new PaniniTaskPool();
 			}
+			initiated = true;
 		}
 		
 		static final synchronized PaniniTaskPool add(PaniniModuleTask t) {
