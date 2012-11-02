@@ -539,6 +539,19 @@ public class Pretty extends JCTree.Visitor {
             throw new UncheckedIOException(e);
         }
     }
+    
+    public void visitForAllLoop(JCForAllLoop tree){
+    	try{
+    		print("forall(");
+    		print(tree.var);
+    		print(" : ");
+    		printExpr(tree.expr);
+    		print(") ");
+    		printStat(tree.body);
+    	}catch (IOException e){
+    		throw new UncheckedIOException(e);
+    	}
+    }
     // end Panini code
     public void visitTopLevel(JCCompilationUnit tree) {
         try {

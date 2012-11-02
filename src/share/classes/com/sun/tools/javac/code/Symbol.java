@@ -71,7 +71,6 @@ public abstract class Symbol implements Element {
     public List<Symbol> modules; // for System symbols
     public SystemGraphs graphs; // for System symbols
     public JCTree tree;
-	public boolean isSerial = false;
 
 	// end Panini code
 

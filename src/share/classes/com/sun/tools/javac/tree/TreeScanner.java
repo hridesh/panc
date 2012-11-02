@@ -97,6 +97,12 @@ public class TreeScanner extends Visitor {
     public void visitInclude(JCInclude tree){
     	scan(tree.lib);
     }
+    
+    public void visitForAllLoop(JCForAllLoop tree){
+    	scan(tree.var);
+    	scan(tree.expr);
+    	scan(tree.body);
+    }
     // end Panini code
 
     public void visitTopLevel(JCCompilationUnit tree) {

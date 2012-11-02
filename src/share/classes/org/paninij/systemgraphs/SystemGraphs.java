@@ -34,6 +34,17 @@ public class SystemGraphs {
         public String varName;
         public MethodSymbol caller, called;
         public Node from, to;
+        public int index;
+        public ProcEdge(Node from, Node to, 
+                        MethodSymbol caller,
+                        MethodSymbol called,
+                        String varName, int index) {
+            this.from = from; this.to = to; 
+            this.caller = caller; this.called = called;
+            this.varName = varName;
+            this.index = index;
+        }
+
         public ProcEdge(Node from, Node to, 
                         MethodSymbol caller,
                         MethodSymbol called,
@@ -41,6 +52,7 @@ public class SystemGraphs {
             this.from = from; this.to = to; 
             this.caller = caller; this.called = called;
             this.varName = varName;
+            this.index = -1;
         }
         public String toString() {
             return "\"" + from + "\" -> \"" + to + "\" [label=" + called + "]";
@@ -84,6 +96,12 @@ public class SystemGraphs {
                             MethodSymbol called, String varName) {
         forwardProcEdges.get(from).add(new ProcEdge(from, to, caller, called, 
                                                     varName));
+    }
+
+        public void addProcEdge(Node from, Node to, MethodSymbol caller, 
+                                MethodSymbol called, String varName, int index) {
+        forwardProcEdges.get(from).add(new ProcEdge(from, to, caller, called, 
+                                                    varName, index));
     }
 
     public String toString() {

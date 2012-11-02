@@ -533,6 +533,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
                         m.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
                                                                             moduleField));
                         origMethSym.callerMethods.add(m.sym);
+                        System.out.println("module " + methSym);
                     } else
                         callGraphTodos.add(new TodoItem(tree, m));
                 } else {
@@ -550,13 +551,14 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public static VarSymbol moduleField(JCMethodInvocation tree) {
-        if (tree.meth instanceof JCFieldAccess) 
+        if (tree.meth instanceof JCFieldAccess) {
             if (((JCFieldAccess)tree.meth).selected instanceof JCIdent) {
                 VarSymbol s = (VarSymbol)TreeInfo.symbol(((JCFieldAccess)tree.meth).selected);
                 if (!s.name.toString().equals("this")) {
                     return (VarSymbol)TreeInfo.symbol(((JCFieldAccess)tree.meth).selected);
                 }
             }
+        }
         return null;
     }
 

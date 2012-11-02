@@ -43,6 +43,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import javax.lang.model.SourceVersion;
+import com.sun.tools.javac.comp.Attr;
 
 import static com.sun.tools.javac.main.Option.ChoiceKind.*;
 import static com.sun.tools.javac.main.Option.OptionKind.*;
@@ -196,6 +197,16 @@ public enum Option {
             return super.process(helper, option, operand);
         }
     },
+
+        // Panini code
+        GRAPHS("-graphs", "opt.panini.graphs", STANDARD, BASIC) {
+            @Override
+            public boolean process(OptionHelper helper, String option) {
+                Attr.doGraphs = true;
+                return super.process(helper, option);
+            }
+        },
+        // end Panini code
 
     VERSION("-version", "opt.version", STANDARD, INFO) {
         @Override

@@ -119,5 +119,6 @@ public interface TreeVisitor<R,P> {
     R visitModule(ModuleTree node, P p);
     R visitInclude(IncludeTree node, P p);
     R visitFree(FreeTree node, P p);
+    R visitForAll(ForAllTree node, P p);
     //end Panini Code
 }
