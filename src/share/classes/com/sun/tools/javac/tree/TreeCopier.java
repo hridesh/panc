@@ -503,5 +503,11 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 		JCFree t = (JCFree)node;
 		return M.at(t.pos).Free(t.getExpression());
 	}
+	
+	@Override
+	public JCForAllLoop visitForAll(ForAllTree node, P p){
+		JCForAllLoop t = (JCForAllLoop)node;
+		return M.at(t.pos).ForAll(t.getVariable(), t.getExpression(), t.getStatement());
+	}
 	// end Panini code
 }

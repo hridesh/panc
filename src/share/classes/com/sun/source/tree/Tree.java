@@ -56,6 +56,7 @@ public interface Tree {
     	MODULE(ModuleTree.class),
     	INCLUDE(IncludeTree.class),
     	FREE(FreeTree.class),
+    	FORALL(ForAllTree.class),
     	// end Panini code
         /**
          * Used for instances of {@link AnnotationTree}.
