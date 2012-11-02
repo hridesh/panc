@@ -12,7 +12,7 @@ mkdir panc/editors
 
 cp -r ../dist panc/lib/dist
 cp -r ../licenses panc/licenses
-cp export/panc.sh panc/bin/panc
+cp export/panc panc/bin/panc
 cp export/panc.bat panc/bin/
 cp export/panini panc/bin/
 cp export/panini.bat panc/bin/
