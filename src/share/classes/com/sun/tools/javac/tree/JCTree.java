@@ -350,7 +350,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         STATE,
         PROCCALL,
         FREE,
-        FORALL;
+        FORALLLOOP;
         // end Panini code
 
 
@@ -981,7 +981,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	
 		@Override
 		public Kind getKind() {
-			return Kind.FORALL;
+			return Kind.FORALLLOOP;
 		}
 
 		@Override
@@ -1001,7 +1001,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
 		@Override
 		public Tag getTag() {
-			return Tag.FORALL;
+			return Tag.FORALLLOOP;
 		}
 
 		@Override
