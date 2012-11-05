@@ -116,7 +116,6 @@ public class SystemGraphsBuilder extends TreeScanner {
             String methodName = TreeInfo.symbol(t.tree.meth).toString();
             methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
             MethodSymbol origMethSym = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
-            System.out.println("todo " + origMethSym + " " + moduleField);
             t.method.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
                                                                        moduleField));
             origMethSym.callerMethods.add(t.method.sym);
