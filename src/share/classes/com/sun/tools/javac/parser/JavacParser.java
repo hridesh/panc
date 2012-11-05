@@ -1808,8 +1808,33 @@ public class JavacParser implements Parser {
     /** VariableInitializer = ArrayInitializer | Expression
      */
     public JCExpression variableInitializer() {
+    	// Panini code
+    	if(token.kind == IDENTIFIER && token.name().toString().equals("forall")){
+    		return parseForAllLoop();
+    	}
+    	// end Panini code
         return token.kind == LBRACE ? arrayInitializer(token.pos, null) : parseExpression();
     }
+    
+    // Panini code
+    public JCExpression parseForAllLoop(){
+    	nextToken();
+    	accept(LPAREN);
+    	
+    	List<JCStatement> inits = forInit();
+    	if(inits.length()!=1 ||
+    			inits.head.getTag()!=Tag.VARDEF||
+    			((JCVariableDecl)inits.head).init!=null){
+    		//TODO: error;
+    	}
+        JCVariableDecl var = (JCVariableDecl)inits.head;
+        accept(COLON);
+        JCExpression expr = parseExpression();
+        accept(RPAREN);
+        JCStatement body = parseStatementAsBlock();
+        return F.at(token.pos).ForAll(var, expr, body);
+    }
+    // end Panini code
 
     /** ParExpression = "(" Expression ")"
      */

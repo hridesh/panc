@@ -447,5 +447,12 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 		R r = scan(node.getExpression(), p);
 		return r;
 	}
+	
+	public R visitForAll(ForAllTree node, P p){
+		R r = scan(node.getVariable(), p);
+        r = scanAndReduce(node.getExpression(), p, r);
+        r = scanAndReduce(node.getStatement(), p, r);
+        return r;
+	}
 	//end Panini code
 }

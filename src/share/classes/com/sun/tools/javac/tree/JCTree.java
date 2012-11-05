@@ -349,7 +349,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         INCLUDE,
         STATE,
         PROCCALL,
-        FREE;
+        FREE,
+        FORALLLOOP;
         // end Panini code
 
 
@@ -965,6 +966,54 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
 			return v.visitFree(this, d);
 		}
+    }
+    
+    public static class JCForAllLoop extends JCExpression implements ForAllTree{
+    	
+    	public JCVariableDecl var;
+        public JCExpression expr;
+        public JCStatement body;
+        protected JCForAllLoop(JCVariableDecl var, JCExpression expr, JCStatement body) {
+            this.var = var;
+            this.expr = expr;
+            this.body = body;
+        }
+    	
+		@Override
+		public Kind getKind() {
+			return Kind.FORALLLOOP;
+		}
+
+		@Override
+		public JCVariableDecl getVariable() {
+			return var;
+		}
+
+		@Override
+		public JCExpression getExpression() {
+			return expr;
+		}
+
+		@Override
+		public JCStatement getStatement() {
+			return body;
+		}
+
+		@Override
+		public Tag getTag() {
+			return Tag.FORALLLOOP;
+		}
+
+		@Override
+		public void accept(Visitor v) {
+			v.visitForAllLoop(this);			
+		}
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitForAll(this, d);
+		}
+    	
     }
     // end Panini code
 
@@ -2910,6 +2959,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitModuleDef(JCModuleDecl that)	     { visitTree(that); }
         public void visitInclude(JCInclude that)	         { visitTree(that); }
         public void visitFree(JCFree that)	                 { visitTree(that); }
+        public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }
         // end Panini code
         public void visitTree(JCTree that)                   { Assert.error(); }
     }
