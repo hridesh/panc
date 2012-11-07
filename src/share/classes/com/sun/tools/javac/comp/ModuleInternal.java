@@ -630,7 +630,7 @@ public class ModuleInternal extends Internal {
 						List.<JCStatement> of(returnt("wrapped")))));
 		JCMethodDecl value = method(
 				mods(PUBLIC),
-				"get",
+				"panini$get",
 				id(trim(restype.toString())),
 				params,
 				body(make.Try(
@@ -654,7 +654,7 @@ ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
 						List.<JCStatement> of(returnt(nullv())))));
 		JCMethodDecl value = method(
 				mods(PUBLIC),
-				"get",
+				"panini$get",
 				id("Void"),
 				params,
 				body(make.Try(
