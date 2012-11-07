@@ -533,7 +533,6 @@ public class ASTChainNodeBuilder extends TreeScanner {
                         m.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
                                                                             moduleField));
                         origMethSym.callerMethods.add(m.sym);
-                        System.out.println("module " + methSym);
                     } else
                         callGraphTodos.add(new TodoItem(tree, m));
                 } else {

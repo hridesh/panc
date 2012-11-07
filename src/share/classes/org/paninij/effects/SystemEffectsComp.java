@@ -76,10 +76,10 @@ public class SystemEffectsComp {
         effectsSub.substituteProcEffects(moduleEffectsComp.methodEffects);
            for (JCModuleDecl module : moduleDecls) 
             reachedProcsComp.computeReachedProcs(module);
-           for (JCMethodDecl m : moduleEffectsComp.methodEffects.keySet()) {
+/*           for (JCMethodDecl m : moduleEffectsComp.methodEffects.keySet()) {
                System.out.println(m);
                System.out.println(moduleEffectsComp.methodEffects.get(m));
-           }
+               }*/
 
     }
 }
