@@ -33,17 +33,17 @@ class Number {
 }
 
 module Worker (int num) {
-	Number _circleCount;
+	Number _circleCount = new Number(0);
 	Random prng = new Random ();
-	void compute() {
+	Number compute() {
 		long result = 0;
 		for (int j = 0; j < num; j++) {
 			double x = prng.nextDouble();
 			double y = prng.nextDouble();
 			if ((x * x + y * y) < 1)
-				result++;
+				_circleCount.incr();
 		}
-		_circleCount = new Number(result);
+		return _circleCount;
 	}
 	Number getCircleCount() { return _circleCount; }
 }
