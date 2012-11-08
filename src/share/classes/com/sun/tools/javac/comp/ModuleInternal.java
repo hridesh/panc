@@ -299,7 +299,7 @@ public class ModuleInternal extends Internal {
 									body(es(assign("redeemed", truev())), es(apply("notifyAll")))))));
 
 					wrappedMethods.add(this.createPaniniMessageID());
-
+					wrappedMethods.add(createVoidFutureGetMethod());
 					implement = implementing(
 							ta(id(PaniniConstants.DUCK_INTERFACE_NAME), args(id("Void")))).toList();
 
