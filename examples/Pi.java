@@ -22,37 +22,37 @@
  * 
  * This computation uses the Monte Carlo Method.
  */
-import java.lang.Math;
+// import java.lang.Math;
+import java.util.Random;
 
-library Numbers {
-	class Number {
-		long value; 
-		Number (long value){ this.value = value; }
-		void incr() { value ++; }
-		long value() { return value; }
-	}
+class Number {
+	long value; 
+	Number (long value){ this.value = value; }
+	void incr() { value ++; }
+	long value() { return value; }
 }
 
 module Worker (int num) {
-	include Numbers; 
 	Number _circleCount = new Number(0);
-	void compute() { 
-		for(int j = 0; j < num; j++) { 
-			// generate 2 random numbers between 0 and 1
-			double x = Math.random();
-			double y = Math.random();
-			if ( (x * x + y * y) < 1 )
-				_circleCount.incr(); 
+	Random prng = new Random ();
+	void compute() {
+		long result = 0;
+		for (int j = 0; j < num; j++) {
+			double x = prng.nextDouble();
+			double y = prng.nextDouble();
+			if ((x * x + y * y) < 1)
+				result++;
 		}
+		_circleCount = new Number(result); 
 	}
 	Number getCircleCount() { return _circleCount; }
 }
 
 module Master (int totalCount, Worker[] workers) {
-	void run(){  
+	void run(){
 		long totalCircleCount = 0;
-		for(Worker w : workers) w.compute(); 
-		for(Worker w: workers) totalCircleCount += w.getCircleCount().value(); 
+		for (Worker w : workers) w.compute();
+		for (Worker w : workers) totalCircleCount += w.getCircleCount().value();
 		double pi = 4.0 * totalCircleCount / totalCount;
 		System.out.println("Pi : " + pi);
 	}
@@ -60,7 +60,7 @@ module Master (int totalCount, Worker[] workers) {
 
 system Pi {
 	Master master; Worker workers[10];
-	master(50000000,workers);
-	for(Worker w : workers) 
+	master(50000000, workers);
+	for (Worker w : workers)
 		w(5000000);
 }
