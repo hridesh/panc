@@ -33,7 +33,7 @@ class Number {
 }
 
 module Worker (int num) {
-	Number _circleCount = new Number(0);
+	Number _circleCount;
 	Random prng = new Random ();
 	void compute() {
 		long result = 0;
