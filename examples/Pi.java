@@ -36,7 +36,6 @@ module Worker (int num) {
 	Number _circleCount = new Number(0);
 	Random prng = new Random ();
 	Number compute() {
-		long result = 0;
 		for (int j = 0; j < num; j++) {
 			double x = prng.nextDouble();
 			double y = prng.nextDouble();
