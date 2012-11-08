@@ -26,7 +26,7 @@
 import java.util.Random;
 
 class Number {
-	long value; 
+	long value;
 	Number (long value){ this.value = value; }
 	void incr() { value ++; }
 	long value() { return value; }
@@ -43,7 +43,7 @@ module Worker (int num) {
 			if ((x * x + y * y) < 1)
 				result++;
 		}
-		_circleCount = new Number(result); 
+		_circleCount = new Number(result);
 	}
 	Number getCircleCount() { return _circleCount; }
 }
