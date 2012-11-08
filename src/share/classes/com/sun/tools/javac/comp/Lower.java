@@ -3752,6 +3752,7 @@ public class Lower extends TreeTranslator {
             accessed = null;
             enumSwitchMap.clear();
         }
+//        System.out.println(translated.toList());
         return translated.toList();
     }
 

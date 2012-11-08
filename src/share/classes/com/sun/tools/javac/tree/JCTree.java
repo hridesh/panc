@@ -349,7 +349,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         INCLUDE,
         STATE,
         PROCCALL,
-        FREE;
+        FREE,
+        FORALLLOOP;
         // end Panini code
 
 
@@ -669,7 +670,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	
     }
     
-    public static class JCModuleArray extends JCArrayTypeTree implements ModuleArrayTree{
+    public static class JCModuleArray extends JCArrayTypeTree implements ModuleArrayTree {
 
     	public int amount;
     	
@@ -700,7 +701,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	
     }
     
-    public static class JCSystemDecl extends JCClassDecl implements SystemTree{
+    public static class JCSystemDecl extends JCClassDecl implements SystemTree {
     	public Name name;
     	public Kind kind;
     	public Tag tag;
@@ -767,14 +768,17 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
     }
     
-    public static class JCLibraryDecl extends JCStatement implements LibraryTree{
-    	public Name name;
-    	public List<JCTree> defs;
+    public static class JCLibraryDecl extends JCClassDecl implements LibraryTree{
     	boolean isIncluded;
+    	Kind kind;
+    	Tag tag;
     	public JCLibraryDecl(Name name, List<JCTree> defs){
+    		super(new JCModifiers(Flags.PUBLIC|Flags.FINAL|Flags.STATIC, List.<JCAnnotation>nil()), name, List.<JCTypeParameter>nil(), 
+    				null, List.<JCExpression>nil(), defs, null);
     		this.name = name;
-    		this.defs = defs;
     		this.isIncluded = false;
+    		kind = Kind.LIBRARY;
+    		tag = Tag.LIBRARYDEF;
     	}
 		public Kind getKind() {
 			return Kind.LIBRARY;
@@ -799,13 +803,31 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		public Tag getTag() {
 			return LIBRARYDEF;
 		}
+		
+		public void switchToClass(){
+			kind = Kind.CLASS;
+			tag = Tag.CLASSDEF;
+		}
+		
+		public void switchToModule(){
+			kind = Kind.LIBRARY;
+			tag = Tag.LIBRARYDEF;
+		}
 
 		@Override
-		public void accept(Visitor v) { v.visitLibraryDef(this);}
+		public void accept(Visitor v) {
+			if(tag != CLASSDEF)
+				v.visitLibraryDef(this);
+			else
+				v.visitClassDef(this);
+			}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitLibrary(this, d);
+			if(tag != CLASSDEF)
+				return v.visitLibrary(this, d);
+			else
+				return v.visitClass(this, d);
 		}
     }
     
@@ -825,7 +847,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     			List<JCExpression> implementing,
     			List<JCTree> defs){
     		super(mods, name, List.<JCTypeParameter>nil(), 
-    				null, List.<JCExpression>nil(), defs, null);
+    				null, implementing, defs, null);
     		this.name = name;
     		this.params = params;
     		this.implementing = implementing;
@@ -845,7 +867,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
 		
 		public void switchToClass(){
-			kind = Kind.CLASS;
+			if((mods.flags & Flags.INTERFACE) !=0)
+				kind = Kind.INTERFACE;
+			else
+				kind = Kind.CLASS;
 			tag = Tag.CLASSDEF;
 		}
 		
@@ -941,6 +966,54 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
 			return v.visitFree(this, d);
 		}
+    }
+    
+    public static class JCForAllLoop extends JCExpression implements ForAllTree{
+    	
+    	public JCVariableDecl var;
+        public JCExpression expr;
+        public JCStatement body;
+        protected JCForAllLoop(JCVariableDecl var, JCExpression expr, JCStatement body) {
+            this.var = var;
+            this.expr = expr;
+            this.body = body;
+        }
+    	
+		@Override
+		public Kind getKind() {
+			return Kind.FORALLLOOP;
+		}
+
+		@Override
+		public JCVariableDecl getVariable() {
+			return var;
+		}
+
+		@Override
+		public JCExpression getExpression() {
+			return expr;
+		}
+
+		@Override
+		public JCStatement getStatement() {
+			return body;
+		}
+
+		@Override
+		public Tag getTag() {
+			return Tag.FORALLLOOP;
+		}
+
+		@Override
+		public void accept(Visitor v) {
+			v.visitForAllLoop(this);			
+		}
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitForAll(this, d);
+		}
+    	
     }
     // end Panini code
 
@@ -2886,6 +2959,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitModuleDef(JCModuleDecl that)	     { visitTree(that); }
         public void visitInclude(JCInclude that)	         { visitTree(that); }
         public void visitFree(JCFree that)	                 { visitTree(that); }
+        public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }
         // end Panini code
         public void visitTree(JCTree that)                   { Assert.error(); }
     }

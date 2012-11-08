@@ -1,22 +1,22 @@
-library integerc {
-    class IntegerC {
+//library integerc {
+class IntegerC {
         int value; public IntegerC(int value) { this.value = value; }
         public int value() { return value; }
     }
-}
+//}
 
 module Main (Indirection i1, Indirection i2) {
-    include integerc;
+//    include integerc;
 
-    void run() {
-        i1.set(new IntegerC(1));
-        i2.set(new IntegerC(2));
-        System.out.println(i1.get().value());
+    void doSomething(int i) {
+        if(i<12) i1.set(new IntegerC(1));
+        else i2.set(new IntegerC(2));
+        i1.get().value();
     }
 }
 
 module Store () {
-    include integerc;
+//    include integerc;
 
     int state = 0;
 
@@ -29,14 +29,14 @@ module Store () {
 }
 
 module Indirection (Store s) {
-    include integerc;
+//    include integerc;
 
     void set(IntegerC newStore) {
-        yield((long)(Math.random()*1000));
+//        yield((long)(Math.random()*1000));
         s.set(newStore);
     }
     IntegerC get() {
-        yield((long)(Math.random()*1000));
+//        yield((long)(Math.random()*1000));
         return s.get();
     }
 }

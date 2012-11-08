@@ -529,10 +529,6 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
 
     // process the non-static imports and the static imports of types.
     public void visitImport(JCImport tree) {
-    	if(tree.qualid.getTag() == Tag.IDENT){
-    		log.error("library.not.found", tree.qualid.toString());
-    		System.exit(444);
-    	}
     	JCFieldAccess imp = (JCFieldAccess)tree.qualid;
     	Name name = TreeInfo.name(imp);
 
@@ -566,6 +562,9 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         MethodSymbol m = new MethodSymbol(0, tree.name, null, enclScope.owner);
         m.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, m, tree);
         tree.sym = m;
+        // Panini code
+        m.tree = tree;
+        // end Panini code
         Env<AttrContext> localEnv = methodEnv(tree, env);
         DeferredLintHandler prevLintHandler =
                 chk.setDeferredLintHandler(deferredLintHandler.setPos(tree.pos()));

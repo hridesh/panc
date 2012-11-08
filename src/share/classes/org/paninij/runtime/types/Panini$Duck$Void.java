@@ -26,6 +26,10 @@ public class Panini$Duck$Void implements Panini$Duck<Void> {
 		this.messageId = messageId;
 	}
 		
+	public final Void panini$get(){
+		return null;
+	}
+	
 	public final Void value() {
 		future.get();
 		return null;

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+mydir=`dirname $0`
+case `uname -s` in
+    CYGWIN*)
+      mydir=`cygpath -m $mydir`
+      ;;
+esac
+export PANC_HOME=$mydir/../
+
+# pass classpath argument through to inner java call
+CP=.
+NON_CP=""
+while [ $# -gt 0 ]
+do
+    ARG="$1"
+    case $ARG in
+        -cp)
+            CP=$CP:$2
+            shift 2
+            ;;
+        *)
+            NON_CP="$NON_CP $ARG"
+            shift
+            ;;
+    esac
+done
+
+java -cp $CP:$PANC_HOME/lib/panini_rt.jar -javaagent:$PANC_HOME/lib/profile.jar -Dprofile.properties=$PANC_HOME/lib/profile.properties $NON_CP

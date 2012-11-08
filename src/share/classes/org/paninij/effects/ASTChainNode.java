@@ -13,6 +13,7 @@ public class ASTChainNode {
     public ArrayList<ASTChainNode> startNodes = new ArrayList<ASTChainNode>();
     public ArrayList<ASTChainNode> endNodes = new ArrayList<ASTChainNode>();
     public ArrayList<ASTChainNode> excEndNodes = new ArrayList<ASTChainNode>();
+    public boolean lhs = false;
     
     // effects of chain up to and including this node
     public EffectSet effects = new EffectSet();

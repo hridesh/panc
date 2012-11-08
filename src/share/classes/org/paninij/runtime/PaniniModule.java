@@ -18,85 +18,7 @@
  */
 
 package org.paninij.runtime;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.paninij.runtime.types.Panini$Duck;
-
-public abstract class PaniniModule extends Thread {
-   protected volatile Object[] objects = new Object[10];
-   protected volatile int head = 0, tail=0, size =0;
-   protected final ReentrantLock queueLock = new ReentrantLock();
-   
-   protected final void extendQueue() {
-       assert(tail>=objects.length);
-       Object[] newObjects = new Object[objects.length+10];
-       if(tail<=head){
-	       System.arraycopy(objects, head, newObjects, 0, objects.length-head);
-		   System.arraycopy(objects, 0, newObjects, objects.length-head, tail);
-       }
-       else
-    	   System.arraycopy(objects, head, newObjects, 0, tail-head);
-       head = 0; tail = size;        
-       objects = newObjects;
-   }        
-
-   /**
-    * Checks to ensure whether this module's queue can accomodate numElems 
-    * number of elements, and if not extends it.
-    * @param numElems 
-    */
-   protected final void ensureSpace(int numElems) {
-	    if (head < tail) {
-	    	if (objects.length + (head - tail) < numElems) 
-	    		if (size != 0) extendQueue();
-	    }
-	    else if (head - tail < numElems) 
-	    			if (size != 0) extendQueue();
-   }
-
-  	/**
-  	 * Extracts and returns the first duck from the module's queue. 
-  	 * This method blocks if there are no ducks in the queue.
-  	 * 
-  	 * precondition: it is assumed that the lock queueLock is held before
-  	 *               calling this method.
-  	 * 
-  	 * @return the first available duck in the module's queue.
-  	 */
-   @SuppressWarnings("rawtypes")
-  	protected final synchronized Panini$Duck get$Next$Duck() {
-   		if(this.size <= 0) blockModule();
-  			size--;
-  			Panini$Duck d = (Panini$Duck) objects[head++];
-  			if (head >= objects.length) head = 0;
-  			return d;
-  	}
-
-   private final void blockModule() {
- 			nomessages: while (this.size <= 0) 
- 				try {	
- 					wait(); 
- 				} catch (InterruptedException e) {
- 					continue nomessages;
- 				}
-   }
-   
-   protected final boolean empty() { return size==0; }
-   
-   protected final void print() { 
-       synchronized (System.out) {
-           System.out.println("size: " + size);
-           System.out.print("[");
-           for (int i = 0; i < objects.length-1; i++) {
-               if (i==head) System.out.print("!!H!!");
-               if (i==tail) System.out.print("!!T!!");
-               System.out.print(objects[i] + ", ");
-           }
-           if (objects.length>0) System.out.println(objects[objects.length-1] + "]");
-           else System.out.println("]");
-           
-       }
-   }
+public interface PaniniModule{
    
   	/**
   	 * Causes the current module to sleep (temporarily cease execution) 
@@ -108,16 +30,7 @@ public abstract class PaniniModule extends Thread {
   	 * @throws IllegalArgumentException - if the value of millis is negative
   	 * 
   	 */
-  	protected void yield (long millis) {
-  		if(millis < 0) throw new IllegalArgumentException();
-  		try {
-  			Thread.sleep(millis);
-  			//TODO: this may also be a good place to introduce interleaving.
-  		} catch (InterruptedException e) {
-  			e.printStackTrace();
-  			//TODO: What should be the semantics here? 
-  		}
-  	}  	
+  	public void yield (long millis);  	
   	
   	/**
   	 * Causes the current module to complete its remaining work and then cease execution.
@@ -130,11 +43,7 @@ public abstract class PaniniModule extends Thread {
   	 * @throws SecurityException - if the client module is not allowed to access this module.
   	 * 
   	 */
-  	public final void shutdown () {
-  		 this.checkAccess();
-	   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-1);
-	   	push(d);
-  	}
+  	public void shutdown();
   	
   	/**
   	 * Causes the current module to immediately cease execution. 
@@ -147,76 +56,8 @@ public abstract class PaniniModule extends Thread {
   	 * @throws SecurityException - if the client module is not allowed to access this module.
   	 * 
   	 */
-  	public final void exit () {
-  		 this.checkAccess();
-	   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-2);
-	   	push(d);
-  	}
-   /**
-    * Pushes a single object on this module's queue.
-    * @param o - Object to be stored.
-    */
-   protected final synchronized void push(Object o) {
-   	ensureSpace(1);
-   	size = size + 1;
-   	objects[tail++] = o;
-   	if (tail >= objects.length)
-   		tail = 0;
-   	if(size==1) notifyAll();
-   }
-
-   /**
-    * Pushes two objects on this module's queue.
-    * @param o1 - first object to be stored. 
-    * @param o2 - second object to be stored.
-    */
-   protected final synchronized void push(Object o1, Object o2) {
-   	ensureSpace(2);
-   	size = size + 2;
-   	objects[tail++] = o1;
-   	if (tail >= objects.length)
-   		tail = 0;
-   	objects[tail++] = o2;
-   	if (tail >= objects.length)
-   		tail = 0;
-   	if(size==2) notifyAll();
-   }
-
-   /**
-    * Pushes three objects on this module's queue.
-    * @param o1 - first object to be stored. 
-    * @param o2 - second object to be stored.
-    * @param o3 - third object to be stored.
-    */
-   protected final synchronized void push(Object o1, Object o2, Object o3) {
-   	ensureSpace(3);
-   	size = size + 3;
-   	objects[tail++] = o1;
-   	if (tail >= objects.length)
-   		tail = 0;
-   	objects[tail++] = o2;
-   	if (tail >= objects.length)
-   		tail = 0;
-   	objects[tail++] = o3;
-   	if (tail >= objects.length)
-   		tail = 0;
-   	if(size==3) notifyAll();
-   }
-
-   /**
-    * Pushes multiple objects on this module's queue.
-    * @param items - list of objects to be stored. 
-    */
-   protected final synchronized void push(Object... items) {
-   	int numItems = items.length;
-   	ensureSpace(numItems);
-   	size = size + numItems;
-   	for(Object o: items) {
-   		objects[tail++] = o;
-   		if (tail >= objects.length)
-   			tail = 0;
-   	}
-   	if(size==numItems) notifyAll(); 
-   }
-
+  	public void exit ();
+  	
+  	public void start();
+  	public void join() throws java.lang.InterruptedException; 
 }

@@ -40,6 +40,11 @@ import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.model.*;
 import com.sun.tools.javac.tree.JCTree;
 
+// Panini code
+import java.util.HashSet;
+import org.paninij.systemgraphs.SystemGraphs;
+// end Panini code
+
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.TypeTags.*;
@@ -62,7 +67,13 @@ public abstract class Symbol implements Element {
 	public boolean isLibrary;
 	public boolean isModule;
 	public boolean hasRun;
+
+    public List<Symbol> modules; // for System symbols
+    public SystemGraphs graphs; // for System symbols
+    public JCTree tree;
+
 	// end Panini code
+
     /** The kind of this symbol.
      *  @see Kinds
      */
@@ -108,6 +119,18 @@ public abstract class Symbol implements Element {
     /** The owner of this symbol.
      */
     public Symbol owner;
+
+// Panini code
+    public ClassSymbol ownerModule() {
+        Symbol owner = this.owner;
+        while (owner != null) {
+            if (owner.isModule) return (ClassSymbol)owner;
+            else owner = owner.owner;
+        }
+        return null;
+    }
+// end Panini code
+
 
     /** The completer of this symbol.
      */
@@ -692,7 +715,6 @@ public abstract class Symbol implements Element {
             return v.visitPackageSymbol(this, p);
         }
     }
-
     /** A class for class symbols
      */
     public static class ClassSymbol extends TypeSymbol implements TypeElement {
@@ -1026,6 +1048,26 @@ public abstract class Symbol implements Element {
 
     	// Panini code
     	public boolean isProcedure;
+        public JCTree.JCMethodDecl tree;
+        public static class MethodInfo {
+            public MethodSymbol method;
+            public VarSymbol module;
+            public MethodInfo(MethodSymbol method) { 
+                this.method = method;
+                this.module = null;
+            }
+            public MethodInfo(MethodSymbol method,
+                VarSymbol module) { 
+                this.method = method;
+                this.module = module;
+            }
+
+        }
+        // built in ASTChainNodeBuilder
+        public HashSet<MethodSymbol> callerMethods = new HashSet<MethodSymbol>();
+        public HashSet<MethodInfo> calledMethods = new HashSet<MethodInfo>();
+        // built in ReachedProcsComp
+        public HashSet<MethodInfo> reachedProcs = new HashSet<MethodInfo>();
     	// end Panini code
     	
         /** The code of the method. */

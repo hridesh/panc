@@ -31,28 +31,57 @@ import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.code.Type.*;
+import static com.sun.tools.javac.code.Flags.*;
 
 import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
+import org.paninij.systemgraphs.SystemGraphs;
+
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 
 public class ASTChainNodeBuilder extends TreeScanner {
+    private JCModuleDecl module;
+    private JCLibraryDecl library;
     private JCMethodDecl m;
     private ASTChain chain;
     private ArrayList<ASTChainNode> currentStartNodes, currentEndNodes, currentExcEndNodes;
 	private final ArrayList<ASTChainNode> emptyList = new ArrayList<ASTChainNode>(0);
+    private boolean lhs = false;
+    public Names names;
+    public static class TodoItem {
+        public JCMethodInvocation tree;
+        public JCMethodDecl method;
+        public TodoItem(JCMethodInvocation tree, JCMethodDecl method) {
+            this.tree = tree;
+            this.method = method;
+        }
+    }
+    public static LinkedList<TodoItem> callGraphTodos = new LinkedList<TodoItem>();
 
-    public void buildNodes(JCMethodDecl m, ASTChain chain) {
+    public void buildNodes(JCModuleDecl module, JCMethodDecl m, ASTChain chain) {
+        this.module = module;
         this.m = m;
         this.chain = chain;
-        
+
         scan(m.body);
         chain.startNode = chain.nodeForTree(m.body);
     }
+
+    public void buildNodes(JCLibraryDecl library, JCMethodDecl m, ASTChain chain) {
+        this.module = null;
+        this.library = library;
+        this.m = m;
+        this.chain = chain;
+
+        scan(m.body);
+        chain.startNode = chain.nodeForTree(m.body);
+    }
+
 
     public void visitTopLevel(JCCompilationUnit that)    { Assert.error(); }
 	public void visitImport(JCImport that)               { Assert.error(); }
@@ -64,7 +93,6 @@ public class ASTChainNodeBuilder extends TreeScanner {
 	public void visitModifiers(JCModifiers that)         { Assert.error(); }
 	public void visitErroneous(JCErroneous that)         { Assert.error(); }
 	
-	/* the followings are about the types. */
 	public void visitTypeIdent(JCPrimitiveTypeTree that) { Assert.error(); }
 	public void visitTypeArray(JCArrayTypeTree that)     { Assert.error(); }
 	public void visitTypeApply(JCTypeApply that)         { Assert.error(); }
@@ -89,6 +117,15 @@ public class ASTChainNodeBuilder extends TreeScanner {
     	scan(tree.exp);
     }
 
+    private void addNode(ASTChainNode node) {
+        node.startNodes = currentStartNodes;
+        node.endNodes = currentEndNodes;
+        node.excEndNodes = currentExcEndNodes;
+        node.lhs = lhs;
+
+        chain.add(node);
+    }
+
     public void visitVarDef(JCVariableDecl tree) {
         ASTChainNode node = new ASTChainNode(tree);
 		JCExpression init = tree.init;
@@ -104,11 +141,8 @@ public class ASTChainNodeBuilder extends TreeScanner {
 
 		currentExcEndNodes = emptyList;
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
 
-        chain.add(node);
+        addNode(node);
     }
 
 
@@ -117,11 +151,8 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		List<JCStatement> stats = tree.stats;
         visitStatements(stats);
 		
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
 
-        chain.add(node);
+        addNode(node);
     }
 
     public void visitDoLoop(JCDoWhileLoop tree) {
@@ -147,11 +178,8 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		this.currentEndNodes = finalEndNodes;
 		this.currentExcEndNodes = finalExcEndNodes;
 
-        node.startNodes = this.currentStartNodes;
-        node.endNodes = this.currentEndNodes;
-        node.excEndNodes = this.currentExcEndNodes;
 
-        chain.add(node);
+        addNode(node);
     }
 
     public void visitWhileLoop(JCWhileLoop tree) {
@@ -181,11 +209,8 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		this.currentEndNodes = finalEndNodes;
 		this.currentExcEndNodes = finalExcEndNodes;
 
-        node.startNodes = this.currentStartNodes;
-        node.endNodes = this.currentEndNodes;
-        node.excEndNodes = this.currentExcEndNodes;
 
-        chain.add(node);
+        addNode(node);
     }
 
     public void visitForLoop(JCForLoop tree) {
@@ -217,10 +242,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 				this.currentEndNodes = finalEndNodes;
 				this.currentExcEndNodes = currentExcEndNodes;
 	
-                node.startNodes = currentStartNodes;
-                node.endNodes = finalEndNodes;
-                node.excEndNodes = currentExcEndNodes;
-                chain.add(node);
+                addNode(node);
 			} else {/*tree.cond == null*/
 				tree.body.accept(this);
 
@@ -241,10 +263,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 				this.currentEndNodes = finalEndNodes;
 				this.currentExcEndNodes = currentExcEndNodes;
 	
-                node.startNodes = currentStartNodes;
-                node.endNodes = finalEndNodes;
-                node.excEndNodes = currentExcEndNodes;
-                chain.add(node);
+                addNode(node);
 			}
 		} else {/*!init.isEmpty()*/
 			ArrayList<ASTChainNode> finalEndNodes = new ArrayList<ASTChainNode>();
@@ -273,10 +292,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 			this.currentEndNodes = finalEndNodes;
 			this.currentExcEndNodes = currentExcEndNodes;
 
-            node.startNodes = currentStartNodes;
-            node.endNodes = finalEndNodes;
-            node.excEndNodes = currentExcEndNodes;
-            chain.add(node);
+            addNode(node);
 		}
     }
 
@@ -291,10 +307,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		this.currentEndNodes = new ArrayList<ASTChainNode>(currentEndNodes);
 		this.currentEndNodes.add(node);
 		
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-        chain.add(node);
+        addNode(node);
     }
 
     public void visitSwitch(JCSwitch tree) {
@@ -315,10 +328,11 @@ public class ASTChainNodeBuilder extends TreeScanner {
         currentEndNodes.addAll(breaks); currentExcEndNodes.removeAll(breaks);
         finalEndNodes.addAll(currentEndNodes);
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = finalEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-        chain.add(node);
+		this.currentStartNodes = currentStartNodes;
+        this.currentEndNodes = finalEndNodes;
+        this.currentExcEndNodes = currentExcEndNodes;
+        
+        addNode(node);
     }
 
     public void visitCase(JCCase tree) {
@@ -331,10 +345,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 
 		this.currentStartNodes = currentStartNodes;
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-        chain.add(node);
+        addNode(node);
     }
 
     public void visitSynchronized(JCSynchronized tree) {
@@ -346,10 +357,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		tree.body.accept(this);
 		this.currentStartNodes = currentStartNodes;
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-        chain.add(node);
+        addNode(node);
     }
 
     public void visitTry(JCTry tree) {
@@ -370,10 +378,6 @@ public class ASTChainNodeBuilder extends TreeScanner {
 			finalizer.accept(this);
 
 			this.currentStartNodes = currentStartNodes;
-
-            node.startNodes = currentStartNodes;
-            node.endNodes = currentEndNodes;
-            node.excEndNodes = currentExcEndNodes;
 		} else {
             visitParallelStatements(catchers);
 
@@ -391,13 +395,9 @@ public class ASTChainNodeBuilder extends TreeScanner {
 				currentEndNodes = finalEndNodes;
 				finalExcEndNodes.addAll(currentExcEndNodes);
 				currentExcEndNodes = finalExcEndNodes;
-
-                node.startNodes = currentStartNodes;
-                node.endNodes = currentEndNodes;
-                node.excEndNodes = currentExcEndNodes;
 			}
 		}
-        chain.add(node);
+        addNode(node);
     }
 
     public void visitCatch(JCCatch tree) {
@@ -413,10 +413,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentStartNodes = finalStartNodes;
 
         // what about finalExcEndNodes?
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-        chain.add(node);
+        addNode(node);
     }
 
     public void visitConditional(JCConditional tree) {
@@ -439,10 +436,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		this.currentEndNodes = finalEndNodes;
 		this.currentExcEndNodes = finalExcEndNodes;
         
-        node.startNodes = currentStartNodes;
-        node.endNodes = finalEndNodes;
-        node.excEndNodes = finalExcEndNodes;
-        chain.add(node);
+        addNode(node);
     }
 
     public void visitIf(JCIf tree) {
@@ -471,10 +465,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		this.currentEndNodes = finalEndNodes;
 		this.currentExcEndNodes = finalExcEndNodes;
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = finalEndNodes;
-        node.excEndNodes = finalExcEndNodes;
-        chain.add(node);
+        addNode(node);
     }
 
     public void visitExec(JCExpressionStatement tree) {
@@ -485,7 +476,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
         node.startNodes = currentStartNodes;
         node.endNodes = currentEndNodes;
         node.excEndNodes = currentExcEndNodes;
-        chain.add(node);
+        addNode(node);
     }
 
     public void visitReturn(JCReturn tree) {
@@ -499,10 +490,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentExcEndNodes = new ArrayList<ASTChainNode>(1);
 		currentExcEndNodes.add(node);
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-        chain.add(node);
+        addNode(node);
 
     }
 
@@ -513,14 +501,13 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentEndNodes = emptyList;
 		currentExcEndNodes = new ArrayList<ASTChainNode>(1);
 		currentExcEndNodes.add(node);
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
     }
 
     public void visitApply(JCMethodInvocation tree) {
         ASTChainNode node = new ASTChainNode(tree);
+
+//        tree.meth.accept(this);
 
 		if(tree.args.isEmpty()) {
 			currentStartNodes = new ArrayList<ASTChainNode>(1);
@@ -532,10 +519,46 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentEndNodes = new ArrayList<ASTChainNode>(1);
 		currentEndNodes.add(node);
 		currentExcEndNodes = emptyList;
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
+        // building call graph
+        if (module != null) { // is a module
+            if (TreeInfo.symbol(tree.meth) != null) {
+                MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
+                if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isModule) {
+                    VarSymbol moduleField = moduleField(tree);
+                    if (methSym.owner == module.sym) {
+                        String methodName = TreeInfo.symbol(tree.meth).toString();
+                        methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
+                        MethodSymbol origMethSym = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
+                        m.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
+                                                                            moduleField));
+                        origMethSym.callerMethods.add(m.sym);
+                    } else
+                        callGraphTodos.add(new TodoItem(tree, m));
+                } else {
+                    m.sym.calledMethods.add(new MethodSymbol.MethodInfo(methSym));
+                    methSym.callerMethods.add(m.sym);
+                }
+            }
+        } else { // is a library
+            if (TreeInfo.symbol(tree.meth) != null) { 
+                MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
+                m.sym.calledMethods.add(new MethodSymbol.MethodInfo(methSym));
+                methSym.callerMethods.add(m.sym);
+            }
+        }
+    }
+
+    public static VarSymbol moduleField(JCMethodInvocation tree) {
+        if (tree.meth instanceof JCFieldAccess) {
+            if (((JCFieldAccess)tree.meth).selected instanceof JCIdent) {
+                VarSymbol s = (VarSymbol)TreeInfo.symbol(((JCFieldAccess)tree.meth).selected);
+                if (!s.name.toString().equals("this")) {
+                    return (VarSymbol)TreeInfo.symbol(((JCFieldAccess)tree.meth).selected);
+                }
+            }
+        }
+        return null;
     }
 
     public void visitNewClass(JCNewClass tree) {
@@ -551,10 +574,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentEndNodes = new ArrayList<ASTChainNode>(1);
 		currentEndNodes.add(node);
 		currentExcEndNodes = emptyList;
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
     }
 
     public void visitNewArray(JCNewArray tree) {
@@ -590,23 +610,22 @@ public class ASTChainNodeBuilder extends TreeScanner {
         node.startNodes = currentStartNodes;
         node.endNodes = currentEndNodes;
         node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
     }
 
     public void visitParens(JCParens tree) {
         ASTChainNode node = new ASTChainNode(tree);
 
 		tree.expr.accept(this);
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
     }
 
     public void visitAssign(JCAssign tree) {
         ASTChainNode node = new ASTChainNode(tree);
 
+        lhs = true;
 		tree.lhs.accept(this);
+        lhs = false;
 		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
 		tree.rhs.accept(this);
 
@@ -614,16 +633,15 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentEndNodes.add(node);
 
 		this.currentStartNodes = currentStartNodes;
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
     }
 
     public void visitAssignop(JCAssignOp tree) {
         ASTChainNode node = new ASTChainNode(tree);
 
+        lhs = true;
 		tree.lhs.accept(this);
+        lhs = false;
 		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
 		tree.rhs.accept(this);
 
@@ -631,10 +649,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentEndNodes.add(node);
 
 		this.currentStartNodes = currentStartNodes;
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
     }
 
     public void visitUnary(JCUnary tree) {
@@ -648,7 +663,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
         node.startNodes = currentStartNodes;
         node.endNodes = currentEndNodes;
         node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
     }
 
     public void visitBinary(JCBinary tree) {
@@ -662,10 +677,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentEndNodes.add(node);
 
 		this.currentStartNodes = currentStartNodes;
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
     }
 
     public void visitTypeCast(JCTypeCast tree) {
@@ -676,10 +688,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentEndNodes = new ArrayList<ASTChainNode>(1);
 		currentEndNodes.add(node);
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
     }
 
     public void visitTypeTest(JCInstanceOf tree) {
@@ -690,10 +699,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentEndNodes = new ArrayList<ASTChainNode>(1);
 		currentEndNodes.add(node);
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
     }
 
     public void visitIndexed(JCArrayAccess tree) {
@@ -714,10 +720,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentExcEndNodes = finalExcEndNodes;
 		this.currentStartNodes = currentStartNodes;
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
     }
 
     public void visitSelect(JCFieldAccess tree) {
@@ -732,7 +735,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
         node.startNodes = currentStartNodes;
         node.endNodes = currentEndNodes;
         node.excEndNodes = currentExcEndNodes;
-		chain.add(node);
+        addNode(node);
     }
 
     public void visitTree(JCTree tree) {
@@ -749,11 +752,8 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentStartNodes = new ArrayList<ASTChainNode>(1);
 		currentStartNodes.add(node);
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
         
-        chain.add(node);
+        addNode(node);
 	}
 
     private void visitStatements(List<? extends JCTree> statements) {

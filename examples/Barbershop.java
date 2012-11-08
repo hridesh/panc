@@ -1,14 +1,14 @@
 
-library bool {
+//library bool {
     class BooleanC {
         boolean v;
         public BooleanC(boolean v) { this.v = v; }
         public boolean value() { return v; }
     }
-}
+//}
 
 module Barber(WaitingRoom r, boolean isSleeping) {
-    include bool;
+//    include bool;
           
     void wake(){
         isSleeping = false;
@@ -37,7 +37,7 @@ module Barber(WaitingRoom r, boolean isSleeping) {
 }
   
 module WaitingRoom(int queue, int cap) {
-    include bool;
+//    include bool;
   
     BooleanC sit(){
         if (queue<cap) {

@@ -35,6 +35,7 @@ import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
+import javax.lang.model.element.ElementKind;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -42,11 +43,13 @@ import java.util.LinkedList;
 public class MethodEffectsComp extends JCTree.Visitor {
     private LinkedList<ASTChainNode> nodesToProcess;
     private EffectSet visitResult;
+    private ASTChainNode currentNode;
+    private ASTChain chain;
+    private Symbol moduleSym;
 
-    public EffectSet computeEffectsForMethod(JCMethodDecl m) {
-        System.out.println(m);
-        ASTChain chain = ASTChainBuilder.buildChain(m);
-        new ASTChainPrinter().printChain(chain);
+    public EffectSet computeEffectsForMethod(ASTChain chain, Symbol moduleSym) {
+        this.chain = chain;
+        this.moduleSym = moduleSym;
         nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
 
         while (!nodesToProcess.isEmpty()) {
@@ -57,7 +60,7 @@ public class MethodEffectsComp extends JCTree.Visitor {
                 newNodeEffects.addAll(prev.effects);
             }
             
-            newNodeEffects.addAll(computeEffectsForTree(node.tree));
+            newNodeEffects.addAll(computeEffectsForNode(node));
 
             if (!newNodeEffects.equals(node.effects)) {
                 nodesToProcess.addAll(node.next);
@@ -72,14 +75,30 @@ public class MethodEffectsComp extends JCTree.Visitor {
         return union;
     }
 
-    public EffectSet computeEffectsForTree(JCTree tree) {
+    public EffectSet computeEffectsForNode(ASTChainNode node) {
         visitResult = new EffectSet();
-        tree.accept(this);
+        currentNode = node;
+        node.tree.accept(this);
         return visitResult;
     }
 
     public void visitReturn(JCReturn tree)               { visitTree(tree); }
-    public void visitApply(JCMethodInvocation tree)      { visitTree(tree); }
+    public void visitApply(JCMethodInvocation tree) { 
+        MethodSymbol sym = (MethodSymbol)TreeInfo.symbol(tree.meth);
+        if (moduleSym != null) { // otherwise this is in a library
+            if (sym.owner.isModule && sym.owner != moduleSym) {
+                visitResult.add(new OpenEffect(sym));
+            } else if (sym.ownerModule() != moduleSym) {
+//                System.out.println("LIBRARY CALL: " + tree);
+                visitResult.add(new LibMethodEffect(sym));
+            } else {
+                visitResult.add(new MethodEffect(sym));
+            }
+        } else {
+            visitResult.add(new MethodEffect(sym));
+        }
+
+    }
     public void visitAssign(JCAssign tree)               { visitTree(tree); }
     public void visitAssignop(JCAssignOp tree)           { visitTree(tree); }
     public void visitUnary(JCUnary tree)                 { visitTree(tree); }
@@ -87,9 +106,35 @@ public class MethodEffectsComp extends JCTree.Visitor {
     public void visitTypeCast(JCTypeCast tree)           { visitTree(tree); }
     public void visitTypeTest(JCInstanceOf tree)         { visitTree(tree); }
     public void visitIndexed(JCArrayAccess tree)         { visitTree(tree); }
-    public void visitSelect(JCFieldAccess tree)          { System.out.println(tree); }
-    public void visitIdent(JCIdent tree)                 { System.out.println(tree); }
-    public void visitProcApply(JCProcInvocation tree)    { visitTree(tree); }
+    public void visitSelect(JCFieldAccess tree) { 
+        if (!(chain.endHeapRepresentation.locationForSymbol(TreeInfo.symbol(tree.selected))
+              instanceof LocalHeapLocation)) {
+            if (tree.sym != null) {
+                if (currentNode.lhs) {
+                    visitResult.add(new FieldWriteEffect(tree.sym));
+                } else {
+                    visitResult.add(new FieldReadEffect(tree.sym));             
+                }
+            }
+        }
+    }
+    public void visitIdent(JCIdent tree) {
+        if (tree.sym.getKind() == ElementKind.FIELD) {
+            if (!tree.sym.name.toString().equals("this")) {
+                if (!(chain.endHeapRepresentation.locationForSymbol(tree.sym)
+                      instanceof LocalHeapLocation)) {
+                    if (currentNode.lhs) {
+                        visitResult.add(new FieldWriteEffect(tree.sym));
+                    } else {
+                        visitResult.add(new FieldReadEffect(tree.sym));
+                    }
+                }
+            }
+        }
+    }
+    public void visitProcApply(JCProcInvocation tree) { 
+        Assert.error();
+    }
     public void visitFree(JCFree tree)	                 { visitTree(tree); }
     public void visitTree(JCTree tree)                   {}
 }

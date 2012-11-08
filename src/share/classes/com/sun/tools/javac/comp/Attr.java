@@ -51,6 +51,8 @@ import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
 import org.paninij.effects.*;
+import org.paninij.systemgraphs.*;
+import org.paninij.consistency.ConsistencyCheck;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -96,6 +98,9 @@ public class Attr extends JCTree.Visitor {
     final DeferredLintHandler deferredLintHandler;
     // Ptolemy code
     ModuleInternal moduleInternal;
+    SystemEffectsComp effects;
+    SystemGraphsBuilder graphsBuilder;
+    public static boolean doGraphs = false;
     // end Ptolemy code
 
     public static Attr instance(Context context) {
@@ -148,6 +153,8 @@ public class Attr extends JCTree.Visitor {
 
         // Panini code
         moduleInternal = new ModuleInternal(make, names, enter, memberEnter, syms);
+        effects = SystemEffectsComp.instance(context);
+        graphsBuilder = SystemGraphsBuilder.instance(context);
         // end Panini code
     }
 
@@ -725,6 +732,7 @@ public class Attr extends JCTree.Visitor {
     			.findType(env, variables.get(names
     					.fromString(mi.meth.toString())));
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
+
     	if (mi.args.length() != syms.moduleparams.get(c).length()) {
     		log.error(mi.pos(), "arguments.of.wiring.mismatch");
     	} else {
@@ -748,7 +756,10 @@ public class Attr extends JCTree.Visitor {
     		enter.classEnter(wrapperClasses, env.outer);
     		//        	System.out.println(wrapperClasses);
     		attribClassBody(env, tree.sym);
-    		tree.computeMethod.body = moduleInternal.generateComputeMethodBody(tree);
+    		if((tree.sym.flags_field & TASK) !=0)
+    			tree.computeMethod.body = moduleInternal.generateTaskModuleComputeMethodBody(tree);
+    		else
+    			tree.computeMethod.body = moduleInternal.generateThreadModuleComputeMethodBody(tree);
     	}
     	else
     		attribClassBody(env, tree.sym);
@@ -762,10 +773,21 @@ public class Attr extends JCTree.Visitor {
 
     		}
     	}
-    	//        System.out.println(tree);
+        if (doGraphs)
+            effects.computeEffects(tree);
     }
 
     public final void visitSystemDef(final JCSystemDecl tree){
+        if (doGraphs) {
+            tree.sym.graphs = graphsBuilder.buildGraphs(tree);
+            effects.substituteProcEffects(tree);
+            ConsistencyCheck cc = 
+                new ConsistencyCheck(effects.moduleEffectsComp.methodEffects);
+/*            for (SystemGraphs.Node n :
+                     tree.sym.graphs.forwardConnectionEdges.keySet()) {
+                cc.checkConsistency(tree.sym.graphs, n);
+                }*/
+        }
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
@@ -774,6 +796,8 @@ public class Attr extends JCTree.Visitor {
     	ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
     	Map<Name, Name> variables = new HashMap<Name, Name>();
     	Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
+    	
+    	processSystemAnnotation(tree, inits);
     	for(int i=0;i <tree.body.stats.length();i++){
     		JCStatement currentSystemStmt = tree.body.stats.get(i);
     		Tag systemStmtKind = currentSystemStmt.getTag();
@@ -813,9 +837,70 @@ public class Attr extends JCTree.Visitor {
     	JCMethodDecl maindecl = createMainMethod(tree.sym, tree.body, tree.params, mainStmts);
     	tree.defs = tree.defs.append(maindecl);
 
+    	
     	tree.switchToClass();
-    	//    	System.out.println(tree);
+
     	memberEnter.memberEnter(maindecl, env);
+        if (doGraphs) {
+            //ListBuffer<Symbol> modules = new ListBuffer<Symbol>();
+            for (JCStatement v : decls) {
+                if (v.getTag() == VARDEF) {
+                    JCVariableDecl varDecl = (JCVariableDecl)v;
+                    ClassSymbol c = syms.modules.get(names.fromString(varDecl.vartype.toString()));
+                    if (varDecl.vartype.toString().contains("[]")) {
+//                    System.out.println("\n\n\nConsistency checker doesn't yet support module arrays. Exiting now.\n\n\n");
+//                    System.exit(5);
+                        //c = syms.modules.get(names.fromString(varDecl.vartype.toString().substring(0, varDecl.vartype.toString().indexOf("["))));
+                        
+                    }
+                    //if (!modules.contains(c)) modules.append(c);
+                }
+            }
+            //tree.sym.modules = modules.toList();
+        }
+    }
+    
+    private void processSystemAnnotation(JCSystemDecl tree, ListBuffer<JCStatement> stats){
+    	boolean init = false;
+    	for(JCAnnotation annotation : tree.mods.annotations){
+    		if(annotation.annotationType.toString().equals("Parallelism")){
+    			int arg = 0;
+    			if(annotation.args.isEmpty())
+    				log.error(tree.pos(), "annotation.missing.default.value", annotation, "value");
+    			else if (annotation.args.size()==1 && annotation.args.head.getTag()==ASSIGN){
+					if (annotate.enterAnnotation(annotation,
+							syms.annotationType, env).member(names.value).type == syms.intType)
+						arg = (Integer) annotate
+								.enterAnnotation(annotation,
+										syms.annotationType, env)
+								.member(names.value).getValue();
+					stats.add(make.Try(make.Block(0, List.<JCStatement> of(make
+							.Exec(make.Apply(List.<JCExpression> nil(), make
+									.Select(make.Ident(names
+											.fromString("PaniniModuleTask")),
+											names.fromString("init")), List
+									.<JCExpression> of(make.Literal(arg)))))),
+							List.<JCCatch> of(make.Catch(make.VarDef(
+									make.Modifiers(0), names.fromString("e"),
+									make.Ident(names.fromString("Exception")),
+									null), make.Block(0,
+									List.<JCStatement> nil()))), null));
+					init = true;
+				}
+			}
+		}
+		if (!init)
+			stats.add(make.Try(make.Block(0, List.<JCStatement> of(make
+					.Exec(make.Apply(List.<JCExpression> nil(), make
+							.Select(make.Ident(names
+									.fromString("PaniniModuleTask")),
+									names.fromString("init")), List
+							.<JCExpression> of(make.Literal(1)))))),
+					List.<JCCatch> of(make.Catch(make.VarDef(
+							make.Modifiers(0), names.fromString("e"),
+							make.Ident(names.fromString("Exception")),
+							null), make.Block(0,
+							List.<JCStatement> nil()))), null));
     }
 
 				private final JCMethodDecl createMainMethod(final ClassSymbol containingClass, final JCBlock methodBody, final List<JCVariableDecl> params, final List<JCStatement> mainStmts) {
@@ -1024,38 +1109,7 @@ public class Attr extends JCTree.Visitor {
 						ListBuffer<JCStatement> joins, Map<Name, Name> variables,
 						JCVariableDecl vdecl) {
 					ClassSymbol c = syms.libclasses.get(names.fromString(vdecl.vartype.toString()));
-					decls.add(vdecl);
-					JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
-							make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
-					newClass.constructor = rs.resolveConstructor
-							(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
-					newClass.type = c.type;
-					JCAssign newAssign = make.at(vdecl.pos()).Assign(make.Ident(vdecl.name),
-							newClass);
-					newAssign.type = vdecl.type;
-					JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
-					nameAssign.type = vdecl.type;
-					inits.append(nameAssign);
-					JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-							make.Select(make.Ident(vdecl.name), names.fromString("start")), 
-							List.<JCExpression>nil()));
-					starts.append(joinAssign);
-					if(c.hasRun){
-						joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-								make.Select(make.Ident(vdecl.name), 
-										names.fromString("join")), List.<JCExpression>nil())))), 
-										List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-												names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-												null), make.Block(0, List.<JCStatement>nil()))), null));
-					}
-					else
-						submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
-								make.Select(make.Ident(vdecl.name), 
-										names.fromString("shutdown")), List.<JCExpression>nil())));
-
-					tree.defs = tree.defs.append(
-							createOwnerInterface(vdecl.vartype.toString()+"_"+vdecl.name.toString()));
-
+					inits.append(vdecl);
 					variables.put(vdecl.name, c.name);
 				}
 
@@ -1166,11 +1220,6 @@ public class Attr extends JCTree.Visitor {
         	catch(ClassCastException e){
         	}
         }
-        // uncomment this to print CFGs for module procedures
-/*        if (tree.name.toString().contains("$Original")) { 
-            MethodEffectsComp effects = new MethodEffectsComp();
-            effects.computeEffectsForMethod(tree);
-            }*/
         // end Panini code
 
         Lint lint = env.info.lint.augment(m.attributes_field, m.flags());

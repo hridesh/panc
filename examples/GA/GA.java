@@ -16,9 +16,9 @@
  *
  * Contributor(s): Hridesh Rajan
  */
+import AILib.*;
 
-module CrossOver (float probability, int max) {
-	include AILib;
+module CrossOver (float probability) {
 
 	Generation compute(Generation g) {
 		int genSize = g.size();		
@@ -29,11 +29,9 @@ module CrossOver (float probability, int max) {
 		}
 		return g1;
 	}
-
 }
 
-module Mutation (float probability, int max) {
- 	include AILib; 
+module Mutation (float probability) {
 
 	Generation mutate(Generation g) {
 		int genSize = g.size();
@@ -47,8 +45,8 @@ module Mutation (float probability, int max) {
 }
 
 module Fittest {
-	include AILib;
-	Generation last;
+
+	Generation last = null;
 	
 	void check(Generation g) {
 		if(last ==null) last = g;
@@ -61,7 +59,7 @@ module Fittest {
 }
 
 module Logger {
-	include AILib; 
+
 	void logit(Generation g) {
 		logGeneration(g);
 	}
@@ -75,19 +73,31 @@ module Logger {
 	}	
 }
 
-system GA {
-	CrossOver c; Mutation m; Fittest f; Logger l ; 
-        c(0.9f, 13);
-	m(0.0001f, 13);
+module Controller (CrossOver c, Mutation m, Fittest f, Logger l, int maxIteration) {
 
-/*
-	public void runGeneticAlgorithm(){
-		Individual individual = new BooleanIndividual();
-		Generation init = new Generation(100, individual);
-		int maxDepth = 13;
-		System.out.println("********************************************");
-		System.out.println("********FINAL***********RESULTS*************");
-		System.out.println("********************************************");
+	void run() {
+         Individual individual = new BooleanIndividual();
+         Generation g = new Generation(100, individual);
+         explore(g, 0); 
+         System.out.println("********************************************");
+         System.out.println("********FINAL***********RESULTS*************");
+         System.out.println("********************************************");
 	}
-*/
+
+	private void explore (Generation g, int depth) {
+		if (depth > maxIteration) return;
+		Generation g1 = c.compute(g); 
+		Generation g2 = m.mutate(g); 
+		explore(g1, depth + 1);
+		explore(g2, depth + 1);
+		f.check(g1); f.check(g2); 
+		l.logit(g1); l.logit(g2); 
+	}
+}
+
+system GA {
+	CrossOver c; Mutation m; Fittest f; Logger l ; Controller cl;
+        c(0.9f);
+	m(0.0001f);
+	cl(c,m,f,l,5);
 }

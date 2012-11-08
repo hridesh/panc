@@ -39,6 +39,6 @@ public class ASTChainPrinter {
     }
 
     public String nodeText(ASTChainNode node) {
-        return "\"" + node.id + " " + node.tree.toString().replace("\"", "\\\"") + "\"";
+        return "\"" + node.id + " " + node.tree.toString().replace("\"", "\\\"") + (node.lhs ? ", lhs" : "") + "\"";
     }
 }

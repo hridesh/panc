@@ -195,6 +195,12 @@ public class TreeMaker implements JCTree.Factory {
     	tree.pos = pos;
     	return tree;
     }
+    
+    public JCForAllLoop ForAll(JCVariableDecl var, JCExpression exp, JCStatement body){
+    	JCForAllLoop tree = new JCForAllLoop(var, exp, body);
+    	tree.pos = pos;
+    	return tree;
+    }
     // end Panini code
 
     /**
