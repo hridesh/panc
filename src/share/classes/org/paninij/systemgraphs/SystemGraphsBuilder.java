@@ -116,9 +116,11 @@ public class SystemGraphsBuilder extends TreeScanner {
             String methodName = TreeInfo.symbol(t.tree.meth).toString();
             methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
             MethodSymbol origMethSym = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
-            t.method.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
+            if (origMethSym != null) {
+                t.method.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
                                                                        moduleField));
-            origMethSym.callerMethods.add(t.method.sym);
+                origMethSym.callerMethods.add(t.method.sym);
+            } // otherwise could be an already compiled method like print() or something
         }
     }
 
@@ -199,19 +201,20 @@ public class SystemGraphsBuilder extends TreeScanner {
             String name = ((JCModuleDecl)module.sym.tree).params.get(i).name.toString();
 
             if (arg.getTag()==Tag.IDENT) { // arg could just be some constant; don't need to look at those
+                if (!arg.toString().equals("args")) { // ignore commandline params. This shouldn't be hardcoded like this
+                    int arraySize = moduleNames.howMany(arg.toString());
+                    if (arraySize > 1) { // Connecting a module to an array of modules
+                        for (int j = 0; j < arraySize; j++) {
+                            Node argArrayModule = moduleNames.get(arg.toString(), j);
+                            graphs.addConnectionEdge(module, argArrayModule, name, j);
+                        }
+                    } else {
+                        // possibly connecting a module to another single module 
+                        Node argModule = moduleNames.get(arg.toString());
 
-                int arraySize = moduleNames.howMany(arg.toString());
-                if (arraySize > 1) { // Connecting a module to an array of modules
-                    for (int j = 0; j < arraySize; j++) {
-                        Node argArrayModule = moduleNames.get(arg.toString(), j);
-                        graphs.addConnectionEdge(module, argArrayModule, name, j);
+                        if (module != null)
+                            graphs.addConnectionEdge(module, argModule, name);
                     }
-                } else {
-                    // possibly connecting a module to another single module 
-                    Node argModule = moduleNames.get(arg.toString());
-
-                    if (module != null)
-                        graphs.addConnectionEdge(module, argModule, name);
                 }
             }
         }
