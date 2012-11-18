@@ -507,14 +507,18 @@ public class ASTChainNodeBuilder extends TreeScanner {
     public void visitApply(JCMethodInvocation tree) {
         ASTChainNode node = new ASTChainNode(tree);
 
-//        tree.meth.accept(this);
+        tree.meth.accept(this);
+
+        ArrayList<ASTChainNode> startNodes = currentStartNodes;
 
 		if(tree.args.isEmpty()) {
-			currentStartNodes = new ArrayList<ASTChainNode>(1);
-			currentStartNodes.add(node);
+//			currentStartNodes = new ArrayList<ASTChainNode>(1);
+//			currentStartNodes.add(node);
 		} else {
             visitStatements(tree.args);
 		}
+
+        currentStartNodes = startNodes;
 
 		currentEndNodes = new ArrayList<ASTChainNode>(1);
 		currentEndNodes.add(node);

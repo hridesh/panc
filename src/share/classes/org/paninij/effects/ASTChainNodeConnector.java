@@ -281,13 +281,14 @@ public class ASTChainNodeConnector extends TreeScanner {
 	}
 
 	public void visitApply(JCMethodInvocation tree) {
+        tree.meth.accept(this);
 		if(!tree.args.isEmpty()) {
-            //chain.nodeForTree(tree.meth).connectStartNodesToEndNodesOf(
-            //          chain.nodeForTree(tree.args.head));
             JCTree lastArg = visitList(tree.args);
+            chain.nodeForTree(lastArg).connectStartNodesToEndNodesOf(
+                chain.nodeForTree(tree.meth));
             chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(lastArg));
-    } //else 
-    //     chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.meth));
+    } else 
+         chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.meth));
 
 	}
 
