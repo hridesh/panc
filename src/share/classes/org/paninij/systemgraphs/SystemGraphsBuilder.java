@@ -31,12 +31,15 @@ public class SystemGraphsBuilder extends TreeScanner {
     private Node currentModule;
 
     static class ModuleNameMap {
-        HashMap<String, ArrayList<Node>> nodes = new HashMap<String, ArrayList<Node>>();
+        HashMap<String, ArrayList<Node>> nodes 
+            = new HashMap<String, ArrayList<Node>>();
+
         public void put(String name, Node n) {
             ArrayList<Node> nodeArray = new ArrayList<Node>();
             nodeArray.add(n);
             nodes.put(name, nodeArray);
         }
+
         public Node get(String name) {
             ArrayList<Node> nodeArray = nodes.get(name);
             if (nodeArray.size() == 1) return nodeArray.get(0);
@@ -46,6 +49,7 @@ public class SystemGraphsBuilder extends TreeScanner {
         public void put(String name, ArrayList<Node> nodeArray) {
             nodes.put(name, nodeArray);
         }
+
         public Node get(String name, int index) {
             ArrayList<Node> nodeArray = nodes.get(name);
             return nodeArray.get(index);
@@ -142,15 +146,18 @@ public class SystemGraphsBuilder extends TreeScanner {
     public void traverseCallGraph(MethodSymbol method) {
         if (finishedMethods.contains(new NodeMethod(currentModule, method))) return;
         finishedMethods.add(new NodeMethod(currentModule, method));
+
         for (MethodSymbol.MethodInfo calledMethodInfo : method.calledMethods) {
             if (calledMethodInfo.module != null) {
                 for (ConnectionEdge edge : graphs.forwardConnectionEdges.get(currentModule)) {
+                    System.out.println(edge);
                     if (edge.varName.equals(calledMethodInfo.module.name.toString())) {
                         Node calledModule = edge.to;
                         graphs.addProcEdge(currentModule, calledModule,
                                            method, calledMethodInfo.method,
                                            edge.varName);
-                    } else if (edge.to.sym.type.toString().equals(calledMethodInfo.module.type.toString())) {
+                    } else if (edge.arrayConnection() 
+                               && edge.to.sym.type.toString().equals(calledMethodInfo.module.type.toString())) {
                         Node calledModule = edge.to;
                         graphs.addProcEdge(currentModule, calledModule,
                                            method, calledMethodInfo.method,
