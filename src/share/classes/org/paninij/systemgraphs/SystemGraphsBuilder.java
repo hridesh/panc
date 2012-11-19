@@ -70,6 +70,7 @@ public class SystemGraphsBuilder extends TreeScanner {
 
     private ModuleNameMap moduleNames;
     private HashSet<NodeMethod> finishedMethods;
+    private HashSet<String> systemConstantNames;
 
     public static SystemGraphsBuilder instance(Context context) {
         SystemGraphsBuilder instance = context.get(sgbKey);
@@ -89,9 +90,10 @@ public class SystemGraphsBuilder extends TreeScanner {
         finishCallGraph();
         graphs = new SystemGraphs();
         moduleNames = new ModuleNameMap();
-        scan(system.body);
-
         finishedMethods = new HashSet<NodeMethod>();
+        systemConstantNames = new HashSet<String>();
+
+        scan(system.body);
 
         for (Node module : moduleNames.allNodes()) {
             for (Symbol s : module.sym.members_field.getElements()) {
@@ -115,7 +117,7 @@ public class SystemGraphsBuilder extends TreeScanner {
 
     public void finishCallGraph() {
         for (ASTChainNodeBuilder.TodoItem t : ASTChainNodeBuilder.callGraphTodos) {
-            VarSymbol moduleField = ASTChainNodeBuilder.moduleField(t.tree);
+            VarSymbol moduleField = ASTChainNodeBuilder.moduleField(t.tree); // doesn't handle module array calls
             MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(t.tree.meth);
             String methodName = TreeInfo.symbol(t.tree.meth).toString();
             methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
@@ -147,21 +149,38 @@ public class SystemGraphsBuilder extends TreeScanner {
         if (finishedMethods.contains(new NodeMethod(currentModule, method))) return;
         finishedMethods.add(new NodeMethod(currentModule, method));
 
+//        System.out.println("===========");
+//        System.out.println(currentModule + "." + method);
+
         for (MethodSymbol.MethodInfo calledMethodInfo : method.calledMethods) {
+//            System.out.println("----------");
+//            System.out.println(calledMethodInfo.method + ":");
+
             if (calledMethodInfo.module != null) {
                 for (ConnectionEdge edge : graphs.forwardConnectionEdges.get(currentModule)) {
-                    System.out.println(edge);
+//                    System.out.print(edge);
                     if (edge.varName.equals(calledMethodInfo.module.name.toString())) {
+//                        System.out.println(" x ");
                         Node calledModule = edge.to;
                         graphs.addProcEdge(currentModule, calledModule,
                                            method, calledMethodInfo.method,
                                            edge.varName);
                     } else if (edge.arrayConnection() 
                                && edge.to.sym.type.toString().equals(calledMethodInfo.module.type.toString())) {
+//                        System.out.println(" a ");
+                        // if it's an array call we do an estimate (add an edge to every reachable module of the right type)
                         Node calledModule = edge.to;
                         graphs.addProcEdge(currentModule, calledModule,
                                            method, calledMethodInfo.method,
                                            edge.varName, calledModule.index);
+                    } else if (edge.arrayConnection() 
+                               && calledMethodInfo.module.type instanceof ArrayType) {
+                        if (edge.to.sym.type.toString().equals(((ArrayType)calledMethodInfo.module.type).elemtype.toString())) {
+                            Node calledModule = edge.to;
+                            graphs.addProcEdge(currentModule, calledModule,
+                                               method, calledMethodInfo.method,
+                                               edge.varName, calledModule.index);
+                        }
                     }
                 }
             } else {
@@ -169,7 +188,9 @@ public class SystemGraphsBuilder extends TreeScanner {
                 // they are starting points
                 traverseCallGraph(calledMethodInfo.method);
             }
+//            System.out.println("----------");
         }
+//        System.out.println("===========");
     }
 
     
@@ -193,6 +214,8 @@ public class SystemGraphsBuilder extends TreeScanner {
             if(syms.modules.containsKey(names.fromString(moduleName))) {
                 ClassSymbol c = syms.modules.get(names.fromString(moduleName));
                 moduleNames.put(varName, graphs.addModule(c, varName));
+            } else {
+                systemConstantNames.add(varName);
             }
         }
     }
@@ -207,8 +230,9 @@ public class SystemGraphsBuilder extends TreeScanner {
             JCExpression arg = tree.args.get(i);
             String name = ((JCModuleDecl)module.sym.tree).params.get(i).name.toString();
 
-            if (arg.getTag()==Tag.IDENT) { // arg could just be some constant; don't need to look at those
-                if (!arg.toString().equals("args")) { // ignore commandline params. This shouldn't be hardcoded like this
+            if (arg.getTag()==Tag.IDENT) { // arg could just be some literal; don't need to look at those
+                if (!arg.toString().equals("args") // ignore commandline params. This shouldn't be hardcoded like this
+                    && !systemConstantNames.contains(arg.toString())) { // make sure the variable isn't a constant
                     int arraySize = moduleNames.howMany(arg.toString());
                     if (arraySize > 1) { // Connecting a module to an array of modules
                         for (int j = 0; j < arraySize; j++) {
@@ -263,6 +287,7 @@ public class SystemGraphsBuilder extends TreeScanner {
             }.scan(tree.body);
         }
     }
+
     public void visitModuleArrayCall(JCModuleArrayCall tree) { 
         if(tree.index.getTag()!=Tag.LITERAL) { 
             System.out.println("Illegal module array call index");
@@ -272,5 +297,29 @@ public class SystemGraphsBuilder extends TreeScanner {
         int indexValue = (Integer)indexExp.value;
 
         Node module = moduleNames.get(tree.name.toString(), indexValue);
+
+        for (int i = 0; i < tree.arguments.size(); i++) {
+            JCExpression arg = tree.arguments.get(i);
+            String name = ((JCModuleDecl)module.sym.tree).params.get(i).name.toString();
+
+            if (arg.getTag()==Tag.IDENT) { // arg could just be some literal; don't need to look at those
+                if (!arg.toString().equals("args") // ignore commandline params. This shouldn't be hardcoded like this
+                    && !systemConstantNames.contains(arg.toString())) { // make sure the variable isn't a constant
+                    int arraySize = moduleNames.howMany(arg.toString());
+                    if (arraySize > 1) { // Connecting a module to an array of modules
+                        for (int j = 0; j < arraySize; j++) {
+                            Node argArrayModule = moduleNames.get(arg.toString(), j);
+                            graphs.addConnectionEdge(module, argArrayModule, name, j);
+                        }
+                    } else {
+                        // possibly connecting a module to another single module 
+                        Node argModule = moduleNames.get(arg.toString());
+
+                        if (module != null)
+                            graphs.addConnectionEdge(module, argModule, name);
+                    }
+                }
+            }
+        }
     }
 }

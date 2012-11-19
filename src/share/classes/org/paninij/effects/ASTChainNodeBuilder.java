@@ -69,19 +69,9 @@ public class ASTChainNodeBuilder extends TreeScanner {
         this.chain = chain;
 
         scan(m.body);
+
         chain.startNode = chain.nodeForTree(m.body);
     }
-
-    public void buildNodes(JCLibraryDecl library, JCMethodDecl m, ASTChain chain) {
-        this.module = null;
-        this.library = library;
-        this.m = m;
-        this.chain = chain;
-
-        scan(m.body);
-        chain.startNode = chain.nodeForTree(m.body);
-    }
-
 
     public void visitTopLevel(JCCompilationUnit that)    { Assert.error(); }
 	public void visitImport(JCImport that)               { Assert.error(); }
@@ -524,6 +514,8 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		currentEndNodes.add(node);
 		currentExcEndNodes = emptyList;
         addNode(node);
+
+
         // building call graph
         if (module != null) { // is a module
             if (TreeInfo.symbol(tree.meth) != null) {
@@ -538,7 +530,9 @@ public class ASTChainNodeBuilder extends TreeScanner {
                                                                             moduleField));
                         origMethSym.callerMethods.add(m.sym);
                     } else
+                    {
                         callGraphTodos.add(new TodoItem(tree, m));
+                    }
                 } else {
                     m.sym.calledMethods.add(new MethodSymbol.MethodInfo(methSym));
                     methSym.callerMethods.add(m.sym);
@@ -560,6 +554,9 @@ public class ASTChainNodeBuilder extends TreeScanner {
                 if (!s.name.toString().equals("this")) {
                     return (VarSymbol)TreeInfo.symbol(((JCFieldAccess)tree.meth).selected);
                 }
+            } else if (((JCFieldAccess)tree.meth).selected.getTag()==Tag.INDEXED) {
+                JCArrayAccess aa = (JCArrayAccess)((JCFieldAccess)tree.meth).selected;
+                return (VarSymbol)TreeInfo.symbol(aa.indexed);
             }
         }
         return null;
