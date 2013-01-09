@@ -57,6 +57,7 @@ public class SystemGraphs {
         public String toString() {
             return "\"" + from + "\" -> \"" + to + "\" [label=" + called + "]";
         }
+        public boolean arrayConnection() { return index!=-1; }        
     }
     public static class ConnectionEdge {
         public String varName;
@@ -65,6 +66,7 @@ public class SystemGraphs {
         public ConnectionEdge(Node from, Node to, String varName) { this.from = from; this.to = to; this.varName = varName; index = -1;}
         public ConnectionEdge(Node from, Node to, String varName, int index) { this.from = from; this.to = to; this.varName = varName; this.index = index;}
         public String toString() { return "\"" + from + "\" -> \"" + to + "\""; }
+        public boolean arrayConnection() { return index!=-1; }        
     }
 
     public HashMap<Node, HashSet<ProcEdge>> forwardProcEdges = new HashMap<Node, HashSet<ProcEdge>>();

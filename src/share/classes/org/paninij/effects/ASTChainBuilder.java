@@ -45,17 +45,14 @@ class ASTChainBuilder {
     public static void setNames(Names n) { nodeBuilder.names = n; }
 
     public static ASTChain buildChain(JCModuleDecl module, JCMethodDecl m) {
-        ASTChain chain = new ASTChain();
-        nodeBuilder.buildNodes(module, m, chain);
-        nodeConnector.connectNodes(m, chain);
-        return chain;
+        if (m.sym.chain != null) 
+            return m.sym.chain;
+        else {
+            ASTChain chain = new ASTChain();
+            nodeBuilder.buildNodes(module, m, chain);
+            nodeConnector.connectNodes(m, chain);
+            m.sym.chain = chain;
+            return chain;
+        }
     }
-
-    public static ASTChain buildChain(JCLibraryDecl library, JCMethodDecl m) {
-        ASTChain chain = new ASTChain();
-        nodeBuilder.buildNodes(library, m, chain);
-        nodeConnector.connectNodes(m, chain);
-        return chain;
-    }
-
 }        

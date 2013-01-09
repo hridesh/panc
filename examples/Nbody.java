@@ -1,5 +1,5 @@
 
-library doubles {
+//library doubles {
     class DoubleC {
         double v;
         public DoubleC(double v) { this.v = v; }
@@ -11,10 +11,10 @@ library doubles {
         public IntC(int v) { this.v = v; }
         public int value() { return v; }
     }
-}
+//}
 
 module Body (Body[] bodies, double x, double y, double vx, double vy, double m, double dt) {
-	include doubles;
+//	include doubles;
 	
     void calcNextV(IntC start) {
     	System.out.println("start calculating the next V");
@@ -51,7 +51,7 @@ module Body (Body[] bodies, double x, double y, double vx, double vy, double m, 
 }
 
 module Controller (Body[] bodies, int n) {
-	include doubles;
+//	include doubles;
     void run() {
         for (int i = 0; i < n; i++) {
             bodies[i].calcNextV(new IntC(i+1));

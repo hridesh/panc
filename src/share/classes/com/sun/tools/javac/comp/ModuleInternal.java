@@ -299,7 +299,7 @@ public class ModuleInternal extends Internal {
 									body(es(assign("redeemed", truev())), es(apply("notifyAll")))))));
 
 					wrappedMethods.add(this.createPaniniMessageID());
-
+					wrappedMethods.add(createVoidFutureGetMethod());
 					implement = implementing(
 							ta(id(PaniniConstants.DUCK_INTERFACE_NAME), args(id("Void")))).toList();
 
@@ -630,7 +630,7 @@ public class ModuleInternal extends Internal {
 						List.<JCStatement> of(returnt("wrapped")))));
 		JCMethodDecl value = method(
 				mods(PUBLIC),
-				"get",
+				"panini$get",
 				id(trim(restype.toString())),
 				params,
 				body(make.Try(
@@ -654,7 +654,7 @@ ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
 						List.<JCStatement> of(returnt(nullv())))));
 		JCMethodDecl value = method(
 				mods(PUBLIC),
-				"get",
+				"panini$get",
 				id("Void"),
 				params,
 				body(make.Try(

@@ -842,7 +842,7 @@ public class Attr extends JCTree.Visitor {
 
     	memberEnter.memberEnter(maindecl, env);
         if (doGraphs) {
-            ListBuffer<Symbol> modules = new ListBuffer<Symbol>();
+            //ListBuffer<Symbol> modules = new ListBuffer<Symbol>();
             for (JCStatement v : decls) {
                 if (v.getTag() == VARDEF) {
                     JCVariableDecl varDecl = (JCVariableDecl)v;
@@ -850,12 +850,13 @@ public class Attr extends JCTree.Visitor {
                     if (varDecl.vartype.toString().contains("[]")) {
 //                    System.out.println("\n\n\nConsistency checker doesn't yet support module arrays. Exiting now.\n\n\n");
 //                    System.exit(5);
-                        c = syms.modules.get(names.fromString(varDecl.vartype.toString().substring(0, varDecl.vartype.toString().indexOf("["))));
+                        //c = syms.modules.get(names.fromString(varDecl.vartype.toString().substring(0, varDecl.vartype.toString().indexOf("["))));
+                        
                     }
-                    if (!modules.contains(c)) modules.append(c);
+                    //if (!modules.contains(c)) modules.append(c);
                 }
             }
-            tree.sym.modules = modules.toList();
+            //tree.sym.modules = modules.toList();
         }
     }
     
