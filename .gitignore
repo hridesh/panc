@@ -8,3 +8,6 @@ make/panc.zip
 make/panc/
 make/build.properties
 make/export/panini_rt.jar
+/.settings
+/.project
+/.classpath
