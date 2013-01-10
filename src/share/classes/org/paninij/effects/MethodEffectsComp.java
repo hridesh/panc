@@ -110,11 +110,14 @@ public class MethodEffectsComp extends JCTree.Visitor {
         if (!(chain.endHeapRepresentation.locationForSymbol(TreeInfo.symbol(tree.selected))
               instanceof LocalHeapLocation)) {
             if (tree.sym != null) {
-                if (currentNode.lhs) {
-                    visitResult.add(new FieldWriteEffect(tree.sym));
-                } else {
-                    visitResult.add(new FieldReadEffect(tree.sym));             
+                if (!(tree.sym instanceof MethodSymbol)) {
+                    if (currentNode.lhs) {
+                        visitResult.add(new FieldWriteEffect(tree.sym));
+                    } else {
+                        visitResult.add(new FieldReadEffect(tree.sym));             
+                    }
                 }
+
             }
         }
     }

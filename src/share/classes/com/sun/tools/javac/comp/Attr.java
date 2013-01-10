@@ -781,9 +781,9 @@ public class Attr extends JCTree.Visitor {
         if (doGraphs) {
             tree.sym.graphs = graphsBuilder.buildGraphs(tree);
             effects.substituteProcEffects(tree);
-            ConsistencyCheck cc = 
+/*            ConsistencyCheck cc = 
                 new ConsistencyCheck(effects.moduleEffectsComp.methodEffects);
-/*            for (SystemGraphs.Node n :
+            for (SystemGraphs.Node n :
                      tree.sym.graphs.forwardConnectionEdges.keySet()) {
                 cc.checkConsistency(tree.sym.graphs, n);
                 }*/
