@@ -488,7 +488,7 @@ public class CFGNodeBuilder extends TreeScanner {
         ArrayList<CFGNode> startNodes = currentStartNodes;
 
 		if(tree.args.isEmpty()) {
-//			currentStartNodes = new ArrayList<ASTChainNode>(1);
+//			currentStartNodes = new ArrayList<CFGNode>(1);
 //			currentStartNodes.add(node);
 		} else {
             visitStatements(tree.args);

@@ -26,8 +26,8 @@ import com.sun.tools.javac.tree.JCTree.*;
 class CFGBuilder {
     private static CFGNodeBuilder nodeBuilder =
     	new CFGNodeBuilder();
-    private static ASTChainNodeConnector nodeConnector =
-    	new ASTChainNodeConnector();
+    private static CFGNodeConnector nodeConnector =
+    	new CFGNodeConnector();
 
     public static void setNames(Names n) { nodeBuilder.names = n; }
 

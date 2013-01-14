@@ -86,7 +86,7 @@ public class ModuleEffectsComp {
             CFG chain = CFGBuilder.buildChain(module, method);
             new AliasingComp().fillInAliasingInfo(chain);
             reachedProcsComp.todoReachedProcs(module);
-            new ASTChainPrinter().printChain(chain);
+            new CFGPrinter().printChain(chain);
             
             for (MethodSymbol.MethodInfo calledMethodInfo : method.sym.calledMethods) {
                 MethodSymbol calledMethod = calledMethodInfo.method;
