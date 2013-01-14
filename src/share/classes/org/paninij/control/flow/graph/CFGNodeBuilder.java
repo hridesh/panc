@@ -35,7 +35,7 @@ public class CFGNodeBuilder extends TreeScanner {
     private JCModuleDecl module;
     private JCLibraryDecl library;
     private JCMethodDecl m;
-    private CFG chain;
+    private CFG cfg;
     private ArrayList<CFGNode> currentStartNodes, currentEndNodes, currentExcEndNodes;
 	private final ArrayList<CFGNode> emptyList = new ArrayList<CFGNode>(0);
     private boolean lhs = false;
@@ -50,14 +50,14 @@ public class CFGNodeBuilder extends TreeScanner {
     }
     public static LinkedList<TodoItem> callGraphTodos = new LinkedList<TodoItem>();
 
-    public void buildNodes(JCModuleDecl module, JCMethodDecl m, CFG chain) {
+    public void buildNodes(JCModuleDecl module, JCMethodDecl m, CFG cfg) {
         this.module = module;
         this.m = m;
-        this.chain = chain;
+        this.cfg = cfg;
 
         scan(m.body);
 
-        chain.startNode = chain.nodeForTree(m.body);
+        cfg.startNode = cfg.nodeForTree(m.body);
     }
 
     public void visitTopLevel(JCCompilationUnit that)    { Assert.error(); }
@@ -100,7 +100,7 @@ public class CFGNodeBuilder extends TreeScanner {
         node.excEndNodes = currentExcEndNodes;
         node.lhs = lhs;
 
-        chain.add(node);
+        cfg.add(node);
     }
 
     public void visitVarDef(JCVariableDecl tree) {

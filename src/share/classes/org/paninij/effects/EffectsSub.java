@@ -53,7 +53,7 @@ public class EffectsSub extends JCTree.Visitor {
     private LinkedList<CFGNode> nodesToProcess;
     private EffectSet visitResult;
     private CFGNode currentNode;
-    private CFG chain;
+    private CFG cfg;
     HashMap<JCMethodDecl, EffectSet> methodEffects;
     private Names names;
     public JCModuleDecl module; 

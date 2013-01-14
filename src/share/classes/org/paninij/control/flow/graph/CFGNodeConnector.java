@@ -30,13 +30,13 @@ import java.util.ArrayList;
 
 public class CFGNodeConnector extends TreeScanner {
     private JCMethodDecl m;
-    private CFG chain;
+    private CFG cfg;
     private ArrayList<CFGNode> currentStartNodes, currentEndNodes, currentExcEndNodes;
 	private final ArrayList<CFGNode> emptyList = new ArrayList<CFGNode>(0);
 
-    public void connectNodes(JCMethodDecl m, CFG chain) {
+    public void connectNodes(JCMethodDecl m, CFG cfg) {
         this.m = m;
-        this.chain = chain;
+        this.cfg = cfg;
         
         scan(m.body);
     }
@@ -69,7 +69,7 @@ public class CFGNodeConnector extends TreeScanner {
 		if(init != null) {
 			init.accept(this);
 //			Util.chainListItem(astnodes, astChainMapping, init, tree);
-            chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(init));
+            cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(init));
 		}
 	}
 
@@ -83,9 +83,9 @@ public class CFGNodeConnector extends TreeScanner {
 		tree.body.accept(this);
 		tree.cond.accept(this);
 
-        chain.nodeForTree(tree.cond).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.body));
-        chain.nodeForTree(tree.body).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.cond));
-        chain.nodeForTree(tree).connectStartNodesToContinuesOf(chain.nodeForTree(tree.body));
+        cfg.nodeForTree(tree.cond).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.body));
+        cfg.nodeForTree(tree.body).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.cond));
+        cfg.nodeForTree(tree).connectStartNodesToContinuesOf(cfg.nodeForTree(tree.body));
 	}
 
 	public void visitWhileLoop(JCWhileLoop tree) {
@@ -95,9 +95,9 @@ public class CFGNodeConnector extends TreeScanner {
 		cond.accept(this);
 		body.accept(this);
 
-        chain.nodeForTree(cond).connectStartNodesToEndNodesOf(chain.nodeForTree(body));
-        chain.nodeForTree(body).connectStartNodesToEndNodesOf(chain.nodeForTree(cond));
-        chain.nodeForTree(tree).connectStartNodesToContinuesOf(chain.nodeForTree(tree.body));
+        cfg.nodeForTree(cond).connectStartNodesToEndNodesOf(cfg.nodeForTree(body));
+        cfg.nodeForTree(body).connectStartNodesToEndNodesOf(cfg.nodeForTree(cond));
+        cfg.nodeForTree(tree).connectStartNodesToContinuesOf(cfg.nodeForTree(tree.body));
 	}
 
 	public void visitForLoop(JCForLoop tree) {
@@ -107,14 +107,14 @@ public class CFGNodeConnector extends TreeScanner {
 
 		tree.cond.accept(this);
 		if(lastStatement != null && tree.cond != null) {
-            chain.nodeForTree(tree.cond).connectStartNodesToEndNodesOf(chain.nodeForTree(lastStatement));
+            cfg.nodeForTree(tree.cond).connectStartNodesToEndNodesOf(cfg.nodeForTree(lastStatement));
 		}
 
 		tree.body.accept(this);
 		if(tree.cond != null) {
-            chain.nodeForTree(tree.body).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.cond));
+            cfg.nodeForTree(tree.body).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.cond));
 		} else if(lastStatement != null) {
-            chain.nodeForTree(tree.body).connectStartNodesToEndNodesOf(chain.nodeForTree(lastStatement));
+            cfg.nodeForTree(tree.body).connectStartNodesToEndNodesOf(cfg.nodeForTree(lastStatement));
 		}
 
 		JCTree nextStartNodeTree = null;
@@ -130,24 +130,24 @@ public class CFGNodeConnector extends TreeScanner {
 
             lastStatement = visitList(tree.step);
 			if(tree.cond != null) 
-                chain.nodeForTree(tree.cond).connectStartNodesToEndNodesOf(chain.nodeForTree(lastStatement));
-			else chain.nodeForTree(tree.body).connectStartNodesToEndNodesOf(chain.nodeForTree(lastStatement));
+                cfg.nodeForTree(tree.cond).connectStartNodesToEndNodesOf(cfg.nodeForTree(lastStatement));
+			else cfg.nodeForTree(tree.body).connectStartNodesToEndNodesOf(cfg.nodeForTree(lastStatement));
         }
 
-        chain.nodeForTree(lastStatement).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.body));
-        chain.nodeForTree(lastStatement).connectStartNodesToContinuesOf(chain.nodeForTree(tree.body));
+        cfg.nodeForTree(lastStatement).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.body));
+        cfg.nodeForTree(lastStatement).connectStartNodesToContinuesOf(cfg.nodeForTree(tree.body));
 	}
 
 	public void visitForeachLoop(JCEnhancedForLoop tree) {
 		tree.expr.accept(this);
-        chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.expr));
+        cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.expr));
 
 		tree.body.accept(this);
 
 		//Util.chainItemList(astnodes, astChainMapping, tree, body);
-        chain.nodeForTree(tree).connectToStartNodesOf(chain.nodeForTree(tree.expr));
+        cfg.nodeForTree(tree).connectToStartNodesOf(cfg.nodeForTree(tree.expr));
         
-        chain.nodeForTree(tree).connectStartNodesToContinuesOf(chain.nodeForTree(tree.body));
+        cfg.nodeForTree(tree).connectStartNodesToContinuesOf(cfg.nodeForTree(tree.body));
 	}
 
 	/* used by visitSwitch and visitCase only, which visit the single node then the subsequent list. */
@@ -157,11 +157,11 @@ public class CFGNodeConnector extends TreeScanner {
 
 		if(list.head != null) {
 			list.head.accept(this);
-            chain.nodeForTree(list.head).connectStartNodesToEndNodesOf(chain.nodeForTree(single));
+            cfg.nodeForTree(list.head).connectStartNodesToEndNodesOf(cfg.nodeForTree(single));
             JCTree prev = list.head;            
 			for(JCTree tree : list.tail) {
 				tree.accept(this);
-                chain.nodeForTree(tree).connectStartNodesToEndNodesOf(chain.nodeForTree(prev));
+                cfg.nodeForTree(tree).connectStartNodesToEndNodesOf(cfg.nodeForTree(prev));
                 prev = tree;
 			}
 		}
@@ -180,7 +180,7 @@ public class CFGNodeConnector extends TreeScanner {
 	public void visitSynchronized(JCSynchronized tree) {
 		tree.lock.accept(this);
 		tree.body.accept(this);
-        chain.nodeForTree(tree.body).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.lock));
+        cfg.nodeForTree(tree.body).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.lock));
 	}
 
 	public void visitTry(JCTry tree) {
@@ -193,17 +193,17 @@ public class CFGNodeConnector extends TreeScanner {
 
 		if(tree.catchers.isEmpty()) {
             if (finalizer != null) 
-                chain.nodeForTree(finalizer).connectStartNodesToEndNodesOf(chain.nodeForTree(body));
+                cfg.nodeForTree(finalizer).connectStartNodesToEndNodesOf(cfg.nodeForTree(body));
 		} else {
 			for(JCCatch c : tree.catchers) {
 				c.accept(this);
-                chain.nodeForTree(c).connectStartNodesToEndNodesOf(chain.nodeForTree(body));
+                cfg.nodeForTree(c).connectStartNodesToEndNodesOf(cfg.nodeForTree(body));
 
 				if(finalizer != null)
-                    chain.nodeForTree(finalizer).connectStartNodesToEndNodesOf(chain.nodeForTree(c));
+                    cfg.nodeForTree(finalizer).connectStartNodesToEndNodesOf(cfg.nodeForTree(c));
 			}
             if (finalizer != null) 
-                chain.nodeForTree(finalizer).connectStartNodesToEndNodesOf(chain.nodeForTree(body));
+                cfg.nodeForTree(finalizer).connectStartNodesToEndNodesOf(cfg.nodeForTree(body));
         }
 	}
 
@@ -211,7 +211,7 @@ public class CFGNodeConnector extends TreeScanner {
 		tree.param.accept(this);
 		tree.body.accept(this);
 
-        chain.nodeForTree(tree.body).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.param));
+        cfg.nodeForTree(tree.body).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.param));
 	}
 
 	public void visitConditional(JCConditional tree) {
@@ -219,19 +219,19 @@ public class CFGNodeConnector extends TreeScanner {
 		tree.truepart.accept(this);
 		tree.falsepart.accept(this);
 
-        chain.nodeForTree(tree.truepart).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.cond));
-        chain.nodeForTree(tree.falsepart).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.cond));
+        cfg.nodeForTree(tree.truepart).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.cond));
+        cfg.nodeForTree(tree.falsepart).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.cond));
 	}
 
 	public void visitIf(JCIf tree) {
 		tree.cond.accept(this);
 		tree.thenpart.accept(this);
 
-        chain.nodeForTree(tree.thenpart).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.cond));
+        cfg.nodeForTree(tree.thenpart).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.cond));
 
 		if(tree.elsepart != null) {
 			tree.elsepart.accept(this);
-            chain.nodeForTree(tree.elsepart).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.cond));
+            cfg.nodeForTree(tree.elsepart).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.cond));
 		}
 	}
 
@@ -241,21 +241,21 @@ public class CFGNodeConnector extends TreeScanner {
 
 	public void visitBreak(JCBreak tree) {
 		if(tree.target != null) {
-            chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.target));
+            cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.target));
 		}
 
 	}
 
 	public void visitContinue(JCContinue tree) {
 		if(tree.target != null) {
-            chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.target));
+            cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.target));
 		}
 	}
 
 	public void visitReturn(JCReturn tree) {
 		if(tree.expr != null) {
 			tree.expr.accept(this);
-            chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.expr));
+            cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.expr));
 		}
 //		exists.add(astChainMapping.get(tree));
 	}
@@ -263,7 +263,7 @@ public class CFGNodeConnector extends TreeScanner {
 	public void visitThrow(JCThrow tree) {
 		if(tree.expr != null) {
 			tree.expr.accept(this);
-            chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.expr));
+            cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.expr));
 		}
 //		exists.add(astChainMapping.get(tree));
 	}
@@ -272,18 +272,18 @@ public class CFGNodeConnector extends TreeScanner {
         tree.meth.accept(this);
 		if(!tree.args.isEmpty()) {
             JCTree lastArg = visitList(tree.args);
-            chain.nodeForTree(lastArg).connectStartNodesToEndNodesOf(
-                chain.nodeForTree(tree.meth));
-            chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(lastArg));
+            cfg.nodeForTree(lastArg).connectStartNodesToEndNodesOf(
+                cfg.nodeForTree(tree.meth));
+            cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(lastArg));
     } else 
-         chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.meth));
+         cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.meth));
 
 	}
 
 	public void visitNewClass(JCNewClass tree) {
 		if(!tree.args.isEmpty()) {
             JCTree lastArg = visitList(tree.args);
-            chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(lastArg));
+            cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(lastArg));
 		}
 	}
 
@@ -298,12 +298,12 @@ public class CFGNodeConnector extends TreeScanner {
 				if(!tree.elems.isEmpty()) {
                     JCTree lastElement = visitList(tree.elems);
 
-                    chain.nodeForTree(tree.elems.head).connectStartNodesToEndNodesOf(chain.nodeForTree(lastDimension));
-                    chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(lastElement));
+                    cfg.nodeForTree(tree.elems.head).connectStartNodesToEndNodesOf(cfg.nodeForTree(lastDimension));
+                    cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(lastElement));
 				} else
-                    chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(lastDimension));
+                    cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(lastDimension));
             } else 
-                chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(lastDimension));
+                cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(lastDimension));
 		}
 	}
 
@@ -315,53 +315,53 @@ public class CFGNodeConnector extends TreeScanner {
 		tree.lhs.accept(this);
 		tree.rhs.accept(this);
 
-        chain.nodeForTree(tree.rhs).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.lhs));
-        chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.rhs));
+        cfg.nodeForTree(tree.rhs).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.lhs));
+        cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.rhs));
 	}
 
 	public void visitAssignop(JCAssignOp tree) {
 		tree.lhs.accept(this);
 		tree.rhs.accept(this);
 
-        chain.nodeForTree(tree.rhs).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.lhs));
-        chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.rhs));
+        cfg.nodeForTree(tree.rhs).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.lhs));
+        cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.rhs));
 	}
 
 	public void visitBinary(JCBinary tree) {
 		tree.lhs.accept(this);
 		tree.rhs.accept(this);
 
-        chain.nodeForTree(tree.rhs).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.lhs));
-        chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.rhs));
+        cfg.nodeForTree(tree.rhs).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.lhs));
+        cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.rhs));
 	}
 
 	public void visitUnary(JCUnary tree) {
 		tree.arg.accept(this);
-        chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.arg));
+        cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.arg));
 	}
 
 	public void visitTypeCast(JCTypeCast tree) {
 		tree.expr.accept(this);
-        chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.expr));
+        cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.expr));
 	}
 
 	public void visitTypeTest(JCInstanceOf tree) {
 		tree.expr.accept(this);
-        chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.expr));
+        cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.expr));
 	}
 
 	public void visitIndexed(JCArrayAccess tree) {
 		tree.indexed.accept(this);
 		tree.index.accept(this);
 
-        chain.nodeForTree(tree.index).connectStartNodesToEndNodesOf(chain.nodeForTree(tree.indexed));
-        chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.index));
+        cfg.nodeForTree(tree.index).connectStartNodesToEndNodesOf(cfg.nodeForTree(tree.indexed));
+        cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.index));
 	}
 
 	public void visitSelect(JCFieldAccess tree) {
 		JCExpression selected = tree.selected;
 		tree.selected.accept(this);
-        chain.nodeForTree(tree).connectToEndNodesOf(chain.nodeForTree(tree.selected));
+        cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.selected));
 	}
 
     public JCTree visitList(List<? extends JCTree> trees) {
@@ -372,7 +372,7 @@ public class CFGNodeConnector extends TreeScanner {
 
             for (JCTree tree : trees.tail) {
                 tree.accept(this);
-                chain.nodeForTree(tree).connectStartNodesToEndNodesOf(chain.nodeForTree(last));
+                cfg.nodeForTree(tree).connectStartNodesToEndNodesOf(cfg.nodeForTree(last));
                 last = tree;
             }
         }

@@ -20,41 +20,30 @@
 package org.paninij.effects;
 
 import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
-import com.sun.tools.javac.util.List;
 
-import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
-import com.sun.tools.javac.code.Type.*;
 
-import com.sun.source.tree.IdentifierTree;
-import com.sun.source.tree.MemberSelectTree;
-import com.sun.source.tree.TreeVisitor;
-import com.sun.source.util.SimpleTreeVisitor;
 import javax.lang.model.element.ElementKind;
 
 import org.paninij.control.flow.graph.CFG;
 import org.paninij.control.flow.graph.CFGNode;
 
-import java.util.HashMap;
 import java.util.LinkedList;
-
 
 public class MethodEffectsComp extends JCTree.Visitor {
     private LinkedList<CFGNode> nodesToProcess;
     private EffectSet visitResult;
     private CFGNode currentNode;
-    private CFG chain;
+    private CFG cfg;
     private Symbol moduleSym;
 
-    public EffectSet computeEffectsForMethod(CFG chain, Symbol moduleSym) {
-        this.chain = chain;
+    public EffectSet computeEffectsForMethod(CFG cfg, Symbol moduleSym) {
+        this.cfg = cfg;
         this.moduleSym = moduleSym;
-        nodesToProcess = new LinkedList<CFGNode>(chain.nodesInOrder);
+        nodesToProcess = new LinkedList<CFGNode>(cfg.nodesInOrder);
 
         while (!nodesToProcess.isEmpty()) {
             CFGNode node = nodesToProcess.poll();
@@ -73,7 +62,7 @@ public class MethodEffectsComp extends JCTree.Visitor {
         }
 
         EffectSet union = new EffectSet();
-        for (CFGNode node : chain.nodesInOrder) {
+        for (CFGNode node : cfg.nodesInOrder) {
             union.addAll(node.effects);
         }
         return union;
@@ -111,7 +100,7 @@ public class MethodEffectsComp extends JCTree.Visitor {
     public void visitTypeTest(JCInstanceOf tree)         { visitTree(tree); }
     public void visitIndexed(JCArrayAccess tree)         { visitTree(tree); }
     public void visitSelect(JCFieldAccess tree) { 
-        if (!(chain.endHeapRepresentation.locationForSymbol(TreeInfo.symbol(tree.selected))
+        if (!(cfg.endHeapRepresentation.locationForSymbol(TreeInfo.symbol(tree.selected))
               instanceof LocalHeapLocation)) {
             if (tree.sym != null) {
                 if (!(tree.sym instanceof MethodSymbol)) {
@@ -128,7 +117,7 @@ public class MethodEffectsComp extends JCTree.Visitor {
     public void visitIdent(JCIdent tree) {
         if (tree.sym.getKind() == ElementKind.FIELD) {
             if (!tree.sym.name.toString().equals("this")) {
-                if (!(chain.endHeapRepresentation.locationForSymbol(tree.sym)
+                if (!(cfg.endHeapRepresentation.locationForSymbol(tree.sym)
                       instanceof LocalHeapLocation)) {
                     if (currentNode.lhs) {
                         visitResult.add(new FieldWriteEffect(tree.sym));

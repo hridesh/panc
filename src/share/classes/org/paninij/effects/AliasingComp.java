@@ -20,35 +20,23 @@
 package org.paninij.effects;
 
 import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.tree.*;
-import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
-import com.sun.tools.javac.util.List;
 
-import com.sun.tools.javac.jvm.Target;
-import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
-import com.sun.tools.javac.code.Type.*;
 
-import com.sun.source.tree.IdentifierTree;
-import com.sun.source.tree.MemberSelectTree;
-import com.sun.source.tree.TreeVisitor;
-import com.sun.source.util.SimpleTreeVisitor;
 import java.util.HashMap;
 import java.util.LinkedList;
 
 import org.paninij.control.flow.graph.CFG;
 import org.paninij.control.flow.graph.CFGNode;
 
-
 public class AliasingComp extends JCTree.Visitor {
     private LinkedList<CFGNode> nodesToProcess;
     private HashMap<CFGNode, EffectSet> effectsSoFar;
     private HeapRepresentation visitResult;
 
-    public void fillInAliasingInfo(CFG chain) {
-        nodesToProcess = new LinkedList<CFGNode>(chain.nodesInOrder);
+    public void fillInAliasingInfo(CFG cfg) {
+        nodesToProcess = new LinkedList<CFGNode>(cfg.nodesInOrder);
 
         HeapRepresentation result = new HeapRepresentation();
 
@@ -70,7 +58,7 @@ public class AliasingComp extends JCTree.Visitor {
             result = result.union(newNodeHR);
         }
 
-        chain.endHeapRepresentation = result;
+        cfg.endHeapRepresentation = result;
     }
 
     public HeapRepresentation computeHeapRepresentationForTree(JCTree tree) {

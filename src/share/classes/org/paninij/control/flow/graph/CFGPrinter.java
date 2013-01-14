@@ -4,9 +4,9 @@ import java.util.LinkedList;
 
 public class CFGPrinter {
 
-    public void printChain(CFG chain) {
+    public void printCFG(CFG cfg) {
         LinkedList<CFGNode> nodesToProcess =
-        	new LinkedList<CFGNode>(chain.nodesInOrder);
+        	new LinkedList<CFGNode>(cfg.nodesInOrder);
         
         System.out.println("digraph G {");
 

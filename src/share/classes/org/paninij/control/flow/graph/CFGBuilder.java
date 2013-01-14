@@ -31,15 +31,15 @@ public class CFGBuilder {
 
     public static void setNames(Names n) { nodeBuilder.names = n; }
 
-    public static CFG buildChain(JCModuleDecl module, JCMethodDecl m) {
-        if (m.sym.chain != null) 
-            return m.sym.chain;
+    public static CFG buildCFG(JCModuleDecl module, JCMethodDecl m) {
+        if (m.sym.cfg != null) 
+            return m.sym.cfg;
         else {
-            CFG chain = new CFG();
-            nodeBuilder.buildNodes(module, m, chain);
-            nodeConnector.connectNodes(m, chain);
-            m.sym.chain = chain;
-            return chain;
+            CFG cfg = new CFG();
+            nodeBuilder.buildNodes(module, m, cfg);
+            nodeConnector.connectNodes(m, cfg);
+            m.sym.cfg = cfg;
+            return cfg;
         }
     }
 }

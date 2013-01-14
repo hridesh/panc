@@ -19,22 +19,12 @@
 
 package org.paninij.effects;
 
-import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
-import com.sun.tools.javac.util.List;
 
-import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
-import com.sun.tools.javac.code.Type.*;
 
-import com.sun.source.tree.IdentifierTree;
-import com.sun.source.tree.MemberSelectTree;
-import com.sun.source.tree.TreeVisitor;
-import com.sun.source.util.SimpleTreeVisitor;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -87,10 +77,10 @@ public class ModuleEffectsComp {
             JCMethodDecl method = methodsToProcess.poll();
             visitedMethods.add(method);
 
-            CFG chain = CFGBuilder.buildChain(module, method);
-            new AliasingComp().fillInAliasingInfo(chain);
+            CFG cfg = CFGBuilder.buildCFG(module, method);
+            new AliasingComp().fillInAliasingInfo(cfg);
             reachedProcsComp.todoReachedProcs(module);
-            new CFGPrinter().printChain(chain);
+            new CFGPrinter().printCFG(cfg);
             
             for (MethodSymbol.MethodInfo calledMethodInfo : method.sym.calledMethods) {
                 MethodSymbol calledMethod = calledMethodInfo.method;
@@ -99,8 +89,8 @@ public class ModuleEffectsComp {
                 if (!visitedMethods.contains(calledMethod.tree))
                     methodsToProcess.offer(calledMethod.tree);
             }
-            EffectSet effects = methodEffectsComp.computeEffectsForMethod(chain, module.sym);
-            effects.chain = chain;
+            EffectSet effects = methodEffectsComp.computeEffectsForMethod(cfg, module.sym);
+            effects.cfg = cfg;
             methodEffects.put(method, effects);
         }
         
