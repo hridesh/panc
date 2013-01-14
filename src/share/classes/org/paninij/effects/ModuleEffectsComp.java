@@ -62,7 +62,7 @@ public class ModuleEffectsComp {
         context.put(secKey, this);
         effectsSub = EffectsSub.instance(context);
         reachedProcsComp = ReachedProcsComp.instance(context);
-        ASTChainBuilder.setNames(Names.instance(context));
+        CFGBuilder.setNames(Names.instance(context));
     }
 
     public void computeEffects(JCModuleDecl module) {
@@ -83,7 +83,7 @@ public class ModuleEffectsComp {
             JCMethodDecl method = methodsToProcess.poll();
             visitedMethods.add(method);
 
-            ASTChain chain = ASTChainBuilder.buildChain(module, method);
+            CFG chain = CFGBuilder.buildChain(module, method);
             new AliasingComp().fillInAliasingInfo(chain);
             reachedProcsComp.todoReachedProcs(module);
             new ASTChainPrinter().printChain(chain);

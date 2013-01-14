@@ -50,7 +50,7 @@ public class EffectsSub extends JCTree.Visitor {
     private LinkedList<ASTChainNode> nodesToProcess;
     private EffectSet visitResult;
     private ASTChainNode currentNode;
-    private ASTChain chain;
+    private CFG chain;
     HashMap<JCMethodDecl, EffectSet> methodEffects;
     private Names names;
     public JCModuleDecl module; 

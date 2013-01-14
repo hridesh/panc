@@ -42,11 +42,11 @@ import java.util.ArrayList;
 
 public class ASTChainNodeConnector extends TreeScanner {
     private JCMethodDecl m;
-    private ASTChain chain;
+    private CFG chain;
     private ArrayList<ASTChainNode> currentStartNodes, currentEndNodes, currentExcEndNodes;
 	private final ArrayList<ASTChainNode> emptyList = new ArrayList<ASTChainNode>(0);
 
-    public void connectNodes(JCMethodDecl m, ASTChain chain) {
+    public void connectNodes(JCMethodDecl m, CFG chain) {
         this.m = m;
         this.chain = chain;
         

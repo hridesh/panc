@@ -48,7 +48,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
     private JCModuleDecl module;
     private JCLibraryDecl library;
     private JCMethodDecl m;
-    private ASTChain chain;
+    private CFG chain;
     private ArrayList<ASTChainNode> currentStartNodes, currentEndNodes, currentExcEndNodes;
 	private final ArrayList<ASTChainNode> emptyList = new ArrayList<ASTChainNode>(0);
     private boolean lhs = false;
@@ -63,7 +63,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
     public static LinkedList<TodoItem> callGraphTodos = new LinkedList<TodoItem>();
 
-    public void buildNodes(JCModuleDecl module, JCMethodDecl m, ASTChain chain) {
+    public void buildNodes(JCModuleDecl module, JCMethodDecl m, CFG chain) {
         this.module = module;
         this.m = m;
         this.chain = chain;

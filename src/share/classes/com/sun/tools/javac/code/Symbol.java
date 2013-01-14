@@ -43,7 +43,7 @@ import com.sun.tools.javac.tree.JCTree;
 // Panini code
 import java.util.HashSet;
 import org.paninij.systemgraphs.SystemGraphs;
-import org.paninij.effects.ASTChain;
+import org.paninij.effects.CFG;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -1070,7 +1070,7 @@ public abstract class Symbol implements Element {
         // built in ReachedProcsComp
         public HashSet<MethodInfo> reachedProcs = new HashSet<MethodInfo>();
         // for storing memoized ASTChain
-        public ASTChain chain;
+        public CFG chain;
     	// end Panini code
     	
         /** The code of the method. */

@@ -95,7 +95,7 @@ class BottomEffect extends Effect {
 
 
 public class EffectSet extends HashSet<Effect> {
-    public ASTChain chain;
+    public CFG chain;
 
     public EffectSet() { super(); }
     public EffectSet(EffectSet e) { super(e); }

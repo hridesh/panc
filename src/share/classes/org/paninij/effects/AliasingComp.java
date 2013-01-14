@@ -44,7 +44,7 @@ public class AliasingComp extends JCTree.Visitor {
     private HashMap<ASTChainNode, EffectSet> effectsSoFar;
     private HeapRepresentation visitResult;
 
-    public void fillInAliasingInfo(ASTChain chain) {
+    public void fillInAliasingInfo(CFG chain) {
         nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
 
         HeapRepresentation result = new HeapRepresentation();

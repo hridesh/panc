@@ -22,7 +22,7 @@ import java.util.LinkedList;
 
 public class ASTChainPrinter {
 
-    public void printChain(ASTChain chain) {
+    public void printChain(CFG chain) {
         LinkedList<ASTChainNode> nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
         
         System.out.println("digraph G {");

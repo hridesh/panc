@@ -44,10 +44,10 @@ public class MethodEffectsComp extends JCTree.Visitor {
     private LinkedList<ASTChainNode> nodesToProcess;
     private EffectSet visitResult;
     private ASTChainNode currentNode;
-    private ASTChain chain;
+    private CFG chain;
     private Symbol moduleSym;
 
-    public EffectSet computeEffectsForMethod(ASTChain chain, Symbol moduleSym) {
+    public EffectSet computeEffectsForMethod(CFG chain, Symbol moduleSym) {
         this.chain = chain;
         this.moduleSym = moduleSym;
         nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
