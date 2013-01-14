@@ -44,14 +44,14 @@ public class AliasingComp extends JCTree.Visitor {
             CFGNode node = nodesToProcess.poll();
 
             HeapRepresentation newNodeHR = new HeapRepresentation();
-            for (CFGNode prev : node.previous) { 
+            for (CFGNode prev : node.successors) { 
                 newNodeHR = newNodeHR.union(prev.heapRepresentation);
             }
             
             newNodeHR = newNodeHR.union(computeHeapRepresentationForTree(node.tree));
 
             if (!newNodeHR.equals(node.heapRepresentation)) {
-                nodesToProcess.addAll(node.next);
+                nodesToProcess.addAll(node.predecessors);
             }
             node.heapRepresentation = newNodeHR;
             

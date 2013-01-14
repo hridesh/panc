@@ -49,14 +49,14 @@ public class MethodEffectsComp extends JCTree.Visitor {
             CFGNode node = nodesToProcess.poll();
 
             EffectSet newNodeEffects = new EffectSet();
-            for (CFGNode prev : node.previous) { 
+            for (CFGNode prev : node.successors) { 
                 newNodeEffects.addAll(prev.effects);
             }
             
             newNodeEffects.addAll(computeEffectsForNode(node));
 
             if (!newNodeEffects.equals(node.effects)) {
-                nodesToProcess.addAll(node.next);
+                nodesToProcess.addAll(node.predecessors);
             }
             node.effects = newNodeEffects;
         }

@@ -3,7 +3,6 @@ package org.paninij.control.flow.graph;
 import java.util.LinkedList;
 
 public class CFGPrinter {
-
     public void printCFG(CFG cfg) {
         LinkedList<CFGNode> nodesToProcess =
         	new LinkedList<CFGNode>(cfg.nodesInOrder);
@@ -13,7 +12,7 @@ public class CFGPrinter {
         while (!nodesToProcess.isEmpty()) {
             CFGNode node = nodesToProcess.poll();
             
-            for (CFGNode next : node.next) {
+            for (CFGNode next : node.predecessors) {
                 System.out.println(nodeText(node) + " -> " + nodeText(next));
             }
         }
