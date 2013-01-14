@@ -17,13 +17,13 @@
  * Contributor(s): Rex Fernando
  */
 
-package org.paninij.effects;
+package org.paninij.control.flow.graph;
 
 import com.sun.tools.javac.util.*;
 
 import com.sun.tools.javac.tree.JCTree.*;
 
-class CFGBuilder {
+public class CFGBuilder {
     private static CFGNodeBuilder nodeBuilder =
     	new CFGNodeBuilder();
     private static CFGNodeConnector nodeConnector =
@@ -42,4 +42,4 @@ class CFGBuilder {
             return chain;
         }
     }
-}        
+}

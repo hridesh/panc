@@ -17,7 +17,7 @@
  * Contributor(s): Rex Fernando
  */
 
-package org.paninij.effects;
+package org.paninij.control.flow.graph;
 
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;

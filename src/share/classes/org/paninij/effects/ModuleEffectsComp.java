@@ -38,8 +38,12 @@ import com.sun.source.util.SimpleTreeVisitor;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import static com.sun.tools.javac.code.Flags.*;
 
+import org.paninij.control.flow.graph.CFG;
+import org.paninij.control.flow.graph.CFGBuilder;
+import org.paninij.control.flow.graph.CFGPrinter;
+
+import static com.sun.tools.javac.code.Flags.*;
 
 public class ModuleEffectsComp {
     protected static final Context.Key<ModuleEffectsComp> secKey =

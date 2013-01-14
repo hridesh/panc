@@ -1,4 +1,4 @@
-package org.paninij.effects;
+package org.paninij.control.flow.graph;
 
 import java.util.LinkedList;
 

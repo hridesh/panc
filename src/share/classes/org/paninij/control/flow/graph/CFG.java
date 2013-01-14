@@ -1,9 +1,11 @@
-package org.paninij.effects;
+package org.paninij.control.flow.graph;
 
 import com.sun.tools.javac.tree.*;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+
+import org.paninij.effects.HeapRepresentation;
 
 /* The data structure that represents the control flow graph (CFG). */
 public class CFG {
