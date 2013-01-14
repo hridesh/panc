@@ -68,7 +68,6 @@ public class CFGNodeConnector extends TreeScanner {
 		JCExpression init = tree.init;
 		if(init != null) {
 			init.accept(this);
-//			Util.chainListItem(astnodes, astChainMapping, init, tree);
             cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(init));
 		}
 	}
@@ -102,7 +101,6 @@ public class CFGNodeConnector extends TreeScanner {
 
 	public void visitForLoop(JCForLoop tree) {
 //		List<JCStatement> init = tree.init;
-//		JCTree lastStmt = Util.handleList(init, astnodes, astChainMapping, this);
         JCTree lastStatement = visitList(tree.init);
 
 		tree.cond.accept(this);
@@ -144,7 +142,6 @@ public class CFGNodeConnector extends TreeScanner {
 
 		tree.body.accept(this);
 
-		//Util.chainItemList(astnodes, astChainMapping, tree, body);
         cfg.nodeForTree(tree).connectToStartNodesOf(cfg.nodeForTree(tree.expr));
         
         cfg.nodeForTree(tree).connectStartNodesToContinuesOf(cfg.nodeForTree(tree.body));
@@ -255,7 +252,6 @@ public class CFGNodeConnector extends TreeScanner {
 			tree.expr.accept(this);
             cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.expr));
 		}
-//		exists.add(astChainMapping.get(tree));
 	}
 
 	public void visitThrow(JCThrow tree) {
@@ -263,7 +259,6 @@ public class CFGNodeConnector extends TreeScanner {
 			tree.expr.accept(this);
             cfg.nodeForTree(tree).connectToEndNodesOf(cfg.nodeForTree(tree.expr));
 		}
-//		exists.add(astChainMapping.get(tree));
 	}
 
 	public void visitApply(JCMethodInvocation tree) {

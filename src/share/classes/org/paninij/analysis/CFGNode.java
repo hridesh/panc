@@ -20,7 +20,7 @@ public class CFGNode {
     public ArrayList<CFGNode> excEndNodes = new ArrayList<CFGNode>();
     public boolean lhs = false;
     
-    // effects of chain up to and including this node
+    // Effects of control flow paths up to and including this node.
     public EffectSet effects = new EffectSet();
 
     public HeapRepresentation heapRepresentation;
