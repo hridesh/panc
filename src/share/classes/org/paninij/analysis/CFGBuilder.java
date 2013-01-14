@@ -17,17 +17,15 @@
  * Contributor(s): Rex Fernando
  */
 
-package org.paninij.control.flow.graph;
+package org.paninij.analysis;
 
 import com.sun.tools.javac.util.*;
 
 import com.sun.tools.javac.tree.JCTree.*;
 
 public class CFGBuilder {
-    private static CFGNodeBuilder nodeBuilder =
-    	new CFGNodeBuilder();
-    private static CFGNodeConnector nodeConnector =
-    	new CFGNodeConnector();
+    private static CFGNodeBuilder nodeBuilder = new CFGNodeBuilder();
+    private static CFGNodeConnector nodeConnector = new CFGNodeConnector();
 
     public static void setNames(Names n) { nodeBuilder.names = n; }
 

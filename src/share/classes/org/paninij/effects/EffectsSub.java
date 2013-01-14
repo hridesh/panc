@@ -38,8 +38,8 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 import javax.lang.model.element.ElementKind;
 
-import org.paninij.control.flow.graph.CFG;
-import org.paninij.control.flow.graph.CFGNode;
+import org.paninij.analysis.CFG;
+import org.paninij.analysis.CFGNode;
 
 import java.util.HashMap;
 import java.util.LinkedList;

@@ -1,4 +1,4 @@
-package org.paninij.control.flow.graph;
+package org.paninij.analysis;
 
 import java.util.ArrayList;
 

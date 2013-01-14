@@ -29,9 +29,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-import org.paninij.control.flow.graph.CFG;
-import org.paninij.control.flow.graph.CFGBuilder;
-import org.paninij.control.flow.graph.CFGPrinter;
+import org.paninij.analysis.CFG;
+import org.paninij.analysis.CFGBuilder;
+import org.paninij.analysis.CFGPrinter;
 
 import static com.sun.tools.javac.code.Flags.*;
 

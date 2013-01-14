@@ -27,8 +27,8 @@ import com.sun.tools.javac.tree.JCTree.*;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import org.paninij.control.flow.graph.CFG;
-import org.paninij.control.flow.graph.CFGNode;
+import org.paninij.analysis.CFG;
+import org.paninij.analysis.CFGNode;
 
 public class AliasingComp extends JCTree.Visitor {
     private LinkedList<CFGNode> nodesToProcess;

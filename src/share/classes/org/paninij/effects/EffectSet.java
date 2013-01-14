@@ -24,7 +24,7 @@ import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.util.*;
 
-import org.paninij.control.flow.graph.CFG;
+import org.paninij.analysis.CFG;
 import org.paninij.systemgraphs.SystemGraphs.*;
 
 abstract class Effect {

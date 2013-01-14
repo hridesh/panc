@@ -28,8 +28,8 @@ import com.sun.tools.javac.tree.JCTree.*;
 
 import javax.lang.model.element.ElementKind;
 
-import org.paninij.control.flow.graph.CFG;
-import org.paninij.control.flow.graph.CFGNode;
+import org.paninij.analysis.CFG;
+import org.paninij.analysis.CFGNode;
 
 import java.util.LinkedList;
 

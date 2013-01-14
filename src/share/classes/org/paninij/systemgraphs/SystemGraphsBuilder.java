@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Collection;
 
-import org.paninij.control.flow.graph.CFGNodeBuilder;
+import org.paninij.analysis.CFGNodeBuilder;
 import org.paninij.systemgraphs.SystemGraphs.*;
 
 public class SystemGraphsBuilder extends TreeScanner {

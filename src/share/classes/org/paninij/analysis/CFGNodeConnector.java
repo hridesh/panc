@@ -17,7 +17,7 @@
  * Contributor(s): Rex Fernando
  */
 
-package org.paninij.control.flow.graph;
+package org.paninij.analysis;
 
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
@@ -170,8 +170,6 @@ public class CFGNodeConnector extends TreeScanner {
 	public void visitSwitch(JCSwitch tree) {
 		switchAndCase(tree.selector, tree.cases);
 	}
-
-
 
 	public void visitCase(JCCase tree) {
 		switchAndCase(tree.pat, tree.stats);

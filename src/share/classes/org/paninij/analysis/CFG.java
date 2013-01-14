@@ -1,4 +1,4 @@
-package org.paninij.control.flow.graph;
+package org.paninij.analysis;
 
 import com.sun.tools.javac.tree.*;
 
@@ -9,12 +9,10 @@ import org.paninij.effects.HeapRepresentation;
 
 /* The data structure that represents the control flow graph (CFG). */
 public class CFG {
-    private HashMap<JCTree, CFGNode> nodes =
-    	new HashMap<JCTree, CFGNode>();
+    private HashMap<JCTree, CFGNode> nodes = new HashMap<JCTree, CFGNode>();
     public CFGNode startNode;
     public HeapRepresentation endHeapRepresentation;
-    public LinkedList<CFGNode> nodesInOrder =
-    	new LinkedList<CFGNode>();
+    public LinkedList<CFGNode> nodesInOrder = new LinkedList<CFGNode>();
 
     public CFGNode nodeForTree(JCTree tree) { return nodes.get(tree); }
     

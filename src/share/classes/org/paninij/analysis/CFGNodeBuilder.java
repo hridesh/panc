@@ -17,7 +17,7 @@
  * Contributor(s): Rex Fernando
  */
 
-package org.paninij.control.flow.graph;
+package org.paninij.analysis;
 
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
@@ -127,7 +127,6 @@ public class CFGNodeBuilder extends TreeScanner {
 		List<JCStatement> stats = tree.stats;
         visitStatements(stats);
 		
-
         addNode(node);
     }
 
