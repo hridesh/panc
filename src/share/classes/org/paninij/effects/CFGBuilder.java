@@ -24,8 +24,8 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.tree.JCTree.*;
 
 class CFGBuilder {
-    private static ASTChainNodeBuilder nodeBuilder =
-    	new ASTChainNodeBuilder();
+    private static CFGNodeBuilder nodeBuilder =
+    	new CFGNodeBuilder();
     private static ASTChainNodeConnector nodeConnector =
     	new ASTChainNodeConnector();
 

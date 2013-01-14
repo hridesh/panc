@@ -23,14 +23,14 @@ import java.util.LinkedList;
 public class ASTChainPrinter {
 
     public void printChain(CFG chain) {
-        LinkedList<ASTChainNode> nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
+        LinkedList<CFGNode> nodesToProcess = new LinkedList<CFGNode>(chain.nodesInOrder);
         
         System.out.println("digraph G {");
 
         while (!nodesToProcess.isEmpty()) {
-            ASTChainNode node = nodesToProcess.poll();
+            CFGNode node = nodesToProcess.poll();
             
-            for (ASTChainNode next : node.next) {
+            for (CFGNode next : node.next) {
                 System.out.println(nodeText(node) + " -> " + nodeText(next));
             }
         }
@@ -38,7 +38,7 @@ public class ASTChainPrinter {
         System.out.println("}");
     }
 
-    public String nodeText(ASTChainNode node) {
+    public String nodeText(CFGNode node) {
         return "\"" + node.id + " " + node.tree.toString().replace("\"", "\\\"") + (node.lhs ? ", lhs" : "") + "\"";
     }
 }

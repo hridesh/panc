@@ -40,20 +40,20 @@ import java.util.LinkedList;
 
 
 public class AliasingComp extends JCTree.Visitor {
-    private LinkedList<ASTChainNode> nodesToProcess;
-    private HashMap<ASTChainNode, EffectSet> effectsSoFar;
+    private LinkedList<CFGNode> nodesToProcess;
+    private HashMap<CFGNode, EffectSet> effectsSoFar;
     private HeapRepresentation visitResult;
 
     public void fillInAliasingInfo(CFG chain) {
-        nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
+        nodesToProcess = new LinkedList<CFGNode>(chain.nodesInOrder);
 
         HeapRepresentation result = new HeapRepresentation();
 
         while (!nodesToProcess.isEmpty()) {
-            ASTChainNode node = nodesToProcess.poll();
+            CFGNode node = nodesToProcess.poll();
 
             HeapRepresentation newNodeHR = new HeapRepresentation();
-            for (ASTChainNode prev : node.previous) { 
+            for (CFGNode prev : node.previous) { 
                 newNodeHR = newNodeHR.union(prev.heapRepresentation);
             }
             

@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Collection;
 
-import org.paninij.effects.ASTChainNodeBuilder;
+import org.paninij.effects.CFGNodeBuilder;
 import org.paninij.systemgraphs.SystemGraphs.*;
 
 public class SystemGraphsBuilder extends TreeScanner {
@@ -116,8 +116,8 @@ public class SystemGraphsBuilder extends TreeScanner {
     }
 
     public void finishCallGraph() {
-        for (ASTChainNodeBuilder.TodoItem t : ASTChainNodeBuilder.callGraphTodos) {
-            VarSymbol moduleField = ASTChainNodeBuilder.moduleField(t.tree); // doesn't handle module array calls
+        for (CFGNodeBuilder.TodoItem t : CFGNodeBuilder.callGraphTodos) {
+            VarSymbol moduleField = CFGNodeBuilder.moduleField(t.tree); // doesn't handle module array calls
             MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(t.tree.meth);
             String methodName = TreeInfo.symbol(t.tree.meth).toString();
             methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";

@@ -41,22 +41,22 @@ import java.util.LinkedList;
 
 
 public class MethodEffectsComp extends JCTree.Visitor {
-    private LinkedList<ASTChainNode> nodesToProcess;
+    private LinkedList<CFGNode> nodesToProcess;
     private EffectSet visitResult;
-    private ASTChainNode currentNode;
+    private CFGNode currentNode;
     private CFG chain;
     private Symbol moduleSym;
 
     public EffectSet computeEffectsForMethod(CFG chain, Symbol moduleSym) {
         this.chain = chain;
         this.moduleSym = moduleSym;
-        nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
+        nodesToProcess = new LinkedList<CFGNode>(chain.nodesInOrder);
 
         while (!nodesToProcess.isEmpty()) {
-            ASTChainNode node = nodesToProcess.poll();
+            CFGNode node = nodesToProcess.poll();
 
             EffectSet newNodeEffects = new EffectSet();
-            for (ASTChainNode prev : node.previous) { 
+            for (CFGNode prev : node.previous) { 
                 newNodeEffects.addAll(prev.effects);
             }
             
@@ -69,13 +69,13 @@ public class MethodEffectsComp extends JCTree.Visitor {
         }
 
         EffectSet union = new EffectSet();
-        for (ASTChainNode node : chain.nodesInOrder) {
+        for (CFGNode node : chain.nodesInOrder) {
             union.addAll(node.effects);
         }
         return union;
     }
 
-    public EffectSet computeEffectsForNode(ASTChainNode node) {
+    public EffectSet computeEffectsForNode(CFGNode node) {
         visitResult = new EffectSet();
         currentNode = node;
         node.tree.accept(this);

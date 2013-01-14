@@ -47,9 +47,9 @@ public class EffectsSub extends JCTree.Visitor {
     protected static final Context.Key<EffectsSub> mesKey =
         new Context.Key<EffectsSub>();
 
-    private LinkedList<ASTChainNode> nodesToProcess;
+    private LinkedList<CFGNode> nodesToProcess;
     private EffectSet visitResult;
-    private ASTChainNode currentNode;
+    private CFGNode currentNode;
     private CFG chain;
     HashMap<JCMethodDecl, EffectSet> methodEffects;
     private Names names;
