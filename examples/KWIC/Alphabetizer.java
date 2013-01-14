@@ -23,7 +23,7 @@
  * This implementation of the KWIC system is based on the example 
  * presented in the following paper. 
  * D. L. Parnas. 1972. On the criteria to be used in decomposing systems 
- * into capsules. Commun. ACM 15, 12 (December 1972), 1053-1058. 
+ * into modules. Commun. ACM 15, 12 (December 1972), 1053-1058. 
  * DOI=10.1145/361598.361623 http://doi.acm.org/10.1145/361598.361623
  * 
  */

@@ -480,7 +480,7 @@ public class CreateSymbols extends AbstractProcessor {
             "com.sun.security.auth",
             "com.sun.security.auth.callback",
             "com.sun.security.auth.login",
-            "com.sun.security.auth.module",
+            "com.sun.security.auth.capsule",
             "com.sun.security.jgss",
             "com.sun.net.httpserver",
             "com.sun.net.httpserver.spi",

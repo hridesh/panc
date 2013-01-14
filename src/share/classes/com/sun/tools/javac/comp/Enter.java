@@ -809,7 +809,7 @@ public class Enter extends JCTree.Visitor {
         	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
         		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
         		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
-        			log.error(tree.pos(), "serialize.active.modules");
+        			log.error(tree.pos(), "serialize.active.capsules");
         		}else if((mdecl.mods.flags & PRIVATE) ==0
         					&&(mdecl.mods.flags & PROTECTED) ==0){
                     JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC|Flags.SYNCHRONIZED),
@@ -1033,7 +1033,7 @@ public class Enter extends JCTree.Visitor {
         	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
         		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
         		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
-        			log.error(tree.pos(), "serialize.active.modules");
+        			log.error(tree.pos(), "serialize.active.capsules");
         		}
         		else if((mdecl.mods.flags & PRIVATE) ==0
         					&&(mdecl.mods.flags & PROTECTED) ==0){
@@ -1186,7 +1186,7 @@ public class Enter extends JCTree.Visitor {
     
     public long processModuleAnnotations(JCModuleDecl tree, ClassSymbol c){
     	for(JCAnnotation annotation : tree.mods.annotations){
-    		if(annotation.annotationType.toString().equals("ModuleKind")){
+    		if(annotation.annotationType.toString().equals("CapsuleKind")){
     			Object arg = "";
     			if(annotation.args.isEmpty())
     				log.error(tree.pos(), "annotation.missing.default.value", annotation, "value");

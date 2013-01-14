@@ -1616,7 +1616,7 @@ public class JavacParser implements Parser {
             } else {
                 JCExpression sizeTree = literal(names.empty);
                 if (sizeTree.getKind()!=Kind.INT_LITERAL) {
-                    log.error(pos, "module.array.call.illegal.index");
+                    log.error(pos, "capsule.array.call.illegal.index");
                     System.exit(5555);
                 }
                 accept(RBRACKET);
@@ -2911,7 +2911,7 @@ public class JavacParser implements Parser {
          		return signatureDecl(mods, dc);
          	else{
          		setErrorEndPos(token.pos);
-         		return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.library.module.not.found")));
+         		return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.library.capsule.not.found")));
          	}
         }
         //end Panini code
@@ -2927,7 +2927,7 @@ public class JavacParser implements Parser {
                 } else {
                     errs = List.<JCTree>of(mods);
                 }
-                return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.library.module.not.found")));
+                return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.library.capsule.not.found")));
             }
         } else {
             if (token.kind == ENUM) {
@@ -2988,7 +2988,7 @@ public class JavacParser implements Parser {
      	int pos = token.pos;
      	Name name = ident();
      	if(token.kind == EXTENDS){
-     		log.error(token.pos, "module.extend.error");
+     		log.error(token.pos, "capsule.extend.error");
      		nextToken();
      		parseType();
      	}
@@ -3015,7 +3015,7 @@ public class JavacParser implements Parser {
       	int pos = token.pos;
       	Name name = ident();
       	if(token.kind == EXTENDS){
-      		log.error(token.pos, "module.extend.error");
+      		log.error(token.pos, "capsule.extend.error");
       		nextToken();
       		parseType();
       	}

@@ -726,7 +726,7 @@ public class Attr extends JCTree.Visitor {
     private List<JCStatement> transWiring(final JCMethodInvocation mi, final Map<Name, Name> variables){
     	if(variables.get(names
     			.fromString(mi.meth.toString()))==null){
-    		log.error(mi.pos(), "module.array.type.error", mi.meth);
+    		log.error(mi.pos(), "capsule.array.type.error", mi.meth);
     	}
     	ClassSymbol c = (ClassSymbol) rs
     			.findType(env, variables.get(names
@@ -877,7 +877,7 @@ public class Attr extends JCTree.Visitor {
 					stats.add(make.Try(make.Block(0, List.<JCStatement> of(make
 							.Exec(make.Apply(List.<JCExpression> nil(), make
 									.Select(make.Ident(names
-											.fromString("PaniniModuleTask")),
+											.fromString(PaniniConstants.PANINI_MODULE_TASK)),
 											names.fromString("init")), List
 									.<JCExpression> of(make.Literal(arg)))))),
 							List.<JCCatch> of(make.Catch(make.VarDef(
@@ -893,7 +893,7 @@ public class Attr extends JCTree.Visitor {
 			stats.add(make.Try(make.Block(0, List.<JCStatement> of(make
 					.Exec(make.Apply(List.<JCExpression> nil(), make
 							.Select(make.Ident(names
-									.fromString("PaniniModuleTask")),
+									.fromString(PaniniConstants.PANINI_MODULE_TASK)),
 									names.fromString("init")), List
 							.<JCExpression> of(make.Literal(1)))))),
 					List.<JCCatch> of(make.Catch(make.VarDef(
@@ -932,7 +932,7 @@ public class Attr extends JCTree.Visitor {
 					try{
 						assigns.appendList(transWiring(mi, variables));
 					}catch (NullPointerException e){
-						log.error(mi.pos(), "only.module.types.allowed");
+						log.error(mi.pos(), "only.capsule.types.allowed");
 					}
 				}
 
@@ -947,12 +947,12 @@ public class Attr extends JCTree.Visitor {
 							.findType(env, variables.get(names
 									.fromString(mi.name.toString())));
 					if(mi.index.getTag()!=Tag.LITERAL)
-						log.error(mi.index.pos(), "module.array.call.illegal.index");
+						log.error(mi.index.pos(), "capsule.array.call.illegal.index");
 					JCLiteral ind = (JCLiteral)mi.index;
 					if((Integer)ind.value<0||(Integer)ind.value>=modArrays.get(names
 							.fromString(mi.name.toString())))
 					{
-						log.error(mi.index.pos(), "module.array.call.index.out.of.bound", ind.value, modArrays.get(names
+						log.error(mi.index.pos(), "capsule.array.call.index.out.of.bound", ind.value, modArrays.get(names
 								.fromString(mi.name.toString())));
 					}
 					if (mi.arguments.length() != syms.moduleparams.get(c).length()) {
@@ -977,7 +977,7 @@ public class Attr extends JCTree.Visitor {
 				private void processForEachLoop(JCEnhancedForLoop loop, ListBuffer<JCStatement> assigns, Map<Name, Name> variables) {
 					ClassSymbol c = syms.modules.get(names.fromString(loop.var.vartype.toString()));
 					if(c==null){
-						log.error(loop.pos(), "module.array.type.error", loop.var.vartype);
+						log.error(loop.pos(), "capsule.array.type.error", loop.var.vartype);
 					}
 					variables.put(loop.var.name, names.fromString(loop.var.vartype.toString()));
 					ClassSymbol d = syms.modules.get(variables.get(names.fromString(loop.expr.toString())));
@@ -1041,7 +1041,7 @@ public class Attr extends JCTree.Visitor {
 					JCModuleArray mat = (JCModuleArray)vdecl.vartype;
 					ClassSymbol c = syms.modules.get(names.fromString(mat.elemtype.toString()));
 					if(c==null){
-						log.error(vdecl.pos(), "module.array.type.error", mat.elemtype);
+						log.error(vdecl.pos(), "capsule.array.type.error", mat.elemtype);
 					}
 					JCNewArray s= make.NewArray(make.Ident(c.type.tsym), 
 							List.<JCExpression>of(make.Literal(mat.amount)), null);
@@ -1375,7 +1375,7 @@ public class Attr extends JCTree.Visitor {
         // Panini code
         if(tree.getTag()==Tag.STATE)
     		if(syms.modules.containsKey(names.fromString(tree.vartype.toString())))
-    			log.error(tree.pos(), "states.with.module.type.error");
+    			log.error(tree.pos(), "states.with.capsule.type.error");
         // end Panini code
         chk.validate(tree.vartype, env);
         deferredLintHandler.flush(tree.pos());
@@ -2844,7 +2844,7 @@ public class Attr extends JCTree.Visitor {
         // Panini code
         if(tree.selected.type.tsym.isModule&&!tree.type.getKind().toString().equals("EXECUTABLE")
         		&&env.enclClass.sym.isModule&&!tree.selected.toString().equals("this")){
-        	log.error(tree.pos, "invalid.access.of.modules.states");
+        	log.error(tree.pos, "invalid.access.of.capsules.states");
         }
         // end Panini code
     }
