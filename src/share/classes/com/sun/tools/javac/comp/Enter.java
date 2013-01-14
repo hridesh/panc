@@ -1186,7 +1186,7 @@ public class Enter extends JCTree.Visitor {
     
     public long processModuleAnnotations(JCModuleDecl tree, ClassSymbol c){
     	for(JCAnnotation annotation : tree.mods.annotations){
-    		if(annotation.annotationType.toString().equals("CapsuleKind")){
+    		if(annotation.annotationType.toString().equals("ModuleKind")){
     			Object arg = "";
     			if(annotation.args.isEmpty())
     				log.error(tree.pos(), "annotation.missing.default.value", annotation, "value");

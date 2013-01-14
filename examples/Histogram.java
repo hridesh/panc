@@ -51,14 +51,14 @@ capsule Reader(String[] args, Bucket[] buckets) {
 
 }
 
-@CapsuleKind("TASK")
+@ModuleKind("TASK")
 capsule Bucket(Printer p) {
 		long count = 0;
 		void bump() { count++; }
 		void finish(int index) { p.print("" + index + ":" + count); }
 }
 
-@CapsuleKind("SERIAL")
+@ModuleKind("SERIAL")
 capsule Printer() { 
 	void print(String output) { System.out.println(output); }
 }
