@@ -501,7 +501,7 @@ public class Pretty extends JCTree.Visitor {
     	try{
     		println();align();
     		printDocComment(tree);
-    		print("module ");
+    		print("capsule "); // Bryan Shrader 1/14/2013 'module' changed to 'capsule'
     		print(tree.name + "(");
     		printExprs(tree.params);
     		print(")");

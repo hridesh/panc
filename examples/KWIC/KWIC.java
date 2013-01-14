@@ -23,16 +23,16 @@
  * This implementation of the KWIC system is based on the example 
  * presented in the following paper. 
  * D. L. Parnas. 1972. On the criteria to be used in decomposing systems 
- * into modules. Commun. ACM 15, 12 (December 1972), 1053-1058. 
+ * into capsules. Commun. ACM 15, 12 (December 1972), 1053-1058. 
  * DOI=10.1145/361598.361623 http://doi.acm.org/10.1145/361598.361623
  * 
  */
 
 /**
- *  The Control module controls all other modules in the KWIC system
+ *  The Control capsule controls all other capsules in the KWIC system
  *  to achieve the desired functionality. 
 */
-module Control (LineStorage lines, Input input, CircularShifter shifter, 
+capsule Control (LineStorage lines, Input input, CircularShifter shifter, 
 		Alphabetizer alphabetizer, Output output, String file){
 
 /**

@@ -31,7 +31,7 @@ library bool {
 	}
 }
 
-module Fork () {
+capsule Fork () {
 	include bool;
 
 	boolean isTaken = false;
@@ -49,7 +49,7 @@ module Fork () {
 }
 
 
-module Philosopher (Fork left, Fork right, String name) {
+capsule Philosopher (Fork left, Fork right, String name) {
 	include bool;
 
 	void run() {

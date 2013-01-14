@@ -23,13 +23,13 @@
  * This implementation of the KWIC system is based on the example 
  * presented in the following paper. 
  * D. L. Parnas. 1972. On the criteria to be used in decomposing systems 
- * into modules. Commun. ACM 15, 12 (December 1972), 1053-1058. 
+ * into capsules. Commun. ACM 15, 12 (December 1972), 1053-1058. 
  * DOI=10.1145/361598.361623 http://doi.acm.org/10.1145/361598.361623
  * 
  */
 
 /**
- *  Input module is responsible for reading and parsing the content of 
+ *  Input capsule is responsible for reading and parsing the content of 
  *  a KWIC input file. The format of the KWIC input file is as follows:
  *  <ul>
  *  <li>Lines are separated by the line separator character(s) (on Unix '\n', on Windows '\r\n')
@@ -47,7 +47,7 @@
  *  </ul>
 */
 
-module Input (LineStorage line_storage){
+capsule Input (LineStorage line_storage){
 	
 	include java.io.BufferedReader;
 	include java.io.FileReader;

@@ -300,8 +300,8 @@ public class JavacParser implements Parser {
                 case IDENTIFIER:
                	 // Panini code
                	 if(token.name().toString().equals("library")||
-       			 token.name().toString().equals("system")||
-       			 token.name().toString().equals("module")||
+       			 token.name().toString().equals("system")|| 
+       			 token.name().toString().equals("capsule")|| // Bryan Shrader 1/14/2013 'module' changed to 'capsule'
        			token.name().toString().equals("signature"))
            		 return;
                	 // end Panini code
@@ -2905,7 +2905,7 @@ public class JavacParser implements Parser {
          		return systemDecl(mods, dc);
          	else if(token.name().toString().equals("library"))
          		return libraryDecl(mods, dc);
-         	else if(token.name().toString().equals("module"))
+         	else if(token.name().toString().equals("capsule")) // Bryan Shrader 1/14/2013 'module' changed to 'capsule'
          		return moduleDecl(mods, dc);
          	else if(token.name().toString().equals("signature"))
          		return signatureDecl(mods, dc);

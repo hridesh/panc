@@ -7,7 +7,7 @@
     }
 //}
 
-module Barber(WaitingRoom r, boolean isSleeping) {
+capsule Barber(WaitingRoom r, boolean isSleeping) {
 //    include bool;
           
     void wake(){
@@ -36,7 +36,7 @@ module Barber(WaitingRoom r, boolean isSleeping) {
           
 }
   
-module WaitingRoom(int queue, int cap) {
+capsule WaitingRoom(int queue, int cap) {
 //    include bool;
   
     BooleanC sit(){
@@ -59,7 +59,7 @@ module WaitingRoom(int queue, int cap) {
     }
 }
   
-module Customers(Barber b, WaitingRoom r) {
+capsule Customers(Barber b, WaitingRoom r) {
     void run() {
         while (true) {
             System.out.println("Customer wants haircut");

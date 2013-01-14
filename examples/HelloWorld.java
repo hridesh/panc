@@ -17,11 +17,11 @@
  * Contributor(s): Hridesh Rajan
  */
 
-module Console () {
+capsule Console () {
 void printGreeting() { System.out.println("Hello World!"); }
 }
 
-module Greeter (Console c) {
+capsule Greeter (Console c) {
  void run(){ c.printGreeting(); }
 }
 

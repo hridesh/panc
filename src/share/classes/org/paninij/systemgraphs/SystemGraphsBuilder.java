@@ -290,7 +290,7 @@ public class SystemGraphsBuilder extends TreeScanner {
 
     public void visitModuleArrayCall(JCModuleArrayCall tree) { 
         if(tree.index.getTag()!=Tag.LITERAL) { 
-            System.out.println("Illegal module array call index");
+            System.out.println("Illegal capsule array call index");
             System.exit(1);
         }
         JCLiteral indexExp = (JCLiteral)tree.index;

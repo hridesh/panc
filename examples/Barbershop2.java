@@ -26,7 +26,7 @@ import java.util.LinkedList;
         public Customer getCustomer() { return c; }
     }
   
-module Barber(WaitingRoom r, boolean isSleeping) {
+capsule Barber(WaitingRoom r, boolean isSleeping) {
           
     void wake(Customer c){
         isSleeping = false;
@@ -57,7 +57,7 @@ module Barber(WaitingRoom r, boolean isSleeping) {
           
 }
   
-module WaitingRoom(int cap) {
+capsule WaitingRoom(int cap) {
   
     Queue<Customer> queue = new LinkedList<Customer>();
     int idCounter = 0;
@@ -79,7 +79,7 @@ module WaitingRoom(int cap) {
     }
 }
   
-module Customers(Barber b, WaitingRoom r) {
+capsule Customers(Barber b, WaitingRoom r) {
     int idCounter = 0;
   
     void run() {

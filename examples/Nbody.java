@@ -13,7 +13,7 @@
     }
 //}
 
-module Body (Body[] bodies, double x, double y, double vx, double vy, double m, double dt) {
+capsule Body (Body[] bodies, double x, double y, double vx, double vy, double m, double dt) {
 //	include doubles;
 	
     void calcNextV(IntC start) {
@@ -50,7 +50,7 @@ module Body (Body[] bodies, double x, double y, double vx, double vy, double m, 
     void incrVY(DoubleC v) {vy = v.value();}
 }
 
-module Controller (Body[] bodies, int n) {
+capsule Controller (Body[] bodies, int n) {
 //	include doubles;
     void run() {
         for (int i = 0; i < n; i++) {

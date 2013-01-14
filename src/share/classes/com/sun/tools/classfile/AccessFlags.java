@@ -209,7 +209,7 @@ public class AccessFlags {
             case ACC_STRICT:
                 return "strictfp";
             case ACC_MODULE:
-                return "module";
+                return "capsule"; // Bryan Shrader 1/14/2013 'module' changed to 'capsule'
             default:
                 return null;
         }

@@ -24,7 +24,7 @@
  */
 import java.io.*;
 
-module Reader(String[] args, Bucket[] buckets) {
+capsule Reader(String[] args, Bucket[] buckets) {
 	
 	void run() {
 	 if(args.length == 0) process("shaks12.txt");
@@ -51,15 +51,15 @@ module Reader(String[] args, Bucket[] buckets) {
 
 }
 
-@ModuleKind("TASK")
-module Bucket(Printer p) {
+@capsuleKind("TASK")
+capsule Bucket(Printer p) {
 		long count = 0;
 		void bump() { count++; }
 		void finish(int index) { p.print("" + index + ":" + count); }
 }
 
-@ModuleKind("SERIAL")
-module Printer() { 
+@capsuleKind("SERIAL")
+capsule Printer() { 
 	void print(String output) { System.out.println(output); }
 }
 
@@ -92,73 +92,73 @@ ARCHITECTURE & DESIGN:
     subproblems are: 1. read the ASCII text, 2. sort characters       
     into bit bucket, 3. output the bit bucket                         
                                                                       
-  Step 2: Create modules and assign responsibilities to modules.      
+  Step 2: Create capsules and assign responsibilities to capsules.      
     In assigning responsibility follow the information-hiding         
     principle. There are two design decisions that are likely to      
     change: input format and output format. Therefore, we must        
-    hide these responsibility behind interface of separate modules.   
+    hide these responsibility behind interface of separate capsules.   
                                                                        
-    This suggests three modules: Reader, Bucket, and Printer.         
+    This suggests three capsules: Reader, Bucket, and Printer.         
                                                                       
-     module Reader() { }                                              
-     module Bucket() { }                                              
-     module Printer() { }                                             
+     capsule Reader() { }                                              
+     capsule Bucket() { }                                              
+     capsule Printer() { }                                             
                                                                       
     We do not yet know the interconnection between these three        
-    modules, but it seems to be the case that Reader ought to read    
+    capsules, but it seems to be the case that Reader ought to read    
     characters from the ASCII text and call Buckets to put characters 
     in the bucket. Finally, when characters are sorted, Bucket could  
     call the Printer to print count. This seems to suggest that the   
-    Reader module ought to be able to reach Buckets and Bucket module 
+    Reader capsule ought to be able to reach Buckets and Bucket capsule 
     ought to be able to reach a Printer. We can use this knowledge    
     to refine our architecture and design.                            
                                                                       
-     module Reader(Bucket[] buckets) { }                              
-     module Bucket(Printer p) { }                                     
-     module Printer() { }                                             
+     capsule Reader(Bucket[] buckets) { }                              
+     capsule Bucket(Printer p) { }                                     
+     capsule Printer() { }                                             
                                                                       
-    The first line says that the Reader module is connected with a    
-    set of Bucket modules. The second line says that the every Bucket 
-    is connected with a printer module, and the third line says that  
-    the Printer module is not connected to any other module.          
+    The first line says that the Reader capsule is connected with a    
+    set of Bucket capsules. The second line says that the every Bucket 
+    is connected with a printer capsule, and the third line says that  
+    the Printer capsule is not connected to any other capsule.          
                                                                       
-    We can now start specifying behavior of each of these modules.    
-    The behavior of module Printer is fairly straightforward, given   
+    We can now start specifying behavior of each of these capsules.    
+    The behavior of capsule Printer is fairly straightforward, given   
     a string it ought to display that string on Console.              
                                                                       
-    module Printer () {                                               
+    capsule Printer () {                                               
      void print(String output) { System.out.println(output); }        
     }                                                                 
                                                                       
-    The behavior of the module Bucket requires keeping track of the   
+    The behavior of the capsule Bucket requires keeping track of the   
     the number of items in the bucket (since all items are the same). 
-    In Panini, a module can declare states to keep track of such      
+    In Panini, a capsule can declare states to keep track of such      
     pieces of information. A state declaration is syntactically same  
     as a field declaration in object-oriented languages, however, it  
     differs semantically in two ways: first, a state is private to a  
-    a module (there are no public modifiers.), second, all the memory 
+    a capsule (there are no public modifiers.), second, all the memory 
     locations that can be reached via this state are uniquely owned   
-    the containing module. Other modules may not access it.           
+    the containing capsule. Other capsules may not access it.           
                                                                       
-    module Bucket(Printer p) {                                        
+    capsule Bucket(Printer p) {                                        
       long count = 0;                                                 
                                                                       
-    To allow other modules to change its state, a module can provide  
-    module procedures, procedures for short. A module procedure is    
+    To allow other capsules to change its state, a capsule can provide  
+    capsule procedures, procedures for short. A capsule procedure is    
     syntactically similar to methods in object-oriented languages,    
     however, they are different semantically in two ways: first, a    
-    module procedures is by default public (although private helper   
+    capsule procedures is by default public (although private helper   
     procedures can be declared using the private keyword), and second 
     a procedure invocation is guaranteed to be logically synchronous. 
     In some cases, Panini may be able to run procedures in parallel   
     to improve parallelism in Panini programs. Two example procedures 
-    of the module Bucket are shown below.                             
+    of the capsule Bucket are shown below.                             
                                                                       
     void bump() { count++; }                                          
     void finish(int index) { p.print(\"\"+ index + \":\" + count); }  
     }                                                                 
                                                                       
-    Finally, the Reader module declares a procedure    
+    Finally, the Reader capsule declares a procedure    
     run that reads the input array and sorts them into buckets.       
                                                                       
 */

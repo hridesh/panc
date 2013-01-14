@@ -32,7 +32,7 @@ class Number {
 	long value() { return value; }
 }
 
-module Worker (int num) {
+capsule Worker (int num) {
 	Number _circleCount = new Number(0);
 	Random prng = new Random ();
 	Number compute() {
@@ -47,7 +47,7 @@ module Worker (int num) {
 	Number getCircleCount() { return _circleCount; }
 }
 
-module Master (int totalCount, Worker[] workers) {
+capsule Master (int totalCount, Worker[] workers) {
 	void run(){
 		long totalCircleCount = 0;
 		for (Worker w : workers) w.compute();

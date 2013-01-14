@@ -98,7 +98,7 @@ public class ModuleInternal extends Internal {
 				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, "panini$finish",
 						args(createOriginalCall(method, args)))));
 			} else {
-				System.out.println("Unsupported return type in a public module method. Can only be void or non-primitive.");
+				System.out.println("Unsupported return type in a public capsule method. Can only be void or non-primitive.");
 				System.exit(5555);
 			}
 			caseStatements.append(break_());
@@ -161,7 +161,7 @@ public class ModuleInternal extends Internal {
 				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, "panini$finish",
 						args(createOriginalCall(method, args)))));
 			} else {
-				System.out.println("Unsupported return type in a public module method. Can only be void or non-primitive.");
+				System.out.println("Unsupported return type in a public capsule method. Can only be void or non-primitive.");
 				System.exit(5555);
 			}
 			caseStatements.append(returnt(falsev()));
@@ -671,14 +671,14 @@ ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
 		if (restype.toString().equals("void"))
 			c = (ClassSymbol) rs.findIdent(env, names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$Void"), TYP);
 		else if (restype.isPrimitive()) {
-			System.out.println("\n\nNon-void primitive return types for module procedure calls are not yet supported.\n\n");
+			System.out.println("\n\nNon-void primitive return types for capsule procedure calls are not yet supported.\n\n");
 			System.exit(10);
 			c = null;
 		} else
 			c = (ClassSymbol) restype.tsym;
 
 		if (c.type.isFinal()) {
-			System.out.println("\n\nFinal classes as return types for module procedure calls are not supported.\n\n");
+			System.out.println("\n\nFinal classes as return types for capsule procedure calls are not supported.\n\n");
 			System.exit(10);
 		}
 		return c;

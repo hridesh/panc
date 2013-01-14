@@ -3,7 +3,7 @@ class IntegerC {
         public int value() { return value; }
     }
 
-module Main (Indirection i1, Indirection i2) {
+capsule Main (Indirection i1, Indirection i2) {
 
     void doSomething(int i) {
         if(i<12) i1.set(new IntegerC(1));
@@ -12,7 +12,7 @@ module Main (Indirection i1, Indirection i2) {
     }
 }
 
-module Store () {
+capsule Store () {
     int state = 0;
 
     void set(IntegerC newState) {
@@ -23,7 +23,7 @@ module Store () {
     }
 }
 
-module Indirection (Store s) {
+capsule Indirection (Store s) {
 
     void set(IntegerC newStore) {
         yield((long)(Math.random()*1000));

@@ -2,13 +2,13 @@ signature Sig {
  void sigMethod(); 
 }
 
-module Mod () implements Sig {
+capsule Mod () implements Sig {
  void sigMethod() {
   System.out.println("Hello World, Signature Style!");
  }
 }
 
-module Client (Sig s) {
+capsule Client (Sig s) {
  void run () {
   s.sigMethod(); 
  }

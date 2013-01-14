@@ -18,7 +18,7 @@
  */
 import AILib.*;
 
-module CrossOver (float probability) {
+capsule CrossOver (float probability) {
 
 	Generation compute(Generation g) {
 		int genSize = g.size();		
@@ -31,7 +31,7 @@ module CrossOver (float probability) {
 	}
 }
 
-module Mutation (float probability) {
+capsule Mutation (float probability) {
 
 	Generation mutate(Generation g) {
 		int genSize = g.size();
@@ -44,7 +44,7 @@ module Mutation (float probability) {
 	}
 }
 
-module Fittest {
+capsule Fittest {
 
 	Generation last = null;
 	
@@ -58,7 +58,7 @@ module Fittest {
 	}
 }
 
-module Logger {
+capsule Logger {
 
 	void logit(Generation g) {
 		logGeneration(g);
@@ -73,7 +73,7 @@ module Logger {
 	}	
 }
 
-module Controller (CrossOver c, Mutation m, Fittest f, Logger l, int maxIteration) {
+capsule Controller (CrossOver c, Mutation m, Fittest f, Logger l, int maxIteration) {
 
 	void run() {
          Individual individual = new BooleanIndividual();
