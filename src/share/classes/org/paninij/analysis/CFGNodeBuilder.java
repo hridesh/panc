@@ -17,40 +17,27 @@
  * Contributor(s): Rex Fernando
  */
 
-package org.paninij.effects;
+package org.paninij.analysis;
 
-import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
 
-import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeScanner;
-import com.sun.tools.javac.code.Type.*;
 import static com.sun.tools.javac.code.Flags.*;
-
-import com.sun.source.tree.IdentifierTree;
-import com.sun.source.tree.MemberSelectTree;
-import com.sun.source.tree.TreeVisitor;
-import com.sun.source.util.SimpleTreeVisitor;
-
-import org.paninij.systemgraphs.SystemGraphs;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-
-public class ASTChainNodeBuilder extends TreeScanner {
+public class CFGNodeBuilder extends TreeScanner {
     private JCModuleDecl module;
     private JCLibraryDecl library;
     private JCMethodDecl m;
-    private ASTChain chain;
-    private ArrayList<ASTChainNode> currentStartNodes, currentEndNodes, currentExcEndNodes;
-	private final ArrayList<ASTChainNode> emptyList = new ArrayList<ASTChainNode>(0);
+    private CFG cfg;
+    private ArrayList<CFGNode> currentStartNodes, currentEndNodes, currentExcEndNodes;
+	private final ArrayList<CFGNode> emptyList = new ArrayList<CFGNode>(0);
     private boolean lhs = false;
     public Names names;
     public static class TodoItem {
@@ -63,14 +50,14 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
     public static LinkedList<TodoItem> callGraphTodos = new LinkedList<TodoItem>();
 
-    public void buildNodes(JCModuleDecl module, JCMethodDecl m, ASTChain chain) {
+    public void buildNodes(JCModuleDecl module, JCMethodDecl m, CFG cfg) {
         this.module = module;
         this.m = m;
-        this.chain = chain;
+        this.cfg = cfg;
 
         scan(m.body);
 
-        chain.startNode = chain.nodeForTree(m.body);
+        cfg.startNode = cfg.nodeForTree(m.body);
     }
 
     public void visitTopLevel(JCCompilationUnit that)    { Assert.error(); }
@@ -107,55 +94,53 @@ public class ASTChainNodeBuilder extends TreeScanner {
     	scan(tree.exp);
     }
 
-    private void addNode(ASTChainNode node) {
+    private void addNode(CFGNode node) {
         node.startNodes = currentStartNodes;
         node.endNodes = currentEndNodes;
         node.excEndNodes = currentExcEndNodes;
         node.lhs = lhs;
 
-        chain.add(node);
+        cfg.add(node);
     }
 
     public void visitVarDef(JCVariableDecl tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 		JCExpression init = tree.init;
 		if(init != null) {
 			tree.init.accept(this);
 		} else {
-			currentStartNodes = new ArrayList<ASTChainNode>(1);
+			currentStartNodes = new ArrayList<CFGNode>(1);
 			currentStartNodes.add(node);
 		}
 
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
 		currentExcEndNodes = emptyList;
-
 
         addNode(node);
     }
 
 
     public void visitBlock(JCBlock tree) {
-		ASTChainNode node = new ASTChainNode(tree);
+		CFGNode node = new CFGNode(tree);
 		List<JCStatement> stats = tree.stats;
         visitStatements(stats);
 		
-
         addNode(node);
     }
 
     public void visitDoLoop(JCDoWhileLoop tree) {
-		ASTChainNode node = new ASTChainNode(tree);
+		CFGNode node = new CFGNode(tree);
 
-        ArrayList<ASTChainNode> finalEndNodes = new ArrayList<ASTChainNode>();
-        ArrayList<ASTChainNode> finalExcEndNodes = new ArrayList<ASTChainNode>();
+        ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
+        ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
 		tree.body.accept(this);
 
-		ArrayList<ASTChainNode> bodyStartNodes = new ArrayList<ASTChainNode>(this.currentStartNodes);
-		ArrayList<ASTChainNode> bodyEndNodes = new ArrayList<ASTChainNode>(this.currentEndNodes);
-		ArrayList<ASTChainNode> bodyExcEndNodes = new ArrayList<ASTChainNode>(this.currentExcEndNodes);
-        ArrayList<ASTChainNode> breaks = getBreaks(bodyExcEndNodes);
+		ArrayList<CFGNode> bodyStartNodes = new ArrayList<CFGNode>(this.currentStartNodes);
+		ArrayList<CFGNode> bodyEndNodes = new ArrayList<CFGNode>(this.currentEndNodes);
+		ArrayList<CFGNode> bodyExcEndNodes = new ArrayList<CFGNode>(this.currentExcEndNodes);
+        ArrayList<CFGNode> breaks = getBreaks(bodyExcEndNodes);
         bodyEndNodes.addAll(breaks); bodyExcEndNodes.removeAll(breaks);
 
 		tree.cond.accept(this);
@@ -173,22 +158,22 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitWhileLoop(JCWhileLoop tree) {
-		ASTChainNode node = new ASTChainNode(tree);
+		CFGNode node = new CFGNode(tree);
 
         tree.cond.accept(this);
-		ArrayList<ASTChainNode> condStartNodes = this.currentStartNodes;
-		ArrayList<ASTChainNode> condEndNodes = this.currentEndNodes;
-        ArrayList<ASTChainNode> condExcEndNodes = this.currentExcEndNodes;
+		ArrayList<CFGNode> condStartNodes = this.currentStartNodes;
+		ArrayList<CFGNode> condEndNodes = this.currentEndNodes;
+        ArrayList<CFGNode> condExcEndNodes = this.currentExcEndNodes;
 
 		tree.body.accept(this);
-		ArrayList<ASTChainNode> bodyEndNodes = new ArrayList<ASTChainNode>(this.currentEndNodes);
-		ArrayList<ASTChainNode> bodyExcEndNodes = new ArrayList<ASTChainNode>(this.currentExcEndNodes);
+		ArrayList<CFGNode> bodyEndNodes = new ArrayList<CFGNode>(this.currentEndNodes);
+		ArrayList<CFGNode> bodyExcEndNodes = new ArrayList<CFGNode>(this.currentExcEndNodes);
 
-        ArrayList<ASTChainNode> breaks = getBreaks(bodyExcEndNodes);
+        ArrayList<CFGNode> breaks = getBreaks(bodyExcEndNodes);
         bodyEndNodes.addAll(breaks); bodyExcEndNodes.removeAll(breaks);
 
-        ArrayList<ASTChainNode> finalEndNodes = new ArrayList<ASTChainNode>();
-        ArrayList<ASTChainNode> finalExcEndNodes = new ArrayList<ASTChainNode>();
+        ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
+        ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
         finalEndNodes.addAll(bodyEndNodes);
         finalEndNodes.addAll(condEndNodes);
         finalExcEndNodes.addAll(bodyExcEndNodes);
@@ -204,21 +189,21 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitForLoop(JCForLoop tree) {
-		ASTChainNode node = new ASTChainNode(tree);
+		CFGNode node = new CFGNode(tree);
 		if(tree.init.isEmpty()) {
-			ArrayList<ASTChainNode> finalEndNodes = new ArrayList<ASTChainNode>();
+			ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
 
 			if(tree.cond != null) {
 				tree.cond.accept(this);
 				finalEndNodes.addAll(currentEndNodes);
 	
-				ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
+				ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 				tree.body.accept(this);
 	
-				ArrayList<ASTChainNode> currentEndNodes = new ArrayList<ASTChainNode>(this.currentEndNodes);
-				ArrayList<ASTChainNode> currentExcEndNodes = new ArrayList<ASTChainNode>(this.currentExcEndNodes);
+				ArrayList<CFGNode> currentEndNodes = new ArrayList<CFGNode>(this.currentEndNodes);
+				ArrayList<CFGNode> currentExcEndNodes = new ArrayList<CFGNode>(this.currentExcEndNodes);
 	
-                ArrayList<ASTChainNode> breaks = getBreaks(currentExcEndNodes);
+                ArrayList<CFGNode> breaks = getBreaks(currentExcEndNodes);
                 currentEndNodes.addAll(breaks); currentExcEndNodes.removeAll(breaks);
                 
 				finalEndNodes.addAll(currentEndNodes);
@@ -236,11 +221,11 @@ public class ASTChainNodeBuilder extends TreeScanner {
 			} else {/*tree.cond == null*/
 				tree.body.accept(this);
 
-				ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
-				ArrayList<ASTChainNode> currentEndNodes = new ArrayList<ASTChainNode>(this.currentEndNodes);
-				ArrayList<ASTChainNode> currentExcEndNodes = new ArrayList<ASTChainNode>(this.currentExcEndNodes);
+				ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
+				ArrayList<CFGNode> currentEndNodes = new ArrayList<CFGNode>(this.currentEndNodes);
+				ArrayList<CFGNode> currentExcEndNodes = new ArrayList<CFGNode>(this.currentExcEndNodes);
 	
-                ArrayList<ASTChainNode> breaks = getBreaks(currentExcEndNodes);
+                ArrayList<CFGNode> breaks = getBreaks(currentExcEndNodes);
                 currentEndNodes.addAll(breaks); currentExcEndNodes.removeAll(breaks);
 				finalEndNodes.addAll(currentEndNodes);
 	
@@ -256,20 +241,20 @@ public class ASTChainNodeBuilder extends TreeScanner {
                 addNode(node);
 			}
 		} else {/*!init.isEmpty()*/
-			ArrayList<ASTChainNode> finalEndNodes = new ArrayList<ASTChainNode>();
+			ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
 
 
             visitStatements(tree.init);
-			ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
+			ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 
 			if(tree.cond != null) {
 				tree.cond.accept(this);
 			}
 
 			tree.body.accept(this);
-			ArrayList<ASTChainNode> currentEndNodes = new ArrayList<ASTChainNode>(this.currentEndNodes);
-			ArrayList<ASTChainNode> currentExcEndNodes = new ArrayList<ASTChainNode>(this.currentExcEndNodes);
-            ArrayList<ASTChainNode> breaks = getBreaks(currentExcEndNodes);
+			ArrayList<CFGNode> currentEndNodes = new ArrayList<CFGNode>(this.currentEndNodes);
+			ArrayList<CFGNode> currentExcEndNodes = new ArrayList<CFGNode>(this.currentExcEndNodes);
+            ArrayList<CFGNode> breaks = getBreaks(currentExcEndNodes);
             currentEndNodes.addAll(breaks); currentExcEndNodes.removeAll(breaks);
 			finalEndNodes.addAll(currentEndNodes);
 
@@ -287,34 +272,34 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitForeachLoop(JCEnhancedForLoop tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.expr.accept(this);
-		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
+		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 
 		tree.body.accept(this);
 		this.currentStartNodes = currentStartNodes;
-		this.currentEndNodes = new ArrayList<ASTChainNode>(currentEndNodes);
+		this.currentEndNodes = new ArrayList<CFGNode>(currentEndNodes);
 		this.currentEndNodes.add(node);
 		
         addNode(node);
     }
 
     public void visitSwitch(JCSwitch tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.selector.accept(this);
-		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
-		ArrayList<ASTChainNode> finalEndNodes = new ArrayList<ASTChainNode>();
+		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
+		ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
 		finalEndNodes.addAll(currentEndNodes);
 
         visitStatements(tree.cases);
 
 		this.currentStartNodes = currentStartNodes;
-		ArrayList<ASTChainNode> currentEndNodes = new ArrayList<ASTChainNode>(this.currentEndNodes);
-		ArrayList<ASTChainNode> currentExcEndNodes = new ArrayList<ASTChainNode>(this.currentExcEndNodes);
+		ArrayList<CFGNode> currentEndNodes = new ArrayList<CFGNode>(this.currentEndNodes);
+		ArrayList<CFGNode> currentExcEndNodes = new ArrayList<CFGNode>(this.currentExcEndNodes);
 
-        ArrayList<ASTChainNode> breaks = getBreaks(currentExcEndNodes);
+        ArrayList<CFGNode> breaks = getBreaks(currentExcEndNodes);
         currentEndNodes.addAll(breaks); currentExcEndNodes.removeAll(breaks);
         finalEndNodes.addAll(currentEndNodes);
 
@@ -326,10 +311,10 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitCase(JCCase tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.pat.accept(this);
-		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
+		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 
         visitStatements(tree.stats);
 
@@ -339,10 +324,10 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitSynchronized(JCSynchronized tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.lock.accept(this);
-		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
+		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 
 		tree.body.accept(this);
 		this.currentStartNodes = currentStartNodes;
@@ -351,13 +336,13 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitTry(JCTry tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.body.accept(this);
-		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
+		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 		
-		ArrayList<ASTChainNode> finalEndNodes = new ArrayList<ASTChainNode>();
-		ArrayList<ASTChainNode> finalExcEndNodes = new ArrayList<ASTChainNode>();
+		ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
+		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
 		finalEndNodes.addAll(currentEndNodes);
 		finalExcEndNodes.addAll(currentExcEndNodes);
 
@@ -391,11 +376,11 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitCatch(JCCatch tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.param.accept(this);
-		ArrayList<ASTChainNode> finalStartNodes = currentStartNodes;
-		ArrayList<ASTChainNode> finalExcEndNodes = new ArrayList<ASTChainNode>();
+		ArrayList<CFGNode> finalStartNodes = currentStartNodes;
+		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
 		finalExcEndNodes.addAll(currentExcEndNodes);
 
 		tree.body.accept(this);
@@ -407,13 +392,13 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitConditional(JCConditional tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.cond.accept(this);
-		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
+		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 
-		ArrayList<ASTChainNode> finalEndNodes = new ArrayList<ASTChainNode>();
-		ArrayList<ASTChainNode> finalExcEndNodes = new ArrayList<ASTChainNode>();
+		ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
+		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
 		tree.truepart.accept(this);
 		finalEndNodes.addAll(this.currentEndNodes);
 		finalExcEndNodes.addAll(this.currentExcEndNodes);
@@ -430,14 +415,14 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitIf(JCIf tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.cond.accept(this);
-		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
-		ArrayList<ASTChainNode> currentEndNodes = this.currentEndNodes;
+		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
+		ArrayList<CFGNode> currentEndNodes = this.currentEndNodes;
 
-		ArrayList<ASTChainNode> finalEndNodes = new ArrayList<ASTChainNode>();
-		ArrayList<ASTChainNode> finalExcEndNodes = new ArrayList<ASTChainNode>();
+		ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
+		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
 
 		tree.thenpart.accept(this);
 		finalEndNodes.addAll(this.currentEndNodes);
@@ -459,7 +444,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitExec(JCExpressionStatement tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.expr.accept(this);
         
@@ -470,14 +455,14 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitReturn(JCReturn tree) {
-		ASTChainNode node = new ASTChainNode(tree);
+		CFGNode node = new CFGNode(tree);
 
 		if(tree.expr != null) {
 			tree.expr.accept(this);
 		}
 
 		currentEndNodes = emptyList;
-		currentExcEndNodes = new ArrayList<ASTChainNode>(1);
+		currentExcEndNodes = new ArrayList<CFGNode>(1);
 		currentExcEndNodes.add(node);
 
         addNode(node);
@@ -485,24 +470,24 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitThrow(JCThrow tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.expr.accept(this);
 		currentEndNodes = emptyList;
-		currentExcEndNodes = new ArrayList<ASTChainNode>(1);
+		currentExcEndNodes = new ArrayList<CFGNode>(1);
 		currentExcEndNodes.add(node);
         addNode(node);
     }
 
     public void visitApply(JCMethodInvocation tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
         tree.meth.accept(this);
 
-        ArrayList<ASTChainNode> startNodes = currentStartNodes;
+        ArrayList<CFGNode> startNodes = currentStartNodes;
 
 		if(tree.args.isEmpty()) {
-//			currentStartNodes = new ArrayList<ASTChainNode>(1);
+//			currentStartNodes = new ArrayList<CFGNode>(1);
 //			currentStartNodes.add(node);
 		} else {
             visitStatements(tree.args);
@@ -510,7 +495,7 @@ public class ASTChainNodeBuilder extends TreeScanner {
 
         currentStartNodes = startNodes;
 
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 		currentExcEndNodes = emptyList;
         addNode(node);
@@ -563,28 +548,28 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitNewClass(JCNewClass tree) {
-	ASTChainNode node = new ASTChainNode(tree);
+	CFGNode node = new CFGNode(tree);
 
 		if(tree.args.isEmpty()) {
-			currentStartNodes = new ArrayList<ASTChainNode>(1);
+			currentStartNodes = new ArrayList<CFGNode>(1);
 			currentStartNodes.add(node);
 		} else {
             visitStatements(tree.args);
 		}
 		
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 		currentExcEndNodes = emptyList;
         addNode(node);
     }
 
     public void visitNewArray(JCNewArray tree) {
-	ASTChainNode node = new ASTChainNode(tree);
+	CFGNode node = new CFGNode(tree);
 
 		List<JCExpression> dims = tree.dims;
 		List<JCExpression> elems = tree.elems;
-		ArrayList<ASTChainNode> finalExcEndNodes = new ArrayList<ASTChainNode>();
-		ArrayList<ASTChainNode> finalStartNodes = null;
+		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
+		ArrayList<CFGNode> finalStartNodes = null;
 		if(!dims.isEmpty()) {
             visitStatements(dims);
 			finalExcEndNodes.addAll(currentExcEndNodes);
@@ -598,13 +583,13 @@ public class ASTChainNodeBuilder extends TreeScanner {
 			}
 		}
 		
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
 		currentExcEndNodes = finalExcEndNodes;
 		
 		if(finalStartNodes == null) {
-			currentStartNodes = new ArrayList<ASTChainNode>(1);
+			currentStartNodes = new ArrayList<CFGNode>(1);
 			currentStartNodes.add(node);
 		} else { currentStartNodes = finalStartNodes; }
 
@@ -615,22 +600,22 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitParens(JCParens tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.expr.accept(this);
         addNode(node);
     }
 
     public void visitAssign(JCAssign tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
         lhs = true;
 		tree.lhs.accept(this);
         lhs = false;
-		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
+		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 		tree.rhs.accept(this);
 
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
 		this.currentStartNodes = currentStartNodes;
@@ -638,15 +623,15 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitAssignop(JCAssignOp tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
         lhs = true;
 		tree.lhs.accept(this);
         lhs = false;
-		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
+		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 		tree.rhs.accept(this);
 
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
 		this.currentStartNodes = currentStartNodes;
@@ -654,11 +639,11 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitUnary(JCUnary tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.arg.accept(this);
 
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
         node.startNodes = currentStartNodes;
@@ -668,13 +653,13 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitBinary(JCBinary tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.lhs.accept(this);
-		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
+		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 		tree.rhs.accept(this);
 
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
 		this.currentStartNodes = currentStartNodes;
@@ -682,40 +667,40 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitTypeCast(JCTypeCast tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.expr.accept(this);
 
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
         addNode(node);
     }
 
     public void visitTypeTest(JCInstanceOf tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 
 		tree.expr.accept(this);
 
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
         addNode(node);
     }
 
     public void visitIndexed(JCArrayAccess tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
 		tree.indexed.accept(this);
 		
-		ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
-		ArrayList<ASTChainNode> finalExcEndNodes = new ArrayList<ASTChainNode>();
+		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
+		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
 		finalExcEndNodes.addAll(currentExcEndNodes);
 		
 		tree.index.accept(this);
 
 		finalExcEndNodes.addAll(currentExcEndNodes);
 
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
 		currentExcEndNodes = finalExcEndNodes;
@@ -725,10 +710,10 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitSelect(JCFieldAccess tree) {
-        ASTChainNode node = new ASTChainNode(tree);
+        CFGNode node = new CFGNode(tree);
         tree.selected.accept(this);
 
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
 		currentExcEndNodes = emptyList;
@@ -744,13 +729,13 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
 	public void singleton(JCTree tree) {
-		ASTChainNode node = new ASTChainNode(tree);
+		CFGNode node = new CFGNode(tree);
 
-		currentEndNodes = new ArrayList<ASTChainNode>(1);
+		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 		currentExcEndNodes = emptyList;
 		
-		currentStartNodes = new ArrayList<ASTChainNode>(1);
+		currentStartNodes = new ArrayList<CFGNode>(1);
 		currentStartNodes.add(node);
 
         
@@ -758,13 +743,13 @@ public class ASTChainNodeBuilder extends TreeScanner {
 	}
 
     private void visitStatements(List<? extends JCTree> statements) {
-        ArrayList<ASTChainNode> finalExcEndNodes = new ArrayList<ASTChainNode>();
+        ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
         JCTree head = statements.head;
 		if(head != null) {
 			List<? extends JCTree> tail = statements.tail;
 			head.accept(this);
-			ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
-			ArrayList<ASTChainNode> currentExcEndNodes = this.currentExcEndNodes;
+			ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
+			ArrayList<CFGNode> currentExcEndNodes = this.currentExcEndNodes;
 
 			finalExcEndNodes.addAll(currentExcEndNodes);
 
@@ -782,15 +767,15 @@ public class ASTChainNodeBuilder extends TreeScanner {
     }
 
     public void visitParallelStatements(List<? extends JCTree> statements) {
-		ArrayList<ASTChainNode> finalExcEndNodes = new ArrayList<ASTChainNode>();
-		ArrayList<ASTChainNode> finalEndNodes = new ArrayList<ASTChainNode>();
+		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
+		ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
         JCTree head = statements.head;
 		if(head != null) {
 			List<? extends JCTree> tail = statements.tail;
 			head.accept(this);
-			ArrayList<ASTChainNode> currentStartNodes = this.currentStartNodes;
-			ArrayList<ASTChainNode> currentEndNodes = this.currentEndNodes;
-			ArrayList<ASTChainNode> currentExcEndNodes = this.currentExcEndNodes;
+			ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
+			ArrayList<CFGNode> currentEndNodes = this.currentEndNodes;
+			ArrayList<CFGNode> currentExcEndNodes = this.currentExcEndNodes;
 
 			finalExcEndNodes.addAll(currentExcEndNodes);
 			finalEndNodes.addAll(currentEndNodes);
@@ -809,9 +794,9 @@ public class ASTChainNodeBuilder extends TreeScanner {
 		} //else throw new Error("block should not be empty");
 	}
 
-    public static ArrayList<ASTChainNode> getBreaks(ArrayList<ASTChainNode> nodes) {
-        ArrayList<ASTChainNode> results = new ArrayList<ASTChainNode>();
-        for(ASTChainNode node : nodes) {
+    public static ArrayList<CFGNode> getBreaks(ArrayList<CFGNode> nodes) {
+        ArrayList<CFGNode> results = new ArrayList<CFGNode>();
+        for(CFGNode node : nodes) {
             if(node.tree instanceof JCBreak) {
                 JCBreak jcb = (JCBreak)node.tree;
 
@@ -823,5 +808,4 @@ public class ASTChainNodeBuilder extends TreeScanner {
         }
         return results;
     }
-
 }

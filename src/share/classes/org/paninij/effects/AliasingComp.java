@@ -20,54 +20,45 @@
 package org.paninij.effects;
 
 import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.tree.*;
-import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
-import com.sun.tools.javac.util.List;
 
-import com.sun.tools.javac.jvm.Target;
-import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
-import com.sun.tools.javac.code.Type.*;
 
-import com.sun.source.tree.IdentifierTree;
-import com.sun.source.tree.MemberSelectTree;
-import com.sun.source.tree.TreeVisitor;
-import com.sun.source.util.SimpleTreeVisitor;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import org.paninij.analysis.CFG;
+import org.paninij.analysis.CFGNode;
 
 public class AliasingComp extends JCTree.Visitor {
-    private LinkedList<ASTChainNode> nodesToProcess;
-    private HashMap<ASTChainNode, EffectSet> effectsSoFar;
+    private LinkedList<CFGNode> nodesToProcess;
+    private HashMap<CFGNode, EffectSet> effectsSoFar;
     private HeapRepresentation visitResult;
 
-    public void fillInAliasingInfo(ASTChain chain) {
-        nodesToProcess = new LinkedList<ASTChainNode>(chain.nodesInOrder);
+    public void fillInAliasingInfo(CFG cfg) {
+        nodesToProcess = new LinkedList<CFGNode>(cfg.nodesInOrder);
 
         HeapRepresentation result = new HeapRepresentation();
 
         while (!nodesToProcess.isEmpty()) {
-            ASTChainNode node = nodesToProcess.poll();
+            CFGNode node = nodesToProcess.poll();
 
             HeapRepresentation newNodeHR = new HeapRepresentation();
-            for (ASTChainNode prev : node.previous) { 
+            for (CFGNode prev : node.successors) { 
                 newNodeHR = newNodeHR.union(prev.heapRepresentation);
             }
             
             newNodeHR = newNodeHR.union(computeHeapRepresentationForTree(node.tree));
 
             if (!newNodeHR.equals(node.heapRepresentation)) {
-                nodesToProcess.addAll(node.next);
+                nodesToProcess.addAll(node.predecessors);
             }
             node.heapRepresentation = newNodeHR;
             
             result = result.union(newNodeHR);
         }
 
-        chain.endHeapRepresentation = result;
+        cfg.endHeapRepresentation = result;
     }
 
     public HeapRepresentation computeHeapRepresentationForTree(JCTree tree) {

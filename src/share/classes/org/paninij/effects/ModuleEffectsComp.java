@@ -19,27 +19,21 @@
 
 package org.paninij.effects;
 
-import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
-import com.sun.tools.javac.util.List;
 
-import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
-import com.sun.tools.javac.code.Type.*;
 
-import com.sun.source.tree.IdentifierTree;
-import com.sun.source.tree.MemberSelectTree;
-import com.sun.source.tree.TreeVisitor;
-import com.sun.source.util.SimpleTreeVisitor;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import static com.sun.tools.javac.code.Flags.*;
 
+import org.paninij.analysis.CFG;
+import org.paninij.analysis.CFGBuilder;
+import org.paninij.analysis.CFGPrinter;
+
+import static com.sun.tools.javac.code.Flags.*;
 
 public class ModuleEffectsComp {
     protected static final Context.Key<ModuleEffectsComp> secKey =
@@ -62,7 +56,7 @@ public class ModuleEffectsComp {
         context.put(secKey, this);
         effectsSub = EffectsSub.instance(context);
         reachedProcsComp = ReachedProcsComp.instance(context);
-        ASTChainBuilder.setNames(Names.instance(context));
+        CFGBuilder.setNames(Names.instance(context));
     }
 
     public void computeEffects(JCModuleDecl module) {
@@ -83,10 +77,10 @@ public class ModuleEffectsComp {
             JCMethodDecl method = methodsToProcess.poll();
             visitedMethods.add(method);
 
-            ASTChain chain = ASTChainBuilder.buildChain(module, method);
-            new AliasingComp().fillInAliasingInfo(chain);
+            CFG cfg = CFGBuilder.buildCFG(module, method);
+            new AliasingComp().fillInAliasingInfo(cfg);
             reachedProcsComp.todoReachedProcs(module);
-            new ASTChainPrinter().printChain(chain);
+            new CFGPrinter().printCFG(cfg);
             
             for (MethodSymbol.MethodInfo calledMethodInfo : method.sym.calledMethods) {
                 MethodSymbol calledMethod = calledMethodInfo.method;
@@ -95,8 +89,8 @@ public class ModuleEffectsComp {
                 if (!visitedMethods.contains(calledMethod.tree))
                     methodsToProcess.offer(calledMethod.tree);
             }
-            EffectSet effects = methodEffectsComp.computeEffectsForMethod(chain, module.sym);
-            effects.chain = chain;
+            EffectSet effects = methodEffectsComp.computeEffectsForMethod(cfg, module.sym);
+            effects.cfg = cfg;
             methodEffects.put(method, effects);
         }
         

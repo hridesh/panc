@@ -24,8 +24,8 @@ import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.util.*;
 
+import org.paninij.analysis.CFG;
 import org.paninij.systemgraphs.SystemGraphs.*;
-
 
 abstract class Effect {
     public Node module;
@@ -95,7 +95,7 @@ class BottomEffect extends Effect {
 
 
 public class EffectSet extends HashSet<Effect> {
-    public ASTChain chain;
+    public CFG cfg;
 
     public EffectSet() { super(); }
     public EffectSet(EffectSet e) { super(e); }

@@ -38,6 +38,9 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 import javax.lang.model.element.ElementKind;
 
+import org.paninij.analysis.CFG;
+import org.paninij.analysis.CFGNode;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Iterator;
@@ -47,10 +50,10 @@ public class EffectsSub extends JCTree.Visitor {
     protected static final Context.Key<EffectsSub> mesKey =
         new Context.Key<EffectsSub>();
 
-    private LinkedList<ASTChainNode> nodesToProcess;
+    private LinkedList<CFGNode> nodesToProcess;
     private EffectSet visitResult;
-    private ASTChainNode currentNode;
-    private ASTChain chain;
+    private CFGNode currentNode;
+    private CFG cfg;
     HashMap<JCMethodDecl, EffectSet> methodEffects;
     private Names names;
     public JCModuleDecl module; 
