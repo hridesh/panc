@@ -197,6 +197,6 @@ public class JavacMessages implements Messages {
             msg = "compiler message file broken: key=" + key +
                 " arguments={0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}";
         }
-        return MessageFormat.format(msg.replaceAll("module", "capsule"), args); // Bryan Shrader 1/14/2013 temporary workaround for appropriately changing 'module' to 'capsule' in error messages
+        return MessageFormat.format(msg, args); 
     }
 }
