@@ -1081,7 +1081,7 @@ public class Attr extends JCTree.Visitor {
 						starts.append(joinAssign);	        		    	
 					}
 					if(c.hasRun){
-						for(int j = mat.amount; j>=0;j--){
+						for(int j = mat.amount-1; j>=0;j--){
 							joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
 									make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
 											names.fromString("join")), List.<JCExpression>nil())))), 
