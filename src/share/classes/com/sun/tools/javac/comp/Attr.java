@@ -1096,8 +1096,8 @@ public class Attr extends JCTree.Visitor {
 									make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), 
 											names.fromString("shutdown")), List.<JCExpression>nil())));
 						}
-					for(int j = 0; j<mat.amount; j++)
-						tree.defs = tree.defs.append(createOwnerInterface(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j));
+//					for(int j = 0; j<mat.amount; j++)
+//						tree.defs = tree.defs.append(createOwnerInterface(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j));
 
 					variables.put(vdecl.name, c.name);
 					modArrays.put(vdecl.name, mat.amount);
@@ -1148,9 +1148,9 @@ public class Attr extends JCTree.Visitor {
 								make.Select(make.Ident(vdecl.name), 
 										names.fromString("shutdown")), List.<JCExpression>nil())));
 
-					tree.defs = tree.defs.append(
-							createOwnerInterface(
-									vdecl.vartype.toString()+"_"+vdecl.name.toString()));
+//					tree.defs = tree.defs.append(
+//							createOwnerInterface(
+//									vdecl.vartype.toString()+"_"+vdecl.name.toString()));
 
 					variables.put(vdecl.name, c.name);
 				}
