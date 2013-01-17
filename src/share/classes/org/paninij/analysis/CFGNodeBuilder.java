@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class CFGNodeBuilder extends TreeScanner {
-    private JCModuleDecl module;
+    private JCCapsuleDecl capsule;
     private JCLibraryDecl library;
     private JCMethodDecl m;
     private CFG cfg;
@@ -50,8 +50,8 @@ public class CFGNodeBuilder extends TreeScanner {
     }
     public static LinkedList<TodoItem> callGraphTodos = new LinkedList<TodoItem>();
 
-    public void buildNodes(JCModuleDecl module, JCMethodDecl m, CFG cfg) {
-        this.module = module;
+    public void buildNodes(JCCapsuleDecl capsule, JCMethodDecl m, CFG cfg) {
+        this.capsule = capsule;
         this.m = m;
         this.cfg = cfg;
 
@@ -502,17 +502,17 @@ public class CFGNodeBuilder extends TreeScanner {
 
 
         // building call graph
-        if (module != null) { // is a module
+        if (capsule != null) { // is a capsule
             if (TreeInfo.symbol(tree.meth) != null) {
                 MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
-                if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isModule) {
-                    VarSymbol moduleField = moduleField(tree);
-                    if (methSym.owner == module.sym) {
+                if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isCapsule) {
+                    VarSymbol capsuleField = capsuleField(tree);
+                    if (methSym.owner == capsule.sym) {
                         String methodName = TreeInfo.symbol(tree.meth).toString();
                         methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
                         MethodSymbol origMethSym = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
                         m.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
-                                                                            moduleField));
+                                                                            capsuleField));
                         origMethSym.callerMethods.add(m.sym);
                     } else
                     {
@@ -532,7 +532,7 @@ public class CFGNodeBuilder extends TreeScanner {
         }
     }
 
-    public static VarSymbol moduleField(JCMethodInvocation tree) {
+    public static VarSymbol capsuleField(JCMethodInvocation tree) {
         if (tree.meth instanceof JCFieldAccess) {
             if (((JCFieldAccess)tree.meth).selected instanceof JCIdent) {
                 VarSymbol s = (VarSymbol)TreeInfo.symbol(((JCFieldAccess)tree.meth).selected);

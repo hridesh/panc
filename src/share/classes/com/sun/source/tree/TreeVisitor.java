@@ -112,11 +112,11 @@ public interface TreeVisitor<R,P> {
     R visitProc(ProcedureTree tree, P p);
     R visitProcInvocation(ProcInvocationTree tree, P p);
     R visitState(StateTree tree, P p);
-    R visitModuleArrayCall(ModuleArrayCallTree tree, P p);
-    R visitModuleArray(ModuleArrayTree tree, P p);
+    R visitCapsuleArrayCall(CapsuleArrayCallTree tree, P p);
+    R visitCapsuleArray(CapsuleArrayTree tree, P p);
     R visitSystem(SystemTree node, P p);
     R visitLibrary(LibraryTree node, P p);
-    R visitModule(ModuleTree node, P p);
+    R visitCapsule(CapsuleTree node, P p);
     R visitInclude(IncludeTree node, P p);
     R visitFree(FreeTree node, P p);
     R visitForAll(ForAllTree node, P p);

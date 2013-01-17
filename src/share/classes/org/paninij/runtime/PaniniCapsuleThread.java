@@ -22,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.paninij.runtime.types.Panini$Duck;
 
-public abstract class PaniniModuleThread extends Thread implements PaniniModule{
+public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsule{
    protected volatile Object[] objects = new Object[10];
    protected volatile int head = 0, tail=0, size =0;
    protected final ReentrantLock queueLock = new ReentrantLock();
@@ -41,7 +41,7 @@ public abstract class PaniniModuleThread extends Thread implements PaniniModule{
    }        
 
    /**
-    * Checks to ensure whether this module's queue can accomodate numElems 
+    * Checks to ensure whether this capsule's queue can accomodate numElems 
     * number of elements, and if not extends it.
     * @param numElems 
     */
@@ -55,24 +55,24 @@ public abstract class PaniniModuleThread extends Thread implements PaniniModule{
    }
 
   	/**
-  	 * Extracts and returns the first duck from the module's queue. 
+  	 * Extracts and returns the first duck from the capsule's queue. 
   	 * This method blocks if there are no ducks in the queue.
   	 * 
   	 * precondition: it is assumed that the lock queueLock is held before
   	 *               calling this method.
   	 * 
-  	 * @return the first available duck in the module's queue.
+  	 * @return the first available duck in the capsule's queue.
   	 */
    @SuppressWarnings("rawtypes")
   	protected final synchronized Panini$Duck get$Next$Duck() {
-   		if(this.size <= 0) blockModule();
+   		if(this.size <= 0) blockCapsule();
   			size--;
   			Panini$Duck d = (Panini$Duck) objects[head++];
   			if (head >= objects.length) head = 0;
   			return d;
   	}
 
-   private final void blockModule() {
+   private final void blockCapsule() {
  			nomessages: while (this.size <= 0) 
  				try {	
  					wait(); 
@@ -99,9 +99,9 @@ public abstract class PaniniModuleThread extends Thread implements PaniniModule{
    }
    
   	/**
-  	 * Causes the current module to sleep (temporarily cease execution) 
+  	 * Causes the current capsule to sleep (temporarily cease execution) 
   	 * for the specified number of milliseconds, subject to the precision 
-  	 * and accuracy of system timers and schedulers. The module does not 
+  	 * and accuracy of system timers and schedulers. The capsule does not 
   	 * lose ownership of any monitors.
   	 * 
   	 * @param millis the length of time to sleep in milliseconds
@@ -120,14 +120,14 @@ public abstract class PaniniModuleThread extends Thread implements PaniniModule{
   	}  	
   	
   	/**
-  	 * Causes the current module to complete its remaining work and then cease execution.
+  	 * Causes the current capsule to complete its remaining work and then cease execution.
   	 * 
-  	 * Shutdown is allowed only if the client module has permission to modify this module.
+  	 * Shutdown is allowed only if the client capsule has permission to modify this capsule.
   	 * 
-  	 * If there is a security manager, its checkAccess method is called with this module 
+  	 * If there is a security manager, its checkAccess method is called with this capsule 
   	 * as its argument. This may result in throwing a SecurityException.
   	 * 
-  	 * @throws SecurityException - if the client module is not allowed to access this module.
+  	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
   	 * 
   	 */
   	public final void shutdown () {
@@ -137,14 +137,14 @@ public abstract class PaniniModuleThread extends Thread implements PaniniModule{
   	}
   	
   	/**
-  	 * Causes the current module to immediately cease execution. 
+  	 * Causes the current capsule to immediately cease execution. 
   	 * 
-  	 * Shutdown is allowed only if the client module has permission to modify this module.
+  	 * Shutdown is allowed only if the client capsule has permission to modify this capsule.
   	 * 
-  	 * If there is a security manager, its checkAccess method is called with this module 
+  	 * If there is a security manager, its checkAccess method is called with this capsule 
   	 * as its argument. This may result in throwing a SecurityException.
   	 * 
-  	 * @throws SecurityException - if the client module is not allowed to access this module.
+  	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
   	 * 
   	 */
   	public final void exit () {
@@ -153,7 +153,7 @@ public abstract class PaniniModuleThread extends Thread implements PaniniModule{
 	   	push(d);
   	}
    /**
-    * Pushes a single object on this module's queue.
+    * Pushes a single object on this capsule's queue.
     * @param o - Object to be stored.
     */
    protected final synchronized void push(Object o) {
@@ -166,7 +166,7 @@ public abstract class PaniniModuleThread extends Thread implements PaniniModule{
    }
 
    /**
-    * Pushes two objects on this module's queue.
+    * Pushes two objects on this capsule's queue.
     * @param o1 - first object to be stored. 
     * @param o2 - second object to be stored.
     */
@@ -183,7 +183,7 @@ public abstract class PaniniModuleThread extends Thread implements PaniniModule{
    }
 
    /**
-    * Pushes three objects on this module's queue.
+    * Pushes three objects on this capsule's queue.
     * @param o1 - first object to be stored. 
     * @param o2 - second object to be stored.
     * @param o3 - third object to be stored.
@@ -204,7 +204,7 @@ public abstract class PaniniModuleThread extends Thread implements PaniniModule{
    }
 
    /**
-    * Pushes multiple objects on this module's queue.
+    * Pushes multiple objects on this capsule's queue.
     * @param items - list of objects to be stored. 
     */
    protected final synchronized void push(Object... items) {

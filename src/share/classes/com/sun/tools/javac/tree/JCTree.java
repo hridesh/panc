@@ -342,10 +342,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         // Panini code
         PROC,
         MAAPPLY,
-        MODULEARRAY,
+        CAPSULEARRAY,
         SYSTEMDEF,
         LIBRARYDEF,
-        MODULEDEF,
+        CAPSULEDEF,
         INCLUDE,
         STATE,
         PROCCALL,
@@ -621,14 +621,14 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		} 
     }
     
-    public static class JCModuleArrayCall extends JCStatement implements ModuleArrayCallTree{
+    public static class JCCapsuleArrayCall extends JCStatement implements CapsuleArrayCallTree{
 
     	public Name name;
     	public JCExpression index;
     	public JCExpression indexed;
     	public List<JCExpression> arguments;
     	
-    	public JCModuleArrayCall(Name name, JCExpression index, JCExpression indexed, List<JCExpression> args){
+    	public JCCapsuleArrayCall(Name name, JCExpression index, JCExpression indexed, List<JCExpression> args){
     		this.name = name;
     		this.index = index;
     		this.indexed = indexed;
@@ -637,7 +637,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     	
 		@Override
 		public Kind getKind() {
-			return Kind.MODULE_ARRAY_CALL;
+			return Kind.CAPSULE_ARRAY_CALL;
 		}
 
 		@Override
@@ -661,20 +661,20 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
 
 		@Override
-		public void accept(Visitor v) { v.visitModuleArrayCall(this); }
+		public void accept(Visitor v) { v.visitCapsuleArrayCall(this); }
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitModuleArrayCall(this, d);
+			return v.visitCapsuleArrayCall(this, d);
 		}
     	
     }
     
-    public static class JCModuleArray extends JCArrayTypeTree implements ModuleArrayTree {
+    public static class JCCapsuleArray extends JCArrayTypeTree implements CapsuleArrayTree {
 
     	public int amount;
     	
-		public JCModuleArray(JCExpression elemtype, int amount) {
+		public JCCapsuleArray(JCExpression elemtype, int amount) {
             super(elemtype);
 			this.amount = amount;
 		}
@@ -686,18 +686,18 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		
 		@Override
         public <R,D> R accept(TreeVisitor<R,D> v, D d) {
-            return v.visitModuleArray(this, d);
+            return v.visitCapsuleArray(this, d);
         }
 		
-		public Kind getKind() { return Kind.MODULE_ARRAY; }
+		public Kind getKind() { return Kind.CAPSULE_ARRAY; }
 		
 		@Override
         public Tag getTag() {
-            return MODULEARRAY;
+            return CAPSULEARRAY;
         }
 
 		@Override
-		public void accept(Visitor v) {	v.visitModuleArray(this); }
+		public void accept(Visitor v) {	v.visitCapsuleArray(this); }
     	
     }
     
@@ -809,7 +809,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 			tag = Tag.CLASSDEF;
 		}
 		
-		public void switchToModule(){
+		public void switchToCapsule(){
 			kind = Kind.LIBRARY;
 			tag = Tag.LIBRARYDEF;
 		}
@@ -831,7 +831,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		}
     }
     
-    public static class JCModuleDecl extends JCClassDecl implements ModuleTree{
+    public static class JCCapsuleDecl extends JCClassDecl implements CapsuleTree{
     	public Name name;
     	public List<JCVariableDecl> params;
     	public List<JCExpression> implementing;
@@ -841,7 +841,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public JCMethodDecl computeMethod;
         public boolean needsDefaultRun;
     	
-    	public JCModuleDecl(JCModifiers mods,
+    	public JCCapsuleDecl(JCModifiers mods,
     			Name name, 
     			List<JCVariableDecl> params, 
     			List<JCExpression> implementing,
@@ -852,8 +852,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     		this.params = params;
     		this.implementing = implementing;
     		this.defs = defs;
-    		this.kind = Kind.MODULE;
-    		this.tag = Tag.MODULEDEF;
+    		this.kind = Kind.CAPSULE;
+    		this.tag = Tag.CAPSULEDEF;
     		this.publicMethods = List.<JCMethodDecl>nil();
             this.needsDefaultRun = false;
     	}
@@ -874,9 +874,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 			tag = Tag.CLASSDEF;
 		}
 		
-		public void switchToModule(){
-			kind = Kind.MODULE;
-			tag = Tag.MODULEDEF;
+		public void switchToCapsule(){
+			kind = Kind.CAPSULE;
+			tag = Tag.CAPSULEDEF;
 		}
 		
 		public List<JCVariableDecl> getParameters(){
@@ -898,7 +898,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		@Override
 		public void accept(Visitor v) {
 			if(tag != CLASSDEF)
-				v.visitModuleDef(this);
+				v.visitCapsuleDef(this);
 			else
 				v.visitClassDef(this);
 			}
@@ -906,7 +906,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
 			if(tag != CLASSDEF)
-				return v.visitModule(this, d);
+				return v.visitCapsule(this, d);
 			else
 				return v.visitClass(this, d);
 		}
@@ -2952,11 +2952,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitProcDef(JCProcDecl that)            { visitTree(that); }
         public void visitProcApply(JCProcInvocation that)    { visitTree(that); }
         public void visitStateDef(JCStateDecl that)	         { visitTree(that); }
-        public void visitModuleArrayCall(JCModuleArrayCall that) { visitTree(that); }
-        public void visitModuleArray(JCModuleArray that)     { visitTree(that); }
+        public void visitCapsuleArrayCall(JCCapsuleArrayCall that) { visitTree(that); }
+        public void visitCapsuleArray(JCCapsuleArray that)     { visitTree(that); }
         public void visitSystemDef(JCSystemDecl that)	     { visitTree(that); }
         public void visitLibraryDef(JCLibraryDecl that)	     { visitTree(that); }
-        public void visitModuleDef(JCModuleDecl that)	     { visitTree(that); }
+        public void visitCapsuleDef(JCCapsuleDecl that)	     { visitTree(that); }
         public void visitInclude(JCInclude that)	         { visitTree(that); }
         public void visitFree(JCFree that)	                 { visitTree(that); }
         public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }

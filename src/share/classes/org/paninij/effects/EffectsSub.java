@@ -56,7 +56,7 @@ public class EffectsSub extends JCTree.Visitor {
     private CFG cfg;
     HashMap<JCMethodDecl, EffectSet> methodEffects;
     private Names names;
-    public JCModuleDecl module; 
+    public JCCapsuleDecl capsule; 
 
     public static EffectsSub instance(Context context) {
         EffectsSub instance = context.get(mesKey);
@@ -91,7 +91,7 @@ public class EffectsSub extends JCTree.Visitor {
 
                     it.remove();
                     if (methSym != method.sym) {
-                        if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isModule) {
+                        if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isCapsule) {
                             String methodName = methSym.toString();
                             methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
                             MethodSymbol methSymOrig = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
@@ -117,8 +117,8 @@ public class EffectsSub extends JCTree.Visitor {
             if (!oldEffects.equals(effects)) {
                 for (MethodSymbol callerMethod : method.sym.callerMethods) {
                     if (callerMethod.tree == null) continue;
-//                    if (module != null) // otherwise a library
-//                        if (callerMethod.ownerModule() != module.sym) continue;
+//                    if (capsule != null) // otherwise a library
+//                        if (callerMethod.ownerCapsule() != capsule.sym) continue;
                     if (callerMethod != method.sym)
                         methodsToProcess.offer(callerMethod.tree);
                 }

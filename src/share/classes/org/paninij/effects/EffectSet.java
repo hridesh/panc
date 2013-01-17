@@ -28,7 +28,7 @@ import org.paninij.analysis.CFG;
 import org.paninij.systemgraphs.SystemGraphs.*;
 
 abstract class Effect {
-    public Node module;
+    public Node capsule;
 }
 class EmptyEffect extends Effect {}
 class FieldReadEffect extends Effect {

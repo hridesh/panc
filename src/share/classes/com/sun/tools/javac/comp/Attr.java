@@ -97,7 +97,7 @@ public class Attr extends JCTree.Visitor {
     final Annotate annotate;
     final DeferredLintHandler deferredLintHandler;
     // Ptolemy code
-    ModuleInternal moduleInternal;
+    CapsuleInternal capsuleInternal;
     SystemEffectsComp effects;
     SystemGraphsBuilder graphsBuilder;
     public static boolean doGraphs = false;
@@ -152,7 +152,7 @@ public class Attr extends JCTree.Visitor {
         unknownTypeInfo = new ResultInfo(TYP, Type.noType);
 
         // Panini code
-        moduleInternal = new ModuleInternal(make, names, enter, memberEnter, syms);
+        capsuleInternal = new CapsuleInternal(make, names, enter, memberEnter, syms);
         effects = SystemEffectsComp.instance(context);
         graphsBuilder = SystemGraphsBuilder.instance(context);
         // end Panini code
@@ -733,14 +733,14 @@ public class Attr extends JCTree.Visitor {
     					.fromString(mi.meth.toString())));
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
 
-    	if (mi.args.length() != syms.moduleparams.get(c).length()) {
+    	if (mi.args.length() != syms.capsuleparams.get(c).length()) {
     		log.error(mi.pos(), "arguments.of.wiring.mismatch");
     	} else {
     		for (int j = 0; j < mi.args.length(); j++) {
     			JCAssign newAssign = make
     					.at(mi.pos())
     					.Assign(make.Select(mi.meth,
-    							syms.moduleparams.get(c).get(j)
+    							syms.capsuleparams.get(c).get(j)
     							.getName()), mi.args.get(j));
     			JCExpressionStatement assignAssign = make
     					.Exec(newAssign);
@@ -750,23 +750,23 @@ public class Attr extends JCTree.Visitor {
     	return assigns.toList();
     }
 
-    public final void visitModuleDef(final JCModuleDecl tree){
+    public final void visitCapsuleDef(final JCCapsuleDecl tree){
     	if (tree.needsDefaultRun){
-    		List<JCClassDecl> wrapperClasses = moduleInternal.generateClassWrappers(tree, env, rs);
+    		List<JCClassDecl> wrapperClasses = capsuleInternal.generateClassWrappers(tree, env, rs);
     		enter.classEnter(wrapperClasses, env.outer);
     		//        	System.out.println(wrapperClasses);
     		attribClassBody(env, tree.sym);
     		if((tree.sym.flags_field & TASK) !=0)
-    			tree.computeMethod.body = moduleInternal.generateTaskModuleComputeMethodBody(tree);
+    			tree.computeMethod.body = capsuleInternal.generateTaskCapsuleComputeMethodBody(tree);
     		else
-    			tree.computeMethod.body = moduleInternal.generateThreadModuleComputeMethodBody(tree);
+    			tree.computeMethod.body = capsuleInternal.generateThreadCapsuleComputeMethodBody(tree);
     	}
     	else
     		attribClassBody(env, tree.sym);
     	for(JCTree def : tree.defs){
     		if(def.getTag() == Tag.METHODDEF){
     			for(JCVariableDecl param : ((JCMethodDecl)def).params){
-    				if(param.type.tsym.isModule&&!((JCMethodDecl)def).name.toString().contains("$Original")){
+    				if(param.type.tsym.isCapsule&&!((JCMethodDecl)def).name.toString().contains("$Original")){
     					log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.name);
     				}
     			}
@@ -782,7 +782,7 @@ public class Attr extends JCTree.Visitor {
             tree.sym.graphs = graphsBuilder.buildGraphs(tree);
             effects.substituteProcEffects(tree);
 /*            ConsistencyCheck cc = 
-                new ConsistencyCheck(effects.moduleEffectsComp.methodEffects);
+                new ConsistencyCheck(effects.capsuleEffectsComp.methodEffects);
             for (SystemGraphs.Node n :
                      tree.sym.graphs.forwardConnectionEdges.keySet()) {
                 cc.checkConsistency(tree.sym.graphs, n);
@@ -804,13 +804,13 @@ public class Attr extends JCTree.Visitor {
     		if(systemStmtKind == VARDEF){
     			JCVariableDecl vdecl = (JCVariableDecl) currentSystemStmt;
     			Name vdeclTypeName = names.fromString(vdecl.vartype.toString());
-    			if(syms.modules.containsKey(vdeclTypeName))
-    				processModuleDef(tree, decls, inits, submits, starts, joins, variables, vdecl);
+    			if(syms.capsules.containsKey(vdeclTypeName))
+    				processCapsuleDef(tree, decls, inits, submits, starts, joins, variables, vdecl);
     			else if(syms.libclasses.containsKey(vdeclTypeName))
-    				processLibModuleDef(tree, decls, inits, submits, starts, joins,	variables, vdecl);
+    				processLibCapsuleDef(tree, decls, inits, submits, starts, joins,	variables, vdecl);
     			else{
-    				if(vdecl.vartype.getTag()==MODULEARRAY){
-    					processModuleArray(tree, decls, assigns, submits, starts, joins,	variables, modArrays, vdecl);
+    				if(vdecl.vartype.getTag()==CAPSULEARRAY){
+    					processCapsuleArray(tree, decls, assigns, submits, starts, joins,	variables, modArrays, vdecl);
     				}
     				else{
     					if(vdecl.vartype.getTag()==TYPEIDENT || vdecl.vartype.toString().equals("String")){
@@ -823,12 +823,12 @@ public class Attr extends JCTree.Visitor {
     		} else if(systemStmtKind == EXEC){
     			JCExpressionStatement currentExprStmt = (JCExpressionStatement) currentSystemStmt;
     			if(currentExprStmt.expr.getTag()==APPLY){
-    				processModuleWiring(currentExprStmt.expr, assigns, variables);
+    				processCapsuleWiring(currentExprStmt.expr, assigns, variables);
     			}
     		}else if(systemStmtKind == FOREACHLOOP)
     			processForEachLoop((JCEnhancedForLoop) currentSystemStmt, assigns, variables);
     		else if(systemStmtKind == MAAPPLY)
-    			processModuleArrayWiring((JCModuleArrayCall) currentSystemStmt, assigns, variables, modArrays);
+    			processCapsuleArrayWiring((JCCapsuleArrayCall) currentSystemStmt, assigns, variables, modArrays);
     		else  			
     			throw new AssertionError("Invalid statement gone through the parser");
     	}
@@ -842,21 +842,21 @@ public class Attr extends JCTree.Visitor {
 
     	memberEnter.memberEnter(maindecl, env);
         if (doGraphs) {
-            //ListBuffer<Symbol> modules = new ListBuffer<Symbol>();
+            //ListBuffer<Symbol> capsules = new ListBuffer<Symbol>();
             for (JCStatement v : decls) {
                 if (v.getTag() == VARDEF) {
                     JCVariableDecl varDecl = (JCVariableDecl)v;
-                    ClassSymbol c = syms.modules.get(names.fromString(varDecl.vartype.toString()));
+                    ClassSymbol c = syms.capsules.get(names.fromString(varDecl.vartype.toString()));
                     if (varDecl.vartype.toString().contains("[]")) {
 //                    System.out.println("\n\n\nConsistency checker doesn't yet support capsule arrays. Exiting now.\n\n\n");
 //                    System.exit(5);
-                        //c = syms.modules.get(names.fromString(varDecl.vartype.toString().substring(0, varDecl.vartype.toString().indexOf("["))));
+                        //c = syms.capsules.get(names.fromString(varDecl.vartype.toString().substring(0, varDecl.vartype.toString().indexOf("["))));
                         
                     }
-                    //if (!modules.contains(c)) modules.append(c);
+                    //if (!capsules.contains(c)) capsules.append(c);
                 }
             }
-            //tree.sym.modules = modules.toList();
+            //tree.sym.capsules = capsules.toList();
         }
     }
     
@@ -877,7 +877,7 @@ public class Attr extends JCTree.Visitor {
 					stats.add(make.Try(make.Block(0, List.<JCStatement> of(make
 							.Exec(make.Apply(List.<JCExpression> nil(), make
 									.Select(make.Ident(names
-											.fromString(PaniniConstants.PANINI_MODULE_TASK)),
+											.fromString(PaniniConstants.PANINI_CAPSULE_TASK)),
 											names.fromString("init")), List
 									.<JCExpression> of(make.Literal(arg)))))),
 							List.<JCCatch> of(make.Catch(make.VarDef(
@@ -893,7 +893,7 @@ public class Attr extends JCTree.Visitor {
 			stats.add(make.Try(make.Block(0, List.<JCStatement> of(make
 					.Exec(make.Apply(List.<JCExpression> nil(), make
 							.Select(make.Ident(names
-									.fromString(PaniniConstants.PANINI_MODULE_TASK)),
+									.fromString(PaniniConstants.PANINI_CAPSULE_TASK)),
 									names.fromString("init")), List
 							.<JCExpression> of(make.Literal(1)))))),
 					List.<JCCatch> of(make.Catch(make.VarDef(
@@ -927,7 +927,7 @@ public class Attr extends JCTree.Visitor {
 					return maindecl;
 				}
 
-				private void processModuleWiring(final JCExpression wiring, final ListBuffer<JCStatement> assigns, final Map<Name, Name> variables) {
+				private void processCapsuleWiring(final JCExpression wiring, final ListBuffer<JCStatement> assigns, final Map<Name, Name> variables) {
 					JCMethodInvocation mi = (JCMethodInvocation) wiring;
 					try{
 						assigns.appendList(transWiring(mi, variables));
@@ -936,7 +936,7 @@ public class Attr extends JCTree.Visitor {
 					}
 				}
 
-				private void processModuleArrayWiring(JCModuleArrayCall mi,
+				private void processCapsuleArrayWiring(JCCapsuleArrayCall mi,
 						ListBuffer<JCStatement> assigns, Map<Name, Name> variables,
 						Map<Name, Integer> modArrays) {
 					if(!variables.containsKey(names
@@ -955,7 +955,7 @@ public class Attr extends JCTree.Visitor {
 						log.error(mi.index.pos(), "capsule.array.call.index.out.of.bound", ind.value, modArrays.get(names
 								.fromString(mi.name.toString())));
 					}
-					if (mi.arguments.length() != syms.moduleparams.get(c).length()) {
+					if (mi.arguments.length() != syms.capsuleparams.get(c).length()) {
 						log.error(mi.pos(), "arguments.of.wiring.mismatch");
 					} else {
 						for (int j = 0; j < mi.arguments.length(); j++) {
@@ -965,7 +965,7 @@ public class Attr extends JCTree.Visitor {
 											(make.Indexed
 													(mi.indexed, 
 															mi.index),
-															syms.moduleparams.get(c).get(j)
+															syms.capsuleparams.get(c).get(j)
 															.getName()), mi.arguments.get(j));
 							JCExpressionStatement assignAssign = make
 									.Exec(newAssign);
@@ -975,12 +975,12 @@ public class Attr extends JCTree.Visitor {
 				}
 
 				private void processForEachLoop(JCEnhancedForLoop loop, ListBuffer<JCStatement> assigns, Map<Name, Name> variables) {
-					ClassSymbol c = syms.modules.get(names.fromString(loop.var.vartype.toString()));
+					ClassSymbol c = syms.capsules.get(names.fromString(loop.var.vartype.toString()));
 					if(c==null){
 						log.error(loop.pos(), "capsule.array.type.error", loop.var.vartype);
 					}
 					variables.put(loop.var.name, names.fromString(loop.var.vartype.toString()));
-					ClassSymbol d = syms.modules.get(variables.get(names.fromString(loop.expr.toString())));
+					ClassSymbol d = syms.capsules.get(variables.get(names.fromString(loop.expr.toString())));
 					if(d==null)
 						log.error(loop.expr.pos(), "symbol.not.found");
 					if(!types.isSameType(c.type, d.type)){
@@ -1033,13 +1033,13 @@ public class Attr extends JCTree.Visitor {
 					assigns.append(floop);
 				}
 
-				private void processModuleArray(JCSystemDecl tree,
+				private void processCapsuleArray(JCSystemDecl tree,
 						ListBuffer<JCStatement> decls, ListBuffer<JCStatement> assigns,
 						ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
 						ListBuffer<JCStatement> joins, Map<Name, Name> variables,
 						Map<Name, Integer> modArrays, JCVariableDecl vdecl) {
-					JCModuleArray mat = (JCModuleArray)vdecl.vartype;
-					ClassSymbol c = syms.modules.get(names.fromString(mat.elemtype.toString()));
+					JCCapsuleArray mat = (JCCapsuleArray)vdecl.vartype;
+					ClassSymbol c = syms.capsules.get(names.fromString(mat.elemtype.toString()));
 					if(c==null){
 						log.error(vdecl.pos(), "capsule.array.type.error", mat.elemtype);
 					}
@@ -1103,7 +1103,7 @@ public class Attr extends JCTree.Visitor {
 					modArrays.put(vdecl.name, mat.amount);
 				}
 
-				private void processLibModuleDef(JCSystemDecl tree,
+				private void processLibCapsuleDef(JCSystemDecl tree,
 						ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
 						ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
 						ListBuffer<JCStatement> joins, Map<Name, Name> variables,
@@ -1113,12 +1113,12 @@ public class Attr extends JCTree.Visitor {
 					variables.put(vdecl.name, c.name);
 				}
 
-				private void processModuleDef(JCSystemDecl tree,
+				private void processCapsuleDef(JCSystemDecl tree,
 						ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
 						ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
 						ListBuffer<JCStatement> joins, Map<Name, Name> variables,
 						JCVariableDecl vdecl) {
-					ClassSymbol c = syms.modules.get(names.fromString(vdecl.vartype.toString()));
+					ClassSymbol c = syms.capsules.get(names.fromString(vdecl.vartype.toString()));
 					decls.add(vdecl);
 					JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
 							make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
@@ -1170,7 +1170,7 @@ public class Attr extends JCTree.Visitor {
 				
     public void visitProcDef(JCProcDecl tree){
     	Type restype = ((MethodType)tree.sym.type).restype;
-    	if(restype.tsym.isModule||tree.sym.getReturnType().isPrimitive()||
+    	if(restype.tsym.isCapsule||tree.sym.getReturnType().isPrimitive()||
     			tree.sym.getReturnType().toString().equals("java.lang.String"))
     	{
     		log.error("procedure.restype.illegal", tree.sym.getReturnType(), tree.sym);
@@ -1374,7 +1374,7 @@ public class Attr extends JCTree.Visitor {
         // Check that the variable's declared type is well-formed.
         // Panini code
         if(tree.getTag()==Tag.STATE)
-    		if(syms.modules.containsKey(names.fromString(tree.vartype.toString())))
+    		if(syms.capsules.containsKey(names.fromString(tree.vartype.toString())))
     			log.error(tree.pos(), "states.with.capsule.type.error");
         // end Panini code
         chk.validate(tree.vartype, env);
@@ -2842,8 +2842,8 @@ public class Attr extends JCTree.Visitor {
         env.info.tvars = List.nil();
         
         // Panini code
-        if(tree.selected.type.tsym.isModule&&!tree.type.getKind().toString().equals("EXECUTABLE")
-        		&&env.enclClass.sym.isModule&&!tree.selected.toString().equals("this")){
+        if(tree.selected.type.tsym.isCapsule&&!tree.type.getKind().toString().equals("EXECUTABLE")
+        		&&env.enclClass.sym.isCapsule&&!tree.selected.toString().equals("this")){
         	log.error(tree.pos, "invalid.access.of.capsules.states");
         }
         // end Panini code
@@ -3582,12 +3582,12 @@ public class Attr extends JCTree.Visitor {
                 	((JCSystemDecl)env.tree).switchToClass();
                 	this.env = oldEnv;
                 }
-                if(c.isModule){
+                if(c.isCapsule){
                 	Env<AttrContext> oldEnv = this.env;
                 	this.env = env;
-                	((JCModuleDecl)env.tree).switchToModule();
+                	((JCCapsuleDecl)env.tree).switchToCapsule();
                 	env.tree.accept(this);
-                	((JCModuleDecl)env.tree).switchToClass();
+                	((JCCapsuleDecl)env.tree).switchToClass();
                 	this.env = oldEnv;
                 }
                 // end Panini code

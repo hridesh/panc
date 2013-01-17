@@ -213,7 +213,7 @@ public class JavacParser implements Parser {
     private int lastmode = 0;
     
     // Panini code
-    boolean inModule = false;
+    boolean inCapsule = false;
     // end Panini code
 
     /* ---------- token management -------------- */
@@ -1431,7 +1431,7 @@ public class JavacParser implements Parser {
         int pos = token.pos;
         List<JCExpression> args = arguments();
         // Panini code
-        if(inModule){
+        if(inCapsule){
         	JCProcInvocation proc = toP(F.at(pos).ProcApply(typeArgs, t, args));
         	proc.switchToMethod();
         	return proc;
@@ -1620,7 +1620,7 @@ public class JavacParser implements Parser {
                     System.exit(5555);
                 }
                 accept(RBRACKET);
-                return toP(F.at(pos).ModuleArray(t, ((Integer)((JCLiteral)sizeTree).value).intValue()));
+                return toP(F.at(pos).CapsuleArray(t, ((Integer)((JCLiteral)sizeTree).value).intValue()));
             }
     }
     // end Panini code
@@ -2028,7 +2028,7 @@ public class JavacParser implements Parser {
             	List<JCExpression> args = arguments();
             	accept(SEMI);
             	JCStatement stm = F.at(pos).
-            			ModuleArrayCall(names.fromString(((JCArrayAccess)t).indexed.toString()), 
+            			CapsuleArrayCall(names.fromString(((JCArrayAccess)t).indexed.toString()), 
             					((JCArrayAccess)t).index, ((JCArrayAccess)t).indexed, args);
             	return List.<JCStatement>of(stm);
             }else if (token.kind == COLON && t.hasTag(IDENT)) {
@@ -2906,7 +2906,7 @@ public class JavacParser implements Parser {
          	else if(token.name().toString().equals("library"))
          		return libraryDecl(mods, dc);
          	else if(token.name().toString().equals("capsule")) // Bryan Shrader 1/14/2013 'module' changed to 'capsule'
-         		return moduleDecl(mods, dc);
+         		return capsuleDecl(mods, dc);
          	else if(token.name().toString().equals("signature"))
          		return signatureDecl(mods, dc);
          	else{
@@ -2951,7 +2951,7 @@ public class JavacParser implements Parser {
 
     // Panini code
      JCStatement systemDecl(JCModifiers mod, String dc){
-    	inModule = true;
+    	inCapsule = true;
      	accept(IDENTIFIER);
      	int pos = token.pos;
      	Name name = ident();
@@ -2969,7 +2969,7 @@ public class JavacParser implements Parser {
      	JCBlock body = systemBlock();
      	JCSystemDecl result = toP(F.at(pos).SystemDef(mod, name, body, params));
      	attach(result, dc);
-     	inModule = false;
+     	inCapsule = false;
      	return result;
      }
      
@@ -2983,7 +2983,7 @@ public class JavacParser implements Parser {
      	return result;
      }
 
-     JCStatement moduleDecl(JCModifiers mod, String dc){
+     JCStatement capsuleDecl(JCModifiers mod, String dc){
      	accept(IDENTIFIER);
      	int pos = token.pos;
      	Name name = ident();
@@ -3003,8 +3003,8 @@ public class JavacParser implements Parser {
             implementing = typeList();
         }
      	List<JCTree> defs = classOrInterfaceBody(name, false);
-     	JCModuleDecl result = 
-     			toP(F.at(pos).ModuleDef(mod, name, params, implementing, defs));
+     	JCCapsuleDecl result = 
+     			toP(F.at(pos).CapsuleDef(mod, name, params, implementing, defs));
      	attach(result, dc);
      	return result;
      }
@@ -3026,8 +3026,8 @@ public class JavacParser implements Parser {
       		params = List.<JCVariableDecl>nil();
       	List<JCExpression> implementing = List.nil();
       	List<JCTree> defs = classOrInterfaceBody(name, true);
-      	JCModuleDecl result = 
-      			toP(F.at(pos).ModuleDef(mod, name, params, implementing, defs));
+      	JCCapsuleDecl result = 
+      			toP(F.at(pos).CapsuleDef(mod, name, params, implementing, defs));
       	attach(result, dc);
       	return result;
       }

@@ -35,9 +35,9 @@ import org.paninij.analysis.CFGPrinter;
 
 import static com.sun.tools.javac.code.Flags.*;
 
-public class ModuleEffectsComp {
-    protected static final Context.Key<ModuleEffectsComp> secKey =
-        new Context.Key<ModuleEffectsComp>();
+public class CapsuleEffectsComp {
+    protected static final Context.Key<CapsuleEffectsComp> secKey =
+        new Context.Key<CapsuleEffectsComp>();
 
     public HashMap<JCMethodDecl, EffectSet> methodEffects = new HashMap<JCMethodDecl, EffectSet>();
     MethodEffectsComp methodEffectsComp = new MethodEffectsComp();
@@ -45,29 +45,29 @@ public class ModuleEffectsComp {
     ReachedProcsComp reachedProcsComp;
     private LinkedList<JCMethodDecl> methodsToProcess;
 
-    public static ModuleEffectsComp instance(Context context) {
-        ModuleEffectsComp instance = context.get(secKey);
+    public static CapsuleEffectsComp instance(Context context) {
+        CapsuleEffectsComp instance = context.get(secKey);
         if (instance == null)
-            instance = new ModuleEffectsComp(context);
+            instance = new CapsuleEffectsComp(context);
         return instance;
     }
 
-    protected ModuleEffectsComp(Context context) {
+    protected CapsuleEffectsComp(Context context) {
         context.put(secKey, this);
         effectsSub = EffectsSub.instance(context);
         reachedProcsComp = ReachedProcsComp.instance(context);
         CFGBuilder.setNames(Names.instance(context));
     }
 
-    public void computeEffects(JCModuleDecl module) {
+    public void computeEffects(JCCapsuleDecl capsule) {
         methodsToProcess = new LinkedList<JCMethodDecl>();
         HashSet<JCMethodDecl> visitedMethods = new HashSet<JCMethodDecl>();
-        for(JCTree def : module.defs) {
+        for(JCTree def : capsule.defs) {
         	if(def.getTag() == Tag.METHODDEF) {
                 JCMethodDecl method = (JCMethodDecl)def;
                 if ((method.sym.flags() & PRIVATE) != 0 ||
                     (method.sym.name.toString().equals("run") &&
-                     module.sym.hasRun)) {
+                     capsule.sym.hasRun)) {
                     methodsToProcess.offer(method);
                 }
             }
@@ -77,24 +77,24 @@ public class ModuleEffectsComp {
             JCMethodDecl method = methodsToProcess.poll();
             visitedMethods.add(method);
 
-            CFG cfg = CFGBuilder.buildCFG(module, method);
+            CFG cfg = CFGBuilder.buildCFG(capsule, method);
             new AliasingComp().fillInAliasingInfo(cfg);
-            reachedProcsComp.todoReachedProcs(module);
+            reachedProcsComp.todoReachedProcs(capsule);
             new CFGPrinter().printCFG(cfg);
             
             for (MethodSymbol.MethodInfo calledMethodInfo : method.sym.calledMethods) {
                 MethodSymbol calledMethod = calledMethodInfo.method;
                 if (calledMethod.tree == null) continue;
-                //if (calledMethod.ownerModule() != module.sym) continue; // null means library symbol
+                //if (calledMethod.ownerCapsule() != capsule.sym) continue; // null means library symbol
                 if (!visitedMethods.contains(calledMethod.tree))
                     methodsToProcess.offer(calledMethod.tree);
             }
-            EffectSet effects = methodEffectsComp.computeEffectsForMethod(cfg, module.sym);
+            EffectSet effects = methodEffectsComp.computeEffectsForMethod(cfg, capsule.sym);
             effects.cfg = cfg;
             methodEffects.put(method, effects);
         }
         
-        effectsSub.module = module;
+        effectsSub.capsule = capsule;
         effectsSub.substituteMethodEffects(methodEffects);
     }
 }

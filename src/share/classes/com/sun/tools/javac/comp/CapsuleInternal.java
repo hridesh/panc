@@ -24,7 +24,7 @@ import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
-import com.sun.tools.javac.tree.JCTree.JCModuleDecl;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCTypeParameter;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.*;
@@ -47,13 +47,13 @@ import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.tree.JCTree.Tag.GE;
 import static com.sun.tools.javac.tree.JCTree.Tag.POSTINC;
 
-public class ModuleInternal extends Internal {
+public class CapsuleInternal extends Internal {
 	ListBuffer<JCTree> contractDefs;
 	Symtab syms;
 	Enter enter;
 	MemberEnter memberEnter;
 
-	public ModuleInternal(TreeMaker make, Names names, Enter enter,
+	public CapsuleInternal(TreeMaker make, Names names, Enter enter,
 			MemberEnter memberEnter, Symtab syms) {
 		super(make, names);
 		this.enter = enter;
@@ -63,7 +63,7 @@ public class ModuleInternal extends Internal {
 		contractDefs = new ListBuffer<JCTree>();
 	}
 
-	public JCBlock generateThreadModuleComputeMethodBody(JCModuleDecl tree) {
+	public JCBlock generateThreadCapsuleComputeMethodBody(JCCapsuleDecl tree) {
 		JCModifiers noMods = mods(0);
 		ListBuffer<JCStatement> messageLoopBody = new ListBuffer<JCStatement>();
 		messageLoopBody.append(var(noMods, PaniniConstants.PANINI_DUCK_TYPE, PaniniConstants.DUCK_INTERFACE_NAME,
@@ -127,7 +127,7 @@ public class ModuleInternal extends Internal {
 		return b;
 	}
 
-	public JCBlock generateTaskModuleComputeMethodBody(JCModuleDecl tree) {
+	public JCBlock generateTaskCapsuleComputeMethodBody(JCCapsuleDecl tree) {
 		JCModifiers noMods = mods(0);
 		ListBuffer<JCStatement> messageLoopBody = new ListBuffer<JCStatement>();
 		
@@ -218,7 +218,7 @@ public class ModuleInternal extends Internal {
 		return exitBody;
 	}
 
-	public List<JCClassDecl> generateClassWrappers(JCModuleDecl tree,
+	public List<JCClassDecl> generateClassWrappers(JCCapsuleDecl tree,
 			Env<AttrContext> env, Resolve rs) {
 		ListBuffer<JCClassDecl> classes = new ListBuffer<JCClassDecl>();
 		Map<String, JCClassDecl> alreadedAddedDuckClasses = new HashMap<String, JCClassDecl>();

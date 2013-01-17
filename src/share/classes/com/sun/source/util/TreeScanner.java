@@ -411,12 +411,12 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 		return visitVariable(node, p);
 	}
     
-    public R visitModuleArrayCall(ModuleArrayCallTree node, P p) {
+    public R visitCapsuleArrayCall(CapsuleArrayCallTree node, P p) {
 		R r = scan(node.getArgs(), p);
 		return r;
 	}
 	
-    public R visitModuleArray(ModuleArrayTree node, P p) {
+    public R visitCapsuleArray(CapsuleArrayTree node, P p) {
 		R r = scan(node.getType(), p);
 		return r;
 	}
@@ -431,7 +431,7 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 		return r;
 	}
 
-	public R visitModule(ModuleTree node, P p) {
+	public R visitCapsule(CapsuleTree node, P p) {
 		R r = scan(node.getParameters(), p);
 		r = scanAndReduce(node.getImplementsClause(), p, r);
 		r = scanAndReduce(node.getMembers(), p, r);

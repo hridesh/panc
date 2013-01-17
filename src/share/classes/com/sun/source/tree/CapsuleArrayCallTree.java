@@ -14,15 +14,22 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  * 
- * Contributor(s): Eric Lin
+ * Contributor(s): Adriano 
  */
 
-package org.paninij.runtime;
-import java.lang.annotation.*;
+package com.sun.source.tree;
 
-@Documented
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface ModuleKind {
-	String value();
+import com.sun.tools.javac.tree.JCTree.JCExpression;
+import com.sun.tools.javac.util.List;
+import com.sun.tools.javac.util.Name;
+
+/**
+ * A node for a Capsule array indexed method call
+ */
+
+public interface CapsuleArrayCallTree extends Tree{
+	public Name getName();
+	public JCExpression getIndex();
+	public List<JCExpression> getArgs();
+	
 }

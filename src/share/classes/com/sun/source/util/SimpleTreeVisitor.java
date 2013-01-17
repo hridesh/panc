@@ -277,11 +277,11 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 		return defaultAction(node, p);
 	}
 
-	public R visitModuleArrayCall(ModuleArrayCallTree node, P p) {
+	public R visitCapsuleArrayCall(CapsuleArrayCallTree node, P p) {
 		return defaultAction(node, p);
 	}
 	
-	public R visitModuleArray(ModuleArrayTree node, P p) {
+	public R visitCapsuleArray(CapsuleArrayTree node, P p) {
 		return defaultAction(node, p);
 	}
 
@@ -293,7 +293,7 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 		return defaultAction(node, p);
 	}
 
-	public R visitModule(ModuleTree node, P p) {
+	public R visitCapsule(CapsuleTree node, P p) {
 		return defaultAction(node, p);
 	}
 

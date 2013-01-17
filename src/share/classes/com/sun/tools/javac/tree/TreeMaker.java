@@ -150,14 +150,14 @@ public class TreeMaker implements JCTree.Factory {
         return tree;
     }
     
-    public JCModuleArrayCall ModuleArrayCall(Name name, JCExpression index, JCExpression indexed, List<JCExpression> args){
-    	JCModuleArrayCall tree = new JCModuleArrayCall(name, index, indexed, args);
+    public JCCapsuleArrayCall CapsuleArrayCall(Name name, JCExpression index, JCExpression indexed, List<JCExpression> args){
+    	JCCapsuleArrayCall tree = new JCCapsuleArrayCall(name, index, indexed, args);
     	tree.pos = pos;
     	return tree;
     }
     
-    public JCModuleArray ModuleArray(JCExpression elemtype, int amount) {
-        JCModuleArray tree = new JCModuleArray(elemtype, amount);
+    public JCCapsuleArray CapsuleArray(JCExpression elemtype, int amount) {
+        JCCapsuleArray tree = new JCCapsuleArray(elemtype, amount);
         tree.pos = pos;
         return tree;
     }
@@ -174,12 +174,12 @@ public class TreeMaker implements JCTree.Factory {
     	return tree;
     }
     
-    public JCModuleDecl ModuleDef(JCModifiers mods,
+    public JCCapsuleDecl CapsuleDef(JCModifiers mods,
     		Name name, 
 			List<JCVariableDecl> params, 
 			List<JCExpression> implementing, 
 			List<JCTree> defs){
-    	JCModuleDecl tree = new JCModuleDecl(mods, name, params, implementing, defs);
+    	JCCapsuleDecl tree = new JCCapsuleDecl(mods, name, params, implementing, defs);
     	tree.pos = pos;
     	return tree;
     }
@@ -219,7 +219,7 @@ public class TreeMaker implements JCTree.Factory {
                 // Panini code
                 || node instanceof JCSystemDecl
                 || node instanceof JCLibraryDecl
-                || node instanceof JCModuleDecl
+                || node instanceof JCCapsuleDecl
                 // end Panini code
                 || (node instanceof JCExpressionStatement
                     && ((JCExpressionStatement)node).expr instanceof JCErroneous),

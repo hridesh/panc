@@ -21,12 +21,12 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import static com.sun.tools.javac.code.Flags.*;
 
-// computes each method's reached (possibly) intermodule procedure calls 
+// computes each method's reached (possibly) intercapsule procedure calls 
 public class ReachedProcsComp {
      protected static final Context.Key<ReachedProcsComp> rpcKey =
         new Context.Key<ReachedProcsComp>();
 
-    private ClassSymbol currentModule;
+    private ClassSymbol currentCapsule;
     private LinkedList<JCMethodDecl> methodsToProcess;
 
     public static ReachedProcsComp instance(Context context) {
@@ -43,14 +43,14 @@ public class ReachedProcsComp {
     }
 
     // For each procedure call/run method, traverse call graph and make todo queue.
-    // Called in ModuleEffectsComp
-    public void todoReachedProcs(JCModuleDecl module) {
-        for(JCTree def : module.defs) {
+    // Called in CapsuleEffectsComp
+    public void todoReachedProcs(JCCapsuleDecl capsule) {
+        for(JCTree def : capsule.defs) {
         	if(def.getTag() == Tag.METHODDEF) {
                 JCMethodDecl method = (JCMethodDecl)def;
                 if ((method.sym.flags() & PRIVATE) != 0 ||
                     (method.sym.name.toString().equals("run") &&
-                     module.sym.hasRun)) { // is a procedure call or the run method
+                     capsule.sym.hasRun)) { // is a procedure call or the run method
                     methodsToProcess.add(method);
                     traverseCallGraph(method.sym);
                 }
@@ -60,8 +60,8 @@ public class ReachedProcsComp {
     
     // Process the todo queue. 
     // Called in Attr.visitSystemDef -> SystemEffectsComp.substituteProcEffects
-    public void computeReachedProcs(JCModuleDecl module) {
-        currentModule = module.sym;
+    public void computeReachedProcs(JCCapsuleDecl capsule) {
+        currentCapsule = capsule.sym;
 
         while (!methodsToProcess.isEmpty()) {
             JCMethodDecl method = methodsToProcess.poll();
@@ -71,7 +71,7 @@ public class ReachedProcsComp {
                 MethodSymbol calledMethod = calledMethodInfo.method;
 
                 if (calledMethod.tree == null) continue;
-                if (calledMethodInfo.module != null)
+                if (calledMethodInfo.capsule != null)
                     method.sym.reachedProcs.add(calledMethodInfo);
             }
 
@@ -83,14 +83,14 @@ public class ReachedProcsComp {
         }
     }
 
-    // traverses intramodule call graph, adding methods to a todo queue
+    // traverses intracapsule call graph, adding methods to a todo queue
     HashSet<MethodSymbol> visitedMethods = new HashSet<MethodSymbol>();
     private void traverseCallGraph(MethodSymbol method) {
         visitedMethods.add(method);
 
         for (MethodSymbol.MethodInfo calledMethodInfo : method.calledMethods) {
             if (calledMethodInfo.method.tree == null) continue; // why?
-            if (calledMethodInfo.module == null) { // keep on going if not a module call
+            if (calledMethodInfo.capsule == null) { // keep on going if not a capsule call
                 if (!visitedMethods.contains(calledMethodInfo.method)) {
                     methodsToProcess.add(calledMethodInfo.method.tree);
                     traverseCallGraph(calledMethodInfo.method);

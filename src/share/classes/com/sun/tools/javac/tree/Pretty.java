@@ -446,7 +446,7 @@ public class Pretty extends JCTree.Visitor {
     	visitVarDef(tree);
     }
     
-    public void visitModuleArrayCall(JCModuleArrayCall tree){
+    public void visitCapsuleArrayCall(JCCapsuleArrayCall tree){
     	try {
 			print(tree.name + "[" + tree.index + "]" + "(" + tree.arguments + ");");
 		} catch (IOException e) {
@@ -454,7 +454,7 @@ public class Pretty extends JCTree.Visitor {
 		}
     }
     
-    public void visitModuleArray(JCModuleArray tree) {
+    public void visitCapsuleArray(JCCapsuleArray tree) {
         try {
             printBaseElementType(tree);
             printBrackets(tree);
@@ -463,13 +463,13 @@ public class Pretty extends JCTree.Visitor {
         }
     }
     
-    private void printBrackets(JCModuleArray tree) throws IOException {
+    private void printBrackets(JCCapsuleArray tree) throws IOException {
         JCTree elem;
         while (true) {
             elem = tree.elemtype;
             print("[" + tree.amount + "]");
-            if (!elem.hasTag(MODULEARRAY)) break;
-            tree = (JCModuleArray) elem;
+            if (!elem.hasTag(CAPSULEARRAY)) break;
+            tree = (JCCapsuleArray) elem;
         }
     }
     
@@ -497,7 +497,7 @@ public class Pretty extends JCTree.Visitor {
     	}
     }
     
-    public void visitModuleDef(JCModuleDecl tree){
+    public void visitCapsuleDef(JCCapsuleDecl tree){
     	try{
     		println();align();
     		printDocComment(tree);

@@ -599,7 +599,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
             annotateDefaultValueLater(tree.defaultValue, localEnv, m);
         
         // Panini code
-        if(!tree.name.toString().contains("$Original")&&m.owner.isModule&&!((tree.name.equals(names.fromString("run")) || (tree.name.equals(names.init))))){
+        if(!tree.name.toString().contains("$Original")&&m.owner.isCapsule&&!((tree.name.equals(names.fromString("run")) || (tree.name.equals(names.init))))){
         	m.isProcedure = true;
         }
         else

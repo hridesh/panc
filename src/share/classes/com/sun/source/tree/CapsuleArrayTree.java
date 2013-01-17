@@ -14,22 +14,17 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  * 
- * Contributor(s): Adriano 
+ * Contributor(s): Adriano
  */
 
 package com.sun.source.tree;
 
-import com.sun.tools.javac.tree.JCTree.JCExpression;
-import com.sun.tools.javac.util.List;
-import com.sun.tools.javac.util.Name;
-
 /**
- * A node for a Module array indexed method call
+ * A tree for representing declaration of (C-like) arrays of capsules
+ * 
+ * @author adriano
+ *
  */
-
-public interface ModuleArrayCallTree extends Tree{
-	public Name getName();
-	public JCExpression getIndex();
-	public List<JCExpression> getArgs();
-	
+public interface CapsuleArrayTree extends ArrayTypeTree {
+	public int getAmount();
 }

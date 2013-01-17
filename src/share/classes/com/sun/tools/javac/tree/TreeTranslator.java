@@ -429,7 +429,7 @@ public class TreeTranslator extends JCTree.Visitor {
         result = tree;
     }
     
-    public void visitModuleDef(JCModuleDecl tree){
+    public void visitCapsuleDef(JCCapsuleDecl tree){
     	result = tree;
     }
     

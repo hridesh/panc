@@ -17,11 +17,11 @@ import java.util.HashMap;
 import java.util.Collection;
 import java.util.HashSet;
 
-// encapsulates two graphs, one with system-specified module connections as
+// encapsulates two graphs, one with system-specified capsule connections as
 // edges, and one with inter-procedure calls as edges. Both graphs use
-// system-specified module instances as nodes.
+// system-specified capsule instances as nodes.
 public class SystemGraphs {
-    public static class Node { // a module instance
+    public static class Node { // a capsule instance
         public ClassSymbol sym; public String name; public int index;
         public Node(ClassSymbol sym, String name) { this.sym = sym; this.name = name; this.index = -1; }
         public Node(ClassSymbol sym, String name, int index) { this.sym = sym; this.name = name; this.index = index; }
@@ -72,14 +72,14 @@ public class SystemGraphs {
     public HashMap<Node, HashSet<ProcEdge>> forwardProcEdges = new HashMap<Node, HashSet<ProcEdge>>();
     public HashMap<Node, HashSet<ConnectionEdge>> forwardConnectionEdges = new HashMap<Node, HashSet<ConnectionEdge>>();
 
-    public Node addModule(ClassSymbol sym, String name) {
+    public Node addCapsule(ClassSymbol sym, String name) {
         Node n = new Node(sym, name);
         forwardProcEdges.put(n, new HashSet<ProcEdge>());
         forwardConnectionEdges.put(n, new HashSet<ConnectionEdge>());
         return n;
     }
 
-    public Node addModule(ClassSymbol sym, String name, int i) {
+    public Node addCapsule(ClassSymbol sym, String name, int i) {
         Node n = new Node(sym, name, i);
         forwardProcEdges.put(n, new HashSet<ProcEdge>());
         forwardConnectionEdges.put(n, new HashSet<ConnectionEdge>());

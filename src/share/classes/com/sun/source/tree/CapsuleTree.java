@@ -21,7 +21,7 @@ package com.sun.source.tree;
 import java.util.List;
 import javax.lang.model.element.Name;
 
-public interface ModuleTree extends StatementTree {
+public interface CapsuleTree extends StatementTree {
     Name getName();
     List<? extends VariableTree> getParameters();
     List<? extends Tree> getImplementsClause();

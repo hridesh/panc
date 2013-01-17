@@ -28,9 +28,9 @@ public class SystemGraphsBuilder extends TreeScanner {
     private final Symtab syms;
     private final Names names;
     private SystemGraphs graphs;
-    private Node currentModule;
+    private Node currentCapsule;
 
-    static class ModuleNameMap {
+    static class CapsuleNameMap {
         HashMap<String, ArrayList<Node>> nodes 
             = new HashMap<String, ArrayList<Node>>();
 
@@ -68,7 +68,7 @@ public class SystemGraphsBuilder extends TreeScanner {
         }
     }
 
-    private ModuleNameMap moduleNames;
+    private CapsuleNameMap capsuleNames;
     private HashSet<NodeMethod> finishedMethods;
     private HashSet<String> systemConstantNames;
 
@@ -89,21 +89,21 @@ public class SystemGraphsBuilder extends TreeScanner {
     public SystemGraphs buildGraphs(JCSystemDecl system) {
         finishCallGraph();
         graphs = new SystemGraphs();
-        moduleNames = new ModuleNameMap();
+        capsuleNames = new CapsuleNameMap();
         finishedMethods = new HashSet<NodeMethod>();
         systemConstantNames = new HashSet<String>();
 
         scan(system.body);
 
-        for (Node module : moduleNames.allNodes()) {
-            for (Symbol s : module.sym.members_field.getElements()) {
+        for (Node capsule : capsuleNames.allNodes()) {
+            for (Symbol s : capsule.sym.members_field.getElements()) {
                 if (s instanceof MethodSymbol) {
                     MethodSymbol method = (MethodSymbol)s;
                     if (method.name.toString().contains("$Original") ||
                         (method.name.toString().equals("run") &&
-                         module.sym.hasRun)
+                         capsule.sym.hasRun)
                         ) {
-                        currentModule = module;
+                        currentCapsule = capsule;
                         traverseCallGraph(method);
                     }
                 }
@@ -117,14 +117,14 @@ public class SystemGraphsBuilder extends TreeScanner {
 
     public void finishCallGraph() {
         for (CFGNodeBuilder.TodoItem t : CFGNodeBuilder.callGraphTodos) {
-            VarSymbol moduleField = CFGNodeBuilder.moduleField(t.tree); // doesn't handle module array calls
+            VarSymbol capsuleField = CFGNodeBuilder.capsuleField(t.tree); // doesn't handle capsule array calls
             MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(t.tree.meth);
             String methodName = TreeInfo.symbol(t.tree.meth).toString();
             methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
             MethodSymbol origMethSym = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
             if (origMethSym != null) {
                 t.method.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
-                                                                       moduleField));
+                                                                       capsuleField));
                 origMethSym.callerMethods.add(t.method.sym);
             } // otherwise could be an already compiled method like print() or something
         }
@@ -146,45 +146,45 @@ public class SystemGraphsBuilder extends TreeScanner {
     }
     
     public void traverseCallGraph(MethodSymbol method) {
-        if (finishedMethods.contains(new NodeMethod(currentModule, method))) return;
-        finishedMethods.add(new NodeMethod(currentModule, method));
+        if (finishedMethods.contains(new NodeMethod(currentCapsule, method))) return;
+        finishedMethods.add(new NodeMethod(currentCapsule, method));
 
 //        System.out.println("===========");
-//        System.out.println(currentModule + "." + method);
+//        System.out.println(currentCapsule + "." + method);
 
         for (MethodSymbol.MethodInfo calledMethodInfo : method.calledMethods) {
 //            System.out.println("----------");
 //            System.out.println(calledMethodInfo.method + ":");
 
-            if (calledMethodInfo.module != null) {
-                for (ConnectionEdge edge : graphs.forwardConnectionEdges.get(currentModule)) {
+            if (calledMethodInfo.capsule != null) {
+                for (ConnectionEdge edge : graphs.forwardConnectionEdges.get(currentCapsule)) {
 //                    System.out.print(edge);
-                    if (edge.varName.equals(calledMethodInfo.module.name.toString())) {
+                    if (edge.varName.equals(calledMethodInfo.capsule.name.toString())) {
 //                        System.out.println(" x ");
-                        Node calledModule = edge.to;
-                        graphs.addProcEdge(currentModule, calledModule,
+                        Node calledCapsule = edge.to;
+                        graphs.addProcEdge(currentCapsule, calledCapsule,
                                            method, calledMethodInfo.method,
                                            edge.varName);
                     } else if (edge.arrayConnection() 
-                               && edge.to.sym.type.toString().equals(calledMethodInfo.module.type.toString())) {
+                               && edge.to.sym.type.toString().equals(calledMethodInfo.capsule.type.toString())) {
 //                        System.out.println(" a ");
-                        // if it's an array call we do an estimate (add an edge to every reachable module of the right type)
-                        Node calledModule = edge.to;
-                        graphs.addProcEdge(currentModule, calledModule,
+                        // if it's an array call we do an estimate (add an edge to every reachable capsule of the right type)
+                        Node calledCapsule = edge.to;
+                        graphs.addProcEdge(currentCapsule, calledCapsule,
                                            method, calledMethodInfo.method,
-                                           edge.varName, calledModule.index);
+                                           edge.varName, calledCapsule.index);
                     } else if (edge.arrayConnection() 
-                               && calledMethodInfo.module.type instanceof ArrayType) {
-                        if (edge.to.sym.type.toString().equals(((ArrayType)calledMethodInfo.module.type).elemtype.toString())) {
-                            Node calledModule = edge.to;
-                            graphs.addProcEdge(currentModule, calledModule,
+                               && calledMethodInfo.capsule.type instanceof ArrayType) {
+                        if (edge.to.sym.type.toString().equals(((ArrayType)calledMethodInfo.capsule.type).elemtype.toString())) {
+                            Node calledCapsule = edge.to;
+                            graphs.addProcEdge(currentCapsule, calledCapsule,
                                                method, calledMethodInfo.method,
-                                               edge.varName, calledModule.index);
+                                               edge.varName, calledCapsule.index);
                         }
                     }
                 }
             } else {
-                // don't need to traverse module procedures, since
+                // don't need to traverse capsule procedures, since
                 // they are starting points
                 traverseCallGraph(calledMethodInfo.method);
             }
@@ -196,55 +196,55 @@ public class SystemGraphsBuilder extends TreeScanner {
     
 
     public void visitVarDef(JCVariableDecl tree) {
-        if (tree.vartype.getTag()==Tag.MODULEARRAY) {
-            JCModuleArray type = (JCModuleArray)tree.vartype;
-            String moduleName = type.elemtype.toString();
+        if (tree.vartype.getTag()==Tag.CAPSULEARRAY) {
+            JCCapsuleArray type = (JCCapsuleArray)tree.vartype;
+            String capsuleName = type.elemtype.toString();
             String varName = tree.name.toString();
-            if(syms.modules.containsKey(names.fromString(moduleName))) {
-                ClassSymbol c = syms.modules.get(names.fromString(moduleName));
+            if(syms.capsules.containsKey(names.fromString(capsuleName))) {
+                ClassSymbol c = syms.capsules.get(names.fromString(capsuleName));
                 ArrayList<Node> nodes = new ArrayList<Node>(type.amount);
                 for (int i = 0; i < type.amount; i++) {
-                    nodes.add(graphs.addModule(c, varName, i));
+                    nodes.add(graphs.addCapsule(c, varName, i));
                 }
-                moduleNames.put(varName, nodes);
+                capsuleNames.put(varName, nodes);
             }
         } else {
-            String moduleName = tree.vartype.toString();
+            String capsuleName = tree.vartype.toString();
             String varName = tree.name.toString();
-            if(syms.modules.containsKey(names.fromString(moduleName))) {
-                ClassSymbol c = syms.modules.get(names.fromString(moduleName));
-                moduleNames.put(varName, graphs.addModule(c, varName));
+            if(syms.capsules.containsKey(names.fromString(capsuleName))) {
+                ClassSymbol c = syms.capsules.get(names.fromString(capsuleName));
+                capsuleNames.put(varName, graphs.addCapsule(c, varName));
             } else {
                 systemConstantNames.add(varName);
             }
         }
     }
 
-    // processing module connection statements in the system def.
-    // Makes connection edges for each module connection described in
+    // processing capsule connection statements in the system def.
+    // Makes connection edges for each capsule connection described in
     // the statement.
     public void visitApply(JCMethodInvocation tree) {
-        Node module = moduleNames.get(tree.meth.toString());
+        Node capsule = capsuleNames.get(tree.meth.toString());
 
         for (int i = 0; i < tree.args.size(); i++) {
             JCExpression arg = tree.args.get(i);
-            String name = ((JCModuleDecl)module.sym.tree).params.get(i).name.toString();
+            String name = ((JCCapsuleDecl)capsule.sym.tree).params.get(i).name.toString();
 
             if (arg.getTag()==Tag.IDENT) { // arg could just be some literal; don't need to look at those
                 if (!arg.toString().equals("args") // ignore commandline params. This shouldn't be hardcoded like this
                     && !systemConstantNames.contains(arg.toString())) { // make sure the variable isn't a constant
-                    int arraySize = moduleNames.howMany(arg.toString());
-                    if (arraySize > 1) { // Connecting a module to an array of modules
+                    int arraySize = capsuleNames.howMany(arg.toString());
+                    if (arraySize > 1) { // Connecting a capsule to an array of capsules
                         for (int j = 0; j < arraySize; j++) {
-                            Node argArrayModule = moduleNames.get(arg.toString(), j);
-                            graphs.addConnectionEdge(module, argArrayModule, name, j);
+                            Node argArrayCapsule = capsuleNames.get(arg.toString(), j);
+                            graphs.addConnectionEdge(capsule, argArrayCapsule, name, j);
                         }
                     } else {
-                        // possibly connecting a module to another single module 
-                        Node argModule = moduleNames.get(arg.toString());
+                        // possibly connecting a capsule to another single capsule 
+                        Node argCapsule = capsuleNames.get(arg.toString());
 
-                        if (module != null)
-                            graphs.addConnectionEdge(module, argModule, name);
+                        if (capsule != null)
+                            graphs.addConnectionEdge(capsule, argCapsule, name);
                     }
                 }
             }
@@ -253,34 +253,34 @@ public class SystemGraphsBuilder extends TreeScanner {
 
     public void visitForeachLoop(JCEnhancedForLoop tree) {
         final String varName = tree.var.name.toString();
-        final String moduleArrayName = tree.expr.toString();
-        if (moduleNames.howMany(moduleArrayName) == 0) {
+        final String capsuleArrayName = tree.expr.toString();
+        if (capsuleNames.howMany(capsuleArrayName) == 0) {
             System.out.println("Illegal foreach loop argument in system decl");
             System.exit(1);
         }
         
-        for (int i = 0; i < moduleNames.howMany(moduleArrayName); i++) {
-            final Node module = moduleNames.get(moduleArrayName, i);
+        for (int i = 0; i < capsuleNames.howMany(capsuleArrayName); i++) {
+            final Node capsule = capsuleNames.get(capsuleArrayName, i);
             final int j = i;
             new TreeScanner() {
                 public void visitApply(JCMethodInvocation tree) {
                     String recipient = tree.meth.toString();
-                    Node module;
+                    Node capsule;
                     if (recipient.equals(varName))
-                        module = moduleNames.get(moduleArrayName, j);
+                        capsule = capsuleNames.get(capsuleArrayName, j);
                     else 
-                        module = moduleNames.get(recipient);
+                        capsule = capsuleNames.get(recipient);
                     for (int i = 0; i < tree.args.size(); i++) {
                         JCExpression arg = tree.args.get(i);
-                        String name = ((JCModuleDecl)module.sym.tree).params.get(i).name.toString();
+                        String name = ((JCCapsuleDecl)capsule.sym.tree).params.get(i).name.toString();
                         if (arg.getTag()==Tag.IDENT) {
-                            Node argModule;
+                            Node argCapsule;
                             if (arg.toString().equals(varName))
-                                argModule = moduleNames.get(moduleArrayName, j);
+                                argCapsule = capsuleNames.get(capsuleArrayName, j);
                             else
-                                argModule = moduleNames.get(arg.toString());
-                            if (module != null)
-                                graphs.addConnectionEdge(module, argModule, name);
+                                argCapsule = capsuleNames.get(arg.toString());
+                            if (capsule != null)
+                                graphs.addConnectionEdge(capsule, argCapsule, name);
                         }
                     }
                 }
@@ -288,7 +288,7 @@ public class SystemGraphsBuilder extends TreeScanner {
         }
     }
 
-    public void visitModuleArrayCall(JCModuleArrayCall tree) { 
+    public void visitCapsuleArrayCall(JCCapsuleArrayCall tree) { 
         if(tree.index.getTag()!=Tag.LITERAL) { 
             System.out.println("Illegal capsule array call index");
             System.exit(1);
@@ -296,27 +296,27 @@ public class SystemGraphsBuilder extends TreeScanner {
         JCLiteral indexExp = (JCLiteral)tree.index;
         int indexValue = (Integer)indexExp.value;
 
-        Node module = moduleNames.get(tree.name.toString(), indexValue);
+        Node capsule = capsuleNames.get(tree.name.toString(), indexValue);
 
         for (int i = 0; i < tree.arguments.size(); i++) {
             JCExpression arg = tree.arguments.get(i);
-            String name = ((JCModuleDecl)module.sym.tree).params.get(i).name.toString();
+            String name = ((JCCapsuleDecl)capsule.sym.tree).params.get(i).name.toString();
 
             if (arg.getTag()==Tag.IDENT) { // arg could just be some literal; don't need to look at those
                 if (!arg.toString().equals("args") // ignore commandline params. This shouldn't be hardcoded like this
                     && !systemConstantNames.contains(arg.toString())) { // make sure the variable isn't a constant
-                    int arraySize = moduleNames.howMany(arg.toString());
-                    if (arraySize > 1) { // Connecting a module to an array of modules
+                    int arraySize = capsuleNames.howMany(arg.toString());
+                    if (arraySize > 1) { // Connecting a capsule to an array of capsules
                         for (int j = 0; j < arraySize; j++) {
-                            Node argArrayModule = moduleNames.get(arg.toString(), j);
-                            graphs.addConnectionEdge(module, argArrayModule, name, j);
+                            Node argArrayCapsule = capsuleNames.get(arg.toString(), j);
+                            graphs.addConnectionEdge(capsule, argArrayCapsule, name, j);
                         }
                     } else {
-                        // possibly connecting a module to another single module 
-                        Node argModule = moduleNames.get(arg.toString());
+                        // possibly connecting a capsule to another single capsule 
+                        Node argCapsule = capsuleNames.get(arg.toString());
 
-                        if (module != null)
-                            graphs.addConnectionEdge(module, argModule, name);
+                        if (capsule != null)
+                            graphs.addConnectionEdge(capsule, argCapsule, name);
                     }
                 }
             }

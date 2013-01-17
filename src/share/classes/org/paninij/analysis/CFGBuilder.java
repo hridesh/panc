@@ -29,12 +29,12 @@ public class CFGBuilder {
 
     public static void setNames(Names n) { nodeBuilder.names = n; }
 
-    public static CFG buildCFG(JCModuleDecl module, JCMethodDecl m) {
+    public static CFG buildCFG(JCCapsuleDecl capsule, JCMethodDecl m) {
         if (m.sym.cfg != null) 
             return m.sym.cfg;
         else {
             CFG cfg = new CFG();
-            nodeBuilder.buildNodes(module, m, cfg);
+            nodeBuilder.buildNodes(capsule, m, cfg);
             nodeConnector.connectNodes(m, cfg);
             m.sym.cfg = cfg;
             return cfg;

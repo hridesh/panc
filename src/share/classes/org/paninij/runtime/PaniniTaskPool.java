@@ -14,7 +14,7 @@ final class PaniniTaskPool extends Thread {
 			initiated = true;
 		}
 		
-		static final synchronized PaniniTaskPool add(PaniniModuleTask t) {
+		static final synchronized PaniniTaskPool add(PaniniCapsuleTask t) {
 			// TODO: see load balancing
 			int currentPool = nextPool;
 			if(nextPool>=poolSize-1)
@@ -27,11 +27,11 @@ final class PaniniTaskPool extends Thread {
 			}
 			return _getInstance[currentPool];
 		}
-		static final synchronized void remove(PaniniTaskPool pool, PaniniModuleTask t) {
+		static final synchronized void remove(PaniniTaskPool pool, PaniniCapsuleTask t) {
 			pool._remove(t);
 		}
 		
-		private final synchronized void _add(PaniniModuleTask t){
+		private final synchronized void _add(PaniniCapsuleTask t){
 			if(_headNode==null){
 				_headNode = t;
 				t.next = t;
@@ -41,9 +41,9 @@ final class PaniniTaskPool extends Thread {
 			}
 		}
 		
-		private final synchronized void _remove(PaniniModuleTask t){
-			PaniniModuleTask current = _headNode;
-			PaniniModuleTask previous = _headNode;
+		private final synchronized void _remove(PaniniCapsuleTask t){
+			PaniniCapsuleTask current = _headNode;
+			PaniniCapsuleTask previous = _headNode;
 			while(current!=t){
 				previous = current;
 				current = current.next;
@@ -54,10 +54,10 @@ final class PaniniTaskPool extends Thread {
 				previous.next = current.next;
 		}
 		
-		private PaniniModuleTask _headNode = null; 
+		private PaniniCapsuleTask _headNode = null; 
 		public void run() {
-			// Implementation relies upon at least one module being present 
-			PaniniModuleTask current = _headNode;
+			// Implementation relies upon at least one capsule being present 
+			PaniniCapsuleTask current = _headNode;
 			while(true){
 				if(current.size!=0){
 					if(current.run() == true)

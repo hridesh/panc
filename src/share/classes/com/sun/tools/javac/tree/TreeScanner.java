@@ -70,11 +70,11 @@ public class TreeScanner extends Visitor {
         visitApply(tree);
     }
     
-    public void visitModuleArrayCall(JCModuleArrayCall tree) {
+    public void visitCapsuleArrayCall(JCCapsuleArrayCall tree) {
         scan(tree.arguments);
     }
     
-    public void visitModuleArray(JCModuleArray tree) {
+    public void visitCapsuleArray(JCCapsuleArray tree) {
         scan(tree.elemtype);
     }
     
@@ -86,7 +86,7 @@ public class TreeScanner extends Visitor {
     	scan(tree.defs);
     }
     
-    public void visitModuleDef(JCModuleDecl tree){
+    public void visitCapsuleDef(JCCapsuleDecl tree){
     	visitClassDef(tree);
     }
     

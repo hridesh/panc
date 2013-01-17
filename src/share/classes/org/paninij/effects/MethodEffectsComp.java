@@ -38,11 +38,11 @@ public class MethodEffectsComp extends JCTree.Visitor {
     private EffectSet visitResult;
     private CFGNode currentNode;
     private CFG cfg;
-    private Symbol moduleSym;
+    private Symbol capsuleSym;
 
-    public EffectSet computeEffectsForMethod(CFG cfg, Symbol moduleSym) {
+    public EffectSet computeEffectsForMethod(CFG cfg, Symbol capsuleSym) {
         this.cfg = cfg;
-        this.moduleSym = moduleSym;
+        this.capsuleSym = capsuleSym;
         nodesToProcess = new LinkedList<CFGNode>(cfg.nodesInOrder);
 
         while (!nodesToProcess.isEmpty()) {
@@ -78,10 +78,10 @@ public class MethodEffectsComp extends JCTree.Visitor {
     public void visitReturn(JCReturn tree)               { visitTree(tree); }
     public void visitApply(JCMethodInvocation tree) { 
         MethodSymbol sym = (MethodSymbol)TreeInfo.symbol(tree.meth);
-        if (moduleSym != null) { // otherwise this is in a library
-            if (sym.owner.isModule && sym.owner != moduleSym) {
+        if (capsuleSym != null) { // otherwise this is in a library
+            if (sym.owner.isCapsule && sym.owner != capsuleSym) {
                 visitResult.add(new OpenEffect(sym));
-            } else if (sym.ownerModule() != moduleSym) {
+            } else if (sym.ownerCapsule() != capsuleSym) {
 //                System.out.println("LIBRARY CALL: " + tree);
                 visitResult.add(new LibMethodEffect(sym));
             } else {

@@ -14,17 +14,15 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  * 
- * Contributor(s): Adriano
+ * Contributor(s): Eric Lin
  */
 
-package com.sun.source.tree;
+package org.paninij.runtime;
+import java.lang.annotation.*;
 
-/**
- * A tree for representing declaration of (C-like) arrays of modules
- * 
- * @author adriano
- *
- */
-public interface ModuleArrayTree extends ArrayTypeTree {
-	public int getAmount();
+@Documented
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface CapsuleKind {
+	String value();
 }

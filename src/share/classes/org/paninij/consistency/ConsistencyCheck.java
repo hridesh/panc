@@ -24,9 +24,9 @@ import java.util.LinkedHashSet;
 
 
 public class ConsistencyCheck {
-    HashMap<ClassSymbol, HashSet<ClassSymbol>> moduleEdges;
+    HashMap<ClassSymbol, HashSet<ClassSymbol>> capsuleEdges;
     HashSet<MethodSymbol> visitedMethods;
-    Node currentModule;
+    Node currentCapsule;
     SystemGraphs graphs;
     HashMap<JCMethodDecl, EffectSet> methodEffects = new HashMap<JCMethodDecl, EffectSet>();    
     MethodSymbol currentMethod;
@@ -36,19 +36,19 @@ public class ConsistencyCheck {
     }
     
     public void checkConsistency(SystemGraphs graphs,
-                                 Node module) {
+                                 Node capsule) {
         this.graphs = graphs;
-        currentModule = module;
+        currentCapsule = capsule;
 
-        for (Symbol s : module.sym.members_field.getElements()) {
+        for (Symbol s : capsule.sym.members_field.getElements()) {
             if (s instanceof MethodSymbol) {
                 MethodSymbol method = (MethodSymbol)s;
                 if (method.name.toString().contains("$Original") ||
                     (method.name.toString().equals("run") &&
-                     module.sym.hasRun)
+                     capsule.sym.hasRun)
                     ) {
                     currentMethod = method;
-                    checkMethodConsistency(module, method);
+                    checkMethodConsistency(capsule, method);
                 }
             }
         }
@@ -85,15 +85,15 @@ public class ConsistencyCheck {
         return null;
     }
 
-    private HashSet<NodeMethod> checkMethodConsistency(Node module,
+    private HashSet<NodeMethod> checkMethodConsistency(Node capsule,
                                                  MethodSymbol method) {
-        HashSet<NodeMethod> visitedModules = new HashSet<NodeMethod>();
-        visitedModules.add(new NodeMethod(module, method));
-        for (ProcEdge edge : edgesFromProc(module, method)) {
-            HashSet<NodeMethod> subVisitedModules = checkMethodConsistency(edge.to,
+        HashSet<NodeMethod> visitedCapsules = new HashSet<NodeMethod>();
+        visitedCapsules.add(new NodeMethod(capsule, method));
+        for (ProcEdge edge : edgesFromProc(capsule, method)) {
+            HashSet<NodeMethod> subVisitedCapsules = checkMethodConsistency(edge.to,
                                                                            edge.called);
-            HashSet<NodeMethod> intersect = nmsIntersect(visitedModules, 
-                                                         subVisitedModules);
+            HashSet<NodeMethod> intersect = nmsIntersect(visitedCapsules, 
+                                                         subVisitedCapsules);
 //            System.out.println(intersect);
             if (intersect != null) {
                 if (intersect.size() == 1) {
@@ -115,18 +115,18 @@ public class ConsistencyCheck {
                 }
             }
 
-            visitedModules.addAll(subVisitedModules);
+            visitedCapsules.addAll(subVisitedCapsules);
         }
 
-        return visitedModules;
+        return visitedCapsules;
     }
 
 
-    private LinkedHashSet<ProcEdge> edgesFromProc(Node module, 
+    private LinkedHashSet<ProcEdge> edgesFromProc(Node capsule, 
                                             MethodSymbol method) {
         LinkedHashSet<ProcEdge> edges = new LinkedHashSet<ProcEdge>();
         for (MethodSymbol.MethodInfo reachedProcInfo : method.reachedProcs) {
-            LinkedHashSet<ProcEdge> rpEdges = edgesForReachedProc(module, method,
+            LinkedHashSet<ProcEdge> rpEdges = edgesForReachedProc(capsule, method,
                                                                 reachedProcInfo);
             if (rpEdges==null) Assert.error(); // Because every reached proc has to have an edge reaching it, I think
             edges.addAll(rpEdges);
@@ -135,24 +135,24 @@ public class ConsistencyCheck {
     }
 
     // could be multiple edges because we have to estimate array call edges
-    private LinkedHashSet<ProcEdge> edgesForReachedProc(Node module, MethodSymbol method,
+    private LinkedHashSet<ProcEdge> edgesForReachedProc(Node capsule, MethodSymbol method,
                                                        MethodSymbol.MethodInfo reachedProc) {
         
         LinkedHashSet<ProcEdge> edges = new LinkedHashSet<ProcEdge>();
                 
-        for (ProcEdge edge : graphs.forwardProcEdges.get(module)) {
-            if (edge.varName.equals(reachedProc.module.name.toString())
+        for (ProcEdge edge : graphs.forwardProcEdges.get(capsule)) {
+            if (edge.varName.equals(reachedProc.capsule.name.toString())
                 && edge.caller == method 
                 && edge.called == reachedProc.method) 
                 edges.add(edge);
             else if (edge.arrayConnection()
-                     && edge.to.sym.type.toString().equals(reachedProc.module.type.toString())
+                     && edge.to.sym.type.toString().equals(reachedProc.capsule.type.toString())
                      && edge.caller == method
                      && edge.called == reachedProc.method)
                 edges.add(edge);
             else if (edge.arrayConnection()
-                     && reachedProc.module.type instanceof ArrayType) 
-                if (edge.to.sym.type.toString().equals(((ArrayType)reachedProc.module.type).elemtype.toString()))
+                     && reachedProc.capsule.type instanceof ArrayType) 
+                if (edge.to.sym.type.toString().equals(((ArrayType)reachedProc.capsule.type).elemtype.toString()))
                     edges.add(edge);
         }
         if (edges.size()==0) return null;

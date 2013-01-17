@@ -66,10 +66,10 @@ public abstract class Symbol implements Element {
 	// Panini code
 	public boolean isConfig;
 	public boolean isLibrary;
-	public boolean isModule;
+	public boolean isCapsule;
 	public boolean hasRun;
 
-    public List<Symbol> modules; // for System symbols
+    public List<Symbol> capsules; // for System symbols
     public SystemGraphs graphs; // for System symbols
     public JCTree tree;
 
@@ -122,10 +122,10 @@ public abstract class Symbol implements Element {
     public Symbol owner;
 
 // Panini code
-    public ClassSymbol ownerModule() {
+    public ClassSymbol ownerCapsule() {
         Symbol owner = this.owner;
         while (owner != null) {
-            if (owner.isModule) return (ClassSymbol)owner;
+            if (owner.isCapsule) return (ClassSymbol)owner;
             else owner = owner.owner;
         }
         return null;
@@ -1052,15 +1052,15 @@ public abstract class Symbol implements Element {
         public JCTree.JCMethodDecl tree;
         public static class MethodInfo {
             public MethodSymbol method;
-            public VarSymbol module;
+            public VarSymbol capsule;
             public MethodInfo(MethodSymbol method) { 
                 this.method = method;
-                this.module = null;
+                this.capsule = null;
             }
             public MethodInfo(MethodSymbol method,
-                VarSymbol module) { 
+                VarSymbol capsule_p) { 
                 this.method = method;
-                this.module = module;
+                this.capsule = capsule_p;
             }
 
         }

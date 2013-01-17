@@ -18,12 +18,12 @@
  */
 
 package org.paninij.runtime;
-public interface PaniniModule{
+public interface PaniniCapsule{
    
   	/**
-  	 * Causes the current module to sleep (temporarily cease execution) 
+  	 * Causes the current capsule to sleep (temporarily cease execution) 
   	 * for the specified number of milliseconds, subject to the precision 
-  	 * and accuracy of system timers and schedulers. The module does not 
+  	 * and accuracy of system timers and schedulers. The capsule does not 
   	 * lose ownership of any monitors.
   	 * 
   	 * @param millis the length of time to sleep in milliseconds
@@ -33,27 +33,27 @@ public interface PaniniModule{
   	public void yield (long millis);  	
   	
   	/**
-  	 * Causes the current module to complete its remaining work and then cease execution.
+  	 * Causes the current capsule to complete its remaining work and then cease execution.
   	 * 
-  	 * Shutdown is allowed only if the client module has permission to modify this module.
+  	 * Shutdown is allowed only if the client capsule has permission to modify this capsule.
   	 * 
-  	 * If there is a security manager, its checkAccess method is called with this module 
+  	 * If there is a security manager, its checkAccess method is called with this capsule 
   	 * as its argument. This may result in throwing a SecurityException.
   	 * 
-  	 * @throws SecurityException - if the client module is not allowed to access this module.
+  	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
   	 * 
   	 */
   	public void shutdown();
   	
   	/**
-  	 * Causes the current module to immediately cease execution. 
+  	 * Causes the current capsule to immediately cease execution. 
   	 * 
-  	 * Shutdown is allowed only if the client module has permission to modify this module.
+  	 * Shutdown is allowed only if the client capsule has permission to modify this capsule.
   	 * 
-  	 * If there is a security manager, its checkAccess method is called with this module 
+  	 * If there is a security manager, its checkAccess method is called with this capsule 
   	 * as its argument. This may result in throwing a SecurityException.
   	 * 
-  	 * @throws SecurityException - if the client module is not allowed to access this module.
+  	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
   	 * 
   	 */
   	public void exit ();

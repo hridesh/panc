@@ -2811,9 +2811,9 @@ public class Lower extends TreeTranslator {
     public void visitProcApply(JCProcInvocation tree){
     	Symbol meth = TreeInfo.symbol(tree.meth);
     	
-    	//check intra module calls
+    	//check intra capsule calls
     	if(meth.owner.toString().equals(outermostClassDef.sym.toString())&&
-        		outermostClassDef.sym.isModule&&
+        		outermostClassDef.sym.isCapsule&&
         		(currentMethodSym.flags()&PRIVATE)!=0&&
         		(meth.flags()&PUBLIC)!=0&&tree.meth.getTag()!=SELECT){
         	JCIdent id = (JCIdent)tree.meth;
@@ -2825,7 +2825,7 @@ public class Lower extends TreeTranslator {
     public void visitApply(JCMethodInvocation tree) {
         Symbol meth = TreeInfo.symbol(tree.meth);
         // Panini code
-        if(meth.owner.isModule){
+        if(meth.owner.isCapsule){
         	JCProcInvocation pi;
         	try{
         	pi = (JCProcInvocation) tree;

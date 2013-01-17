@@ -46,7 +46,7 @@ public class SystemEffectsComp {
         new Context.Key<SystemEffectsComp>();
 
     ReachedProcsComp reachedProcsComp;
-    public ModuleEffectsComp moduleEffectsComp;
+    public CapsuleEffectsComp capsuleEffectsComp;
     private EffectsSub effectsSub;
 
     public static SystemEffectsComp instance(Context context) {
@@ -59,26 +59,26 @@ public class SystemEffectsComp {
     protected SystemEffectsComp(Context context) {
         context.put(secKey, this);
         reachedProcsComp = ReachedProcsComp.instance(context);
-        moduleEffectsComp = ModuleEffectsComp.instance(context);
+        capsuleEffectsComp = CapsuleEffectsComp.instance(context);
         effectsSub = EffectsSub.instance(context);
     }
 
-    public void computeEffects(JCModuleDecl module) {
-        moduleDecls.add(module);
-        moduleEffectsComp.computeEffects(module);
+    public void computeEffects(JCCapsuleDecl capsule) {
+        capsuleDecls.add(capsule);
+        capsuleEffectsComp.computeEffects(capsule);
 
     }
 
-    LinkedList<JCModuleDecl> moduleDecls = new LinkedList<JCModuleDecl>();
+    LinkedList<JCCapsuleDecl> capsuleDecls = new LinkedList<JCCapsuleDecl>();
 
     public void substituteProcEffects(JCSystemDecl system) {
 
-        effectsSub.substituteProcEffects(moduleEffectsComp.methodEffects);
-           for (JCModuleDecl module : moduleDecls) 
-            reachedProcsComp.computeReachedProcs(module);
-           for (JCMethodDecl m : moduleEffectsComp.methodEffects.keySet()) {
+        effectsSub.substituteProcEffects(capsuleEffectsComp.methodEffects);
+           for (JCCapsuleDecl capsule : capsuleDecls) 
+            reachedProcsComp.computeReachedProcs(capsule);
+           for (JCMethodDecl m : capsuleEffectsComp.methodEffects.keySet()) {
                System.out.println(m);
-               System.out.println(moduleEffectsComp.methodEffects.get(m));
+               System.out.println(capsuleEffectsComp.methodEffects.get(m));
                }
 
     }

@@ -460,17 +460,17 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     }
     
     @Override
-	public JCTree visitModuleArrayCall(ModuleArrayCallTree node, P p) {
-		JCModuleArrayCall t = (JCModuleArrayCall) node;
+	public JCTree visitCapsuleArrayCall(CapsuleArrayCallTree node, P p) {
+		JCCapsuleArrayCall t = (JCCapsuleArrayCall) node;
 		List<JCExpression> args = copy(t.arguments, p);
-		return M.at(t.pos).ModuleArrayCall(t.name, t.index, t.indexed, args);
+		return M.at(t.pos).CapsuleArrayCall(t.name, t.index, t.indexed, args);
 	}
     
     @Override
-	public JCTree visitModuleArray(ModuleArrayTree node, P p) {
-    	JCModuleArray t = (JCModuleArray) node;
+	public JCTree visitCapsuleArray(CapsuleArrayTree node, P p) {
+    	JCCapsuleArray t = (JCCapsuleArray) node;
         JCExpression elemtype = copy(t.elemtype, p);
-        return M.at(t.pos).ModuleArray(elemtype, t.getAmount());
+        return M.at(t.pos).CapsuleArray(elemtype, t.getAmount());
 	}
     
 	public JCTree visitSystem(SystemTree node, P p) {
@@ -485,9 +485,9 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 	}
 
 	@Override
-	public JCTree visitModule(ModuleTree node, P p) {
-		JCModuleDecl t = (JCModuleDecl)node;
-		return M.at(t.pos).ModuleDef(t.getModifiers(),
+	public JCTree visitCapsule(CapsuleTree node, P p) {
+		JCCapsuleDecl t = (JCCapsuleDecl)node;
+		return M.at(t.pos).CapsuleDef(t.getModifiers(),
 				t.getName(), 
 				t.getParameters(), 
 				t.getImplementsClause(),

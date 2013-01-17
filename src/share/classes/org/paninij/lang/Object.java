@@ -21,7 +21,7 @@ package org.paninij.lang;
 /***
  * The class Object is the root of all class inheritance hierarchies. 
  * 
- * @param <OWNER> - The owner module of an instance of this class.
+ * @param <OWNER> - The owner capsule of an instance of this class.
  * @since 1.0
  */
 public class Object <OWNER> extends java.lang.Object {
