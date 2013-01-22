@@ -24,20 +24,20 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.tree.JCTree.*;
 
 public class CFGBuilder {
-    private static CFGNodeBuilder nodeBuilder = new CFGNodeBuilder();
-    private static CFGNodeConnector nodeConnector = new CFGNodeConnector();
+	private static CFGNodeBuilder nodeBuilder = new CFGNodeBuilder();
+	private static CFGNodeConnector nodeConnector = new CFGNodeConnector();
 
-    public static void setNames(Names n) { nodeBuilder.names = n; }
+	public static void setNames(Names n) { nodeBuilder.names = n; }
 
-    public static CFG buildCFG(JCCapsuleDecl capsule, JCMethodDecl m) {
-        if (m.sym.cfg != null) 
-            return m.sym.cfg;
-        else {
-            CFG cfg = new CFG();
-            nodeBuilder.buildNodes(capsule, m, cfg);
-            nodeConnector.connectNodes(m, cfg);
-            m.sym.cfg = cfg;
-            return cfg;
-        }
-    }
+	public static CFG buildCFG(JCCapsuleDecl capsule, JCMethodDecl m) {
+		if (m.sym.cfg != null) 
+			return m.sym.cfg;
+		else {
+			CFG cfg = new CFG();
+			nodeBuilder.buildNodes(capsule, m, cfg);
+			nodeConnector.connectNodes(m, cfg);
+			m.sym.cfg = cfg;
+			return cfg;
+		}
+	}
 }

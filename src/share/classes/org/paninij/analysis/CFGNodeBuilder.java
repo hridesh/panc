@@ -32,35 +32,39 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class CFGNodeBuilder extends TreeScanner {
-    private JCCapsuleDecl capsule;
-    private JCLibraryDecl library;
-    private JCMethodDecl m;
-    private CFG cfg;
-    private ArrayList<CFGNode> currentStartNodes, currentEndNodes, currentExcEndNodes;
+	private JCCapsuleDecl capsule;
+	private JCLibraryDecl library;
+	private JCMethodDecl m;
+	private CFG cfg;
+	private ArrayList<CFGNode> currentStartNodes, currentEndNodes,
+		currentExcEndNodes;
 	private final ArrayList<CFGNode> emptyList = new ArrayList<CFGNode>(0);
-    private boolean lhs = false;
-    public Names names;
-    public static class TodoItem {
-        public JCMethodInvocation tree;
-        public JCMethodDecl method;
-        public TodoItem(JCMethodInvocation tree, JCMethodDecl method) {
-            this.tree = tree;
-            this.method = method;
-        }
-    }
-    public static LinkedList<TodoItem> callGraphTodos = new LinkedList<TodoItem>();
+	private boolean lhs = false;
+	public Names names;
 
-    public void buildNodes(JCCapsuleDecl capsule, JCMethodDecl m, CFG cfg) {
-        this.capsule = capsule;
-        this.m = m;
-        this.cfg = cfg;
+	public static class TodoItem {
+		public JCMethodInvocation tree;
+		public JCMethodDecl method;
+		public TodoItem(JCMethodInvocation tree, JCMethodDecl method) {
+			this.tree = tree;
+			this.method = method;
+		}
+	}
 
-        scan(m.body);
+	public static LinkedList<TodoItem> callGraphTodos =
+		new LinkedList<TodoItem>();
 
-        cfg.startNode = cfg.nodeForTree(m.body);
-    }
+	public void buildNodes(JCCapsuleDecl capsule, JCMethodDecl m, CFG cfg) {
+		this.capsule = capsule;
+		this.m = m;
+		this.cfg = cfg;
 
-    public void visitTopLevel(JCCompilationUnit that)    { Assert.error(); }
+		scan(m.body);
+
+		cfg.startNode = cfg.nodeForTree(m.body);
+	}
+
+	public void visitTopLevel(JCCompilationUnit that)    { Assert.error(); }
 	public void visitImport(JCImport that)               { Assert.error(); }
 	public void visitProcDef(JCProcDecl that)            { Assert.error(); }
 	public void visitMethodDef(JCMethodDecl that)        { Assert.error(); }
@@ -69,7 +73,7 @@ public class CFGNodeBuilder extends TreeScanner {
 	public void visitAnnotation(JCAnnotation that)       { Assert.error(); }
 	public void visitModifiers(JCModifiers that)         { Assert.error(); }
 	public void visitErroneous(JCErroneous that)         { Assert.error(); }
-	
+
 	public void visitTypeIdent(JCPrimitiveTypeTree that) { Assert.error(); }
 	public void visitTypeArray(JCArrayTypeTree that)     { Assert.error(); }
 	public void visitTypeApply(JCTypeApply that)         { Assert.error(); }
@@ -85,28 +89,28 @@ public class CFGNodeBuilder extends TreeScanner {
 	public void visitContinue(JCContinue that) { singleton(that); }
 	public void visitLiteral(JCLiteral that) { singleton(that); }
 	public void visitIdent(JCIdent that) { singleton(that); }
-    
-    public void visitProcApply(JCProcInvocation tree) {
-        visitApply(tree);
-    }
-    
-    public void visitFree(JCFree tree){
-    	scan(tree.exp);
-    }
 
-    private void addNode(CFGNode node) {
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-        node.lhs = lhs;
+	public void visitProcApply(JCProcInvocation tree) {
+		visitApply(tree);
+	}
 
-        cfg.add(node);
-    }
+	public void visitFree(JCFree tree){
+		scan(tree.exp);
+	}
 
-    public void visitVarDef(JCVariableDecl tree) {
-        CFGNode node = new CFGNode(tree);
+	private void addNode(CFGNode node) {
+		node.startNodes = currentStartNodes;
+		node.endNodes = currentEndNodes;
+		node.excEndNodes = currentExcEndNodes;
+		node.lhs = lhs;
+
+		cfg.add(node);
+	}
+
+	public void visitVarDef(JCVariableDecl tree) {
+		CFGNode node = new CFGNode(tree);
 		JCExpression init = tree.init;
-		if(init != null) {
+		if (init != null) {
 			tree.init.accept(this);
 		} else {
 			currentStartNodes = new ArrayList<CFGNode>(1);
@@ -118,161 +122,178 @@ public class CFGNodeBuilder extends TreeScanner {
 
 		currentExcEndNodes = emptyList;
 
-        addNode(node);
-    }
+		addNode(node);
+	}
 
 
-    public void visitBlock(JCBlock tree) {
+	public void visitBlock(JCBlock tree) {
 		CFGNode node = new CFGNode(tree);
 		List<JCStatement> stats = tree.stats;
-        visitStatements(stats);
-		
-        addNode(node);
-    }
+		visitStatements(stats);
 
-    public void visitDoLoop(JCDoWhileLoop tree) {
+		addNode(node);
+	}
+
+	public void visitDoLoop(JCDoWhileLoop tree) {
 		CFGNode node = new CFGNode(tree);
 
-        ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
-        ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
+		ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
+		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
 		tree.body.accept(this);
 
-		ArrayList<CFGNode> bodyStartNodes = new ArrayList<CFGNode>(this.currentStartNodes);
-		ArrayList<CFGNode> bodyEndNodes = new ArrayList<CFGNode>(this.currentEndNodes);
-		ArrayList<CFGNode> bodyExcEndNodes = new ArrayList<CFGNode>(this.currentExcEndNodes);
-        ArrayList<CFGNode> breaks = getBreaks(bodyExcEndNodes);
-        bodyEndNodes.addAll(breaks); bodyExcEndNodes.removeAll(breaks);
+		ArrayList<CFGNode> bodyStartNodes =
+			new ArrayList<CFGNode>(this.currentStartNodes);
+		ArrayList<CFGNode> bodyEndNodes =
+			new ArrayList<CFGNode>(this.currentEndNodes);
+		ArrayList<CFGNode> bodyExcEndNodes =
+			new ArrayList<CFGNode>(this.currentExcEndNodes);
+		ArrayList<CFGNode> breaks =
+			getBreaks(bodyExcEndNodes);
+		bodyEndNodes.addAll(breaks);
+		bodyExcEndNodes.removeAll(breaks);
 
 		tree.cond.accept(this);
 		finalEndNodes.addAll(bodyEndNodes);
 		finalEndNodes.addAll(this.currentEndNodes);
-        finalExcEndNodes.addAll(bodyExcEndNodes);
-        finalExcEndNodes.addAll(this.currentExcEndNodes);
-        
+		finalExcEndNodes.addAll(bodyExcEndNodes);
+		finalExcEndNodes.addAll(this.currentExcEndNodes);
+
 		this.currentStartNodes = bodyStartNodes;
 		this.currentEndNodes = finalEndNodes;
 		this.currentExcEndNodes = finalExcEndNodes;
 
 
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitWhileLoop(JCWhileLoop tree) {
+	public void visitWhileLoop(JCWhileLoop tree) {
 		CFGNode node = new CFGNode(tree);
 
-        tree.cond.accept(this);
+		tree.cond.accept(this);
 		ArrayList<CFGNode> condStartNodes = this.currentStartNodes;
 		ArrayList<CFGNode> condEndNodes = this.currentEndNodes;
-        ArrayList<CFGNode> condExcEndNodes = this.currentExcEndNodes;
+		ArrayList<CFGNode> condExcEndNodes = this.currentExcEndNodes;
 
 		tree.body.accept(this);
-		ArrayList<CFGNode> bodyEndNodes = new ArrayList<CFGNode>(this.currentEndNodes);
-		ArrayList<CFGNode> bodyExcEndNodes = new ArrayList<CFGNode>(this.currentExcEndNodes);
+		ArrayList<CFGNode> bodyEndNodes =
+			new ArrayList<CFGNode>(this.currentEndNodes);
+		ArrayList<CFGNode> bodyExcEndNodes =
+			new ArrayList<CFGNode>(this.currentExcEndNodes);
 
-        ArrayList<CFGNode> breaks = getBreaks(bodyExcEndNodes);
-        bodyEndNodes.addAll(breaks); bodyExcEndNodes.removeAll(breaks);
+		ArrayList<CFGNode> breaks = getBreaks(bodyExcEndNodes);
+		bodyEndNodes.addAll(breaks);
+		bodyExcEndNodes.removeAll(breaks);
 
-        ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
-        ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
-        finalEndNodes.addAll(bodyEndNodes);
-        finalEndNodes.addAll(condEndNodes);
-        finalExcEndNodes.addAll(bodyExcEndNodes);
-        finalExcEndNodes.addAll(condExcEndNodes);
-        
+		ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
+		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
+		finalEndNodes.addAll(bodyEndNodes);
+		finalEndNodes.addAll(condEndNodes);
+		finalExcEndNodes.addAll(bodyExcEndNodes);
+		finalExcEndNodes.addAll(condExcEndNodes);
+
 
 		this.currentStartNodes = condStartNodes;
 		this.currentEndNodes = finalEndNodes;
 		this.currentExcEndNodes = finalExcEndNodes;
 
 
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitForLoop(JCForLoop tree) {
+	public void visitForLoop(JCForLoop tree) {
 		CFGNode node = new CFGNode(tree);
-		if(tree.init.isEmpty()) {
+		if (tree.init.isEmpty()) {
 			ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
 
-			if(tree.cond != null) {
+			if (tree.cond != null) {
 				tree.cond.accept(this);
 				finalEndNodes.addAll(currentEndNodes);
-	
+
 				ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 				tree.body.accept(this);
-	
-				ArrayList<CFGNode> currentEndNodes = new ArrayList<CFGNode>(this.currentEndNodes);
-				ArrayList<CFGNode> currentExcEndNodes = new ArrayList<CFGNode>(this.currentExcEndNodes);
-	
-                ArrayList<CFGNode> breaks = getBreaks(currentExcEndNodes);
-                currentEndNodes.addAll(breaks); currentExcEndNodes.removeAll(breaks);
-                
+
+				ArrayList<CFGNode> currentEndNodes =
+					new ArrayList<CFGNode>(this.currentEndNodes);
+				ArrayList<CFGNode> currentExcEndNodes =
+					new ArrayList<CFGNode>(this.currentExcEndNodes);
+
+				ArrayList<CFGNode> breaks = getBreaks(currentExcEndNodes);
+				currentEndNodes.addAll(breaks);
+				currentExcEndNodes.removeAll(breaks);
+
 				finalEndNodes.addAll(currentEndNodes);
-	
-				if(!tree.step.isEmpty()) {
-                    visitStatements(tree.step);
+
+				if (!tree.step.isEmpty()) {
+					visitStatements(tree.step);
 					finalEndNodes.addAll(this.currentEndNodes);
 				}
 
 				this.currentStartNodes = currentStartNodes;
 				this.currentEndNodes = finalEndNodes;
 				this.currentExcEndNodes = currentExcEndNodes;
-	
-                addNode(node);
+
+				addNode(node);
 			} else {/*tree.cond == null*/
 				tree.body.accept(this);
 
-				ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
-				ArrayList<CFGNode> currentEndNodes = new ArrayList<CFGNode>(this.currentEndNodes);
-				ArrayList<CFGNode> currentExcEndNodes = new ArrayList<CFGNode>(this.currentExcEndNodes);
-	
-                ArrayList<CFGNode> breaks = getBreaks(currentExcEndNodes);
-                currentEndNodes.addAll(breaks); currentExcEndNodes.removeAll(breaks);
-				finalEndNodes.addAll(currentEndNodes);
-	
-                if(!tree.step.isEmpty()) {
-                    visitStatements(tree.step);
-					finalEndNodes.addAll(this.currentEndNodes);
-				}
-				
-				this.currentStartNodes = currentStartNodes;
-				this.currentEndNodes = finalEndNodes;
-				this.currentExcEndNodes = currentExcEndNodes;
-	
-                addNode(node);
-			}
-		} else {/*!init.isEmpty()*/
-			ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
-
-
-            visitStatements(tree.init);
 			ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
+			ArrayList<CFGNode> currentEndNodes =
+				new ArrayList<CFGNode>(this.currentEndNodes);
+			ArrayList<CFGNode> currentExcEndNodes =
+				new ArrayList<CFGNode>(this.currentExcEndNodes);
 
-			if(tree.cond != null) {
-				tree.cond.accept(this);
-			}
-
-			tree.body.accept(this);
-			ArrayList<CFGNode> currentEndNodes = new ArrayList<CFGNode>(this.currentEndNodes);
-			ArrayList<CFGNode> currentExcEndNodes = new ArrayList<CFGNode>(this.currentExcEndNodes);
-            ArrayList<CFGNode> breaks = getBreaks(currentExcEndNodes);
-            currentEndNodes.addAll(breaks); currentExcEndNodes.removeAll(breaks);
+			ArrayList<CFGNode> breaks = getBreaks(currentExcEndNodes);
+			currentEndNodes.addAll(breaks);
+			currentExcEndNodes.removeAll(breaks);
 			finalEndNodes.addAll(currentEndNodes);
 
-			if(!tree.step.isEmpty()) {
-                visitStatements(tree.step);
-                finalEndNodes.addAll(this.currentEndNodes);
+			if (!tree.step.isEmpty()) {
+				visitStatements(tree.step);
+				finalEndNodes.addAll(this.currentEndNodes);
 			}
 
 			this.currentStartNodes = currentStartNodes;
 			this.currentEndNodes = finalEndNodes;
 			this.currentExcEndNodes = currentExcEndNodes;
 
-            addNode(node);
-		}
-    }
+			addNode(node);
+			}
+		} else {/*!init.isEmpty()*/
+			ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
 
-    public void visitForeachLoop(JCEnhancedForLoop tree) {
-        CFGNode node = new CFGNode(tree);
+
+			visitStatements(tree.init);
+			ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
+
+			if (tree.cond != null) {
+				tree.cond.accept(this);
+			}
+
+			tree.body.accept(this);
+			ArrayList<CFGNode> currentEndNodes =
+				new ArrayList<CFGNode>(this.currentEndNodes);
+			ArrayList<CFGNode> currentExcEndNodes =
+				new ArrayList<CFGNode>(this.currentExcEndNodes);
+			ArrayList<CFGNode> breaks = getBreaks(currentExcEndNodes);
+			currentEndNodes.addAll(breaks);
+			currentExcEndNodes.removeAll(breaks);
+			finalEndNodes.addAll(currentEndNodes);
+
+			if (!tree.step.isEmpty()) {
+				visitStatements(tree.step);
+				finalEndNodes.addAll(this.currentEndNodes);
+			}
+
+			this.currentStartNodes = currentStartNodes;
+			this.currentEndNodes = finalEndNodes;
+			this.currentExcEndNodes = currentExcEndNodes;
+
+			addNode(node);
+		}
+	}
+
+	public void visitForeachLoop(JCEnhancedForLoop tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.expr.accept(this);
 		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
@@ -281,50 +302,52 @@ public class CFGNodeBuilder extends TreeScanner {
 		this.currentStartNodes = currentStartNodes;
 		this.currentEndNodes = new ArrayList<CFGNode>(currentEndNodes);
 		this.currentEndNodes.add(node);
-		
-        addNode(node);
-    }
 
-    public void visitSwitch(JCSwitch tree) {
-        CFGNode node = new CFGNode(tree);
+		addNode(node);
+	}
+
+	public void visitSwitch(JCSwitch tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.selector.accept(this);
 		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 		ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
 		finalEndNodes.addAll(currentEndNodes);
 
-        visitStatements(tree.cases);
+		visitStatements(tree.cases);
 
 		this.currentStartNodes = currentStartNodes;
-		ArrayList<CFGNode> currentEndNodes = new ArrayList<CFGNode>(this.currentEndNodes);
-		ArrayList<CFGNode> currentExcEndNodes = new ArrayList<CFGNode>(this.currentExcEndNodes);
+		ArrayList<CFGNode> currentEndNodes =
+			new ArrayList<CFGNode>(this.currentEndNodes);
+		ArrayList<CFGNode> currentExcEndNodes =
+			new ArrayList<CFGNode>(this.currentExcEndNodes);
 
-        ArrayList<CFGNode> breaks = getBreaks(currentExcEndNodes);
-        currentEndNodes.addAll(breaks); currentExcEndNodes.removeAll(breaks);
-        finalEndNodes.addAll(currentEndNodes);
+		ArrayList<CFGNode> breaks = getBreaks(currentExcEndNodes);
+		currentEndNodes.addAll(breaks); currentExcEndNodes.removeAll(breaks);
+		finalEndNodes.addAll(currentEndNodes);
 
 		this.currentStartNodes = currentStartNodes;
-        this.currentEndNodes = finalEndNodes;
-        this.currentExcEndNodes = currentExcEndNodes;
-        
-        addNode(node);
-    }
+		this.currentEndNodes = finalEndNodes;
+		this.currentExcEndNodes = currentExcEndNodes;
 
-    public void visitCase(JCCase tree) {
-        CFGNode node = new CFGNode(tree);
+		addNode(node);
+	}
+
+	public void visitCase(JCCase tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.pat.accept(this);
 		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 
-        visitStatements(tree.stats);
+		visitStatements(tree.stats);
 
 		this.currentStartNodes = currentStartNodes;
 
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitSynchronized(JCSynchronized tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitSynchronized(JCSynchronized tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.lock.accept(this);
 		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
@@ -332,15 +355,15 @@ public class CFGNodeBuilder extends TreeScanner {
 		tree.body.accept(this);
 		this.currentStartNodes = currentStartNodes;
 
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitTry(JCTry tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitTry(JCTry tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.body.accept(this);
 		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
-		
+
 		ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
 		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
 		finalEndNodes.addAll(currentEndNodes);
@@ -348,23 +371,23 @@ public class CFGNodeBuilder extends TreeScanner {
 
 		List<JCCatch> catchers = tree.catchers;
 		JCBlock finalizer = tree.finalizer;
-		
-		if(catchers.isEmpty()) {
+
+		if (catchers.isEmpty()) {
 			finalizer.accept(this);
 
 			this.currentStartNodes = currentStartNodes;
 		} else {
-            visitParallelStatements(catchers);
+			visitParallelStatements(catchers);
 
-			if(finalizer != null) {
+			if (finalizer != null) {
 				finalizer.accept(this);
 				this.currentStartNodes = currentStartNodes;
 				/* TODO fix the logic for the try block, where the finalizer 
 				 * could go outside a loop. */
-                node.startNodes = currentStartNodes;
-                node.endNodes = currentEndNodes;
-                node.excEndNodes = currentExcEndNodes;
-            } else {
+				 node.startNodes = currentStartNodes;
+				 node.endNodes = currentEndNodes;
+				 node.excEndNodes = currentExcEndNodes;
+			} else {
 				this.currentStartNodes = currentStartNodes;
 				finalEndNodes.addAll(currentEndNodes);
 				currentEndNodes = finalEndNodes;
@@ -372,11 +395,11 @@ public class CFGNodeBuilder extends TreeScanner {
 				currentExcEndNodes = finalExcEndNodes;
 			}
 		}
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitCatch(JCCatch tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitCatch(JCCatch tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.param.accept(this);
 		ArrayList<CFGNode> finalStartNodes = currentStartNodes;
@@ -387,12 +410,12 @@ public class CFGNodeBuilder extends TreeScanner {
 
 		currentStartNodes = finalStartNodes;
 
-        // what about finalExcEndNodes?
-        addNode(node);
-    }
+		// what about finalExcEndNodes?
+		addNode(node);
+	}
 
-    public void visitConditional(JCConditional tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitConditional(JCConditional tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.cond.accept(this);
 		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
@@ -410,12 +433,12 @@ public class CFGNodeBuilder extends TreeScanner {
 		this.currentStartNodes = currentStartNodes;
 		this.currentEndNodes = finalEndNodes;
 		this.currentExcEndNodes = finalExcEndNodes;
-        
-        addNode(node);
-    }
 
-    public void visitIf(JCIf tree) {
-        CFGNode node = new CFGNode(tree);
+		addNode(node);
+	}
+
+	public void visitIf(JCIf tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.cond.accept(this);
 		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
@@ -428,7 +451,7 @@ public class CFGNodeBuilder extends TreeScanner {
 		finalEndNodes.addAll(this.currentEndNodes);
 		finalExcEndNodes.addAll(currentExcEndNodes);
 
-		if(tree.elsepart!=null) {
+		if (tree.elsepart!=null) {
 			tree.elsepart.accept(this);
 			finalEndNodes.addAll(this.currentEndNodes);
 			finalExcEndNodes.addAll(currentExcEndNodes);
@@ -440,24 +463,24 @@ public class CFGNodeBuilder extends TreeScanner {
 		this.currentEndNodes = finalEndNodes;
 		this.currentExcEndNodes = finalExcEndNodes;
 
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitExec(JCExpressionStatement tree) {
-        CFGNode node = new CFGNode(tree);
-
-		tree.expr.accept(this);
-        
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-        addNode(node);
-    }
-
-    public void visitReturn(JCReturn tree) {
+	public void visitExec(JCExpressionStatement tree) {
 		CFGNode node = new CFGNode(tree);
 
-		if(tree.expr != null) {
+		tree.expr.accept(this);
+
+		node.startNodes = currentStartNodes;
+		node.endNodes = currentEndNodes;
+		node.excEndNodes = currentExcEndNodes;
+		addNode(node);
+	}
+
+	public void visitReturn(JCReturn tree) {
+		CFGNode node = new CFGNode(tree);
+
+		if (tree.expr != null) {
 			tree.expr.accept(this);
 		}
 
@@ -465,153 +488,163 @@ public class CFGNodeBuilder extends TreeScanner {
 		currentExcEndNodes = new ArrayList<CFGNode>(1);
 		currentExcEndNodes.add(node);
 
-        addNode(node);
+		addNode(node);
+	}
 
-    }
-
-    public void visitThrow(JCThrow tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitThrow(JCThrow tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.expr.accept(this);
 		currentEndNodes = emptyList;
 		currentExcEndNodes = new ArrayList<CFGNode>(1);
 		currentExcEndNodes.add(node);
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitApply(JCMethodInvocation tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitApply(JCMethodInvocation tree) {
+		CFGNode node = new CFGNode(tree);
 
-        tree.meth.accept(this);
+		tree.meth.accept(this);
 
-        ArrayList<CFGNode> startNodes = currentStartNodes;
+		ArrayList<CFGNode> startNodes = currentStartNodes;
 
-		if(tree.args.isEmpty()) {
-//			currentStartNodes = new ArrayList<CFGNode>(1);
-//			currentStartNodes.add(node);
+		if (tree.args.isEmpty()) {
+			//			currentStartNodes = new ArrayList<CFGNode>(1);
+			//			currentStartNodes.add(node);
 		} else {
-            visitStatements(tree.args);
+			visitStatements(tree.args);
 		}
 
-        currentStartNodes = startNodes;
+		currentStartNodes = startNodes;
 
 		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 		currentExcEndNodes = emptyList;
-        addNode(node);
+		addNode(node);
 
 
-        // building call graph
-        if (capsule != null) { // is a capsule
-            if (TreeInfo.symbol(tree.meth) != null) {
-                MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
-                if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isCapsule) {
-                    VarSymbol capsuleField = capsuleField(tree);
-                    if (methSym.owner == capsule.sym) {
-                        String methodName = TreeInfo.symbol(tree.meth).toString();
-                        methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
-                        MethodSymbol origMethSym = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
-                        m.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
-                                                                            capsuleField));
-                        origMethSym.callerMethods.add(m.sym);
-                    } else
-                    {
-                        callGraphTodos.add(new TodoItem(tree, m));
-                    }
-                } else {
-                    m.sym.calledMethods.add(new MethodSymbol.MethodInfo(methSym));
-                    methSym.callerMethods.add(m.sym);
-                }
-            }
-        } else { // is a library
-            if (TreeInfo.symbol(tree.meth) != null) { 
-                MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
-                m.sym.calledMethods.add(new MethodSymbol.MethodInfo(methSym));
-                methSym.callerMethods.add(m.sym);
-            }
-        }
-    }
+		// building call graph
+		if (capsule != null) { // is a capsule
+			if (TreeInfo.symbol(tree.meth) != null) {
+				MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
+				if ((methSym.flags() & PRIVATE) == 0 &&
+						methSym.owner.isCapsule) {
+					VarSymbol capsuleField = capsuleField(tree);
+					if (methSym.owner == capsule.sym) {
+						String methodName =
+							TreeInfo.symbol(tree.meth).toString();
+						methodName = methodName.substring(0,
+								methodName.indexOf("(")) + "$Original";
+						MethodSymbol origMethSym =
+							(MethodSymbol)((ClassSymbol)methSym.owner).
+							members_field.lookup(names.fromString(methodName)).
+							sym;
+						m.sym.calledMethods.add(new MethodSymbol.MethodInfo(
+								origMethSym, capsuleField));
+						origMethSym.callerMethods.add(m.sym);
+					} else {
+						callGraphTodos.add(new TodoItem(tree, m));
+					}
+				} else {
+					m.sym.calledMethods.add(
+							new MethodSymbol.MethodInfo(methSym));
+					methSym.callerMethods.add(m.sym);
+				}
+			}
+		} else { // is a library
+			if (TreeInfo.symbol(tree.meth) != null) { 
+				MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
+				m.sym.calledMethods.add(new MethodSymbol.MethodInfo(methSym));
+				methSym.callerMethods.add(m.sym);
+			}
+		}
+	}
 
-    public static VarSymbol capsuleField(JCMethodInvocation tree) {
-        if (tree.meth instanceof JCFieldAccess) {
-            if (((JCFieldAccess)tree.meth).selected instanceof JCIdent) {
-                VarSymbol s = (VarSymbol)TreeInfo.symbol(((JCFieldAccess)tree.meth).selected);
-                if (!s.name.toString().equals("this")) {
-                    return (VarSymbol)TreeInfo.symbol(((JCFieldAccess)tree.meth).selected);
-                }
-            } else if (((JCFieldAccess)tree.meth).selected.getTag()==Tag.INDEXED) {
-                JCArrayAccess aa = (JCArrayAccess)((JCFieldAccess)tree.meth).selected;
-                return (VarSymbol)TreeInfo.symbol(aa.indexed);
-            }
-        }
-        return null;
-    }
+	public static VarSymbol capsuleField(JCMethodInvocation tree) {
+		if (tree.meth instanceof JCFieldAccess) {
+			if (((JCFieldAccess)tree.meth).selected instanceof JCIdent) {
+				VarSymbol s =
+					(VarSymbol)TreeInfo.symbol(
+							((JCFieldAccess)tree.meth).selected);
+				if (!s.name.toString().equals("this")) {
+					return (VarSymbol)TreeInfo.symbol(
+							((JCFieldAccess)tree.meth).selected);
+				}
+			} else if (((JCFieldAccess)tree.meth).selected.getTag() ==
+					Tag.INDEXED) {
+				JCArrayAccess aa =
+					(JCArrayAccess)((JCFieldAccess)tree.meth).selected;
+				return (VarSymbol)TreeInfo.symbol(aa.indexed);
+			}
+		}
+		return null;
+	}
 
-    public void visitNewClass(JCNewClass tree) {
-	CFGNode node = new CFGNode(tree);
+	public void visitNewClass(JCNewClass tree) {
+		CFGNode node = new CFGNode(tree);
 
-		if(tree.args.isEmpty()) {
+		if (tree.args.isEmpty()) {
 			currentStartNodes = new ArrayList<CFGNode>(1);
 			currentStartNodes.add(node);
 		} else {
-            visitStatements(tree.args);
+			visitStatements(tree.args);
 		}
-		
+
 		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 		currentExcEndNodes = emptyList;
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitNewArray(JCNewArray tree) {
-	CFGNode node = new CFGNode(tree);
+	public void visitNewArray(JCNewArray tree) {
+		CFGNode node = new CFGNode(tree);
 
 		List<JCExpression> dims = tree.dims;
 		List<JCExpression> elems = tree.elems;
 		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
 		ArrayList<CFGNode> finalStartNodes = null;
-		if(!dims.isEmpty()) {
-            visitStatements(dims);
+		if (!dims.isEmpty()) {
+			visitStatements(dims);
 			finalExcEndNodes.addAll(currentExcEndNodes);
 			finalStartNodes = currentStartNodes;
 		}
-		
-		if(elems != null){
-			if(!elems.isEmpty()) {
-                visitStatements(elems);
+
+		if (elems != null){
+			if (!elems.isEmpty()) {
+				visitStatements(elems);
 				finalExcEndNodes.addAll(currentExcEndNodes);
 			}
 		}
-		
+
 		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
 		currentExcEndNodes = finalExcEndNodes;
-		
-		if(finalStartNodes == null) {
+
+		if (finalStartNodes == null) {
 			currentStartNodes = new ArrayList<CFGNode>(1);
 			currentStartNodes.add(node);
 		} else { currentStartNodes = finalStartNodes; }
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-        addNode(node);
-    }
+		node.startNodes = currentStartNodes;
+		node.endNodes = currentEndNodes;
+		node.excEndNodes = currentExcEndNodes;
+		addNode(node);
+	}
 
-    public void visitParens(JCParens tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitParens(JCParens tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.expr.accept(this);
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitAssign(JCAssign tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitAssign(JCAssign tree) {
+		CFGNode node = new CFGNode(tree);
 
-        lhs = true;
+		lhs = true;
 		tree.lhs.accept(this);
-        lhs = false;
+		lhs = false;
 		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 		tree.rhs.accept(this);
 
@@ -619,15 +652,15 @@ public class CFGNodeBuilder extends TreeScanner {
 		currentEndNodes.add(node);
 
 		this.currentStartNodes = currentStartNodes;
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitAssignop(JCAssignOp tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitAssignop(JCAssignOp tree) {
+		CFGNode node = new CFGNode(tree);
 
-        lhs = true;
+		lhs = true;
 		tree.lhs.accept(this);
-        lhs = false;
+		lhs = false;
 		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 		tree.rhs.accept(this);
 
@@ -635,25 +668,25 @@ public class CFGNodeBuilder extends TreeScanner {
 		currentEndNodes.add(node);
 
 		this.currentStartNodes = currentStartNodes;
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitUnary(JCUnary tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitUnary(JCUnary tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.arg.accept(this);
 
 		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-        addNode(node);
-    }
+		node.startNodes = currentStartNodes;
+		node.endNodes = currentEndNodes;
+		node.excEndNodes = currentExcEndNodes;
+		addNode(node);
+	}
 
-    public void visitBinary(JCBinary tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitBinary(JCBinary tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.lhs.accept(this);
 		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
@@ -663,39 +696,39 @@ public class CFGNodeBuilder extends TreeScanner {
 		currentEndNodes.add(node);
 
 		this.currentStartNodes = currentStartNodes;
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitTypeCast(JCTypeCast tree) {
-        CFGNode node = new CFGNode(tree);
-
-		tree.expr.accept(this);
-
-		currentEndNodes = new ArrayList<CFGNode>(1);
-		currentEndNodes.add(node);
-
-        addNode(node);
-    }
-
-    public void visitTypeTest(JCInstanceOf tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitTypeCast(JCTypeCast tree) {
+		CFGNode node = new CFGNode(tree);
 
 		tree.expr.accept(this);
 
 		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitIndexed(JCArrayAccess tree) {
-        CFGNode node = new CFGNode(tree);
+	public void visitTypeTest(JCInstanceOf tree) {
+		CFGNode node = new CFGNode(tree);
+
+		tree.expr.accept(this);
+
+		currentEndNodes = new ArrayList<CFGNode>(1);
+		currentEndNodes.add(node);
+
+		addNode(node);
+	}
+
+	public void visitIndexed(JCArrayAccess tree) {
+		CFGNode node = new CFGNode(tree);
 		tree.indexed.accept(this);
-		
+
 		ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
 		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
 		finalExcEndNodes.addAll(currentExcEndNodes);
-		
+
 		tree.index.accept(this);
 
 		finalExcEndNodes.addAll(currentExcEndNodes);
@@ -706,27 +739,27 @@ public class CFGNodeBuilder extends TreeScanner {
 		currentExcEndNodes = finalExcEndNodes;
 		this.currentStartNodes = currentStartNodes;
 
-        addNode(node);
-    }
+		addNode(node);
+	}
 
-    public void visitSelect(JCFieldAccess tree) {
-        CFGNode node = new CFGNode(tree);
-        tree.selected.accept(this);
+	public void visitSelect(JCFieldAccess tree) {
+		CFGNode node = new CFGNode(tree);
+		tree.selected.accept(this);
 
 		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 
 		currentExcEndNodes = emptyList;
 
-        node.startNodes = currentStartNodes;
-        node.endNodes = currentEndNodes;
-        node.excEndNodes = currentExcEndNodes;
-        addNode(node);
-    }
+		node.startNodes = currentStartNodes;
+		node.endNodes = currentEndNodes;
+		node.excEndNodes = currentExcEndNodes;
+		addNode(node);
+	}
 
-    public void visitTree(JCTree tree) {
-        Assert.error();
-    }
+	public void visitTree(JCTree tree) {
+		Assert.error();
+	}
 
 	public void singleton(JCTree tree) {
 		CFGNode node = new CFGNode(tree);
@@ -734,18 +767,18 @@ public class CFGNodeBuilder extends TreeScanner {
 		currentEndNodes = new ArrayList<CFGNode>(1);
 		currentEndNodes.add(node);
 		currentExcEndNodes = emptyList;
-		
+
 		currentStartNodes = new ArrayList<CFGNode>(1);
 		currentStartNodes.add(node);
 
-        
-        addNode(node);
+
+		addNode(node);
 	}
 
-    private void visitStatements(List<? extends JCTree> statements) {
-        ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
-        JCTree head = statements.head;
-		if(head != null) {
+	private void visitStatements(List<? extends JCTree> statements) {
+		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
+		JCTree head = statements.head;
+		if (head != null) {
 			List<? extends JCTree> tail = statements.tail;
 			head.accept(this);
 			ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
@@ -754,7 +787,7 @@ public class CFGNodeBuilder extends TreeScanner {
 			finalExcEndNodes.addAll(currentExcEndNodes);
 
 			while(!tail.isEmpty()) {
-                head = tail.head;
+				head = tail.head;
 				head.accept(this);
 				finalExcEndNodes.addAll(this.currentExcEndNodes);
 				tail = tail.tail;
@@ -762,15 +795,14 @@ public class CFGNodeBuilder extends TreeScanner {
 			this.currentStartNodes = currentStartNodes;
 			finalExcEndNodes.addAll(this.currentExcEndNodes);
 			this.currentExcEndNodes = finalExcEndNodes;
-            
 		} //else throw new Error("block should not be empty");
-    }
+	}
 
-    public void visitParallelStatements(List<? extends JCTree> statements) {
+	public void visitParallelStatements(List<? extends JCTree> statements) {
 		ArrayList<CFGNode> finalExcEndNodes = new ArrayList<CFGNode>();
 		ArrayList<CFGNode> finalEndNodes = new ArrayList<CFGNode>();
-        JCTree head = statements.head;
-		if(head != null) {
+		JCTree head = statements.head;
+		if (head != null) {
 			List<? extends JCTree> tail = statements.tail;
 			head.accept(this);
 			ArrayList<CFGNode> currentStartNodes = this.currentStartNodes;
@@ -794,18 +826,18 @@ public class CFGNodeBuilder extends TreeScanner {
 		} //else throw new Error("block should not be empty");
 	}
 
-    public static ArrayList<CFGNode> getBreaks(ArrayList<CFGNode> nodes) {
-        ArrayList<CFGNode> results = new ArrayList<CFGNode>();
-        for(CFGNode node : nodes) {
-            if(node.tree instanceof JCBreak) {
-                JCBreak jcb = (JCBreak)node.tree;
+	public static ArrayList<CFGNode> getBreaks(ArrayList<CFGNode> nodes) {
+		ArrayList<CFGNode> results = new ArrayList<CFGNode>();
+		for (CFGNode node : nodes) {
+			if (node.tree instanceof JCBreak) {
+				JCBreak jcb = (JCBreak)node.tree;
 
-                if(jcb.label==null || jcb.target==null)
-                    results.add(node);
-                else 
-                    throw new Error("jcb.label="+jcb.label+"\tjcb.target="+jcb.target);
-            }
-        }
-        return results;
-    }
+				if (jcb.label==null || jcb.target==null)
+					results.add(node);
+				else 
+					throw new Error("jcb.label="+jcb.label+"\tjcb.target="+jcb.target);
+			}
+		}
+		return results;
+	}
 }
