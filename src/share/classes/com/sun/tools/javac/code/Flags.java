@@ -255,6 +255,7 @@ public class Flags {
     public static final long SERIAL = 1L<<43;
     public static final long ACTIVE = 1L<<44;
     public static final long TASK = 1L<<45;
+    public static final long MONITOR = 1L<<46;
     // end Panini code
 
     /** Modifier masks.

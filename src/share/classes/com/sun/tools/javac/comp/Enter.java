@@ -340,6 +340,9 @@ public class Enter extends JCTree.Visitor {
             c.members_field = new Scope(c);
             tree.packge.package_info = c;
         }
+    // Panini code
+        tree.defs = capsuleSplitter(tree.defs);
+    // end Panini code
         classEnter(tree.defs, topEnv);
         if (addEnv) {
             todo.append(topEnv);
@@ -347,6 +350,88 @@ public class Enter extends JCTree.Visitor {
         log.useSource(prev);
         result = null;
     }
+    
+    // Panini Code
+    private List<JCTree> capsuleSplitter(List<JCTree> defs){
+    	ListBuffer<JCTree> copiedDefs = new ListBuffer<JCTree>();
+    	TreeCopier<Void> tc = new TreeCopier<Void>(make);
+    	for(JCTree def : defs){
+    		if(def.getTag() == CAPSULEDEF){
+    			//check if module is interface? - signature
+//    			copiedDefs.add(def);//make changes to original capsule here; change module to interface here maybe
+    			JCCapsuleDecl capsule = (JCCapsuleDecl)def;
+    			ListBuffer<JCTree> interfaceBody = new ListBuffer<JCTree>();
+    			boolean hasRun = false;
+    			for(JCTree capsuleDefs : capsule.defs){
+    				if(capsuleDefs.getTag() == METHODDEF){
+    					if(((JCMethodDecl)capsuleDefs).name.toString().equals("run")&&((JCMethodDecl)capsuleDefs).params.isEmpty())
+    						hasRun = true;
+    					interfaceBody.add(make.MethodDef(tc.copy(((JCMethodDecl)capsuleDefs).mods), 
+    							((JCMethodDecl)capsuleDefs).name, 
+    							tc.copy(((JCMethodDecl)capsuleDefs).restype), 
+    							tc.copy(((JCMethodDecl)capsuleDefs).typarams), 
+    							tc.copy(((JCMethodDecl)capsuleDefs).params), 
+    							tc.copy(((JCMethodDecl)capsuleDefs).thrown), null, tc.copy(((JCMethodDecl)capsuleDefs).defaultValue)));
+    				}else if(capsuleDefs.getTag() == VARDEF){
+    					interfaceBody.add(make.VarDef(tc.copy(((JCVariableDecl)capsuleDefs).mods), ((JCVariableDecl)capsuleDefs).name, 
+    							tc.copy(((JCVariableDecl)capsuleDefs).vartype), null));
+    				}
+    			}
+    			JCExpression excp = make.Ident(names.fromString("java"));
+    	    	excp = make.Select(excp, names.fromString("lang"));
+    	    	excp = make.Select(excp, names.fromString("InterruptedException"));
+    			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString("start"), make.TypeIdent(TypeTags.VOID), 
+    					List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>nil(), null, null));
+    			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString("shutdown"), make.TypeIdent(TypeTags.VOID), 
+    					List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>nil(), null, null));
+    			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString("join"), make.TypeIdent(TypeTags.VOID), 
+    					List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>of(excp), null, null));
+    			JCCapsuleDecl copyCapsule = 
+    					make.CapsuleDef(make.Modifiers(INTERFACE), 
+    							capsule.name, tc.copy(capsule.params), tc.copy(capsule.implementing), interfaceBody.toList());
+//    			JCCapsuleDecl copyActive =
+//    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("ModuleKind")), 
+//            			List.<JCExpression>of(make.Literal("ACTIVE"))))), names.fromString(capsule.name + "$thread"), 
+//            			tc.copy(capsule.params), List.<JCExpression>nil(), tc.copy(capsule.defs));
+//    			copyActive.extending = make.Ident(capsule.name);
+//    			JCCapsuleDecl copyTask =
+//    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("ModuleKind")), 
+//            			List.<JCExpression>of(make.Literal("TASK"))))), names.fromString(capsule.name + "$task"), 
+//            			tc.copy(capsule.params), List.<JCExpression>nil(), tc.copy(capsule.defs));
+//    			copyTask.extending = make.Ident(capsule.name);
+//    			JCCapsuleDecl copySerial =
+//    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("ModuleKind")), 
+//            			List.<JCExpression>of(make.Literal("SERIAL"))))), names.fromString(capsule.name + "$serial"), 
+//            			tc.copy(capsule.params), List.<JCExpression>nil(), tc.copy(capsule.defs));
+//    			copySerial.extending = make.Ident(capsule.name);
+    			JCCapsuleDecl copyActive =
+    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
+            			List.<JCExpression>of(make.Literal("ACTIVE"))))), names.fromString(capsule.name + "$thread"), 
+            			tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
+    			JCCapsuleDecl copyTask =
+    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
+            			List.<JCExpression>of(make.Literal("TASK"))))), names.fromString(capsule.name + "$task"), 
+            			tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
+    			JCCapsuleDecl copySerial =
+    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
+            			List.<JCExpression>of(make.Literal("SERIAL"))))), names.fromString(capsule.name + "$serial"), 
+            			tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
+    			    			
+//    			capsule.mods = make.Modifiers(ABSTRACT);
+//    			copiedDefs.add(capsule);
+    			copiedDefs.add(copyCapsule);
+    			copiedDefs.add(copyActive);
+    			if(!hasRun){
+	    			copiedDefs.add(copyTask);
+	    			copiedDefs.add(copySerial);
+    			}
+    		}
+    		else
+    			copiedDefs.add(tc.copy(def));
+    	}
+    	return copiedDefs.toList();
+    }
+    // end Panini code
 
     @Override
     public void visitClassDef(JCClassDecl tree) {
@@ -775,7 +860,17 @@ public class Enter extends JCTree.Visitor {
 	    		fields = fields.tail;
 	    	}
 	    	tree.defs = definitions.toList();
-        }else c.hasRun = true;
+        }else {
+        	List<JCVariableDecl> fields = tree.getParameters();
+	    	while(fields.nonEmpty()){
+	    		tree.defs = tree.defs.prepend(make.VarDef(make.Modifiers(PUBLIC),
+	    				fields.head.name,
+	    				fields.head.vartype,
+	    				null));
+	    		fields = fields.tail;
+	    	}
+        	c.hasRun = true;
+        }
         c.isCapsule = true;
         tree.sym = c;
         syms.capsules.put(c.fullname, c);
