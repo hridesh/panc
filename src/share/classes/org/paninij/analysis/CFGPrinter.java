@@ -3,25 +3,25 @@ package org.paninij.analysis;
 import java.util.LinkedList;
 
 public class CFGPrinter {
-    public void printCFG(CFG cfg) {
-        LinkedList<CFGNode> nodesToProcess =
-        	new LinkedList<CFGNode>(cfg.nodesInOrder);
-        
-        System.out.println("digraph G {");
+	public void printCFG(CFG cfg) {
+		LinkedList<CFGNode> nodesToProcess =
+			new LinkedList<CFGNode>(cfg.nodesInOrder);
 
-        while (!nodesToProcess.isEmpty()) {
-            CFGNode node = nodesToProcess.poll();
-            
-            for (CFGNode next : node.predecessors) {
-                System.out.println(nodeText(node) + " -> " + nodeText(next));
-            }
-        }
+		System.out.println("digraph G {");
 
-        System.out.println("}");
-    }
+		while (!nodesToProcess.isEmpty()) {
+			CFGNode node = nodesToProcess.poll();
 
-    public String nodeText(CFGNode node) {
-        return "\"" + node.id + " " + node.tree.toString().replace("\"", "\\\"")
-        	+ (node.lhs ? ", lhs" : "") + "\"";
-    }
+			for (CFGNode next : node.predecessors) {
+				System.out.println(nodeText(node) + " -> " + nodeText(next));
+			}
+		}
+
+		System.out.println("}");
+	}
+
+	public String nodeText(CFGNode node) {
+		return "\"" + node.id + " " + node.tree.toString().replace("\"", "\\\"")
+			+ (node.lhs ? ", lhs" : "") + "\"";
+	}
 }
