@@ -48,7 +48,7 @@ capsule Barber(WaitingRoom r, boolean isSleeping) {
           
     void work(Customer c){
         System.out.println("Barber working on customer " + c.getID());  
-        yield();
+        yield(1000);
     }
           
     BooleanC isSleeping(){

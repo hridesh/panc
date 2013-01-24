@@ -226,13 +226,7 @@ public class Tokens {
         GTGTEQ(">>="),
         GTGTGTEQ(">>>="),
         MONKEYS_AT("@"),
-        CUSTOM,
-        // Panini code
-        TASK("pantask"),
-        SEQUENTIAL("sequential"),
-        MONITOR("monitor")
-        //end Panini code
-        ;
+        CUSTOM;
 
         public final String name;
         public final Tag tag;

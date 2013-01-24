@@ -389,21 +389,6 @@ public class Enter extends JCTree.Visitor {
     			JCCapsuleDecl copyCapsule = 
     					make.CapsuleDef(make.Modifiers(INTERFACE), 
     							capsule.name, tc.copy(capsule.params), tc.copy(capsule.implementing), interfaceBody.toList());
-//    			JCCapsuleDecl copyActive =
-//    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("ModuleKind")), 
-//            			List.<JCExpression>of(make.Literal("ACTIVE"))))), names.fromString(capsule.name + "$thread"), 
-//            			tc.copy(capsule.params), List.<JCExpression>nil(), tc.copy(capsule.defs));
-//    			copyActive.extending = make.Ident(capsule.name);
-//    			JCCapsuleDecl copyTask =
-//    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("ModuleKind")), 
-//            			List.<JCExpression>of(make.Literal("TASK"))))), names.fromString(capsule.name + "$task"), 
-//            			tc.copy(capsule.params), List.<JCExpression>nil(), tc.copy(capsule.defs));
-//    			copyTask.extending = make.Ident(capsule.name);
-//    			JCCapsuleDecl copySerial =
-//    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("ModuleKind")), 
-//            			List.<JCExpression>of(make.Literal("SERIAL"))))), names.fromString(capsule.name + "$serial"), 
-//            			tc.copy(capsule.params), List.<JCExpression>nil(), tc.copy(capsule.defs));
-//    			copySerial.extending = make.Ident(capsule.name);
     			JCCapsuleDecl copyActive =
     					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
             			List.<JCExpression>of(make.Literal("ACTIVE"))))), names.fromString(capsule.name + "$thread"), 
@@ -416,14 +401,16 @@ public class Enter extends JCTree.Visitor {
     					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
             			List.<JCExpression>of(make.Literal("SERIAL"))))), names.fromString(capsule.name + "$serial"), 
             			tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-    			    			
-//    			capsule.mods = make.Modifiers(ABSTRACT);
-//    			copiedDefs.add(capsule);
+    			JCCapsuleDecl copyMonitor =
+    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
+            			List.<JCExpression>of(make.Literal("MONITOR"))))), names.fromString(capsule.name + "$monitor"), 
+            			tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
     			copiedDefs.add(copyCapsule);
     			copiedDefs.add(copyActive);
     			if(!hasRun){
 	    			copiedDefs.add(copyTask);
 	    			copiedDefs.add(copySerial);
+	    			copiedDefs.add(copyMonitor);
     			}
     		}
     		else
@@ -842,14 +829,13 @@ public class Enter extends JCTree.Visitor {
 	        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
 	        if((c.flags_field & SERIAL)!=0){
 	        	definitions = translateSerialCapsule(tree, c, localEnv);
-	        }
-	        else if((c.flags_field & ACTIVE)!=0){
+	        }else if((c.flags_field & ACTIVE)!=0){
 	        	definitions = translateActiveCapsule(tree, c, localEnv);
-	        }
-	        else if((c.flags_field & TASK)!=0){
+	        }else if((c.flags_field & TASK)!=0){
 	        	definitions = translateTaskCapsule(tree, c, localEnv);
-	        }
-	        else //default action
+	        }else if((c.flags_field & MONITOR)!=0){
+	        	definitions = translateMonitorCapsule(tree, c, localEnv);
+	        }else //default action
 	        	definitions = translateActiveCapsule(tree, c, localEnv);
 	    	List<JCVariableDecl> fields = tree.getParameters();
 	    	while(fields.nonEmpty()){
@@ -898,7 +884,51 @@ public class Enter extends JCTree.Visitor {
     
     public ListBuffer<JCTree> translateSerialCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
     	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_SEQUENTIAL));
-        boolean hasRun = false;
+        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+        for(int i=0;i<tree.defs.length();i++){
+        	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
+        		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
+        		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
+        			log.error(tree.pos(), "serialize.active.capsules");
+        		}else if((mdecl.mods.flags & PRIVATE) ==0
+        					&&(mdecl.mods.flags & PROTECTED) ==0){
+                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC),
+                    		mdecl.name,
+                    		mdecl.restype,
+                    		mdecl.typarams,
+                    		mdecl.params,
+                    		mdecl.thrown,
+                    		mdecl.body,
+                    		null
+                    		);
+                    p.switchToMethod();
+                    tree.publicMethods = tree.publicMethods.append(p);
+        		}else 
+        			definitions.add(mdecl);
+        	}
+        	else if(tree.defs.get(i).getTag() == INCLUDE){
+    		}else if(tree.defs.get(i).getTag() == VARDEF){
+    			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
+    			if(mdecl.mods.flags!=0)
+    				log.error(mdecl.pos(), "illegal.state.modifiers");
+    			if(mdecl.init ==null)
+    				log.warning(mdecl.pos(), "state.not.initialized");
+    			mdecl.mods.flags |=PRIVATE;
+    			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, mdecl.vartype, mdecl.init);
+    			state.switchToVar();
+    			definitions.add(state);
+    		}else definitions.add(tree.defs.get(i));
+        }
+        c.hasRun = false;
+        for(JCMethodDecl d : tree.publicMethods){
+    		definitions.add(d);
+    	}
+        tree.needsDefaultRun = false;
+        return definitions;
+    }
+    
+    public ListBuffer<JCTree> translateMonitorCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
+    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_SEQUENTIAL));
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
         for(int i=0;i<tree.defs.length();i++){
         	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
@@ -1304,6 +1334,8 @@ public class Enter extends JCTree.Visitor {
 			return c.flags_field |= ACTIVE;
 		else if (kind.equals("TASK"))
 			return c.flags_field |= TASK;
+		else if (kind.equals("MONITOR"))
+			return c.flags_field |= MONITOR;
 		else
 			log.error(annotation.pos(), "annotation.value.not.allowable.type");
 		return c.flags_field;

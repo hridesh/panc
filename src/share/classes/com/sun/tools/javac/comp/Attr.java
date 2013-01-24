@@ -1044,11 +1044,11 @@ public class Attr extends JCTree.Visitor {
     	JCCapsuleArray mat = (JCCapsuleArray)vdecl.vartype;
     	String initName = mat.elemtype.toString()+"$thread";
     	if((vdecl.mods.flags & Flags.TASK) !=0)
-    		initName = vdecl.vartype.toString()+"$task";
+    		initName = mat.elemtype.toString()+"$task";
     	else if((vdecl.mods.flags & Flags.SERIAL) !=0)
-    		initName = vdecl.vartype.toString()+"$serial";
+    		initName = mat.elemtype.toString()+"$serial";
     	else if((vdecl.mods.flags & Flags.MONITOR) !=0)
-    		initName = vdecl.vartype.toString()+"$monitor";
+    		initName = mat.elemtype.toString()+"$monitor";
     	ClassSymbol c = syms.capsules.get(names.fromString(initName));
     	if(c==null){
     		log.error(vdecl.pos(), "capsule.array.type.error", mat.elemtype);

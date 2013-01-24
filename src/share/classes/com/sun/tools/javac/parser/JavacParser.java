@@ -1967,10 +1967,30 @@ public class JavacParser implements Parser {
         }
     }
     // Panini code
+    List<JCStatement> parseModdedVariableDecl(JCModifiers capsuleMod){
+		nextToken();
+		JCExpression t = term(EXPR | TYPE);
+		int pos = token.pos;
+		F.at(pos);
+		ListBuffer<JCStatement> stats =
+				systemVariableDeclarators(capsuleMod, t, new ListBuffer<JCStatement>());
+		// A "LocalVariableDeclarationStatement" subsumes the terminating semicolon
+		storeEnd(stats.elems.last(), token.endPos);
+		accept(SEMI);
+		return stats.toList();
+    }
+    
     @SuppressWarnings("fallthrough")
     List<JCStatement> systemStatement(){
-    	if(token.kind == TASK || token.kind == SEQUENTIAL);
-    	else if(token.kind != FOR &&((token.kind.tag != Token.Tag.NAMED && (token.kind != RBRACE))
+    	if(token.kind == IDENTIFIER){
+    		if(token.name().toString().equals("task"))
+    			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.TASK));
+    		else if(token.name().toString().equals("sequential"))
+    			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.SERIAL));
+    		else if(token.name().toString().equals("monitor"))
+    			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.MONITOR));
+    	}
+    	if(token.kind != FOR &&((token.kind.tag != Token.Tag.NAMED && (token.kind != RBRACE))
     			|| token.kind == ASSERT || token.kind == ENUM 
     			|| token.kind == SUPER	|| token.kind == THIS)){
     		reportSyntaxError(token.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.system");
@@ -1979,26 +1999,6 @@ public class JavacParser implements Parser {
     	//todo: skip to anchor on error(?)
     	int pos = token.pos;
     	switch (token.kind) {
-    	case TASK: case MONITOR: case SEQUENTIAL:{
-    		Token prevToken = token;
-    		nextToken();
-    		JCExpression t = term(EXPR | TYPE);
-    		pos = token.pos;
-    		JCModifiers mods = F.at(Position.NOPOS).Modifiers(0);
-    		if(prevToken.kind == TASK)
-    			mods = F.at(Position.NOPOS).Modifiers(Flags.TASK);
-    		else if(prevToken.kind == MONITOR)
-    			mods = F.at(Position.NOPOS).Modifiers(Flags.MONITOR);
-    		else if(prevToken.kind == SEQUENTIAL)
-    			mods = F.at(Position.NOPOS).Modifiers(Flags.SERIAL);
-    		F.at(pos);
-    		ListBuffer<JCStatement> stats =
-    				systemVariableDeclarators(mods, t, new ListBuffer<JCStatement>());
-    		// A "LocalVariableDeclarationStatement" subsumes the terminating semicolon
-    		storeEnd(stats.elems.last(), token.endPos);
-    		accept(SEMI);
-    		return stats.toList();
-    	}
     	case RBRACE: case CASE: case DEFAULT: case EOF:
     		return List.nil();
     	case LBRACE: case IF: case FOR: case WHILE: case DO: case TRY:
@@ -2520,9 +2520,6 @@ public class JavacParser implements Parser {
             case STRICTFP    : flag = Flags.STRICTFP; break;
             case MONKEYS_AT  : flag = Flags.ANNOTATION; break;
             case ERROR       : flag = 0; nextToken(); break;
-            case TASK       : flag = Flags.TASK;nextToken(); break;
-            case SEQUENTIAL       : flag = Flags.SERIAL;nextToken(); break;
-            case MONITOR       : flag = Flags.MONITOR;nextToken(); break;
             default: break loop;
             }
             if ((flags & flag) != 0) error(token.pos, "repeated.modifier");
