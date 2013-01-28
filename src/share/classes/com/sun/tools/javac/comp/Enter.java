@@ -356,9 +356,7 @@ public class Enter extends JCTree.Visitor {
     	ListBuffer<JCTree> copiedDefs = new ListBuffer<JCTree>();
     	TreeCopier<Void> tc = new TreeCopier<Void>(make);
     	for(JCTree def : defs){
-    		if(def.getTag() == CAPSULEDEF){
-    			//check if module is interface? - signature
-//    			copiedDefs.add(def);//make changes to original capsule here; change module to interface here maybe
+    		if(def.getTag() == CAPSULEDEF && (((JCCapsuleDecl)def).mods.flags & INTERFACE)==0 ){
     			JCCapsuleDecl capsule = (JCCapsuleDecl)def;
     			ListBuffer<JCTree> interfaceBody = new ListBuffer<JCTree>();
     			boolean hasRun = false;
