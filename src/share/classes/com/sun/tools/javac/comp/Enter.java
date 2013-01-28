@@ -366,6 +366,7 @@ public class Enter extends JCTree.Visitor {
     				if(capsuleDefs.getTag() == METHODDEF){
     					if(((JCMethodDecl)capsuleDefs).name.toString().equals("run")&&((JCMethodDecl)capsuleDefs).params.isEmpty())
     						hasRun = true;
+    					if((((JCMethodDecl)capsuleDefs).mods.flags & PRIVATE)==0)
     					interfaceBody.add(make.MethodDef(tc.copy(((JCMethodDecl)capsuleDefs).mods), 
     							((JCMethodDecl)capsuleDefs).name, 
     							tc.copy(((JCMethodDecl)capsuleDefs).restype), 
