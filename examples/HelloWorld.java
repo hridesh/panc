@@ -18,14 +18,14 @@
  */
 
 capsule Console () {
-void printGreeting() { System.out.println("Hello World!"); }
+	void printGreeting() { System.out.println("Hello World!"); }
 }
 
 capsule Greeter (Console c) {
- void run(){ c.printGreeting(); }
+	void run(){ c.printGreeting(); }
 }
 
 system HelloWorld {
- Console c; Greeter g;
- g(c);
+	Console c; Greeter g;
+	g(c);
 }
