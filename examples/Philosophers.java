@@ -17,32 +17,24 @@
  * Contributor(s): 
  */
 
-library bool {
-	interface BooleanI {
-		public boolean value();
-	}
+interface BooleanI {
+	public boolean value();
+}
 
-	class BooleanC implements BooleanI {
-		private boolean v;
-
-		public BooleanC(boolean v) { this.v = v; }
-
-		public boolean value() { return v; }
-	}
+class BooleanC implements BooleanI {
+	private boolean v;
+	public BooleanC(boolean v) { this.v = v; }
+	public boolean value() { return v; }
 }
 
 capsule Fork () {
-	include bool;
-
 	boolean isTaken = false;
-
 	BooleanC take() {
 		if (isTaken) return new BooleanC(false);
 		else {
 			isTaken = true; return new BooleanC(true);
 		}
 	}
-
 	void giveBack() { 
 		isTaken = false;
 	}
@@ -50,20 +42,16 @@ capsule Fork () {
 
 
 capsule Philosopher (Fork left, Fork right, String name) {
-	include bool;
-
 	void run() {
 		for (int count=3; count>0; count--) {
 			think();
 			tryEat();
 		}
 	}
-
 	void think() {
 		System.out.println(name + " is thinking");
 		yield(1000);
 	}
-
 	void tryEat() {
 		System.out.println(name + " is hungry so they are trying to take fork 1.");
 		boolean ate = false;
