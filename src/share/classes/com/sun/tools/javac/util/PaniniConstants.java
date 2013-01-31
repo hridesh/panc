@@ -38,11 +38,15 @@ public class PaniniConstants {
 	public final static String DUCK_INTERFACE_NAME = "Panini$Duck";
 	public final static String PANINI_FINISH = "panini$finish";
 	public final static String PANINI_MESSAGE = "panini$message";
+	public final static String PANINI_DUCK_GET = "panini$get";
 	public final static String PANINI_GET_NEXT_DUCK = "get$Next$Duck";
 	public final static String PANINI_TERMINATE = "panini$terminate";
 	public final static String PANINI_METHOD_CONST = "panini$methodConst$";
 	public final static String PANINI_MESSAGE_ID = "panini$message$id";
 	public final static String PANINI_DUCK_TYPE = "panini$duck$future";
+
+	public final static String PANINI_DUCK_HASHCODE = "hashCode";
+	public final static String PANINI_DUCK_EQUALS = "equals";
 
 	// To implement the flag in the duck.
 	public final static String REDEEMED = "redeemed";

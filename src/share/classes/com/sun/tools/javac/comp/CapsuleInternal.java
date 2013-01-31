@@ -450,6 +450,8 @@ public class CapsuleInternal extends Internal {
 
 		JCMethodDecl messageIdMethod = createPaniniMessageID();
 		JCMethodDecl finishMethod = createPaniniFinishMethod(rawClassName);
+		JCMethodDecl hashCode = createHashCode();
+		JCMethodDecl equals = createEquals();
 
 		JCExpression extending;
 		List<JCExpression> implement;
@@ -506,7 +508,7 @@ public class CapsuleInternal extends Internal {
 				names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$"
 						+ rawClassName + "$" + classNameSuffix),
 						List.<JCTypeParameter> nil(), extending, implement,
-						defs(fieldWrapped, fieldMessageId, fieldRedeemed, finishMethod, messageIdMethod).appendList(variableFields)
+						defs(fieldWrapped, fieldMessageId, fieldRedeemed, finishMethod, messageIdMethod, hashCode, equals).appendList(variableFields)
 						.appendList(constructors).appendList(wrappedMethods).toList());
 
 		return wrappedClass;
@@ -532,6 +534,26 @@ public class CapsuleInternal extends Internal {
 				names.fromString(PaniniConstants.PANINI_MESSAGE_ID),
 				make.TypeIdent(TypeTags.INT),
 				body(returnt(select(thist(), "messageId"))));
+	}
+
+	private JCMethodDecl createHashCode() {
+		return method(mods(PUBLIC | FINAL),
+				names.fromString(PaniniConstants.PANINI_DUCK_HASHCODE),
+				make.TypeIdent(TypeTags.INT),
+				body(returnt(apply(apply(thist(),PaniniConstants.PANINI_DUCK_GET, new ListBuffer<JCExpression>()), PaniniConstants.PANINI_DUCK_HASHCODE, new ListBuffer<JCExpression>()))));
+	}
+
+	private JCMethodDecl createEquals() {
+		ListBuffer<JCVariableDecl> equalsParams = new ListBuffer<JCVariableDecl>();
+		equalsParams.add(var(mods(0), "o", "Object"));		
+		return method(mods(PUBLIC | FINAL),
+				names.fromString(PaniniConstants.PANINI_DUCK_EQUALS),
+				make.TypeIdent(TypeTags.BOOLEAN),
+				equalsParams,
+    body(ifs(
+				isNull(apply(thist(),PaniniConstants.PANINI_DUCK_GET, new ListBuffer<JCExpression>())),
+				returnt(isNull("o")),
+				returnt(apply(select(thist(),"wrapped"), PaniniConstants.PANINI_DUCK_EQUALS, args(id("o")))))));
 	}
 
 	private JCMethodDecl createDuckConstructor(ListBuffer<JCExpression> inits) {
