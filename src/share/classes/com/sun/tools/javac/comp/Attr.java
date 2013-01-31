@@ -984,7 +984,7 @@ public class Attr extends JCTree.Visitor {
     	ClassSymbol d = syms.capsules.get(variables.get(names.fromString(loop.expr.toString())));
     	if(d==null)
     		log.error(loop.expr.pos(), "symbol.not.found");
-    	variables.put(loop.var.name, names.fromString(d.toString()));
+    	variables.put(loop.var.name, names.fromString(d.name.toString()));
     	//					if(!types.isSameType(c.type, d.type)){
     	//						log.error(loop.var.pos(),"expected", d.type);
     	//					}// this won't work any more

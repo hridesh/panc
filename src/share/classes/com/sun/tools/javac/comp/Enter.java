@@ -858,7 +858,7 @@ public class Enter extends JCTree.Visitor {
         }
         c.isCapsule = true;
         tree.sym = c;
-        syms.capsules.put(c.fullname, c);
+        syms.capsules.put(c.name, c);
         syms.capsuleparams.put(c, tree.params);
         result = c.type;
         classEnter(tree.defs, localEnv);
