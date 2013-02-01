@@ -32,15 +32,12 @@ import java.util.ArrayList;
  * For example, the head tree of and if statement is
  * the condition expression, because it is first executed. */
 public class CFGHeadTailNodesBuilder extends TreeScanner {
-	private JCMethodDecl m;
 	private ArrayList<JCTree> currentStartNodes, currentEndNodes,
 		currentExitNodes;
 
 	public static ArrayList<JCTree> emptyList = new ArrayList<JCTree>(0);
 
 	public void buildNodes(JCMethodDecl m) {
-		this.m = m;
-
 		scan(m.body);
 	}
 

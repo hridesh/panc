@@ -19,6 +19,8 @@
 
 package org.paninij.analysis;
 
+import java.util.ArrayList;
+
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
 
@@ -362,8 +364,23 @@ public class ASTNodeConnector extends TreeScanner {
 		return last;
 	}
 
+	// This method is called to lazy init the successors and predecessors or a
+	// JCTree node.
+	private static void init(JCTree tree) {
+		if (tree.predecessors == null) {
+			tree.predecessors = new ArrayList<JCTree>();
+		}
+
+		if (tree.successors == null) {
+			tree.successors = new ArrayList<JCTree>();
+		}
+	}
+
 	private static void connectToEndNodesOf(JCTree start, JCTree end) {
+		init(end);
+
 		for (JCTree endNode : start.endNodes) {
+			init(endNode);
 			endNode.successors.add(end);
 			end.successors.add(endNode);
 		}
@@ -372,21 +389,25 @@ public class ASTNodeConnector extends TreeScanner {
 	private static void connectStartNodesToEndNodesOf(
 			JCTree start, JCTree end) {
 		for (JCTree endNode : end.endNodes) {
+			init(endNode);
 			for (JCTree startNode : start.startNodes) {
+				init(startNode);
 				endNode.successors.add(startNode);
 				startNode.predecessors.add(endNode);
 			}
 		}
 	}
-	
+
 	private static void connectStartNodesToContinuesOf(
 			JCTree start, JCTree end) {
 		for (JCTree endNode : end.exitNodes) {
 			if (endNode instanceof JCBreak) {
 				throw new Error("should not reach JCBreak");
 			} else if (endNode instanceof JCContinue) {
+				init(endNode);
 				endNode.successors.addAll(start.startNodes);
 				for (JCTree startNode : start.startNodes) {
+					init(startNode);
 					startNode.predecessors.add(endNode);
 				}
 			} else if (endNode instanceof JCReturn) {
@@ -396,7 +417,9 @@ public class ASTNodeConnector extends TreeScanner {
 	}
 
 	private static void connectToStartNodesOf(JCTree start, JCTree end) {
+		init(start);
 		for (JCTree startNode : end.startNodes) {
+			init(startNode);
 			startNode.predecessors.add(start);
 			start.successors.add(startNode);
 		}

@@ -394,17 +394,17 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     // Panini code
     /* The following fields are added to represent the edges of
      * the control flow graph. */
-    public ArrayList<JCTree> predecessors = new ArrayList<JCTree>();
-	public ArrayList<JCTree> successors = new ArrayList<JCTree>();
+    public java.util.List<JCTree> predecessors;
+	public java.util.List<JCTree> successors;
 
-	public ArrayList<JCTree> getSuccessors() { return successors; }
+	public java.util.List<JCTree> getSuccessors() { return successors; }
 
-	public ArrayList<JCTree> getPredecessors() { return predecessors; }
+	public java.util.List<JCTree> getPredecessors() { return predecessors; }
 
 	// The following fields are building the control flow graph.
-	public ArrayList<JCTree> startNodes;
-	public ArrayList<JCTree> endNodes;
-	public ArrayList<JCTree> exitNodes;
+	public java.util.List<JCTree> startNodes;
+	public java.util.List<JCTree> endNodes;
+	public java.util.List<JCTree> exitNodes;
 	// end Panini code
 
     /* The (encoded) position in the source file. @see util.Position.
