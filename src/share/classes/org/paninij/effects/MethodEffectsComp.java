@@ -29,27 +29,27 @@ import com.sun.tools.javac.tree.JCTree.*;
 import javax.lang.model.element.ElementKind;
 
 import org.paninij.analysis.CFG;
-import org.paninij.analysis.CFGNode;
+import org.paninij.analysis.CFGNodeImpl;
 
 import java.util.LinkedList;
 
 public class MethodEffectsComp extends JCTree.Visitor {
-    private LinkedList<CFGNode> nodesToProcess;
+    private LinkedList<CFGNodeImpl> nodesToProcess;
     private EffectSet visitResult;
-    private CFGNode currentNode;
+    private CFGNodeImpl currentNode;
     private CFG cfg;
     private Symbol capsuleSym;
 
     public EffectSet computeEffectsForMethod(CFG cfg, Symbol capsuleSym) {
         this.cfg = cfg;
         this.capsuleSym = capsuleSym;
-        nodesToProcess = new LinkedList<CFGNode>(cfg.nodesInOrder);
+        nodesToProcess = new LinkedList<CFGNodeImpl>(cfg.nodesInOrder);
 
         while (!nodesToProcess.isEmpty()) {
-            CFGNode node = nodesToProcess.poll();
+            CFGNodeImpl node = nodesToProcess.poll();
 
             EffectSet newNodeEffects = new EffectSet();
-            for (CFGNode prev : node.successors) { 
+            for (CFGNodeImpl prev : node.successors) { 
                 newNodeEffects.addAll(prev.effects);
             }
             
@@ -62,13 +62,13 @@ public class MethodEffectsComp extends JCTree.Visitor {
         }
 
         EffectSet union = new EffectSet();
-        for (CFGNode node : cfg.nodesInOrder) {
+        for (CFGNodeImpl node : cfg.nodesInOrder) {
             union.addAll(node.effects);
         }
         return union;
     }
 
-    public EffectSet computeEffectsForNode(CFGNode node) {
+    public EffectSet computeEffectsForNode(CFGNodeImpl node) {
         visitResult = new EffectSet();
         currentNode = node;
         node.tree.accept(this);

@@ -28,23 +28,23 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 import org.paninij.analysis.CFG;
-import org.paninij.analysis.CFGNode;
+import org.paninij.analysis.CFGNodeImpl;
 
 public class AliasingComp extends JCTree.Visitor {
-    private LinkedList<CFGNode> nodesToProcess;
-    private HashMap<CFGNode, EffectSet> effectsSoFar;
+    private LinkedList<CFGNodeImpl> nodesToProcess;
+    private HashMap<CFGNodeImpl, EffectSet> effectsSoFar;
     private HeapRepresentation visitResult;
 
     public void fillInAliasingInfo(CFG cfg) {
-        nodesToProcess = new LinkedList<CFGNode>(cfg.nodesInOrder);
+        nodesToProcess = new LinkedList<CFGNodeImpl>(cfg.nodesInOrder);
 
         HeapRepresentation result = new HeapRepresentation();
 
         while (!nodesToProcess.isEmpty()) {
-            CFGNode node = nodesToProcess.poll();
+            CFGNodeImpl node = nodesToProcess.poll();
 
             HeapRepresentation newNodeHR = new HeapRepresentation();
-            for (CFGNode prev : node.successors) { 
+            for (CFGNodeImpl prev : node.successors) { 
                 newNodeHR = newNodeHR.union(prev.heapRepresentation);
             }
             

@@ -82,7 +82,11 @@ import static com.sun.tools.javac.tree.JCTree.Tag.*;
  * @see TreeTranslator
  * @see Pretty
  */
-public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
+public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
+//Panini code
+, org.paninij.analysis.CFGNode
+//end Panini code
+{
 
     /* Tree tag values, identifying kinds of trees */
     public enum Tag{

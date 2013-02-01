@@ -39,7 +39,7 @@ import com.sun.source.util.SimpleTreeVisitor;
 import javax.lang.model.element.ElementKind;
 
 import org.paninij.analysis.CFG;
-import org.paninij.analysis.CFGNode;
+import org.paninij.analysis.CFGNodeImpl;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -50,9 +50,9 @@ public class EffectsSub extends JCTree.Visitor {
     protected static final Context.Key<EffectsSub> mesKey =
         new Context.Key<EffectsSub>();
 
-    private LinkedList<CFGNode> nodesToProcess;
+    private LinkedList<CFGNodeImpl> nodesToProcess;
     private EffectSet visitResult;
-    private CFGNode currentNode;
+    private CFGNodeImpl currentNode;
     private CFG cfg;
     HashMap<JCMethodDecl, EffectSet> methodEffects;
     private Names names;
