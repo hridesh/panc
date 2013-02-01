@@ -94,7 +94,7 @@ public class CFGNodeBuilder extends TreeScanner {
 		visitApply(tree);
 	}
 
-	public void visitFree(JCFree tree){
+	public void visitFree(JCFree tree) {
 		scan(tree.exp);
 	}
 
@@ -609,7 +609,7 @@ public class CFGNodeBuilder extends TreeScanner {
 			finalStartNodes = currentStartNodes;
 		}
 
-		if (elems != null){
+		if (elems != null) {
 			if (!elems.isEmpty()) {
 				visitStatements(elems);
 				finalExcEndNodes.addAll(currentExcEndNodes);
@@ -771,7 +771,6 @@ public class CFGNodeBuilder extends TreeScanner {
 		currentStartNodes = new ArrayList<CFGNode>(1);
 		currentStartNodes.add(node);
 
-
 		addNode(node);
 	}
 
@@ -786,7 +785,7 @@ public class CFGNodeBuilder extends TreeScanner {
 
 			finalExcEndNodes.addAll(currentExcEndNodes);
 
-			while(!tail.isEmpty()) {
+			while (!tail.isEmpty()) {
 				head = tail.head;
 				head.accept(this);
 				finalExcEndNodes.addAll(this.currentExcEndNodes);
@@ -812,7 +811,7 @@ public class CFGNodeBuilder extends TreeScanner {
 			finalExcEndNodes.addAll(currentExcEndNodes);
 			finalEndNodes.addAll(currentEndNodes);
 
-			while(!tail.isEmpty()) {
+			while (!tail.isEmpty()) {
 				head = tail.head;
 				head.accept(this);
 				finalExcEndNodes.addAll(this.currentExcEndNodes);

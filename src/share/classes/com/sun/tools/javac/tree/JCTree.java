@@ -33,6 +33,8 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.type.TypeKind;
 import javax.tools.JavaFileObject;
 
+import org.paninij.analysis.CFGNode;
+
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
@@ -390,6 +392,22 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
             return (this.ordinal() - POS.ordinal());
         }
     }
+
+    // Panini code
+    /* The following fields are added to represent the edges of
+     * the control flow graph. */
+    public ArrayList<CFGNode> predecessors = new ArrayList<CFGNode>();
+	public ArrayList<CFGNode> successors = new ArrayList<CFGNode>();
+
+	public ArrayList<CFGNode> getSuccessors() { return successors; }
+
+	public ArrayList<CFGNode> getPredecessors() { return predecessors; }
+
+	// The following fields are building the control flow graph.
+	public ArrayList<JCTree> startNodes;
+	public ArrayList<JCTree> endNodes;
+	public ArrayList<JCTree> exitNodes;
+	// end Panini code
 
     /* The (encoded) position in the source file. @see util.Position.
      */
