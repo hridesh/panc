@@ -256,34 +256,7 @@ public class CapsuleInternal extends Internal {
 							body(es(supert()),
 									es(assign(select(thist(), "messageId"), id("messageId"))))));
 
-					// Code to be generated for the flag logic.
-					// public final Void value() {
-					// try {
-					// synchronized (this) {
-					// while (redeemed == false) wait(); // --- New
-					// }
-					// } catch (InterruptedException e) {
-					// return value();
-					// }
-					// return null;
-					// }
-					List<JCCatch> catchers = List.<JCCatch> of(make.Catch(
-							make.VarDef(make.Modifiers(0), names.fromString("e"),
-									make.Ident(names.fromString("InterruptedException")), null),
-							make.Block(
-									0,
-									List.<JCStatement> of(make.Return(make.Apply(null,
-											make.Ident(names.fromString(PaniniConstants.VALUE)),
-											List.<JCExpression> nil()))))));
-					wrappedMethods.add(method(
-							mods(PUBLIC | FINAL),
-							"value",
-							id("Void"),
-							params(),
-							body(make.Try(body(sync(make.This(Type.noType), body(whilel(
-							// Test whether the duck is ready.
-									isFalse(PaniniConstants.REDEEMED), es(apply("wait")))))), catchers,
-									null), returnt(nullv()))));
+					wrappedMethods.add(createValueMethod());
 
 					// Code to be generated for the flag logic.
 					// public final void panini$finish(Void t) {
@@ -565,6 +538,16 @@ public class CapsuleInternal extends Internal {
 						es(assign(select(thist(), "messageId"), id("messageId")))));
 	}
 
+	private JCMethodDecl createValueMethod() {
+		return method(
+				mods(PUBLIC | FINAL),
+				"value",
+				id("Void"),
+				params(),
+				body(ifs(isFalse(PaniniConstants.REDEEMED), es(apply(thist(),"panini$get"))), 
+						returnt(nullv())));
+	}
+	
 	private JCMethodDecl createFutureValueMethod(MethodSymbol m, Name method_name) {
 		ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
 		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
@@ -587,22 +570,13 @@ public class CapsuleInternal extends Internal {
 				args.add(id(v.name));
 			}
 		}
-		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
-				make.Modifiers(0), names.fromString("e"),
-				make.Ident(names.fromString("InterruptedException")), null),
-				make.Block(
-						0,
-						List.<JCStatement> of(returnt(apply("wrapped", method_name.toString(), args))))));
 		JCMethodDecl value = method(
 				mods(PUBLIC),
 				method_name,
 				restype,
 				params,
-				body(make.Try(
-						body(sync(
-								make.This(Type.noType),
-								body(whilel(isFalse(PaniniConstants.REDEEMED),
-										es(apply("wait")))))), catchers, null),
+				body(
+						ifs(isFalse(PaniniConstants.REDEEMED), es(apply(thist(),"panini$get"))),
 						returnt(apply("wrapped", method_name.toString(), args))));
 		return value;
 	}
@@ -621,70 +595,64 @@ public class CapsuleInternal extends Internal {
 				args.add(id(v.name));
 			}
 		}
-		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
-				make.Modifiers(0), names.fromString("e"),
-				make.Ident(names.fromString("InterruptedException")), null),
-				make.Block(0, List.<JCStatement> of(make.Exec(make.Apply(null,
-					make.Ident(method_name),
-					args.toList()))))));
 		JCMethodDecl delegate = method(
 				mods(PUBLIC | FINAL),
 				method_name,
 				make.Type(syms.voidType),
 				params,
-				body(make.Try(body(sync(make.This(Type.noType), body(whilel(
-				// Test whether the duck is ready.
-				// while (redeemed == false) wait();
-						isFalse(PaniniConstants.REDEEMED), es(apply("wait")))))), catchers,
-						null), es(apply("wrapped", method_name.toString(), args))));
+				body(
+						ifs(isFalse(PaniniConstants.REDEEMED), es(apply(thist(),"panini$get"))), 
+						es(apply("wrapped", method_name.toString(), args))));
 		return delegate;
 	}
 
 	private JCMethodDecl createFutureGetMethod(Type restype) {
 		ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
-		
+
 		// TODO correct type parameter replacements
 		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
 				make.Modifiers(0), names.fromString("e"),
 				make.Ident(names.fromString("InterruptedException")), null),
 				make.Block(
 						0,
-						List.<JCStatement> of(returnt("wrapped")))));
+						List.<JCStatement> nil())));
 		JCMethodDecl value = method(
 				mods(PUBLIC),
 				"panini$get",
 				id(trim(restype.toString())),
 				params,
-				body(make.Try(
-						body(sync(
-								make.This(Type.noType),
-								body(whilel(isFalse(PaniniConstants.REDEEMED),
-										es(apply("wait")))))), catchers, null),
-						returnt("wrapped")));
+				body(whilel(isFalse(PaniniConstants.REDEEMED),
+						make.Try(
+								body(sync(
+										make.This(Type.noType),
+										body(whilel(isFalse(PaniniConstants.REDEEMED),
+												es(apply("wait")))))), catchers, null)),
+												returnt("wrapped")));
 		return value;
 	}
 
 	private JCMethodDecl createVoidFutureGetMethod() {
-ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
-		
+		ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
+
 		// TODO correct type parameter replacements
 		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
 				make.Modifiers(0), names.fromString("e"),
 				make.Ident(names.fromString("InterruptedException")), null),
 				make.Block(
 						0,
-						List.<JCStatement> of(returnt(nullv())))));
+						List.<JCStatement> nil())));
 		JCMethodDecl value = method(
 				mods(PUBLIC),
 				"panini$get",
 				id("Void"),
 				params,
-				body(make.Try(
-						body(sync(
-								make.This(Type.noType),
-								body(whilel(isFalse(PaniniConstants.REDEEMED),
-										es(apply("wait")))))), catchers, null),
-						returnt(nullv())));
+				body(whilel(isFalse(PaniniConstants.REDEEMED),
+						make.Try(
+								body(sync(
+										make.This(Type.noType),
+										body(whilel(isFalse(PaniniConstants.REDEEMED),
+												es(apply("wait")))))), catchers, null)),
+												returnt(nullv())));
 		return value;
 	}
 	
