@@ -33,7 +33,6 @@ import java.util.LinkedList;
 
 public class CFGNodeBuilder extends TreeScanner {
 	private JCCapsuleDecl capsule;
-	private JCLibraryDecl library;
 	private JCMethodDecl m;
 	private CFG cfg;
 	private ArrayList<CFGNodeImpl> currentStartNodes, currentEndNodes,

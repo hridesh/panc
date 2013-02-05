@@ -348,9 +348,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         MAAPPLY,
         CAPSULEARRAY,
         SYSTEMDEF,
-        LIBRARYDEF,
         CAPSULEDEF,
-        INCLUDE,
         STATE,
         PROCCALL,
         FREE,
@@ -504,160 +502,171 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         return TreeInfo.getEndPos(this, endPosTable);
     }
     
-    // Panini code
-    public static class JCProcDecl extends JCMethodDecl implements ProcedureTree{
-    	public Kind kind;
-    	public Tag tag;
+	// Panini code
+	public static class JCProcDecl extends JCMethodDecl implements ProcedureTree {
+		public Kind kind;
+		public Tag tag;
 
 		protected JCProcDecl(JCModifiers mods, Name name, JCExpression restype,
 				List<JCTypeParameter> typarams, List<JCVariableDecl> params,
-				List<JCExpression> thrown, JCBlock body,
-				JCExpression defaultValue, MethodSymbol sym) {
+				List<JCExpression> thrown, JCBlock body, JCExpression defaultValue,
+				MethodSymbol sym) {
 			super(mods, name, restype, typarams, params, thrown, body, defaultValue, sym);
 			kind = Kind.PROCEDURE;
 			tag = Tag.PROC;
 		}
-		
-		public void switchToMethod(){
+
+		public void switchToMethod() {
 			kind = Kind.METHOD;
 			tag = Tag.METHODDEF;
 		}
-    	
-		public void switchToProc(){
+
+		public void switchToProc() {
 			kind = Kind.PROCEDURE;
 			tag = Tag.PROC;
 		}
-		
+
 		@Override
-		public Kind getKind(){
+		public Kind getKind() {
 			return kind;
 		}
-		
+
 		@Override
-		public Tag getTag(){
+		public Tag getTag() {
 			return tag;
 		}
-		
+
 		@Override
-		public void accept(Visitor v) { 
-			if(kind != Kind.PROCEDURE)
-				v.visitMethodDef(this); 
+		public void accept(Visitor v) {
+			if (kind != Kind.PROCEDURE)
+				v.visitMethodDef(this);
 			else
 				v.visitProcDef(this);
 		}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			if(kind != Kind.PROCEDURE)
-				return v.visitMethod(this, d); 
+			if (kind != Kind.PROCEDURE)
+				return v.visitMethod(this, d);
 			else
 				return v.visitProc(this, d);
-		} 
-    	
-    }
-    public static class JCProcInvocation extends JCMethodInvocation implements ProcInvocationTree{
-    	Kind kind;
-    	Tag tag;
+		}
 
-		protected JCProcInvocation(List<JCExpression> typeargs,
-				JCExpression meth, List<JCExpression> args) {
+	}
+
+	public static class JCProcInvocation extends JCMethodInvocation implements
+			ProcInvocationTree {
+		Kind kind;
+		Tag tag;
+
+		protected JCProcInvocation(List<JCExpression> typeargs, JCExpression meth,
+				List<JCExpression> args) {
 			super(typeargs, meth, args);
 			kind = Kind.PROCCALL;
 			tag = Tag.PROCCALL;
 		}
-		
-		public void switchToMethod(){
+
+		public void switchToMethod() {
 			kind = Kind.METHOD_INVOCATION;
 			tag = Tag.APPLY;
 		}
-		
-		public void switchToProcedure(){
+
+		public void switchToProcedure() {
 			kind = Kind.PROCCALL;
 			tag = Tag.PROCCALL;
 		}
-    	
+
 		@Override
-		public Kind getKind(){
+		public Kind getKind() {
 			return kind;
 		}
-		
+
 		@Override
-		public Tag getTag(){
+		public Tag getTag() {
 			return tag;
 		}
-		
+
 		@Override
-		public void accept(Visitor v) { 
-			if(kind != Kind.PROCCALL)v.visitApply(this);
-			else v.visitProcApply(this);
+		public void accept(Visitor v) {
+			if (kind != Kind.PROCCALL)
+				v.visitApply(this);
+			else
+				v.visitProcApply(this);
 		}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			if(kind != Kind.PROCCALL)
+			if (kind != Kind.PROCCALL)
 				return v.visitMethodInvocation(this, d);
 			else
 				return v.visitProcInvocation(this, d);
-		} 
-    }
-    
-    public static class JCStateDecl extends JCVariableDecl implements StateTree{
-    	Kind kind;
-    	Tag tag;
+		}
+	}
 
-		protected JCStateDecl(JCModifiers mods, Name name,
-				JCExpression vartype, JCExpression init, VarSymbol sym) {
+	public static class JCStateDecl extends JCVariableDecl implements StateTree {
+		Kind kind;
+		Tag tag;
+
+		protected JCStateDecl(JCModifiers mods, Name name, JCExpression vartype,
+				JCExpression init, VarSymbol sym) {
 			super(mods, name, vartype, init, sym);
 			kind = Kind.STATE;
 			tag = Tag.STATE;
 		}
+
 		@Override
-		public Kind getKind(){
+		public Kind getKind() {
 			return kind;
 		}
-		
+
 		@Override
-		public Tag getTag(){
+		public Tag getTag() {
 			return tag;
 		}
-		
-		public void switchToVar(){
+
+		public void switchToVar() {
 			kind = Kind.VARIABLE;
 			tag = Tag.VARDEF;
 		}
-		
-		public void switchToState(){
+
+		public void switchToState() {
 			kind = Kind.STATE;
 			tag = Tag.STATE;
 		}
-		
+
 		@Override
-		public void accept(Visitor v) { 
-			if(kind != Kind.STATE)v.visitVarDef(this); 
-			else v.visitStateDef(this);
+		public void accept(Visitor v) {
+			if (kind != Kind.STATE)
+				v.visitVarDef(this);
+			else
+				v.visitStateDef(this);
 		}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			if(kind != Kind.STATE) return v.visitVariable(this, d);
-			else return v.visitState(this, d);
-		} 
-    }
-    
-    public static class JCCapsuleArrayCall extends JCStatement implements CapsuleArrayCallTree{
+			if (kind != Kind.STATE)
+				return v.visitVariable(this, d);
+			else
+				return v.visitState(this, d);
+		}
+	}
 
-    	public Name name;
-    	public JCExpression index;
-    	public JCExpression indexed;
-    	public List<JCExpression> arguments;
-    	
-    	public JCCapsuleArrayCall(Name name, JCExpression index, JCExpression indexed, List<JCExpression> args){
-    		this.name = name;
-    		this.index = index;
-    		this.indexed = indexed;
-    		this.arguments = args;
-    	}
-    	
+	public static class JCCapsuleArrayCall extends JCStatement implements
+			CapsuleArrayCallTree {
+
+		public Name name;
+		public JCExpression index;
+		public JCExpression indexed;
+		public List<JCExpression> arguments;
+
+		public JCCapsuleArrayCall(Name name, JCExpression index,
+				JCExpression indexed, List<JCExpression> args) {
+			this.name = name;
+			this.index = index;
+			this.indexed = indexed;
+			this.arguments = args;
+		}
+
 		@Override
 		public Kind getKind() {
 			return Kind.CAPSULE_ARRAY_CALL;
@@ -684,21 +693,24 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		}
 
 		@Override
-		public void accept(Visitor v) { v.visitCapsuleArrayCall(this); }
+		public void accept(Visitor v) {
+			v.visitCapsuleArrayCall(this);
+		}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
 			return v.visitCapsuleArrayCall(this, d);
 		}
-    	
-    }
-    
-    public static class JCCapsuleArray extends JCArrayTypeTree implements CapsuleArrayTree {
 
-    	public int amount;
-    	
+	}
+
+	public static class JCCapsuleArray extends JCArrayTypeTree implements
+			CapsuleArrayTree {
+
+		public int amount;
+
 		public JCCapsuleArray(JCExpression elemtype, int amount) {
-            super(elemtype);
+			super(elemtype);
 			this.amount = amount;
 		}
 
@@ -706,302 +718,218 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		public int getAmount() {
 			return this.amount;
 		}
-		
-		@Override
-        public <R,D> R accept(TreeVisitor<R,D> v, D d) {
-            return v.visitCapsuleArray(this, d);
-        }
-		
-		public Kind getKind() { return Kind.CAPSULE_ARRAY; }
-		
-		@Override
-        public Tag getTag() {
-            return CAPSULEARRAY;
-        }
 
 		@Override
-		public void accept(Visitor v) {	v.visitCapsuleArray(this); }
-    	
-    }
-    
-    public static class JCSystemDecl extends JCClassDecl implements SystemTree {
-    	public Name name;
-    	public Kind kind;
-    	public Tag tag;
-    	public JCBlock body;
-    	public List<JCVariableDecl> params;
-    	
-    	public JCSystemDecl(JCModifiers mods, Name name, JCBlock body, List<JCVariableDecl> params){
-    		super(mods, name, List.<JCTypeParameter>nil(), 
-    				null, List.<JCExpression>nil(), List.<JCTree>nil(), null);
-    		this.body = body;
-    		this.name = name;
-    		this.params = params; 
-    		kind = Kind.SYSTEM;
-    		tag = Tag.SYSTEMDEF;
-    	}
-    	
-    	public JCBlock getBody(){
-    		return body;
-    	}
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitCapsuleArray(this, d);
+		}
+
 		public Kind getKind() {
-			return kind;
+			return Kind.CAPSULE_ARRAY;
 		}
-		
-		public void switchToClass(){
-			kind = Kind.CLASS;
-			tag = Tag.CLASSDEF;
+
+		@Override
+		public Tag getTag() {
+			return CAPSULEARRAY;
 		}
-		
-		public void switchtoSystem(){
+
+		@Override
+		public void accept(Visitor v) {
+			v.visitCapsuleArray(this);
+		}
+
+	}
+
+	public static class JCSystemDecl extends JCClassDecl implements SystemTree {
+		public Name name;
+		public Kind kind;
+		public Tag tag;
+		public JCBlock body;
+		public List<JCVariableDecl> params;
+
+		public JCSystemDecl(JCModifiers mods, Name name, JCBlock body,
+				List<JCVariableDecl> params) {
+			super(mods, name, List.<JCTypeParameter> nil(), null, List
+					.<JCExpression> nil(), List.<JCTree> nil(), null);
+			this.body = body;
+			this.name = name;
+			this.params = params;
 			kind = Kind.SYSTEM;
 			tag = Tag.SYSTEMDEF;
 		}
-		
-		public Name getName(){
+
+		public JCBlock getBody() {
+			return body;
+		}
+
+		public Kind getKind() {
+			return kind;
+		}
+
+		public void switchToClass() {
+			kind = Kind.CLASS;
+			tag = Tag.CLASSDEF;
+		}
+
+		public void switchtoSystem() {
+			kind = Kind.SYSTEM;
+			tag = Tag.SYSTEMDEF;
+		}
+
+		public Name getName() {
 			return name;
 		}
 
 		public List<JCTree> getMembers() {
 			return defs;
 		}
-		
+
 		public Tag getTag() {
 			return tag;
 		}
-		
+
 		public List<JCVariableDecl> getParams() {
 			return params;
 		}
 
 		@Override
 		public void accept(Visitor v) {
-			if(tag != CLASSDEF)
+			if (tag != CLASSDEF)
 				v.visitSystemDef(this);
 			else
 				v.visitClassDef(this);
-			}
+		}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			if(tag != CLASSDEF)
+			if (tag != CLASSDEF)
 				return v.visitSystem(this, d);
 			else
 				return v.visitClass(this, d);
 		}
-    }
-    
-    public static class JCLibraryDecl extends JCClassDecl implements LibraryTree{
-    	boolean isIncluded;
-    	Kind kind;
-    	Tag tag;
-    	public JCLibraryDecl(Name name, List<JCTree> defs){
-    		super(new JCModifiers(Flags.PUBLIC|Flags.FINAL|Flags.STATIC, List.<JCAnnotation>nil()), name, List.<JCTypeParameter>nil(), 
-    				null, List.<JCExpression>nil(), defs, null);
-    		this.name = name;
-    		this.isIncluded = false;
-    		kind = Kind.LIBRARY;
-    		tag = Tag.LIBRARYDEF;
-    	}
-		public Kind getKind() {
-			return Kind.LIBRARY;
-		}
-		
-		public void switchIncluded(){
-			isIncluded = !isIncluded;
-		}
-		
-		public boolean isIncluded(){
-			return isIncluded;
-		}
-		
-		public Name getName(){
-			return name;
-		}
-		
-		public List<JCTree> getMembers(){
-			return defs;
-		}
-		
-		public Tag getTag() {
-			return LIBRARYDEF;
-		}
-		
-		public void switchToClass(){
-			kind = Kind.CLASS;
-			tag = Tag.CLASSDEF;
-		}
-		
-		public void switchToCapsule(){
-			kind = Kind.LIBRARY;
-			tag = Tag.LIBRARYDEF;
+	}
+
+	public static class JCCapsuleDecl extends JCClassDecl implements CapsuleTree {
+		public Name name;
+		public List<JCVariableDecl> params;
+		public List<JCExpression> implementing;
+		public Kind kind;
+		public Tag tag;
+		public List<JCMethodDecl> publicMethods;
+		public JCMethodDecl computeMethod;
+		public boolean needsDefaultRun;
+
+		public JCCapsuleDecl(JCModifiers mods, Name name,
+				List<JCVariableDecl> params, List<JCExpression> implementing,
+				List<JCTree> defs) {
+			super(mods, name, List.<JCTypeParameter> nil(), null, implementing, defs,
+					null);
+			this.name = name;
+			this.params = params;
+			this.implementing = implementing;
+			this.defs = defs;
+			this.kind = Kind.CAPSULE;
+			this.tag = Tag.CAPSULEDEF;
+			this.publicMethods = List.<JCMethodDecl> nil();
+			this.needsDefaultRun = false;
 		}
 
-		@Override
-		public void accept(Visitor v) {
-			if(tag != CLASSDEF)
-				v.visitLibraryDef(this);
-			else
-				v.visitClassDef(this);
-			}
-
-		@Override
-		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			if(tag != CLASSDEF)
-				return v.visitLibrary(this, d);
-			else
-				return v.visitClass(this, d);
-		}
-    }
-    
-    public static class JCCapsuleDecl extends JCClassDecl implements CapsuleTree{
-    	public Name name;
-    	public List<JCVariableDecl> params;
-    	public List<JCExpression> implementing;
-    	public Kind kind;
-    	public Tag tag;
-        public List<JCMethodDecl> publicMethods;
-        public JCMethodDecl computeMethod;
-        public boolean needsDefaultRun;
-    	
-    	public JCCapsuleDecl(JCModifiers mods,
-    			Name name, 
-    			List<JCVariableDecl> params, 
-    			List<JCExpression> implementing,
-    			List<JCTree> defs){
-    		super(mods, name, List.<JCTypeParameter>nil(), 
-    				null, implementing, defs, null);
-    		this.name = name;
-    		this.params = params;
-    		this.implementing = implementing;
-    		this.defs = defs;
-    		this.kind = Kind.CAPSULE;
-    		this.tag = Tag.CAPSULEDEF;
-    		this.publicMethods = List.<JCMethodDecl>nil();
-            this.needsDefaultRun = false;
-    	}
-    	
 		public Kind getKind() {
 			return kind;
 		}
-		
-		public Name getName(){
+
+		public Name getName() {
 			return name;
 		}
-		
-		public void switchToClass(){
-			if((mods.flags & Flags.INTERFACE) !=0)
+
+		public void switchToClass() {
+			if ((mods.flags & Flags.INTERFACE) != 0)
 				kind = Kind.INTERFACE;
 			else
 				kind = Kind.CLASS;
 			tag = Tag.CLASSDEF;
 		}
-		
-		public void switchToCapsule(){
+
+		public void switchToCapsule() {
 			kind = Kind.CAPSULE;
 			tag = Tag.CAPSULEDEF;
 		}
-		
-		public List<JCVariableDecl> getParameters(){
+
+		public List<JCVariableDecl> getParameters() {
 			return params;
 		}
-		
-		public List<JCExpression> getImplementsClause(){
+
+		public List<JCExpression> getImplementsClause() {
 			return implementing;
 		}
-		
-		public List<JCTree> getMembers(){
+
+		public List<JCTree> getMembers() {
 			return defs;
 		}
-		
+
 		public Tag getTag() {
 			return tag;
 		}
 
 		@Override
 		public void accept(Visitor v) {
-			if(tag != CLASSDEF)
+			if (tag != CLASSDEF)
 				v.visitCapsuleDef(this);
 			else
 				v.visitClassDef(this);
-			}
+		}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			if(tag != CLASSDEF)
+			if (tag != CLASSDEF)
 				return v.visitCapsule(this, d);
 			else
 				return v.visitClass(this, d);
 		}
-    }
-    
-    public static class JCInclude extends JCStatement implements IncludeTree{
-    	public JCExpression lib;
-    	
-    	public JCInclude(JCExpression lib){
-    		this.lib = lib;
-    	}
-    	
-		public Kind getKind() {
-			return Kind.INCLUDE;
-		}
-		
-		public JCExpression getExpression(){
-			return lib;
-		}
-		
-		public Tag getTag() {
-			return INCLUDE;
+	}
+
+	public static class JCFree extends JCExpression implements FreeTree {
+		public JCExpression exp;
+
+		public JCFree(JCExpression exp) {
+			this.exp = exp;
 		}
 
-		@Override
-		public void accept(Visitor v) { v.visitInclude(this);}
-
-		@Override
-		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitInclude(this, d);
-		}
-    }
-    
-    public static class JCFree extends JCExpression implements FreeTree{
-    	public JCExpression exp;
-    	
-    	public JCFree(JCExpression exp){
-    		this.exp = exp;
-    	}
-    	
 		public Kind getKind() {
 			return Kind.FREE;
 		}
-		
-		public JCExpression getExpression(){
+
+		public JCExpression getExpression() {
 			return exp;
 		}
-		
+
 		public Tag getTag() {
 			return FREE;
 		}
 
 		@Override
-		public void accept(Visitor v) { v.visitFree(this);}
+		public void accept(Visitor v) {
+			v.visitFree(this);
+		}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
 			return v.visitFree(this, d);
 		}
-    }
-    
-    public static class JCForAllLoop extends JCExpression implements ForAllTree{
-    	
-    	public JCVariableDecl var;
-        public JCExpression expr;
-        public JCStatement body;
-        protected JCForAllLoop(JCVariableDecl var, JCExpression expr, JCStatement body) {
-            this.var = var;
-            this.expr = expr;
-            this.body = body;
-        }
-    	
+	}
+
+	public static class JCForAllLoop extends JCExpression implements ForAllTree {
+
+		public JCVariableDecl var;
+		public JCExpression expr;
+		public JCStatement body;
+
+		protected JCForAllLoop(JCVariableDecl var, JCExpression expr, JCStatement body) {
+			this.var = var;
+			this.expr = expr;
+			this.body = body;
+		}
+
 		@Override
 		public Kind getKind() {
 			return Kind.FORALLLOOP;
@@ -1029,15 +957,16 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 		@Override
 		public void accept(Visitor v) {
-			v.visitForAllLoop(this);			
+			v.visitForAllLoop(this);
 		}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
 			return v.visitForAll(this, d);
 		}
-    	
-    }
+
+	}
+
     // end Panini code
 
     /**
@@ -2978,9 +2907,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitCapsuleArrayCall(JCCapsuleArrayCall that) { visitTree(that); }
         public void visitCapsuleArray(JCCapsuleArray that)     { visitTree(that); }
         public void visitSystemDef(JCSystemDecl that)	     { visitTree(that); }
-        public void visitLibraryDef(JCLibraryDecl that)	     { visitTree(that); }
         public void visitCapsuleDef(JCCapsuleDecl that)	     { visitTree(that); }
-        public void visitInclude(JCInclude that)	         { visitTree(that); }
         public void visitFree(JCFree that)	                 { visitTree(that); }
         public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }
         // end Panini code

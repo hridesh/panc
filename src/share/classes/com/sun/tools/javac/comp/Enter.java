@@ -685,30 +685,7 @@ public class Enter extends JCTree.Visitor {
         result = c.type;
         tree.switchToClass();
     }
-    
-    public void visitLibraryDef(JCLibraryDecl tree){
-    	ClassSymbol c;
-    	PackageSymbol packge = (PackageSymbol)env.info.scope.owner;
-    	for(JCTree statement :tree.defs){
-    		if(statement.getTag()==CLASSDEF){
-    			JCClassDecl cdecl = (JCClassDecl)statement;
-    			ClassSymbol cs;
-    	        cs = reader.enterClass(cdecl.name, packge);
-    	        cdecl.sym = cs;
-    	        syms.libclasses.put(cdecl.name, cs);
-    			classEnter(cdecl, env);
-    		}else if(statement.getTag() == INCLUDE){
-    			JCInclude inc = (JCInclude)statement;
-    			if(inc.lib.getTag()==SELECT){
-	    			JCImport imp = make.Import(inc.lib, false);
-	    			env.toplevel.defs = env.toplevel.defs.prepend(imp);
-    			}
-    		}
-		}
-//        c = reader.enterClass(tree.name, packge);
-        tree.switchToClass();
-    }
-    
+        
     public void visitCapsuleDef(JCCapsuleDecl tree){
     	if((tree.mods.flags & Flags.INTERFACE) !=0){
     		tree.needsDefaultRun= false;
@@ -904,9 +881,7 @@ public class Enter extends JCTree.Visitor {
                     tree.publicMethods = tree.publicMethods.append(p);
         		}else 
         			definitions.add(mdecl);
-        	}
-        	else if(tree.defs.get(i).getTag() == INCLUDE){
-    		}else if(tree.defs.get(i).getTag() == VARDEF){
+        	} else if(tree.defs.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
     			if(mdecl.mods.flags!=0)
     				log.error(mdecl.pos(), "illegal.state.modifiers");
@@ -949,9 +924,7 @@ public class Enter extends JCTree.Visitor {
                     tree.publicMethods = tree.publicMethods.append(p);
         		}else 
         			definitions.add(mdecl);
-        	}
-        	else if(tree.defs.get(i).getTag() == INCLUDE){
-    		}else if(tree.defs.get(i).getTag() == VARDEF){
+        	} else if(tree.defs.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
     			if(mdecl.mods.flags!=0)
     				log.error(mdecl.pos(), "illegal.state.modifiers");
@@ -1025,9 +998,7 @@ public class Enter extends JCTree.Visitor {
                     tree.publicMethods = tree.publicMethods.append(p);
         		}else 
         			definitions.add(mdecl);
-        	}
-        	else if(tree.defs.get(i).getTag() == INCLUDE){
-    		}else if(tree.defs.get(i).getTag() == VARDEF){
+        	} else if(tree.defs.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
     			if(mdecl.mods.flags!=0)
     				log.error(mdecl.pos(), "illegal.state.modifiers");
@@ -1185,9 +1156,7 @@ public class Enter extends JCTree.Visitor {
                     tree.publicMethods = tree.publicMethods.append(p);
         		}else 
         			definitions.add(mdecl);
-        	}
-        	else if(tree.defs.get(i).getTag() == INCLUDE){
-    		}else if(tree.defs.get(i).getTag() == VARDEF){
+        	} else if(tree.defs.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
     			if(mdecl.mods.flags!=0)
     				log.error(mdecl.pos(), "illegal.state.modifiers");

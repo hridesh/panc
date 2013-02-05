@@ -115,9 +115,7 @@ public interface TreeVisitor<R,P> {
     R visitCapsuleArrayCall(CapsuleArrayCallTree tree, P p);
     R visitCapsuleArray(CapsuleArrayTree tree, P p);
     R visitSystem(SystemTree node, P p);
-    R visitLibrary(LibraryTree node, P p);
     R visitCapsule(CapsuleTree node, P p);
-    R visitInclude(IncludeTree node, P p);
     R visitFree(FreeTree node, P p);
     R visitForAll(ForAllTree node, P p);
     //end Panini Code

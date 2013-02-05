@@ -167,13 +167,7 @@ public class TreeMaker implements JCTree.Factory {
     	tree.pos = pos;
     	return tree;
     }
-    
-    public JCLibraryDecl LibraryDef(Name name, List<JCTree> defs){
-    	JCLibraryDecl tree = new JCLibraryDecl(name, defs);
-    	tree.pos = pos;
-    	return tree;
-    }
-    
+        
     public JCCapsuleDecl CapsuleDef(JCModifiers mods,
     		Name name, 
 			List<JCVariableDecl> params, 
@@ -183,13 +177,7 @@ public class TreeMaker implements JCTree.Factory {
     	tree.pos = pos;
     	return tree;
     }
-    
-    public JCInclude Include(JCExpression exp){
-    	JCInclude tree = new JCInclude(exp);
-    	tree.pos = pos;
-    	return tree;
-    }
-    
+        
     public JCFree Free(JCExpression exp){
     	JCFree tree = new JCFree(exp);
     	tree.pos = pos;
@@ -218,7 +206,6 @@ public class TreeMaker implements JCTree.Factory {
                 || node instanceof JCErroneous
                 // Panini code
                 || node instanceof JCSystemDecl
-                || node instanceof JCLibraryDecl
                 || node instanceof JCCapsuleDecl
                 // end Panini code
                 || (node instanceof JCExpressionStatement
