@@ -28,7 +28,7 @@ import com.sun.tools.javac.tree.TreeScanner;
 
 import java.util.ArrayList;
 
-/* This class find out the head/tail nodes for a AST.
+/* This class finds out the head/tail nodes for a AST.
  * For example, the head tree of and if statement is
  * the condition expression, because it is first executed. */
 public class CFGHeadTailNodesBuilder extends TreeScanner {
@@ -381,7 +381,7 @@ public class CFGHeadTailNodesBuilder extends TreeScanner {
 		finalEndNodes.addAll(this.currentEndNodes);
 		finalExcEndNodes.addAll(currentExitNodes);
 
-		if (tree.elsepart!=null) {
+		if (tree.elsepart != null) {
 			tree.elsepart.accept(this);
 			finalEndNodes.addAll(this.currentEndNodes);
 			finalExcEndNodes.addAll(currentExitNodes);

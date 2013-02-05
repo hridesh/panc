@@ -40,4 +40,9 @@ public class CFGBuilder {
 			return cfg;
 		}
 	}
+
+	public static void buildASTCFG(JCMethodDecl m) {
+		m.body.accept(new CFGHeadTailNodesBuilder());
+		m.body.accept(new ASTNodeConnector());
+	}
 }

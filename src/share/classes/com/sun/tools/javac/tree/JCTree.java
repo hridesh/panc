@@ -409,6 +409,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 	public java.util.List<JCTree> startNodes;
 	public java.util.List<JCTree> endNodes;
 	public java.util.List<JCTree> exitNodes;
+
+	// Used to print out the CFG for debug.
+	public int id;
 	// end Panini code
 
     /* The (encoded) position in the source file. @see util.Position.
