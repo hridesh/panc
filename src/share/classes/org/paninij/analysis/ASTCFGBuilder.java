@@ -31,6 +31,7 @@ import com.sun.tools.javac.tree.TreeScanner;
  * i.e. CFGHeadTailNodesBuilder.java, and connecting the nodes together, i.e.,
  * ASTNodeConector.java. */
 public class ASTCFGBuilder extends TreeScanner {
+	private int id = 0;
 	private ArrayList<JCTree> currentStartNodes, currentEndNodes,
 	currentExitNodes;
 
@@ -57,11 +58,12 @@ public class ASTCFGBuilder extends TreeScanner {
 	public void visitWildcard(JCWildcard tree)           { Assert.error(); }
 	public void visitTypeBoundKind(TypeBoundKind tree)   { Assert.error(); }
 
-	public void visitClassDef(JCClassDecl tree)          { /* do nothing */ }
 	public void visitSkip(JCSkip tree)                   { /* do nothing */ }
 	public void visitLabelled(JCLabeledStatement tree)   { /* do nothing */ }
-	public void visitIdent(JCIdent tree)                 { /* do nothing */ }
-	public void visitLiteral(JCLiteral tree)             { /* do nothing */ }    
+
+	public void visitClassDef(JCClassDecl tree)          { singleton(tree); }	
+	public void visitIdent(JCIdent tree)                 { singleton(tree); }
+	public void visitLiteral(JCLiteral tree)             { singleton(tree); }    
 
 	public void visitVarDef(JCVariableDecl tree) {
 		JCExpression init = tree.init;
@@ -726,6 +728,7 @@ public class ASTCFGBuilder extends TreeScanner {
 	}
 
 	public void visitAssign(JCAssign tree) {
+		System.out.println("ASTCFGBuilder visitAssign");
 		JCExpression lhs = tree.lhs;
 		JCExpression rhs = tree.rhs;
 
@@ -881,6 +884,7 @@ public class ASTCFGBuilder extends TreeScanner {
 
 			for (JCTree tree : trees.tail) {
 				// tree.accept(this);
+				// System.out.println("connect " + tree + " and " + last);
 				connectStartNodesToEndNodesOf(tree, last);
 				last = tree;
 			}
@@ -901,21 +905,19 @@ public class ASTCFGBuilder extends TreeScanner {
 	}
 
 	private static void connectToEndNodesOf(JCTree start, JCTree end) {
-		init(end);
 
 		for (JCTree endNode : start.endNodes) {
-			init(endNode);
-			endNode.successors.add(end);
+			System.out.println("\tconnect " + endNode + " and " + end);
 			end.successors.add(endNode);
+			endNode.predecessors.add(end);
 		}
 	}
 
 	private static void connectStartNodesToEndNodesOf(
 			JCTree start, JCTree end) {
 		for (JCTree endNode : end.endNodes) {
-			init(endNode);
 			for (JCTree startNode : start.startNodes) {
-				init(startNode);
+				System.out.println("\tconnect " + endNode + " and " + startNode);
 				endNode.successors.add(startNode);
 				startNode.predecessors.add(endNode);
 			}
@@ -928,10 +930,9 @@ public class ASTCFGBuilder extends TreeScanner {
 			if (endNode instanceof JCBreak) {
 				throw new Error("should not reach JCBreak");
 			} else if (endNode instanceof JCContinue) {
-				init(endNode);
 				endNode.successors.addAll(start.startNodes);
 				for (JCTree startNode : start.startNodes) {
-					init(startNode);
+					System.out.println("\tconnect " + endNode + " and " + startNode);
 					startNode.predecessors.add(endNode);
 				}
 			} else if (endNode instanceof JCReturn) {
@@ -941,9 +942,9 @@ public class ASTCFGBuilder extends TreeScanner {
 	}
 
 	private static void connectToStartNodesOf(JCTree start, JCTree end) {
-		init(start);
 		for (JCTree startNode : end.startNodes) {
-			init(startNode);
+			// init(startNode);
+			System.out.println("\tconnect " + startNode + " and " + start);
 			startNode.predecessors.add(start);
 			start.successors.add(startNode);
 		}
@@ -969,7 +970,7 @@ public class ASTCFGBuilder extends TreeScanner {
 			this.currentStartNodes = currentStartNodes;
 			finalExcEndNodes.addAll(this.currentExitNodes);
 			this.currentExitNodes = finalExcEndNodes;
-		} //else throw new Error("block should not be empty");
+		} // else throw new Error("block should not be empty");
 	}
 
 	private void singleton(JCTree tree) {
@@ -984,9 +985,12 @@ public class ASTCFGBuilder extends TreeScanner {
 	}
 
 	private void addNode(JCTree tree) {
+		tree.id = id++;
 		tree.startNodes = currentStartNodes;
 		tree.endNodes = currentEndNodes;
 		tree.exitNodes = currentExitNodes;
+
+		init(tree);
 	}
 
 	private static ArrayList<JCTree> getBreaks(ArrayList<JCTree> nodes) {
@@ -997,7 +1001,7 @@ public class ASTCFGBuilder extends TreeScanner {
 
 				if (jcb.label == null || jcb.target == null)
 					results.add(tree);
-				else 
+				else
 					throw new Error("jcb.label = " + jcb.label +
 							"\tjcb.target = " + jcb.target);
 			}
