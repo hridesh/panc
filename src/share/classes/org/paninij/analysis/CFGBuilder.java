@@ -44,7 +44,6 @@ public class CFGBuilder {
 	public static void buildASTCFG(JCMethodDecl m) {
 		/* m.body.accept(new CFGHeadTailNodesBuilder());
 		m.body.accept(new ASTNodeConnector()); */
-
 		if (m.body != null) {
 			m.body.accept(new ASTCFGBuilder());
 
