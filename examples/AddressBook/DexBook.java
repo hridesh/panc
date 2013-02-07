@@ -31,16 +31,13 @@ import org.htmlparser.util.ParserException;
 capsule DexBook() implements Book {
 
 	Address search(AddressRequest request) {
-		return search(request.getFirstname(), request.getLastname());
-	}
-	
-	private Address search(String firstname, String lastname) {
+
 		String url = "http://dexknows.whitepages.com/search/FindPerson?extra_listing=mixed&form_mode=opt_a&post_back=0&firstname_begins_with=1&firstname="
-				+ firstname + "&name=" + lastname + "&city_zip=&localtime=survey";
+				+ request.getFirstname() + "&name=" + request.getLastname() + "&city_zip=&localtime=survey";
 		Parser par;
 		Address newAddress = new Address();
-		newAddress.setFirstname(firstname);
-		newAddress.setLastname(lastname);
+		newAddress.setFirstname(request.getFirstname());
+		newAddress.setLastname(request.getLastname());
 		try {
 			par = new Parser(url);
 			org.htmlparser.util.NodeList list;

@@ -17,7 +17,7 @@
  * Contributor(s): Hridesh Rajan
  */
 
-public class AddressRequest implements Request {
+public class AddressRequest {
     public AddressRequest(String firstname, String lastname) {
         this.firstname = firstname;
         this.lastname = lastname;

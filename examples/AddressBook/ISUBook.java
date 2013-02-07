@@ -30,22 +30,13 @@ import org.htmlparser.util.ParserException;
  * @author Hridesh Rajan
  */
 capsule ISUBook() implements Book {
-	
+
 	Address search(AddressRequest r) {
-		return search(r.getFirstname(), r.getLastname());
-	}
-
-	String url = null;
-
-	private final Address search(String firstname, String lastname) {
-		String name = new String(firstname + "%20" + lastname);
+		String name = new String(r.getFirstname() + "%20" + r.getLastname());
+		String 	url = "http://www.info.iastate.edu/individuals/search/" + name;
 		try {
-			if (url == null) {
-				url = "http://www.info.iastate.edu/individuals/search/" + name;
-			}
 			Parser par = new Parser(url);
-			org.htmlparser.util.NodeList list;
-			list = par.parse(new HasAttributeFilter("class", "error"));
+			org.htmlparser.util.NodeList list = par.parse(new HasAttributeFilter("class", "error"));
 			if (list.size() > 0) return null;
 
 			list = par.parse(new HasAttributeFilter("class", "sub_title"));
@@ -53,8 +44,8 @@ capsule ISUBook() implements Book {
 
 			Node[] nodes = list.toNodeArray();
 			Address addr = new Address();
-			addr.setFirstname(firstname);
-			addr.setLastname(lastname);
+			addr.setFirstname(r.getFirstname());
+			addr.setLastname(r.getLastname());
 			String address;
 			if (nodes[0].toPlainTextString().equals("In-Session Address:")) {
 				par.reset();
@@ -83,11 +74,9 @@ capsule ISUBook() implements Book {
 			addr.setState(scan.next());
 			addr.setZipcode(scan.next().substring(0, 5));
 			return addr;
-
 		} catch (ParserException e) {
 			e.printStackTrace();
 		}
-
 		return null;
 	}
 }

@@ -12,17 +12,12 @@ import org.htmlparser.util.ParserException;
  * @author Hridesh Rajan
  */
 capsule YellowBook() implements Book {
-	
 	Address search(AddressRequest r) {
-		return search(r.getFirstname(), r.getLastname());
-	}
-
-	private final Address search(String firstname, String lastname) {
-		String url = "http://www.yellowpages.com/findaperson?fap_terms[first]="+firstname+"&fap_terms[last]="+lastname+"&fap_terms[city]=&fap_terms[state]=&fap_terms[searchtype]=phone";	
+		String url = "http://www.yellowpages.com/findaperson?fap_terms[first]="+r.getFirstname()+"&fap_terms[last]="+r.getLastname()+"&fap_terms[city]=&fap_terms[state]=&fap_terms[searchtype]=phone";	
 		Parser par;
 		Address newAddress = new Address();
-		newAddress.setFirstname(firstname);
-		newAddress.setLastname(lastname);
+		newAddress.setFirstname(r.getFirstname());
+		newAddress.setLastname(r.getLastname());
 		try {
 			par = new Parser(url);
 			org.htmlparser.util.NodeList list;
