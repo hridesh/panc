@@ -114,7 +114,7 @@ public class BlockEdgeFrequencyPass {
 		// Clear the list first
 		notVisited.clear();
 		// Use an artificial stack
-		Stack<JCTree> stack = new Stack();
+		Stack<JCTree> stack = new Stack<JCTree>();
 		stack.push(root);
 		// Visit all childs marking them as visited in depth-first order
 		while (!stack.empty()) {
