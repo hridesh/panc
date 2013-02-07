@@ -2921,7 +2921,7 @@ public class JavacParser implements Parser {
          		return signatureDecl(mods, dc);
          	else{
          		setErrorEndPos(token.pos);
-         		return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.library.capsule.not.found")));
+         		return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.capsule.not.found")));
          	}
         }
         //end Panini code
@@ -2937,7 +2937,7 @@ public class JavacParser implements Parser {
                 } else {
                     errs = List.<JCTree>of(mods);
                 }
-                return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.library.capsule.not.found")));
+                return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.capsule.not.found")));
             }
         } else {
             if (token.kind == ENUM) {
