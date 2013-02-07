@@ -308,6 +308,8 @@ public class Enter extends JCTree.Visitor {
         }
         tree.packge.complete(); // Find all classes in package.
         Env<AttrContext> topEnv = topLevelEnv(tree);
+        
+        setRuntimeImports(topEnv);
 
         // Save environment of package-info.java file.
         if (isPkgInfo) {
@@ -686,10 +688,8 @@ public class Enter extends JCTree.Visitor {
         tree.switchToClass();
     }
         
-    public void visitCapsuleDef(JCCapsuleDecl tree){
-    	if((tree.mods.flags & Flags.INTERFACE) !=0){
-    		tree.needsDefaultRun= false;
-    	}
+    
+    private void setRuntimeImports(Env<AttrContext> env){
     	JCExpression pid = make.Ident(names.fromString("java"));
     	pid = make.Select(pid, names.fromString("util"));
     	pid = make.Select(pid, names.fromString("concurrent"));
@@ -717,6 +717,14 @@ public class Enter extends JCTree.Visitor {
     	pid = make.Select(pid, names.fromString("types"));
     	pid = make.Select(pid, names.fromString("Panini$Duck$Void"));
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    }
+    
+    
+    public void visitCapsuleDef(JCCapsuleDecl tree){
+    	if((tree.mods.flags & Flags.INTERFACE) !=0){
+    		tree.needsDefaultRun= false;
+    	}
+    	
     	
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
