@@ -834,7 +834,15 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
             // These method calls must be chained to avoid memory leaks
             delegateCompiler =
                 processAnnotations(
-                    enterTrees(stopIfError(CompileState.PARSE, parseFiles(sourceFileObjects))),
+                    enterTrees(stopIfError(CompileState.PARSE,
+                    		// Panini code
+                    		CFGconstruction(
+                    		// end Panini code
+                    		parseFiles(sourceFileObjects)
+                    		// Panini code
+                    		)
+                    		// end Panini code
+                    		)),
                     classnames);
 
             delegateCompiler.compile2();
@@ -1658,4 +1666,37 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
        }
 
     }
+
+    // Panini code
+    private static List<JCCompilationUnit> CFGconstruction(
+    		List<JCCompilationUnit> input) {
+    	if (Attr.doGraphs) {
+    		for (JCCompilationUnit root : input) {
+        		List<JCTree> defs = root.defs;
+                for (JCTree tree : defs) {
+                	if (tree instanceof JCClassDecl) {
+                		tree.accept(new org.paninij.analysis.ASTCFGBuilder());
+
+                		JCClassDecl jccd = (JCClassDecl) tree;
+                		for (JCTree def : jccd.defs) {
+                			if (def instanceof JCMethodDecl) {
+                				JCMethodDecl m = (JCMethodDecl)def;
+                				if (m.body != null) {
+    	            				System.out.println("digraph G {");
+    	    	        			m.body.accept(
+    	    	        				new org.paninij.analysis.ASTCFGPrinter()
+    	    	        			);
+    	    	        			System.out.println("}");
+                				}
+                			}
+                		}
+                	}
+                }
+            }
+    		Attr.doGraphs = false;
+    	}
+ 
+    	return input;
+    }
+    // end Panini code
 }

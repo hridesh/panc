@@ -146,7 +146,7 @@ public class ASTCFGPrinter extends TreeScanner {
 	public void visitNewClass(JCNewClass tree) {
 		printCurrent(tree);
 
-		super.visitNewClass(tree);
+		// super.visitNewClass(tree);
 	}
 
 	public void visitNewArray(JCNewArray tree) {
