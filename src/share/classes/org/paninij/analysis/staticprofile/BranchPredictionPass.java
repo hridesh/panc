@@ -58,7 +58,7 @@ public class BranchPredictionPass {
 					JCTree successorBlk = succIter.next();
 					Pair<JCTree, JCTree> edge = new Pair<JCTree, JCTree> (block, successorBlk);
 					if (bpi.isBackEdge(edge)) {
-						float probabilityTaken = (float) bhi.getProbabilityTaken(
+						float probabilityTaken = bhi.getProbabilityTaken(
 								BranchHeuristics.LOOP_BRANCH_HEURISTIC) / noOfBackEdges;
 						edgeProbabilities.put(edge, new Double(probabilityTaken));
 					} else {
@@ -66,7 +66,7 @@ public class BranchPredictionPass {
 						// an exit edge. However, there are situations in which this edge is
 						// an exit edge of an inner loop, but not for the outer loop. So,
 						// consider the other edges always as an exit edge.
-						float probabilityNotTaken = (float) bhi.getProbabilityNotTaken(
+						float probabilityNotTaken = bhi.getProbabilityNotTaken(
 								BranchHeuristics.LOOP_BRANCH_HEURISTIC) / (noOfSuccessors - noOfBackEdges);
 						edgeProbabilities.put(edge, new Double(probabilityNotTaken));
 					}
