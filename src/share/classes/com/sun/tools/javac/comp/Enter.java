@@ -598,35 +598,6 @@ public class Enter extends JCTree.Visitor {
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
         ClassSymbol c;
-        
-        JCExpression pid = make.Ident(names.fromString("java"));
-    	pid = make.Select(pid, names.fromString("util"));
-    	pid = make.Select(pid, names.fromString("concurrent"));
-    	pid = make.Select(pid, names.fromString("locks"));
-    	pid = make.Select(pid, names.fromString("ReentrantLock"));
-    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
-    	pid = make.Ident(names.fromString("java"));
-    	pid = make.Select(pid, names.fromString("util"));
-    	pid = make.Select(pid, names.fromString("List"));
-    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
-    	pid = make.Ident(names.fromString("org"));
-    	pid = make.Select(pid, names.fromString("paninij"));
-    	pid = make.Select(pid, names.fromString("runtime"));
-    	pid = make.Select(pid, names.asterisk);
-    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
-    	pid = make.Ident(names.fromString("org"));
-    	pid = make.Select(pid, names.fromString("paninij"));
-    	pid = make.Select(pid, names.fromString("runtime"));
-    	pid = make.Select(pid, names.fromString("types"));
-    	pid = make.Select(pid, names.fromString("Panini$Duck"));
-    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
-    	pid = make.Ident(names.fromString("org"));
-    	pid = make.Select(pid, names.fromString("paninij"));
-    	pid = make.Select(pid, names.fromString("runtime"));
-    	pid = make.Select(pid, names.fromString("types"));
-    	pid = make.Select(pid, names.fromString("Panini$Duck$Void"));
-    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
-        
         if (owner.kind == PCK) {
             // We are seeing a toplevel class.
             PackageSymbol packge = (PackageSymbol)owner;
@@ -719,7 +690,33 @@ public class Enter extends JCTree.Visitor {
     	if((tree.mods.flags & Flags.INTERFACE) !=0){
     		tree.needsDefaultRun= false;
     	}
-    	
+    	JCExpression pid = make.Ident(names.fromString("java"));
+    	pid = make.Select(pid, names.fromString("util"));
+    	pid = make.Select(pid, names.fromString("concurrent"));
+    	pid = make.Select(pid, names.fromString("locks"));
+    	pid = make.Select(pid, names.fromString("ReentrantLock"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	pid = make.Ident(names.fromString("java"));
+    	pid = make.Select(pid, names.fromString("util"));
+    	pid = make.Select(pid, names.fromString("List"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	pid = make.Ident(names.fromString("org"));
+    	pid = make.Select(pid, names.fromString("paninij"));
+    	pid = make.Select(pid, names.fromString("runtime"));
+    	pid = make.Select(pid, names.asterisk);
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	pid = make.Ident(names.fromString("org"));
+    	pid = make.Select(pid, names.fromString("paninij"));
+    	pid = make.Select(pid, names.fromString("runtime"));
+    	pid = make.Select(pid, names.fromString("types"));
+    	pid = make.Select(pid, names.fromString("Panini$Duck"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	pid = make.Ident(names.fromString("org"));
+    	pid = make.Select(pid, names.fromString("paninij"));
+    	pid = make.Select(pid, names.fromString("runtime"));
+    	pid = make.Select(pid, names.fromString("types"));
+    	pid = make.Select(pid, names.fromString("Panini$Duck$Void"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     	
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
