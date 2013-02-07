@@ -696,10 +696,6 @@ public class Enter extends JCTree.Visitor {
     	pid = make.Select(pid, names.fromString("locks"));
     	pid = make.Select(pid, names.fromString("ReentrantLock"));
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
-    	pid = make.Ident(names.fromString("java"));
-    	pid = make.Select(pid, names.fromString("util"));
-    	pid = make.Select(pid, names.fromString("List"));
-    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     	pid = make.Ident(names.fromString("org"));
     	pid = make.Select(pid, names.fromString("paninij"));
     	pid = make.Select(pid, names.fromString("runtime"));
