@@ -391,7 +391,8 @@ public class CapsuleInternal extends Internal {
 			Symbol s = iter.next();
 			if (s.getKind() == ElementKind.METHOD) {
 				MethodSymbol m = (MethodSymbol) s;
-				JCMethodDecl value; 
+				JCMethodDecl value;
+				if (m.isStatic()) continue; //Do not wrap static methods.
 				if (!m.type.getReturnType().toString().equals("void")){
 					value = createFutureValueMethod(m, m.name);
 				}
@@ -477,7 +478,7 @@ public class CapsuleInternal extends Internal {
 		}
 
 		JCClassDecl wrappedClass = make.ClassDef(
-				mods(0),
+				mods(FINAL),
 				names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$"
 						+ rawClassName + "$" + classNameSuffix),
 						List.<JCTypeParameter> nil(), extending, implement,
