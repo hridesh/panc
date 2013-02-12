@@ -3052,6 +3052,10 @@ public class JavacParser implements Parser {
       	attach(result, dc);
       	return result;
       }
+     
+     public List<JCVariableDecl> capsuleParameters(){
+    	 return formalParameters();
+     }
      // end Panini code
 
     /** ClassDeclaration = CLASS Ident TypeParametersOpt [EXTENDS Type]

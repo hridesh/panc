@@ -72,6 +72,7 @@ public abstract class Symbol implements Element {
     public List<Symbol> capsules; // for System symbols
     public SystemGraphs graphs; // for System symbols
     public JCTree tree;
+    public List<JCTree.JCVariableDecl> params;
 
 	// end Panini code
 
