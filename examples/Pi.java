@@ -22,38 +22,41 @@
  * 
  * This computation uses the Monte Carlo Method.
  */
-// import java.lang.Math;
 import java.util.Random;
 
 class Number {
 	long value;
+	Number (){ this.value = 0; }
 	Number (long value){ this.value = value; }
 	void incr() { value ++; }
 	long value() { return value; }
+	static long total(Number[] numbers) {
+		long total = 0; 
+		for(Number n: numbers) total += n.value();
+		return total;
+	}
 }
 
 capsule Worker (int num) {
-	Number _circleCount = new Number(0);
 	Random prng = new Random ();
 	Number compute() {
-		_circleCount = new Number(0);
+		Number _circleCount = new Number(0);
 		for (int j = 0; j < num; j++) {
 			double x = prng.nextDouble();
 			double y = prng.nextDouble();
-			if ((x * x + y * y) < 1)
-				_circleCount.incr();
+			if ((x * x + y * y) < 1)	_circleCount.incr();
 		}
 		return _circleCount;
 	}
-	Number getCircleCount() { return _circleCount; }
 }
 
 capsule Master (int totalCount, Worker[] workers) {
 	void run(){
-		long totalCircleCount = 0;
-		for (Worker w : workers) w.compute();
-		for (Worker w : workers) totalCircleCount += w.getCircleCount().value();
-		double pi = 4.0 * totalCircleCount / totalCount;
+		Number[] results = new Number[workers.length];
+		for (int i=0; i< workers.length; i++)
+			results[i] = workers[i].compute();
+
+		double pi = 4.0 * Number.total(results) / totalCount; 
 		System.out.println("Pi : " + pi);
 	}
 }

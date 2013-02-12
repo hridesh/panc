@@ -81,11 +81,7 @@ public class TreeScanner extends Visitor {
     public void visitSystemDef(JCSystemDecl tree){
     	visitClassDef(tree);
     }
-    
-    public void visitLibraryDef(JCLibraryDecl tree){
-    	scan(tree.defs);
-    }
-    
+        
     public void visitCapsuleDef(JCCapsuleDecl tree){
     	visitClassDef(tree);
     }
@@ -93,11 +89,7 @@ public class TreeScanner extends Visitor {
     public void visitFree(JCFree tree){
     	scan(tree.exp);
     }
-    
-    public void visitInclude(JCInclude tree){
-    	scan(tree.lib);
-    }
-    
+        
     public void visitForAllLoop(JCForAllLoop tree){
     	scan(tree.var);
     	scan(tree.expr);

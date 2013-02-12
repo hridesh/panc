@@ -479,12 +479,6 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 	}
 
 	@Override
-	public JCTree visitLibrary(LibraryTree node, P p) {
-		JCLibraryDecl t = (JCLibraryDecl)node;
-		return M.at(t.pos).LibraryDef(t.getName(), t.getMembers());
-	}
-
-	@Override
 	public JCTree visitCapsule(CapsuleTree node, P p) {
 		JCCapsuleDecl t = (JCCapsuleDecl)node;
 		return M.at(t.pos).CapsuleDef(t.getModifiers(),
@@ -493,12 +487,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 				t.getImplementsClause(),
 				t.getMembers());
 	}
-	
-	public JCTree visitInclude(IncludeTree node, P p) {
-		JCInclude t = (JCInclude)node;
-		return M.at(t.pos).Include(t.getExpression());
-	}
-	
+		
 	public JCTree visitFree(FreeTree node, P p) {
 		JCFree t = (JCFree)node;
 		return M.at(t.pos).Free(t.getExpression());

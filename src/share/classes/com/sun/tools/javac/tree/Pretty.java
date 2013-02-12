@@ -485,18 +485,7 @@ public class Pretty extends JCTree.Visitor {
     		throw new UncheckedIOException(e);
     	}
     }
-    
-    public void visitLibraryDef(JCLibraryDecl tree){
-    	try{
-    		println();align();
-    		print("library ");
-    		print(tree.name + " ");
-    		printBlock(tree.defs);
-    	} catch (IOException e){
-    		throw new UncheckedIOException(e);
-    	}
-    }
-    
+        
     public void visitCapsuleDef(JCCapsuleDecl tree){
     	try{
     		println();align();
@@ -518,16 +507,6 @@ public class Pretty extends JCTree.Visitor {
     	} catch (IOException e){
     		throw new UncheckedIOException(e);
     	}
-    }
-    
-    public void visitInclude(JCInclude tree) {
-        try {
-            print("include ");
-            printExpr(tree.lib);
-            print(";");
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
     
     public void visitFree(JCFree tree) {

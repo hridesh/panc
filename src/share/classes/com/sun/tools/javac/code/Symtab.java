@@ -31,7 +31,6 @@ import javax.lang.model.element.ElementVisitor;
 
 // Panini code
 import com.sun.tools.javac.tree.JCTree;
-import com.sun.tools.javac.tree.JCTree.JCLibraryDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 // end Panini code
 import com.sun.tools.javac.util.*;
@@ -195,7 +194,6 @@ public class Symtab {
     public final Map<Name, ClassSymbol> capsules = new HashMap<Name, ClassSymbol>();
     public final Map<Name, ClassSymbol> libclasses = new HashMap<Name, ClassSymbol>();
     public final Map<ClassSymbol, List<JCVariableDecl>> capsuleparams = new HashMap<ClassSymbol, List<JCVariableDecl>>();
-    public final Map<Name, JCLibraryDecl> libraries = new HashMap<Name, JCLibraryDecl>();
     // end Panini code
     
     /** A hashtable containing the encountered packages.

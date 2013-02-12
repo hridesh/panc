@@ -2126,16 +2126,7 @@ public class JavacParser implements Parser {
                 return List.of(classOrInterfaceOrEnumDeclaration(modifiersOpt(), dc));
             } else if (allowAsserts && token.kind == ASSERT) {
                 return List.of(parseStatement());
-            }
-            // Panini code
-        case IDENTIFIER:
-    		if(token.name().toString().equals("include")){
-    			nextToken();
-    			JCExpression exp = qualident();
-    			return List.<JCStatement>of(F.at(pos).Include(exp));
-    		}
-            // end Panini code
-            
+            }            
             /* fall through to default */
         default:
             Token prevToken = token;
@@ -2924,15 +2915,13 @@ public class JavacParser implements Parser {
         else if(token.kind == IDENTIFIER){
         	if(token.name().toString().equals("system"))
          		return systemDecl(mods, dc);
-         	else if(token.name().toString().equals("library"))
-         		return libraryDecl(mods, dc);
-         	else if(token.name().toString().equals("capsule")) // Bryan Shrader 1/14/2013 'module' changed to 'capsule'
+         	else if(token.name().toString().equals("capsule")) 
          		return capsuleDecl(mods, dc);
          	else if(token.name().toString().equals("signature"))
          		return signatureDecl(mods, dc);
          	else{
          		setErrorEndPos(token.pos);
-         		return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.library.capsule.not.found")));
+         		return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.capsule.not.found")));
          	}
         }
         //end Panini code
@@ -2948,7 +2937,7 @@ public class JavacParser implements Parser {
                 } else {
                     errs = List.<JCTree>of(mods);
                 }
-                return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.library.capsule.not.found")));
+                return toP(F.Exec(syntaxError(token.pos, "expected.class.interface.enum.system.capsule.not.found")));
             }
         } else {
             if (token.kind == ENUM) {
@@ -2994,16 +2983,6 @@ public class JavacParser implements Parser {
      	return result;
      }
      
-     JCStatement libraryDecl(JCModifiers mod, String dc){
-     	accept(IDENTIFIER);
-     	int pos = token.pos;
-     	Name name = ident();
-     	List<JCTree> defs = classOrInterfaceBody(name, true);
-     	JCLibraryDecl result = toP(F.at(pos).LibraryDef(name, defs));
-     	attach(result, dc);
-     	return result;
-     }
-
      JCStatement capsuleDecl(JCModifiers mod, String dc){
      	accept(IDENTIFIER);
      	int pos = token.pos;
