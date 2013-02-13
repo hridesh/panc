@@ -48,11 +48,11 @@ capsule Philosopher (Fork left, Fork right, String name) {
 			tryEat();
 		}
 	}
-	void think() {
+	private void think() {
 		System.out.println(name + " is thinking");
 		yield(1000);
 	}
-	void tryEat() {
+	private void tryEat() {
 		System.out.println(name + " is hungry so they are trying to take fork 1.");
 		boolean ate = false;
 		while (!ate) {
