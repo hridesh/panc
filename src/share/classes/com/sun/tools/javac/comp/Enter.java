@@ -849,7 +849,6 @@ public class Enter extends JCTree.Visitor {
         classEnter(tree.defs, localEnv);
         result = c.type;
         tree.switchToClass();
-        System.out.println(tree);
     }
     
     public List<JCStatement> push(Name n){
