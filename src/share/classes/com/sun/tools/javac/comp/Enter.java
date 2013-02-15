@@ -114,7 +114,7 @@ public class Enter extends JCTree.Visitor {
     PkgInfo pkginfoOpt;
     // Panini code
     CapsuleInternal capsuleInternal;
-    CapsuleAnnotationTranslator capsuleTranslator;
+    CapsuleAnnotationProcessor annotationProcessor;
     // end Panini code
 
     private final Todo todo;
@@ -152,7 +152,7 @@ public class Enter extends JCTree.Visitor {
 
         // Panini code
         capsuleInternal = new CapsuleInternal(make, names, this, memberEnter, syms);
-        capsuleTranslator = new CapsuleAnnotationTranslator(names, make, ParserFactory.instance(context));
+        annotationProcessor = new CapsuleAnnotationProcessor(names, make, ParserFactory.instance(context));
         // end Panini code
     }
 
@@ -384,8 +384,8 @@ public class Enter extends JCTree.Visitor {
     				}
     			}
     			JCExpression excp = make.Ident(names.fromString("java"));
-    	    	excp = make.Select(excp, names.fromString("lang"));
-    	    	excp = make.Select(excp, names.fromString("InterruptedException"));
+    			excp = make.Select(excp, names.fromString("lang"));
+    			excp = make.Select(excp, names.fromString("InterruptedException"));
     			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString("start"), make.TypeIdent(TypeTags.VOID), 
     					List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>nil(), null, null));
     			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString("shutdown"), make.TypeIdent(TypeTags.VOID), 
@@ -393,25 +393,17 @@ public class Enter extends JCTree.Visitor {
     			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString("join"), make.TypeIdent(TypeTags.VOID), 
     					List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>of(excp), null, null));
     			JCCapsuleDecl copyActive =
-    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
-            			List.<JCExpression>of(make.Literal("ACTIVE"))), make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclThread")), 
-                    			List.<JCExpression>of(make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())))))), names.fromString(capsule.name + "$thread"), 
-            			tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
+    					make.CapsuleDef(make.Modifiers(0, annotationProcessor.createCapsuleAnnotation(Flags.ACTIVE, capsule)), names.fromString(capsule.name + "$thread"), 
+    							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
     			JCCapsuleDecl copyTask =
-    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
-            			List.<JCExpression>of(make.Literal("TASK"))), make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclTask")), 
-                    			List.<JCExpression>of(make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())))))), names.fromString(capsule.name + "$task"), 
-            			tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
+    					make.CapsuleDef(make.Modifiers(0, annotationProcessor.createCapsuleAnnotation(Flags.TASK, capsule)), names.fromString(capsule.name + "$task"), 
+    							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
     			JCCapsuleDecl copySerial =
-    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
-            			List.<JCExpression>of(make.Literal("SERIAL"))), make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclSequential")), 
-                    			List.<JCExpression>of(make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())))))), names.fromString(capsule.name + "$serial"), 
-            			tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
+    					make.CapsuleDef(make.Modifiers(0, annotationProcessor.createCapsuleAnnotation(Flags.SERIAL, capsule)), names.fromString(capsule.name + "$serial"), 
+    							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
     			JCCapsuleDecl copyMonitor =
-    					make.CapsuleDef(make.Modifiers(0, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
-            			List.<JCExpression>of(make.Literal("MONITOR"))), make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclSynchronized")), 
-                    			List.<JCExpression>of(make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())))))), names.fromString(capsule.name + "$monitor"), 
-            			tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
+    					make.CapsuleDef(make.Modifiers(0, annotationProcessor.createCapsuleAnnotation(Flags.MONITOR, capsule)), names.fromString(capsule.name + "$monitor"), 
+    							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
 //    			interfaceBody.add(copyActive);
     			if(!hasRun){
 //    				interfaceBody.add(copyTask);
@@ -702,7 +694,6 @@ public class Enter extends JCTree.Visitor {
         tree.switchToClass();
     }
         
-    
     private void setRuntimeImports(Env<AttrContext> env){
     	JCExpression pid = make.Ident(names.fromString("java"));
     	pid = make.Select(pid, names.fromString("util"));
@@ -729,13 +720,10 @@ public class Enter extends JCTree.Visitor {
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     }
     
-    
     public void visitCapsuleDef(JCCapsuleDecl tree){
     	if((tree.mods.flags & Flags.INTERFACE) !=0){
     		tree.needsDefaultRun= false;
     	}
-    	
-    	
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
         ClassSymbol c;
@@ -1342,7 +1330,7 @@ public class Enter extends JCTree.Visitor {
     		if(classSymbol.attributes_field.size()!=0){
     			for(Attribute.Compound compound : classSymbol.attributes_field){
     				if(compound.type.tsym.getQualifiedName().toString().contains("PaniniCapsuleDecl")){
-    					capsuleTranslator.translate(classSymbol, compound);
+    					annotationProcessor.translate(classSymbol, compound);
     					classSymbol.isCapsule = true;
 	    				syms.capsules.put(classSymbol.name, classSymbol);
 	    				syms.capsuleparams.put(classSymbol, classSymbol.params);

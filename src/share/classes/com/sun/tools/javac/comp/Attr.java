@@ -1136,7 +1136,7 @@ public class Attr extends JCTree.Visitor {
     	ClassSymbol c = syms.capsules.get(names.fromString((initName)));
     	decls.add(vdecl);
     	JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
-    			make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
+    			make.Ident(c.type.tsym), List.<JCExpression>nil(), null);
     	newClass.constructor = rs.resolveConstructor
     			(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
     	newClass.type = c.type;
