@@ -728,9 +728,8 @@ public class Attr extends JCTree.Visitor {
     			.fromString(mi.meth.toString()))==null){
     		log.error(mi.pos(), "capsule.array.type.error", mi.meth);
     	}
-    	ClassSymbol c = (ClassSymbol) rs
-    			.findType(env, variables.get(names
-    					.fromString(mi.meth.toString())));
+    	ClassSymbol c = syms.capsules.get(variables.get(names
+				.fromString(mi.meth.toString())));
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
 
     	if (mi.args.length() != syms.capsuleparams.get(c).length()) {
@@ -739,8 +738,7 @@ public class Attr extends JCTree.Visitor {
     		for (int j = 0; j < mi.args.length(); j++) {
     			JCAssign newAssign = make
     					.at(mi.pos())
-    					.Assign(make.Select(make.TypeCast(make.Ident(variables.get(names
-    			    			.fromString(mi.meth.toString()))), mi.meth),
+    					.Assign(make.Select(make.TypeCast(make.Ident(c), mi.meth),
     							syms.capsuleparams.get(c).get(j)
     							.getName()), mi.args.get(j));
     			JCExpressionStatement assignAssign = make
@@ -1138,7 +1136,7 @@ public class Attr extends JCTree.Visitor {
     	ClassSymbol c = syms.capsules.get(names.fromString((initName)));
     	decls.add(vdecl);
     	JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
-    			make.QualIdent(c.type.tsym), List.<JCExpression>nil(), null);
+    			make.Ident(c.type.tsym), List.<JCExpression>nil(), null);
     	newClass.constructor = rs.resolveConstructor
     			(tree.pos(), env, c.type, List.<Type>nil(), null,false,false);
     	newClass.type = c.type;

@@ -44,8 +44,6 @@ import javax.lang.model.type.TypeKind;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
-import static com.sun.tools.javac.tree.JCTree.Tag.GE;
-import static com.sun.tools.javac.tree.JCTree.Tag.POSTINC;
 
 public class CapsuleInternal extends Internal {
 	ListBuffer<JCTree> contractDefs;

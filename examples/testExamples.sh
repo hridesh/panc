@@ -21,3 +21,12 @@ cd -
 #rm *.class 
 #cd - 
 
+echo "Testing separately compiled version of the HelloWorld example."
+cd HelloWorldSeparate
+../../bin/panc Console.java
+../../bin/panc Greeter.java
+../../bin/panc HelloWorld.java
+../../bin/panini HelloWorld 
+rm *.class 
+cd -
+
