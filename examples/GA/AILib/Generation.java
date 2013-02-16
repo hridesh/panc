@@ -3,6 +3,11 @@ package AILib;
 import java.util.ArrayList;
 
 public class Generation extends ArrayList<Individual> {
+	
+	public Generation() {
+		super(0);
+		this.depth = 0;
+	}
 
 	/***
 	 * Creates a generation of size <code>num</code> with individuals of type baseIndividual.
