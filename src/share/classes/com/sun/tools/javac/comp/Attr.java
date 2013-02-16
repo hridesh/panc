@@ -772,21 +772,21 @@ public class Attr extends JCTree.Visitor {
 
     		}
     	}
-        if (doGraphs)
-            effects.computeEffects(tree);
+        /*if (doGraphs)
+            effects.computeEffects(tree);*/
     }
 
     public final void visitSystemDef(final JCSystemDecl tree){
-        if (doGraphs) {
+        /*if (doGraphs) {
             tree.sym.graphs = graphsBuilder.buildGraphs(tree);
             effects.substituteProcEffects(tree);
-/*            ConsistencyCheck cc = 
+            ConsistencyCheck cc = 
                 new ConsistencyCheck(effects.capsuleEffectsComp.methodEffects);
             for (SystemGraphs.Node n :
                      tree.sym.graphs.forwardConnectionEdges.keySet()) {
                 cc.checkConsistency(tree.sym.graphs, n);
-                }*/
-        }
+                }
+        }*/
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();

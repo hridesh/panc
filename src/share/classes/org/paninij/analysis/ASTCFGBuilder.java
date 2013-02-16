@@ -913,8 +913,12 @@ public class ASTCFGBuilder extends TreeScanner {
 
 	private static void connectToEndNodesOf(JCTree start, JCTree end) {
 		for (JCTree endNode : start.endNodes) {
-			end.successors.add(endNode);
-			endNode.predecessors.add(end);
+			if (end.successors != null) {
+				end.successors.add(endNode);
+			}
+			if (endNode.predecessors != null) {
+				endNode.predecessors.add(end);
+			}
 		}
 	}
 

@@ -833,17 +833,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 
             // These method calls must be chained to avoid memory leaks
             delegateCompiler =
-                processAnnotations(
-                    enterTrees(stopIfError(CompileState.PARSE,
-                    		// Panini code
-                    		CFGconstruction(
-                    		// end Panini code
-                    		parseFiles(sourceFileObjects)
-                    		// Panini code
-                    		)
-                    		// end Panini code
-                    		)),
-                    classnames);
+                processAnnotations(enterTrees(stopIfError(CompileState.PARSE, parseFiles(sourceFileObjects))), classnames);
 
             delegateCompiler.compile2();
             delegateCompiler.close();
@@ -1211,6 +1201,30 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
         finally {
             log.useSource(prev);
         }
+
+        // Panini code
+        if (Attr.doGraphs) {
+    		JCClassDecl root = env.enclClass;
+System.out.println("dingding = " + root.sym);
+    		List<JCTree> defs = root.defs;
+            for (JCTree tree : defs) {
+    			if (tree instanceof JCMethodDecl) {
+    				JCMethodDecl m = (JCMethodDecl)tree;
+    				if (m.body != null) {
+    					System.out.println("m = " + m.name + "\tc = " + root.name);
+    					System.out.println(m);
+    					tree.accept(new org.paninij.analysis.ASTCFGBuilder());
+        				System.out.println("digraph G {");
+	        			m.body.accept(
+	        				new org.paninij.analysis.ASTCFGPrinter()
+	        			);
+	        			System.out.println("}");
+System.out.println();
+    				}
+    			}
+            }
+    	}
+        // end Panini code
 
         return env;
     }
@@ -1666,37 +1680,4 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
        }
 
     }
-
-    // Panini code
-    private static List<JCCompilationUnit> CFGconstruction(
-    		List<JCCompilationUnit> input) {
-    	if (Attr.doGraphs) {
-    		for (JCCompilationUnit root : input) {
-        		List<JCTree> defs = root.defs;
-                for (JCTree tree : defs) {
-                	if (tree instanceof JCClassDecl) {
-                		tree.accept(new org.paninij.analysis.ASTCFGBuilder());
-
-                		JCClassDecl jccd = (JCClassDecl) tree;
-                		for (JCTree def : jccd.defs) {
-                			if (def instanceof JCMethodDecl) {
-                				JCMethodDecl m = (JCMethodDecl)def;
-                				if (m.body != null) {
-    	            				System.out.println("digraph G {");
-    	    	        			m.body.accept(
-    	    	        				new org.paninij.analysis.ASTCFGPrinter()
-    	    	        			);
-    	    	        			System.out.println("}");
-                				}
-                			}
-                		}
-                	}
-                }
-            }
-    		Attr.doGraphs = false;
-    	}
- 
-    	return input;
-    }
-    // end Panini code
 }
