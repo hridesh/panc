@@ -770,6 +770,9 @@ public class Attr extends JCTree.Visitor {
     				}
     			}
 
+    		}else if(def.getTag() == Tag.VARDEF){
+    				if(((JCVariableDecl)def).type.tsym.isCapsule)
+    					((JCVariableDecl)def).mods.flags |= FINAL;
     		}
     	}
         /*if (doGraphs)

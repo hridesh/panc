@@ -393,16 +393,16 @@ public class Enter extends JCTree.Visitor {
     			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString("join"), make.TypeIdent(TypeTags.VOID), 
     					List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>of(excp), null, null));
     			JCCapsuleDecl copyActive =
-    					make.CapsuleDef(make.Modifiers(0, annotationProcessor.createCapsuleAnnotation(Flags.ACTIVE, capsule)), names.fromString(capsule.name + "$thread"), 
+    					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.ACTIVE, capsule)), names.fromString(capsule.name + "$thread"), 
     							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
     			JCCapsuleDecl copyTask =
-    					make.CapsuleDef(make.Modifiers(0, annotationProcessor.createCapsuleAnnotation(Flags.TASK, capsule)), names.fromString(capsule.name + "$task"), 
+    					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.TASK, capsule)), names.fromString(capsule.name + "$task"), 
     							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
     			JCCapsuleDecl copySerial =
-    					make.CapsuleDef(make.Modifiers(0, annotationProcessor.createCapsuleAnnotation(Flags.SERIAL, capsule)), names.fromString(capsule.name + "$serial"), 
+    					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.SERIAL, capsule)), names.fromString(capsule.name + "$serial"), 
     							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
     			JCCapsuleDecl copyMonitor =
-    					make.CapsuleDef(make.Modifiers(0, annotationProcessor.createCapsuleAnnotation(Flags.MONITOR, capsule)), names.fromString(capsule.name + "$monitor"), 
+    					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.MONITOR, capsule)), names.fromString(capsule.name + "$monitor"), 
     							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
 //    			interfaceBody.add(copyActive);
     			if(!hasRun){
@@ -827,7 +827,7 @@ public class Enter extends JCTree.Visitor {
         			log.error(tree.pos(), "serialize.active.capsules");
         		}else if((mdecl.mods.flags & PRIVATE) ==0
         					&&(mdecl.mods.flags & PROTECTED) ==0){
-                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC),
+                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC|FINAL),
                     		mdecl.name,
                     		mdecl.restype,
                     		mdecl.typarams,
@@ -870,7 +870,7 @@ public class Enter extends JCTree.Visitor {
         			log.error(tree.pos(), "serialize.active.capsules");
         		}else if((mdecl.mods.flags & PRIVATE) ==0
         					&&(mdecl.mods.flags & PROTECTED) ==0){
-                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC|Flags.SYNCHRONIZED),
+                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC|Flags.SYNCHRONIZED|FINAL),
                     		mdecl.name,
                     		mdecl.restype,
                     		mdecl.typarams,
@@ -1101,7 +1101,7 @@ public class Enter extends JCTree.Visitor {
     						names.fromString(constantName),
     						make.TypeIdent(TypeTags.INT),
     					    make.Literal(indexer++));
-                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC),
+                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC|FINAL),
                     		mdecl.name,
                     		mdecl.restype,
                     		mdecl.typarams,
