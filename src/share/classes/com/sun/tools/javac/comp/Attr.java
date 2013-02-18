@@ -804,8 +804,6 @@ public class Attr extends JCTree.Visitor {
     			Name vdeclTypeName = names.fromString(vdecl.vartype.toString());
     			if(syms.capsules.containsKey(vdeclTypeName))
     				processCapsuleDef(tree, decls, inits, submits, starts, joins, variables, vdecl);
-    			else if(syms.libclasses.containsKey(vdeclTypeName))
-    				processLibCapsuleDef(tree, decls, inits, submits, starts, joins,	variables, vdecl);
     			else{
     				if(vdecl.vartype.getTag()==CAPSULEARRAY){
     					processCapsuleArray(tree, decls, assigns, submits, starts, joins,	variables, modArrays, vdecl);
@@ -836,10 +834,9 @@ public class Attr extends JCTree.Visitor {
     	List<JCStatement> mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
     	JCMethodDecl maindecl = createMainMethod(tree.sym, tree.body, tree.params, mainStmts);
     	tree.defs = tree.defs.append(maindecl);
-
     	
     	tree.switchToClass();
-
+    	
     	memberEnter.memberEnter(maindecl, env);
         if (doGraphs) {
             //ListBuffer<Symbol> capsules = new ListBuffer<Symbol>();
@@ -1098,16 +1095,6 @@ public class Attr extends JCTree.Visitor {
 
     	variables.put(vdecl.name, c.name);
     	modArrays.put(vdecl.name, mat.amount);
-    }
-
-    private void processLibCapsuleDef(JCSystemDecl tree,
-    		ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
-    		ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
-    		ListBuffer<JCStatement> joins, Map<Name, Name> variables,
-    		JCVariableDecl vdecl) {
-    	ClassSymbol c = syms.libclasses.get(names.fromString(vdecl.vartype.toString()));
-    	inits.append(vdecl);
-    	variables.put(vdecl.name, c.name);
     }
 
     private void processCapsuleDef(JCSystemDecl tree,

@@ -552,56 +552,6 @@ public class Enter extends JCTree.Visitor {
         result = null;
     }
     // Panini code
-    public void addDuck(){
-    	if(!syms.duckAdded){
-    		make.MethodDef(make.Modifiers(PUBLIC), 
-    				names.fromString(PaniniConstants.PANINI_FINISH), 
-    				make.Type(syms.voidType), List.<JCTypeParameter>nil(), 
-    				List.<JCVariableDecl>of(make.VarDef(make.Modifiers(0), names.fromString("t"),
-    						make.Ident(names.fromString("T")), null)), 
-    				List.<JCExpression>nil(), null, null);
-    		JCClassDecl cdecl = make.ClassDef(make.Modifiers(INTERFACE), 
-    				names.fromString(PaniniConstants.DUCK_INTERFACE_NAME), 
-    				List.<JCTypeParameter>of(make.TypeParameter(names.fromString("T"), List.<JCExpression>nil())), 
-    				null, List.<JCExpression>nil(), List.<JCTree>of(make.MethodDef(make.Modifiers(PUBLIC), 
-    	    				names.fromString(PaniniConstants.PANINI_FINISH), 
-    	    				make.Type(syms.voidType), List.<JCTypeParameter>nil(), 
-    	    				List.<JCVariableDecl>of(make.VarDef(make.Modifiers(0), names.fromString("t"),
-    	    						make.Ident(names.fromString("T")), null)), 
-    	    				List.<JCExpression>nil(), null, null)));
-    		make.MethodDef(make.Modifiers(PUBLIC),
-                           names.fromString(PaniniConstants.PANINI_FINISH),
-                           make.Type(syms.voidType), List.<JCTypeParameter>nil(),
-                           List.<JCVariableDecl>of(make.VarDef(make.Modifiers(0), names.fromString("t"),
-                                           make.Ident(names.fromString("Object")), null)),
-                           List.<JCExpression>nil(), null, null);
-            JCClassDecl voidDuck = make.ClassDef(
-                           make.Modifiers(0),
-                           names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$Void"),
-                           List.<JCTypeParameter>nil(),
-                           null,
-                           List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME))),
-                           List.<JCTree>of(make.MethodDef(make.Modifiers(PUBLIC),
-                                   names.fromString(PaniniConstants.PANINI_FINISH),
-                                   make.Type(syms.voidType), List.<JCTypeParameter>nil(),
-                                   List.<JCVariableDecl>of(make.VarDef(make.Modifiers(0), names.fromString("t"),
-                                                   make.Ident(names.fromString("Object")), null)),
-                                   List.<JCExpression>nil(), make.Block(0, List.<JCStatement>nil()), null)));
-            env.toplevel.defs = env.toplevel.defs.append(voidDuck);
-            env.toplevel.defs = env.toplevel.defs.append(cdecl);
-            ClassSymbol cs;
-            PackageSymbol packge = (PackageSymbol)env.info.scope.owner;
-            cs = reader.enterClass(cdecl.name, packge);
-            cdecl.sym = cs;
-            cs = reader.enterClass(voidDuck.name, packge);
-            voidDuck.sym= cs;
-            syms.libclasses.put(cdecl.name, cs);
-            classEnter(cdecl, env);
-            classEnter(voidDuck, env);
-            syms.duckAdded=true;
-    	}
-    }
-    
     public void visitSystemDef(JCSystemDecl tree){
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
