@@ -841,7 +841,6 @@ public class Attr extends JCTree.Visitor {
     	tree.defs = tree.defs.append(maindecl);
     	
     	tree.switchToClass();
-    	System.out.println(tree);
     	
     	memberEnter.memberEnter(maindecl, env);
         if (doGraphs) {
