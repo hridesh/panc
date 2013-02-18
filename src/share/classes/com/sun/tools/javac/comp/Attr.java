@@ -795,7 +795,6 @@ public class Attr extends JCTree.Visitor {
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> submits = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> starts = new ListBuffer<JCStatement>();
-    	ListBuffer<JCStatement> starts2 = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
     	Map<Name, Name> variables = new HashMap<Name, Name>();
     	Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
@@ -807,10 +806,10 @@ public class Attr extends JCTree.Visitor {
     			JCVariableDecl vdecl = (JCVariableDecl) currentSystemStmt;
     			Name vdeclTypeName = names.fromString(vdecl.vartype.toString());
     			if(syms.capsules.containsKey(vdeclTypeName))
-    				processCapsuleDef(tree, decls, inits, submits, starts, starts2, joins, variables, vdecl);
+    				processCapsuleDef(tree, decls, inits, submits, starts, joins, variables, vdecl);
     			else{
     				if(vdecl.vartype.getTag()==CAPSULEARRAY){
-    					processCapsuleArray(tree, decls, assigns, submits, starts, starts2, joins, variables, modArrays, vdecl);
+    					processCapsuleArray(tree, decls, assigns, submits, starts, joins, variables, modArrays, vdecl);
     				}
     				else{
     					if(vdecl.vartype.getTag()==TYPEIDENT || vdecl.vartype.toString().equals("String")){
@@ -836,10 +835,7 @@ public class Attr extends JCTree.Visitor {
     		processSystemAnnotation(tree, inits);
 
     	List<JCStatement> mainStmts;
-    	if(tree.activeCapsuleCount == 1)
-    		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts2).appendList(submits).toList();
-    	else
-    		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
+		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
     	JCMethodDecl maindecl = createMainMethod(tree.sym, tree.body, tree.params, mainStmts);
     	tree.defs = tree.defs.append(maindecl);
     	
@@ -1029,7 +1025,6 @@ public class Attr extends JCTree.Visitor {
     private void processCapsuleArray(JCSystemDecl tree,
     		ListBuffer<JCStatement> decls, ListBuffer<JCStatement> assigns,
     		ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
-    		ListBuffer<JCStatement> singleActiveStart,
     		ListBuffer<JCStatement> joins, Map<Name, Name> variables,
     		Map<Name, Integer> modArrays, JCVariableDecl vdecl) {
     	JCCapsuleArray mat = (JCCapsuleArray)vdecl.vartype;
@@ -1077,29 +1072,29 @@ public class Attr extends JCTree.Visitor {
     					List.of(step), 
     					make.Block(0, loopBody.toList()));
     	assigns.append(floop);
-    	for(int j=0;j<mat.amount;j++){
-    		JCExpressionStatement joinAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-    				make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("start")), 
-    				List.<JCExpression>nil()));
-    		starts.append(joinAssign);	        		    	
-    	}
     	if(c.hasRun){
-    		tree.activeCapsuleCount += mat.amount;
     		for(int j = mat.amount-1; j>=0;j--){
-    			singleActiveStart.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    			if(tree.activeCapsuleCount==0)
+    				starts.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
     					make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("run")), 
     					List.<JCExpression>nil())));
-    			joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-    					make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
-    							names.fromString("join")), List.<JCExpression>nil())))), 
-    							List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-    									names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-    									null), make.Block(0, List.<JCStatement>nil()))), null));
+    			else{
+    				starts.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    	    				make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("start")), 
+    	    				List.<JCExpression>nil())));
+    				joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+        					make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
+        							names.fromString("join")), List.<JCExpression>nil())))), 
+        							List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
+        									names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
+        									null), make.Block(0, List.<JCStatement>nil()))), null));
+    			}
+    			tree.activeCapsuleCount += mat.amount;
     		}
     	}
     	else{
     		for(int j = mat.amount-1; j>=0;j--){
-    			singleActiveStart.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
+    			starts.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
     					make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("start")), 
     					List.<JCExpression>nil())));
     		}
@@ -1119,7 +1114,6 @@ public class Attr extends JCTree.Visitor {
     private void processCapsuleDef(JCSystemDecl tree,
     		ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
     		ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
-    		ListBuffer<JCStatement> singleActiveStart,
     		ListBuffer<JCStatement> joins, Map<Name, Name> variables,
     		JCVariableDecl vdecl) {
     	String initName = vdecl.vartype.toString()+"$thread";
@@ -1147,21 +1141,24 @@ public class Attr extends JCTree.Visitor {
     	JCExpressionStatement startAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
     			make.Select(make.Ident(vdecl.name), names.fromString("start")), 
     			List.<JCExpression>nil()));
-    	starts.append(startAssign);
     	if(c.hasRun){
+    		if(tree.activeCapsuleCount==0)
+	    		starts.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
+	    				make.Select(make.Ident(vdecl.name), names.fromString("run")), 
+	    				List.<JCExpression>nil())));
+    		else{
+    			starts.prepend(startAssign);
+    			joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
+        				make.Select(make.Ident(vdecl.name), 
+        						names.fromString("join")), List.<JCExpression>nil())))), 
+        						List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
+        								names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
+        								null), make.Block(0, List.<JCStatement>nil()))), null));
+    		}
     		tree.activeCapsuleCount++;
-    		singleActiveStart.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
-    				make.Select(make.Ident(vdecl.name), names.fromString("run")), 
-    				List.<JCExpression>nil())));
-    		joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
-    				make.Select(make.Ident(vdecl.name), 
-    						names.fromString("join")), List.<JCExpression>nil())))), 
-    						List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
-    								names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
-    								null), make.Block(0, List.<JCStatement>nil()))), null));
     	}
     	else{
-    		singleActiveStart.prepend(startAssign);
+    		starts.prepend(startAssign);
     		submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
     				make.Select(make.Ident(vdecl.name), 
     						names.fromString("shutdown")), List.<JCExpression>nil())));
