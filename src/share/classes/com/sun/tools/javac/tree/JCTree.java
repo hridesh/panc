@@ -746,6 +746,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		public Tag tag;
 		public JCBlock body;
 		public List<JCVariableDecl> params;
+		public boolean hasTaskCapsule;
 
 		public JCSystemDecl(JCModifiers mods, Name name, JCBlock body,
 				List<JCVariableDecl> params) {
