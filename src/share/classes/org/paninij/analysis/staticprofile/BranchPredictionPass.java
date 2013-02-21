@@ -1,5 +1,6 @@
 package org.paninij.analysis.staticprofile;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -38,6 +39,7 @@ public class BranchPredictionPass {
 	 */
 	private final void calculateBranchProbabilities(JCTree block) {
 		List<JCTree> successors = block.getSuccessors();
+		if (successors == null)	return;
 		int noOfSuccessors = successors.size();
 		int noOfBackEdges = bpi.CountBackEdges(block);
 		// The basic block should have some succesors to compute profile

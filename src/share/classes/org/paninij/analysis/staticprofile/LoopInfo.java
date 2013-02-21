@@ -1,5 +1,6 @@
 package org.paninij.analysis.staticprofile;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -26,10 +27,13 @@ public class LoopInfo {
 	public LoopInfo(JCCapsuleDecl module, JCMethodDecl m) {
 		this.module = module;
 		this.method = m;
+		this.loops = new HashSet<Loop>();
+		loopfinder();
 	}
 
 	private void loopfinder() {
 		JCBlock body = this.method.body;
+		if (body == null)	return;
 		List<JCStatement> methodBody = body.getStatements();
 		Iterator<JCStatement> statsIter = methodBody.iterator();
 		while (statsIter.hasNext()) {
@@ -93,10 +97,12 @@ public class LoopInfo {
 	}
 	
 	public List<JCStatement> methodBody () {
+		if (method.body == null)	return new ArrayList<JCTree.JCStatement>();
 		return this.method.body.getStatements();
 	}
 	
 	public JCTree first () {
+		if (this.method.body == null)	return null;
 		return this.method.body.getStatements().head;
 	}
 	

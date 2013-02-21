@@ -8,8 +8,10 @@ import java.util.ListIterator;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
+import java.util.Map.Entry;
 
 import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 
@@ -55,6 +57,14 @@ public class BlockEdgeFrequencyPass {
 		this.li = li;
 		this.bpp = new BranchPredictionPass(this.li);
 		runOnFunction();
+	}
+	
+	public BlockEdgeFrequencyPass(JCCapsuleDecl module, JCMethodDecl m) {
+		this.li = new LoopInfo(module, m);
+		this.bpp = new BranchPredictionPass(this.li);
+		runOnFunction();
+		display1();
+		display2();
 	}
 
 	private final boolean runOnFunction() {
@@ -124,7 +134,9 @@ public class BlockEdgeFrequencyPass {
 			notVisited.add(block);
 			// Put the new successors into the stack
 			// LoopInfo li = bpp.getBPI().getLoopInformation();
+			if (block == null)	return;
 			List<JCTree> successors = block.getSuccessors();
+			if (successors == null)	continue;
 			for (Iterator<JCTree> succIter = successors.iterator(); succIter
 					.hasNext();) {
 				stack.push(succIter.next());
@@ -146,6 +158,7 @@ public class BlockEdgeFrequencyPass {
 		// notVisited.add(head);
 		do {
 			JCTree basicBlk = stack.pop();
+			if (basicBlk == null)	continue;
 			// If BB has been visited
 			if (!(notVisited.contains(basicBlk)))
 				continue;
@@ -215,6 +228,7 @@ public class BlockEdgeFrequencyPass {
 
 			// Calculate the edges frequencies for all successor of this block.
 			List<JCTree> successors = basicBlk.getSuccessors();
+			if (successors == null)	continue;
 			for (Iterator<JCTree> succIter = successors.iterator(); succIter
 					.hasNext();) {
 				JCTree successor = succIter.next();
@@ -292,8 +306,9 @@ public class BlockEdgeFrequencyPass {
 			// If the basic block has no successors, then it s a termination
 			// node.
 			// List<Unit> successors = LI.getFullSuccessors(block);
-
-			if (block.getSuccessors().size() != 0) {
+			List<JCTree> successors = block.getSuccessors();
+			if (successors == null)	continue;
+			if (successors.size() != 0) {
 				// Find all predecessor edges leading to BB.
 				List<JCTree> predecessors = block.getPredecessors();
 				for (Iterator<JCTree> predIter = predecessors.iterator(); predIter
@@ -319,6 +334,11 @@ public class BlockEdgeFrequencyPass {
 		return edgeFrequencies.containsKey(edge) ? edgeFrequencies.get(edge)
 				: 0.0;
 	}
+	
+	public double getBlockFrequency (JCTree block) {
+		return blockFrequencies.containsKey(block)?
+				blockFrequencies.get(block):0.0;
+	}
 
 	/**
 	 * Clear - Clear all stored information.
@@ -329,5 +349,42 @@ public class BlockEdgeFrequencyPass {
 		backEdgesProbabilities.clear();
 		edgeFrequencies.clear();
 		blockFrequencies.clear();
+	}
+	
+	public void display1 () {
+		System.out.println ("============================================================================");
+		System.out.println ("List of all edge frequencies");
+		System.out.println ("============================================================================");
+
+		Set<Entry<Pair<JCTree, JCTree>, Double>> mapEnteries = edgeFrequencies.entrySet();
+		for (Iterator<Entry<Pair<JCTree, JCTree>, Double>> entryIter = 
+			mapEnteries.iterator(); entryIter.hasNext();) {
+			Entry<Pair<JCTree, JCTree>, Double> entry = entryIter.next();
+			Pair<JCTree, JCTree> edge = entry.getKey();
+			Double prob = entry.getValue();
+			System.out.print(edge.first().toString());
+			System.out.print(" -----> ");
+			System.out.print(edge.second().toString());
+			System.out.println(" = "+prob.doubleValue());
+			System.out.println ("============================================================================");
+
+		}
+	}
+
+	public void display2 () {
+		System.out.println ("============================================================================");
+		System.out.println ("List of all block frequencies");
+		System.out.println ("============================================================================");
+
+		Set<Entry<JCTree, Double>> mapEnteries = blockFrequencies.entrySet();
+		for (Iterator<Entry<JCTree, Double>> entryIter = 
+			mapEnteries.iterator(); entryIter.hasNext();) {
+			Entry<JCTree, Double> entry = entryIter.next();
+			JCTree block = entry.getKey();
+			Double prob = entry.getValue();
+			System.out.print(block.toString());
+			System.out.println(" = "+prob.doubleValue());
+			System.out.println ("============================================================================");
+		}
 	}
 }

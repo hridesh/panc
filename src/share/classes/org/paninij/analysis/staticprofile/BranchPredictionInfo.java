@@ -91,7 +91,7 @@ public class BranchPredictionInfo {
 					// continue;
 
 					List<JCTree> successors = block.getSuccessors();
-
+					if (successors == null) continue;
 					// For each loop block successor, check if the block
 					// pointing is
 					// outside the loop.

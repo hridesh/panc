@@ -99,6 +99,7 @@ public class BranchHeuristicsInfo {
 		boolean matched = false;
 		Pair<JCTree, JCTree> prediction = null;
 		List<JCTree> successors = root.getSuccessors();
+		if (successors == null)	return null;
 		if (successors.size() < 2)
 			return null;
 		// Basic block successors, the true and false branches.
@@ -146,6 +147,7 @@ public class BranchHeuristicsInfo {
 		if (!(root.getTag().equals(Tag.IF)))
 			return null;
 		List<JCTree> successors = root.getSuccessors();
+		if (successors == null)	return null;
 		if (successors.size() < 2)
 			return null;
 		// Basic block successors, the true and false branches.
@@ -172,6 +174,7 @@ public class BranchHeuristicsInfo {
 		boolean matched = false;
 		Pair<JCTree, JCTree> prediction = null;
 		List<JCTree> successors = root.getSuccessors();
+		if (successors == null)	return null;
 		if (successors.size() < 2)
 			return null;
 		// Basic block successors, the true and false branches.
@@ -226,6 +229,7 @@ public class BranchHeuristicsInfo {
 	private final Pair<JCTree, JCTree> MatchLoopExitHeuristic(JCTree root) {
 		Pair<JCTree, JCTree> prediction = null;
 		List<JCTree> successors = root.getSuccessors();
+		if (successors == null)	return null;
 		if (successors.size() < 2)
 			return null;
 		// Basic block successors, the true and false branches.
@@ -265,6 +269,7 @@ public class BranchHeuristicsInfo {
 		boolean matched = false;
 		Pair<JCTree, JCTree> prediction = null;
 		List<JCTree> successors = root.getSuccessors();
+		if (successors == null)	return null;
 		if (successors.size() < 2)
 			return null;
 		// Basic block successors, the true and false branches.
@@ -306,6 +311,7 @@ public class BranchHeuristicsInfo {
 		boolean matched = false;
 		Pair<JCTree, JCTree> prediction = null;
 		List<JCTree> successors = root.getSuccessors();
+		if (successors == null)	return null;
 		if (successors.size() < 2)
 			return null;
 		// Basic block successors, the true and false branches.
@@ -349,6 +355,7 @@ public class BranchHeuristicsInfo {
 		boolean matched = false;
 		Pair<JCTree, JCTree> prediction = null;
 		List<JCTree> successors = root.getSuccessors();
+		if (successors == null)	return null;
 		if (successors.size() < 2)
 			return null;
 		// Basic block successors, the true and false branches.
@@ -409,6 +416,7 @@ public class BranchHeuristicsInfo {
 		if (!(root.getTag().equals(Tag.IF)))
 			return null;
 		List<JCTree> successors = root.getSuccessors();
+		if (successors == null)	return null;
 		if (successors.size() == 0)
 			return null;
 		// Basic block successors, the true and false branches.

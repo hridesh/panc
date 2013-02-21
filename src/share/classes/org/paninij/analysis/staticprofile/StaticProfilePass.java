@@ -1,16 +1,33 @@
 package org.paninij.analysis.staticprofile;
 
+import static com.sun.tools.javac.code.Flags.PRIVATE;
+
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Set;
 import java.util.Vector;
 
+import org.paninij.analysis.CFG;
+import org.paninij.analysis.CFGBuilder;
+import org.paninij.analysis.CFGPrinter;
+import org.paninij.effects.AliasingComp;
+import org.paninij.effects.EffectSet;
+import org.paninij.effects.SystemEffectsComp;
+
+import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
+import com.sun.tools.javac.tree.JCTree.Tag;
+import com.sun.tools.javac.util.Context;
 
 public class StaticProfilePass {
 
+    protected static final Context.Key<StaticProfilePass> secKey =
+            new Context.Key<StaticProfilePass>();
+    
 	static double epsilon = 0.000001;
 	
 	private JCCapsuleDecl capsule;
@@ -28,7 +45,44 @@ public class StaticProfilePass {
 	
 	public StaticProfilePass(JCCapsuleDecl capsule) {
 		this.capsule = capsule;
-		runOnCapsule();
+		// runOnCapsule();
+		processCapsule(this.capsule);
+	}
+	
+    public static StaticProfilePass instance(Context context) {
+    	StaticProfilePass instance = context.get(secKey);
+        if (instance == null)
+            instance = new StaticProfilePass(context);
+        return instance;
+    }
+    
+    protected StaticProfilePass(Context context) {
+        context.put(secKey, this);
+    }
+	
+	/**
+	 * per class staticprofile information
+	 */
+	private void processCapsule(JCCapsuleDecl capsule) {
+		this.capsule = capsule;
+		LinkedList<JCMethodDecl> methodsToProcess;
+		methodsToProcess = new LinkedList<JCMethodDecl>();
+		HashSet<JCMethodDecl> visitedMethods = new HashSet<JCMethodDecl>();
+		for (JCTree def : capsule.defs) {
+			if (def.getTag() == Tag.METHODDEF) {
+				JCMethodDecl method = (JCMethodDecl) def;
+				if ((method.sym.flags() & PRIVATE) != 0
+						|| (method.sym.name.toString().equals("run") && capsule.sym.hasRun)) {
+					methodsToProcess.offer(method);
+				}
+			}
+		}
+
+		while (!methodsToProcess.isEmpty()) {
+			JCMethodDecl method = methodsToProcess.poll();
+			visitedMethods.add(method);
+			new BlockEdgeFrequencyPass(this.capsule, method);
+		}
 	}
 	
 	private final boolean runOnCapsule() {

@@ -16,8 +16,8 @@ import com.sun.tools.javac.tree.JCTree.Tag;
 
 public class Loop {
 
-	private JCStatement header;
-	private JCStatement preheader;
+	private JCTree header;
+	private JCTree preheader;
 
 	//private List<JCStatement> body = new ArrayList<JCStatement>();
 
@@ -32,6 +32,7 @@ public class Loop {
 		this.KIND = loop.getTag();
 		this.body = (JCBlock) loop.body;
 		this.stats = this.body.stats;
+		this.header = loop.cond;
 	}
 	
 	public Loop(JCForAllLoop loop) {
@@ -39,6 +40,7 @@ public class Loop {
 		this.KIND = loop.getTag();
 		this.body = (JCBlock) loop.body;
 		this.stats = this.body.stats;
+		this.header = loop.getExpression();
 	}
 	
 	public Loop(JCForLoop loop) {
@@ -46,6 +48,7 @@ public class Loop {
 		this.KIND = loop.getTag();
 		this.body = (JCBlock) loop.body;
 		this.stats = this.body.stats;
+		this.header = loop.cond;
 	}
 	
 	public Loop(JCWhileLoop loop) {
@@ -53,6 +56,7 @@ public class Loop {
 		this.KIND = loop.getTag();
 		this.body = (JCBlock) loop.body;
 		this.stats = this.body.stats;
+		this.header = loop.cond;
 	}
 
 	public JCTree getHead() {
