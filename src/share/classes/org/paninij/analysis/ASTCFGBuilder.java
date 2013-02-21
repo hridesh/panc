@@ -53,6 +53,7 @@ public class ASTCFGBuilder extends TreeScanner {
 	private java.util.List<String> blockingCalls;
 	public static HashMap<String, Integer> costs = new HashMap<String, Integer>();
 	public static HashMap<JCMethodDecl, java.util.List<String>> invokedProcs = new HashMap<JCMethodDecl, java.util.List<String>>();
+	public static java.util.List<String> blockingCapsules = new ArrayList<String>();
 	//public static HashMap<K, V>
 
 	// methodCost
@@ -194,6 +195,8 @@ public class ASTCFGBuilder extends TreeScanner {
 				String method = type + " " + clsw + "." + sym.toString();
 				System.out.println("map put: " + method);
 				costs.put(method, this.methodCost);
+				if (tree.hasBlocking)
+					blockingCapsules.add(clsw);
 			}
 			System.out.println("methodCost = " + methodCost);
 			tree.cost = this.methodCost; // saving the cost in JCTree
@@ -810,15 +813,40 @@ public class ASTCFGBuilder extends TreeScanner {
 		if (meth instanceof JCFieldAccess) {
 			JCFieldAccess m = (JCFieldAccess) meth;
 			sym = m.sym;
+		} /*else if (meth instanceof JCMethodInvocation) {
+			JCMethodInvocation m = (JCMethodInvocation) meth;
+		} else if (meth instanceof JCNewClass) {
+			JCNewClass m = (JCNewClass) meth;
+		} else if (meth instanceof JCTypeCast) {
+			JCTypeCast m = (JCTypeCast) meth;
+		} else if (meth instanceof JCParens) {
+			JCParens m = (JCParens) meth;
+		} else if (meth instanceof JCLiteral) {
+			JCLiteral m = (JCLiteral) meth; 
+		} else if (meth instanceof JCBinary) {
+			JCBinary m = (JCBinary) meth;
+		} else if (meth instanceof JCAssign) {
+			JCAssign m = (JCAssign) meth; 
+		} else if (meth instanceof JCArrayAccess) {
+			JCArrayAccess m = (JCArrayAccess) meth;
+		} */ else if (meth instanceof JCIdent) {
+			JCIdent m = (JCIdent) meth;
+			sym = m.sym;
 		}
+		
 		if (sym != null) {
 			ClassSymbol cls = (ClassSymbol) sym.owner;
 			String type = meth.type.getReturnType().toString();
 			String method = type + " " + cls.fullname + "." + sym.toString();
 			if (sym.owner.isCapsule) {
 				invokedCapsuleProcs.add(method);
-			} else
-				blockingCalls.add(method); // TODO: currently not checking for blocking calls
+			} else {
+				for (String blkCall : Blocking.thread_methods) {
+					if (method.equals(blkCall))
+						blockingCalls.add(method); // TODO: currently not checking for blocking calls
+				}
+				
+			}
 		}
 		// TODO:need to identify type of invocation (static, virtual, special,
 		// interface or dynamic).

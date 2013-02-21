@@ -83,4 +83,11 @@ public interface Blocking {
 		// explicit concurrent libraries, hence, programmer 
 		// without concurrency in mind may not use them.
 	};
+	
+	static final String[] thread_methods = {
+		"void java.lang.Thread.sleep(long)",
+		"void java.lang.Thread.sleep(long,int)",
+		"void java.lang.Thread.yield()",
+		"void org.paninij.runtime.PaniniCapsuleSequential.yield(long)"
+	};
 }
