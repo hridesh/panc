@@ -22,7 +22,7 @@ import java.util.HashSet;
 // system-specified capsule instances as nodes.
 public class SystemGraphs {
     public static class Node { // a capsule instance
-        public ClassSymbol sym; public String name; public int index;
+        public ClassSymbol sym; public String name; public int index; public int indegree; public int outdegree;
         public Node(ClassSymbol sym, String name) { this.sym = sym; this.name = name; this.index = -1; }
         public Node(ClassSymbol sym, String name, int index) { this.sym = sym; this.name = name; this.index = index; }
         public String toString() { 

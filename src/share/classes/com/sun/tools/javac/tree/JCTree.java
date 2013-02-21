@@ -410,6 +410,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	// Used to print out the CFG for debug.
 	public int id;
+	// methodCost
+	public int cost;
+	public boolean hasBlocking;
+	// methodCost
 	// end Panini code
 
     /* The (encoded) position in the source file. @see util.Position.

@@ -110,6 +110,15 @@ public class SystemGraphsBuilder extends TreeScanner {
             }
         }
 
+		for (Collection<ConnectionEdge> edges : graphs.forwardConnectionEdges.values()) {
+			for (ConnectionEdge edge : edges) {
+				Node from = edge.from;
+				Node to = edge.to;
+				from.outdegree++;
+				to.indegree++;
+			}
+		}
+		
         System.out.println(graphs);
 
         return graphs;

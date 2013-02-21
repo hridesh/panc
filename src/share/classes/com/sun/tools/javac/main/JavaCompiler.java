@@ -26,6 +26,7 @@
 package com.sun.tools.javac.main;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -35,6 +36,7 @@ import java.util.MissingResourceException;
 import java.util.Queue;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.Stack;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,6 +47,11 @@ import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
+
+import org.paninij.analysis.ASTCFGBuilder;
+import org.paninij.systemgraphs.SystemGraphs;
+import org.paninij.systemgraphs.SystemGraphs.ConnectionEdge;
+import org.paninij.systemgraphs.SystemGraphs.Node;
 
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
@@ -1203,30 +1210,86 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
         }
 
         // Panini code
-        if (Attr.doGraphs) {
-    		JCClassDecl root = env.enclClass;
-System.out.println("dingding = " + root.sym);
-    		List<JCTree> defs = root.defs;
-            for (JCTree tree : defs) {
-    			if (tree instanceof JCMethodDecl) {
-    				JCMethodDecl m = (JCMethodDecl)tree;
-    				if (m.body != null) {
-    					System.out.println("m = " + m.name + "\tc = " + root.name);
-    					System.out.println(m);
-    					tree.accept(new org.paninij.analysis.ASTCFGBuilder());
-        				System.out.println("digraph G {");
-	        			m.body.accept(
-	        				new org.paninij.analysis.ASTCFGPrinter()
-	        			);
-	        			System.out.println("}");
-System.out.println();
-    				}
-    			}
-            }
-    	}
-        // end Panini code
+		if (Attr.doGraphs) {
+			JCClassDecl root = env.enclClass;
+			// eliminate processing of duck classes
+			if (!root.sym.name.toString().contains("Panini$Duck")) {
+				// eliminate processing of task, thread versions except for capsule with run method
+				if (root.sym.isCapsule
+						&& !root.sym.name.toString().contains("$serial")
+						&& !root.sym.hasRun)
+					return env;
+				System.out.println("Processing class: " + root.sym);
+				List<JCTree> defs = root.defs;
+				for (JCTree tree : defs) {
+					if (tree instanceof JCMethodDecl) {
+						JCMethodDecl m = (JCMethodDecl) tree;
+						if (m.body != null) {
+							/*System.out.println("m = " + m.name + "\tc = "
+									+ root.name);
+							System.out.println(m);*/
+							tree.accept(new org.paninij.analysis.ASTCFGBuilder());
+							/*System.out.println("digraph G {");
+							m.body.accept(new org.paninij.analysis.ASTCFGPrinter());
+							System.out.println("}");
+							System.out.println();*/
+						}
+					}
+				}
+			}
+			if (root.sym.isConfig) {
+				ASTCFGBuilder.finalizeCost(); // inter-capsule cost update
 
-        return env;
+				// Rules to decide execution model for capsules in the system
+				// 1. capsule instance with run() method: thread
+				// 2. capsule instance with no run() method, and one indegree
+				// and low cost: serial
+				// 3. capsule instance with no run() method, and more than one
+				// indegree and low cost: monitor
+				// 4. capsule instance with no run() method, and more than one
+				// indegree and high cost and low PIC: task
+				// 5. capsule instance with no run() method, and more than one
+				// indegree and high cost and high PIC: thread
+				Stack<Node> visited = new Stack<SystemGraphs.Node>();
+				SystemGraphs graphs = root.sym.graphs;
+				for (Collection<ConnectionEdge> edges : graphs.forwardConnectionEdges
+						.values()) {
+					for (ConnectionEdge edge : edges) {
+						Node from = edge.from;
+						Node to = edge.to;
+						if (!visited.contains(from)) {
+							if (from.sym.hasRun && (from.indegree == 0)) {
+								// thread
+								System.out.println(from.toString() + " := THREAD");
+							} else if (from.indegree == 1){
+								// serial
+								System.out.println(from.toString() + " := SERIAL");
+							} else {
+								// monitor
+								System.out.println(from.toString() + " := MONITOR");
+							}
+							visited.add(from);
+						}
+						if (!visited.contains(to)) {
+							if (to.sym.hasRun && (to.indegree == 0)) {
+								// thread
+								System.out.println(to.toString() + " := THREAD");
+							} else if (to.indegree == 1){
+								// serial
+								System.out.println(to.toString() + " := SERIAL");
+							} else {
+								// monitor
+								System.out.println(to.toString() + " := MONITOR");
+							}
+							visited.add(to);
+						}
+					}
+				}
+			}
+		}
+		// end Panini code
+
+		return env;
     }
 
     /**

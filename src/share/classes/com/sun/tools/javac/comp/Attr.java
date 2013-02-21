@@ -790,6 +790,7 @@ public class Attr extends JCTree.Visitor {
                 cc.checkConsistency(tree.sym.graphs, n);
                 }
         }*/
+    	tree.sym.graphs = graphsBuilder.buildGraphs(tree);
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
@@ -848,6 +849,7 @@ public class Attr extends JCTree.Visitor {
                 if (v.getTag() == VARDEF) {
                     JCVariableDecl varDecl = (JCVariableDecl)v;
                     ClassSymbol c = syms.capsules.get(names.fromString(varDecl.vartype.toString()));
+                    //System.out.println("indegree: "+ c.indegree + ", outdegree: "+ c.outdegree);
                     if (varDecl.vartype.toString().contains("[]")) {
 //                    System.out.println("\n\n\nConsistency checker doesn't yet support capsule arrays. Exiting now.\n\n\n");
 //                    System.exit(5);
