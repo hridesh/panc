@@ -54,7 +54,7 @@ public class ASTCFGBuilder extends TreeScanner {
 	public static HashMap<String, Integer> costs = new HashMap<String, Integer>();
 	public static HashMap<JCMethodDecl, java.util.List<String>> invokedProcs = new HashMap<JCMethodDecl, java.util.List<String>>();
 	public static java.util.List<String> blockingCapsules = new ArrayList<String>();
-	//public static HashMap<K, V>
+	public static java.util.List<String> highCostCapsules = new ArrayList<String>();
 
 	// methodCost
 
@@ -65,6 +65,9 @@ public class ASTCFGBuilder extends TreeScanner {
 			for (String value : values) {
 				if (costs.containsKey(value))
 					key.cost += costs.get(value);
+			}
+			if (key.cost > 1000) { // TODO: change 1000 to some valid number later
+				highCostCapsules.add(capsuleInstanceOwnerName(key));
 			}
 			//System.out.println("Final cost of "+ key.name +" : "+ key.cost);
 		}
@@ -152,6 +155,22 @@ public class ASTCFGBuilder extends TreeScanner {
 		}
 	}
 
+	private static String capsuleInstanceOwnerName (JCMethodDecl tree) {
+		Symbol sym = tree.sym;
+		if (sym != null) {
+			ClassSymbol cls = (ClassSymbol) sym.owner;
+			String type = tree.type.getReturnType().toString();
+			String clsw = cls.fullname.toString();
+			if (clsw.contains("$")) {
+				int d = clsw.indexOf("$");
+				clsw = clsw.substring(0, d);
+				return clsw;
+			}
+		}
+		return null;
+	}
+	
+	
 	public void visitMethodDef(JCMethodDecl tree) {
 		enter++;
 		invokedCapsuleProcs = new ArrayList<String>();
@@ -200,6 +219,9 @@ public class ASTCFGBuilder extends TreeScanner {
 			}
 			System.out.println("methodCost = " + methodCost);
 			tree.cost = this.methodCost; // saving the cost in JCTree
+			if (tree.cost > 1000) { // TODO: change 1000 to some valid number later
+				highCostCapsules.add(capsuleInstanceOwnerName(tree));
+			}
 			this.methodCost = 0;
 			// this.enter = 0;
 		}
