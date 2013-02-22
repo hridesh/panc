@@ -1307,7 +1307,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 						&& !root.sym.name.toString().contains("$serial")
 						&& !root.sym.hasRun)
 					return env;
-				System.out.println("Processing class: " + root.sym);
+				//System.out.println("Processing class: " + root.sym);
 				List<JCTree> defs = root.defs;
 				for (JCTree tree : defs) {
 					if (tree instanceof JCMethodDecl) {
@@ -1328,6 +1328,8 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 					}
 				}
 			}
+			// TODO: assumes that all capsules and system are in the same file
+			// All capsules are processed before the system
 			if (root.sym.isConfig) {
 				ASTCFGBuilder.finalizeCost(); // inter-capsule cost update
 

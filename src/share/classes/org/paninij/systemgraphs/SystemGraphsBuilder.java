@@ -119,7 +119,7 @@ public class SystemGraphsBuilder extends TreeScanner {
 			}
 		}
 		
-        System.out.println(graphs);
+        //System.out.println(graphs);
 
         return graphs;
     }
