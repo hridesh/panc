@@ -49,8 +49,9 @@ public class ASTCFGBuilder extends TreeScanner {
 	private int methodCost = 0;
 	private int enter = 0;
 	private int loop = 0;
+	private static final int threshold = 1000;
 	private java.util.List<String> invokedCapsuleProcs;
-	private java.util.List<String> blockingCalls;
+	private java.util.List<String> blockingCalls; //TODO: deallocate memory
 	public static HashMap<String, Integer> costs = new HashMap<String, Integer>();
 	public static HashMap<JCMethodDecl, java.util.List<String>> invokedProcs = new HashMap<JCMethodDecl, java.util.List<String>>();
 	public static java.util.List<String> blockingCapsules = new ArrayList<String>();
@@ -66,7 +67,7 @@ public class ASTCFGBuilder extends TreeScanner {
 				if (costs.containsKey(value))
 					key.cost += costs.get(value);
 			}
-			if (key.cost > 1000) { // TODO: change 1000 to some valid number later
+			if (key.cost > threshold) { // TODO: change 1000 to some valid number later
 				highCostCapsules.add(capsuleInstanceOwnerName(key));
 			}
 			//System.out.println("Final cost of "+ key.name +" : "+ key.cost);
@@ -176,9 +177,9 @@ public class ASTCFGBuilder extends TreeScanner {
 		invokedCapsuleProcs = new ArrayList<String>();
 		blockingCalls = new ArrayList<String>();
 		// DEBUG
-		System.out.println("Entering method: " + tree.getName() + " class: "
+		/*System.out.println("Entering method: " + tree.getName() + " class: "
 				+ tree.sym.owner.name + " isCapsule: "
-				+ tree.sym.owner.isCapsule);
+				+ tree.sym.owner.isCapsule);*/
 		JCBlock body = tree.body;
 		if (body != null) {
 			body.accept(this);
@@ -212,21 +213,21 @@ public class ASTCFGBuilder extends TreeScanner {
 					clsw = clsw.substring(0, d);
 				}
 				String method = type + " " + clsw + "." + sym.toString();
-				System.out.println("map put: " + method);
+				//System.out.println("map put: " + method);
 				costs.put(method, this.methodCost);
 				if (tree.hasBlocking)
 					blockingCapsules.add(clsw);
 			}
-			System.out.println("methodCost = " + methodCost);
+			//System.out.println("methodCost = " + methodCost);
 			tree.cost = this.methodCost; // saving the cost in JCTree
-			if (tree.cost > 1000) { // TODO: change 1000 to some valid number later
+			if (tree.cost > threshold) { // TODO: change 1000 to some valid number later
 				highCostCapsules.add(capsuleInstanceOwnerName(tree));
 			}
 			this.methodCost = 0;
 			// this.enter = 0;
 		}
 		enter--;
-		System.out.println("Leaving method: " + tree.getName());
+		//System.out.println("Leaving method: " + tree.getName());
 		// methodCost
 	}
 
@@ -236,7 +237,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		// methodCost
 		VarSymbol v = tree.sym;
 		if (this.loop > 0) {
-			methodCost += (Costs.iload * this.loop * 128);
+			methodCost += (Costs.iload * this.loop * 128);//TODO: loopBooster
 			methodCost += (Costs.istore * this.loop * 128);
 		} else {
 			methodCost += Costs.iload;
@@ -861,7 +862,7 @@ public class ASTCFGBuilder extends TreeScanner {
 			String type = meth.type.getReturnType().toString();
 			String method = type + " " + cls.fullname + "." + sym.toString();
 			if (sym.owner.isCapsule) {
-				invokedCapsuleProcs.add(method);
+				invokedCapsuleProcs.add(method); //TODO: library methods cost
 			} else {
 				for (String blkCall : Blocking.thread_methods) {
 					if (method.equals(blkCall))
