@@ -27,24 +27,33 @@ public class Panini$Duck$Void implements Panini$Duck<Void> {
 	}
 		
 	public final Void panini$get(){
+        while (redeemed == false) try {
+            synchronized (this) {
+                while (redeemed == false) wait();
+            }
+        } catch (InterruptedException e) {}
 		return null;
 	}
 	
 	public final Void value() {
-		future.get();
+		if (redeemed == false) this.panini$get();
 		return null;
 	}
 
 	public void panini$finish(Void t) {
-		future.set();
+        synchronized (this) {
+            redeemed = true;
+            notifyAll();
+        }
 	}
 
 	public final int panini$message$id() {
 		return this.messageId;
 	}
 
-	protected final DuckBarrier future = new DuckBarrier();
-	private final int messageId; 
 	@SuppressWarnings("unused")
 	private Panini$Duck$Void() { messageId = -1; }
+	
+    private final int messageId;
+    private boolean redeemed = false;
 }
