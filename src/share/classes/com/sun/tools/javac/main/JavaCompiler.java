@@ -48,11 +48,6 @@ import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 
-import org.paninij.analysis.ASTCFGBuilder;
-import org.paninij.systemgraphs.SystemGraphs;
-import org.paninij.systemgraphs.SystemGraphs.ConnectionEdge;
-import org.paninij.systemgraphs.SystemGraphs.Node;
-
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
 import com.sun.source.util.TaskEvent;
@@ -1299,6 +1294,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 		// Panini code
 		if (Attr.doGraphs) {
 			JCClassDecl root = env.enclClass;
+
 			// eliminate processing of duck classes
 			if (!root.sym.name.toString().contains("Panini$Duck")) {
 				// eliminate processing of task, thread versions except for
@@ -1307,7 +1303,8 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 						&& !root.sym.name.toString().contains("$serial")
 						&& !root.sym.hasRun)
 					return env;
-				//System.out.println("Processing class: " + root.sym);
+
+				// System.out.println("Processing class: " + root.sym);
 				List<JCTree> defs = root.defs;
 				for (JCTree tree : defs) {
 					if (tree instanceof JCMethodDecl) {
@@ -1324,6 +1321,16 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 							 * org.paninij.analysis.ASTCFGPrinter());
 							 * System.out.println("}"); System.out.println();
 							 */
+
+							// detect confinement violations
+							if (root instanceof JCCapsuleDecl) {
+								JCCapsuleDecl capsule = (JCCapsuleDecl)root;
+								if ((m.mods.flags & Flags.PRIVATE) == 0) {
+									org.paninij.analysis.ViolationDetector vd =
+										new org.paninij.analysis.ViolationDetector(capsule.defs, capsule);
+									m.body.accept(vd);
+								}
+							}
 						}
 					}
 				}
@@ -1331,7 +1338,8 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 			// TODO: assumes that all capsules and system are in the same file
 			// All capsules are processed before the system
 			if (root.sym.isConfig) {
-				ASTCFGBuilder.finalizeCost(); // inter-capsule cost update
+				// inter-capsule cost update
+				org.paninij.analysis.ASTCFGBuilder.finalizeCost();
 
 				// Rules to decide execution model for capsules in the system
 				// 1. capsule instance with run() method: thread
@@ -1343,13 +1351,15 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 				// indegree and high cost and low PIC: task
 				// 5. capsule instance with no run() method, and more than one
 				// indegree and high cost and high PIC: thread
-				Stack<Node> visited = new Stack<SystemGraphs.Node>();
-				SystemGraphs graphs = root.sym.graphs;
-				for (Collection<ConnectionEdge> edges : graphs.forwardConnectionEdges
+				
+				Stack<org.paninij.systemgraphs.SystemGraphs.Node> visited =
+					new Stack<org.paninij.systemgraphs.SystemGraphs.Node>();
+				org.paninij.systemgraphs.SystemGraphs graphs = root.sym.graphs;
+				for (Collection<org.paninij.systemgraphs.SystemGraphs.ConnectionEdge> edges : graphs.forwardConnectionEdges
 						.values()) {
-					for (ConnectionEdge edge : edges) {
-						Node from = edge.from;
-						Node to = edge.to;
+					for (org.paninij.systemgraphs.SystemGraphs.ConnectionEdge edge : edges) {
+						org.paninij.systemgraphs.SystemGraphs.Node from = edge.from;
+						org.paninij.systemgraphs.SystemGraphs.Node to = edge.to;
 						if (!visited.contains(from)) {
 							decide(from);
 							visited.add(from);
@@ -1366,29 +1376,27 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 
 		return env;
 	}
-	
-	private void decide (Node node) {
+
+	// Panini code
+	private void decide (org.paninij.systemgraphs.SystemGraphs.Node node) {
 		if ((node.sym.hasRun && (node.indegree == 0))
-				|| ASTCFGBuilder.blockingCapsules
+				|| org.paninij.analysis.ASTCFGBuilder.blockingCapsules
 						.contains(node.sym.name)) {
 			// thread
-			System.out.println(node.toString()
-					+ " := THREAD");
+			System.out.println(node.toString() + " := THREAD");
 		} else if (node.indegree == 1) {
-			if (ASTCFGBuilder.highCostCapsules.contains(node.sym.name.toString()))
-				System.out.println(node.toString()
-						+ " := TASK");
+			if (org.paninij.analysis.ASTCFGBuilder.highCostCapsules.contains(node.sym.name.toString()))
+				System.out.println(node.toString() + " := TASK");
 			else {
 			// serial
-			System.out.println(node.toString()
-					+ " := SERIAL");
+			System.out.println(node.toString() + " := SERIAL");
 			}
 		} else {
 			// monitor
-			System.out.println(node.toString()
-					+ " := MONITOR");
+			System.out.println(node.toString() + " := MONITOR");
 		}
 	}
+	// end Panini code
 
 	/**
 	 * Perform dataflow checks on attributed parse trees. These include checks

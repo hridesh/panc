@@ -14,21 +14,17 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  * 
- * Contributor(s): Rex Fernando and Yuheng Long
+ * Contributor(s): Rex Fernando, Yuheng Long and Ganesha Upadhyaya
  */
 
 package org.paninij.analysis;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
-import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
 
@@ -160,7 +156,6 @@ public class ASTCFGBuilder extends TreeScanner {
 		Symbol sym = tree.sym;
 		if (sym != null) {
 			ClassSymbol cls = (ClassSymbol) sym.owner;
-			String type = tree.type.getReturnType().toString();
 			String clsw = cls.fullname.toString();
 			if (clsw.contains("$")) {
 				int d = clsw.indexOf("$");
@@ -235,7 +230,6 @@ public class ASTCFGBuilder extends TreeScanner {
 		JCExpression init = tree.init;
 
 		// methodCost
-		VarSymbol v = tree.sym;
 		if (this.loop > 0) {
 			methodCost += (Costs.iload * this.loop * 128);//TODO: loopBooster
 			methodCost += (Costs.istore * this.loop * 128);
