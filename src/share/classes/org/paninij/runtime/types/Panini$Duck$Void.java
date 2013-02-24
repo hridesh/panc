@@ -43,7 +43,7 @@ public class Panini$Duck$Void implements Panini$Duck<Void> {
 	public void panini$finish(Void t) {
         synchronized (this) {
             redeemed = true;
-            notifyAll();
+            notify();
         }
 	}
 
