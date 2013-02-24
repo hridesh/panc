@@ -72,15 +72,46 @@ public class ViolationDetector extends TreeScanner {
 	}
 
 	public void visitApply(JCMethodInvocation that) {
-		warningList(that.args);
+		JCExpression meth = that.meth;
+
+		boolean innerCall = false;
+
+		// if the method is not intra capsule method call
+		if (meth instanceof JCIdent) {
+			innerCall = true;
+		} else if (meth instanceof JCFieldAccess) {
+			JCFieldAccess jcfa = (JCFieldAccess)meth;
+			JCExpression receiver = getEssentialExpr(jcfa.selected);
+
+			if (receiver instanceof JCIdent) {
+				JCIdent jci = (JCIdent)receiver;
+				if (isInnerField(jci.sym)) {
+					innerCall = true;
+				}
+			} else if (receiver instanceof JCFieldAccess) {
+				JCFieldAccess field = (JCFieldAccess)receiver;
+				if (isInnerField(field.sym)) {
+					innerCall = true;
+				}
+			}
+		}
+
+		if (!innerCall) {
+			warningList(that.args);
+		}
 
 		super.visitApply(that);
 	}
 
 	public void visitAssign(JCAssign that) {
-		warningCandidates(that.lhs);
+		JCExpression rhs = that.rhs;
+
+		if (!(getEssentialExpr(rhs) instanceof JCNewClass)) {
+			warningCandidates(that.lhs);
+		}
 
 		warningCandidates(that.rhs);
+		
 
 		super.visitAssign(that);
 	}
