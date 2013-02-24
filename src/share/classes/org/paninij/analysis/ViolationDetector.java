@@ -52,7 +52,9 @@ public class ViolationDetector extends TreeScanner {
 	public final List<JCTree> defs;
 	public final JCCapsuleDecl capsule;
 
-	public ViolationDetector(List<JCTree> defs, JCCapsuleDecl capsule) {
+    Log log;
+	public ViolationDetector(Log log, List<JCTree> defs, JCCapsuleDecl capsule) {
+        this.log = log;
 		this.defs = defs;
 		this.capsule = capsule;
 	}
@@ -124,8 +126,7 @@ public class ViolationDetector extends TreeScanner {
 				JCExpression selected = jcfa.selected;
 				if (isVarThis(selected)) {
 					if (isInnerField(jcfa.sym) && !jcfa.type.isPrimitive()) {
-						System.out.println("Warning, Sym " + jcfa.sym +
-								" leaks in capsule " + capsule.sym);
+						log.error("confinement.violation", jcfa.sym, capsule.sym);
 					}
 				}
 			}
@@ -150,8 +151,7 @@ public class ViolationDetector extends TreeScanner {
 			ElementKind symKind = sym.getKind();
 			if (symKind == ElementKind.FIELD && isInnerField(sym) &&
 					!sym.type.isPrimitive()) {
-				System.out.println("Warning, Sym " + sym + " leaks in capsule "
-						+ capsule.sym);
+				log.error("confinement.violation", sym, capsule.sym);
 			}
 		}
 	}

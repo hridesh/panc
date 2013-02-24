@@ -1327,7 +1327,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 								JCCapsuleDecl capsule = (JCCapsuleDecl)root;
 								if ((m.mods.flags & Flags.PRIVATE) == 0) {
 									org.paninij.analysis.ViolationDetector vd =
-										new org.paninij.analysis.ViolationDetector(capsule.defs, capsule);
+										new org.paninij.analysis.ViolationDetector(log, capsule.defs, capsule);
 									m.body.accept(vd);
 								}
 							}
