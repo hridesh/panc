@@ -23,6 +23,7 @@ import javax.lang.model.element.ElementKind;
 
 import com.sun.tools.javac.util.*;
 
+import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.JCTree;
@@ -51,12 +52,15 @@ public class ViolationDetector extends TreeScanner {
 
 	public final List<JCTree> defs;
 	public final JCCapsuleDecl capsule;
+	public final JCMethodDecl m;
 
     Log log;
-	public ViolationDetector(Log log, List<JCTree> defs, JCCapsuleDecl capsule) {
+	public ViolationDetector(Log log, List<JCTree> defs, JCCapsuleDecl capsule,
+			JCMethodDecl m) {
         this.log = log;
 		this.defs = defs;
 		this.capsule = capsule;
+		this.m = m;
 	}
 
 	public void visitVarDef(JCVariableDecl that) {
@@ -157,7 +161,8 @@ public class ViolationDetector extends TreeScanner {
 				JCExpression selected = jcfa.selected;
 				if (isVarThis(selected)) {
 					if (isInnerField(jcfa.sym) && !jcfa.type.isPrimitive()) {
-						log.error("confinement.violation", jcfa.sym, capsule.sym);
+						log.error("confinement.violation", jcfa.sym,
+								capsule.sym, m.sym);
 					}
 				}
 			}
@@ -182,7 +187,7 @@ public class ViolationDetector extends TreeScanner {
 			ElementKind symKind = sym.getKind();
 			if (symKind == ElementKind.FIELD && isInnerField(sym) &&
 					!sym.type.isPrimitive()) {
-				log.error("confinement.violation", sym, capsule.sym);
+				log.error("confinement.violation", sym, capsule.sym, m.sym);
 			}
 		}
 	}
@@ -207,7 +212,8 @@ public class ViolationDetector extends TreeScanner {
 		for (JCTree def : defs) {
 			if (def instanceof JCVariableDecl) {
 				JCVariableDecl field = (JCVariableDecl)def;
-				if (field.sym == s) {
+				if (field.sym == s &&
+						((field.mods.flags & Flags.PRIVATE) != 0)) {
 					return true;
 				}
 			}
