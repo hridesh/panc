@@ -161,7 +161,8 @@ public class ViolationDetector extends TreeScanner {
 				JCExpression selected = jcfa.selected;
 				if (isVarThis(selected)) {
 					if (isInnerField(jcfa.sym) && !jcfa.type.isPrimitive()) {
-						log.error("confinement.violation", jcfa.sym,
+						log.useSource(((JCFieldAccess) tree).sym.outermostClass().sourcefile);
+						log.error(tree.pos(), "confinement.violation", jcfa.sym,
 								capsule.sym, m.sym);
 					}
 				}
@@ -187,7 +188,8 @@ public class ViolationDetector extends TreeScanner {
 			ElementKind symKind = sym.getKind();
 			if (symKind == ElementKind.FIELD && isInnerField(sym) &&
 					!sym.type.isPrimitive()) {
-				log.error("confinement.violation", sym, capsule.sym, m.sym);
+				log.useSource (tree.sym.outermostClass().sourcefile);
+				log.error(tree.pos(), "confinement.violation", sym, capsule.sym, m.sym);
 			}
 		}
 	}
