@@ -108,21 +108,23 @@ public class ViolationDetector extends TreeScanner {
 	}
 
 	public void visitAssign(JCAssign that) {
-		JCExpression rhs = that.rhs;
-
-		if (!(getEssentialExpr(rhs) instanceof JCNewClass) &&
+		// The intended semantics is to let different state own different
+		// objects.
+		/* if (!(getEssentialExpr(rhs) instanceof JCNewClass) &&
 				!(getEssentialExpr(rhs) instanceof JCNewArray)) {
 			warningCandidates(that.lhs);
-		}
+		} */
 
 		warningCandidates(that.rhs);
-		
 
 		super.visitAssign(that);
 	}
 
 	public void visitAssignop(JCAssignOp that) {
-		warningCandidates(that.lhs);
+		// The intended semantics is to let different state own different
+		// objects.
+		// warningCandidates(that.lhs);
+
 		warningCandidates(that.rhs);
 
 		super.visitAssignop(that);
