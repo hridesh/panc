@@ -21,7 +21,7 @@
  * A simple example of a pipeline architecture in the Panini language 
  * 
  * This pipeline is organized as:
- * 		Source -> Average -> Sum -> Sink
+ * 		Source -> Average -> Sum -> Min -> Max -> Sink
  * 
  * Here, capsule Source generates a set of random numbers, 
  * capsule Average maintains a running average, capsule Sum maintains
@@ -43,7 +43,7 @@ capsule Source (Stage next, long num) {
 			next.consume(n);
 		}
 		next.consume(-1);
-		yield(1);
+		yield(2);
 	}
 }
 
@@ -71,6 +71,28 @@ capsule Sum (Stage next) implements Stage {
 	}
 }
 
+capsule Min (Stage next) implements Stage {
+	long min = Long.MAX_VALUE; 
+	void consume(long n) {
+		next.consume(n);
+		if (n != -1) {
+			if(n < min) min = n;
+		} else 
+			System.out.println("Min of numbers was " + min + ".");
+	}
+}
+
+capsule Max (Stage next) implements Stage {
+	long max = 0; 
+	void consume(long n) {
+		next.consume(n);
+		if (n != -1) {
+			if ( n > max) max = n;
+		} else 
+			System.out.println("Max of numbers was " + max + ".");
+	}
+}
+
 capsule Sink(long num) implements Stage {
 	long count = 0;
 	void consume(long n) {
@@ -82,6 +104,6 @@ capsule Sink(long num) implements Stage {
 }
 
 system Pipeline {
-	Source src; Average avg; Sum sum; Sink snk;
-	src(avg,500); avg(sum); sum(snk); snk(500);
+	Source src; Average avg; Sum sum; Min min; Max max; Sink snk;
+	src(avg,500); avg(sum); sum(min); min(max); max(snk); snk(500);
 }
