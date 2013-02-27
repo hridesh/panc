@@ -3,7 +3,7 @@ echo "Testing Pi"
 ../bin/panini Pi 8
 rm *.class
 
-EXAMPLES="Barbershop Barbershop2 HelloWorld Histogram Philosophers SequentialConsistency SignatureExample"
+EXAMPLES="Barbershop Barbershop2 HelloWorld Histogram Philosophers Pipeline SequentialConsistency SignatureExample"
 for EXAMPLE in $EXAMPLES 
  do
   echo "Testing $EXAMPLE."
