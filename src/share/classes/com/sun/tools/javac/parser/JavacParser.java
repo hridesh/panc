@@ -3253,16 +3253,7 @@ public class JavacParser implements Parser {
                        (mods.flags & Flags.StandardFlags & ~Flags.STATIC) == 0 &&
                        mods.annotations.isEmpty()) {
                 return List.<JCTree>of(block(pos, mods.flags));
-            } else 
-            // Panini code
-            if(token.kind == IDENTIFIER && token.name().toString().equals("include")){
-            	List<JCStatement> stm = blockStatement();
-            	ListBuffer<JCTree> ls = new ListBuffer<JCTree>();
-            	for(JCStatement s : stm){ ls.append(s); }
-            	return ls.toList();
-            } else 
-            // end Panini code
-            {
+            } else {
                 pos = token.pos;
                 List<JCTypeParameter> typarams = typeParametersOpt();
                 // if there are type parameters but no modifiers, save the start
