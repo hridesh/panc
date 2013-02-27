@@ -25,45 +25,53 @@
 import java.util.Random;
 
 class Number {
-	long value;
+	double value;
 	Number (){ this.value = 0; }
-	Number (long value){ this.value = value; }
+	Number (double value){ this.value = value; }
 	void incr() { value ++; }
-	long value() { return value; }
-	static long total(Number[] numbers) {
-		long total = 0; 
-		for(Number n: numbers) total += n.value();
+	double value() { return value; }
+	static double total(Number[] numbers) {
+	       double total = 0;
+	       for(Number n: numbers) total += n.value();
 		return total;
-	}
+        }
 }
 
-capsule Worker (int num) {
+capsule Worker (double num) {
 	Random prng = new Random ();
 	Number compute() {
 		Number _circleCount = new Number(0);
-		for (int j = 0; j < num; j++) {
+		for (double j = 0; j < num; j++) {
 			double x = prng.nextDouble();
 			double y = prng.nextDouble();
-			if ((x * x + y * y) < 1)	_circleCount.incr();
+			if ((x * x + y * y) < 1) _circleCount.incr();
 		}
 		return _circleCount;
 	}
 }
 
-capsule Master (int totalCount, Worker[] workers) {
+capsule Master (double totalCount, Worker[] workers) {
 	void run(){
+	 	double startTime = System.currentTimeMillis();
 		Number[] results = new Number[workers.length];
 		for (int i=0; i< workers.length; i++)
 			results[i] = workers[i].compute();
 
-		double pi = 4.0 * Number.total(results) / totalCount; 
+                double total = 0;
+		for (int i=0; i < workers.length; i++)
+		 	total += results[i].value(); 
+
+		double pi = 4.0 * total / totalCount; 
 		System.out.println("Pi : " + pi);
+		double endTime = System.currentTimeMillis();
+		System.out.println("Time to compute Pi using " + totalCount + " samples was:" + (endTime - startTime) + "ms.");
 	}
 }
 
-system Pi {
+system Pi (String[] args) {
+    double totalSamples = Math.pow(10,Integer.parseInt(args[0]));
 	Master master; Worker workers[10];
-	master(50000000, workers);
+	master(totalSamples, workers);
 	for (Worker w : workers)
-		w(5000000);
+		w(totalSamples/workers.length);
 }

@@ -1,4 +1,9 @@
-EXAMPLES="Barbershop Barbershop2 HelloWorld Histogram Philosophers Pi SequentialConsistency SignatureExample"
+echo "Testing Pi"
+../bin/panc Pi.java
+../bin/panini Pi 8
+rm *.class
+
+EXAMPLES="Barbershop Barbershop2 HelloWorld Histogram Philosophers SequentialConsistency SignatureExample"
 for EXAMPLE in $EXAMPLES 
  do
   echo "Testing $EXAMPLE."
