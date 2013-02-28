@@ -844,8 +844,6 @@ public class Enter extends JCTree.Visitor {
     			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
     			if(mdecl.mods.flags!=0)
     				log.error(mdecl.pos(), "illegal.state.modifiers");
-    			if(mdecl.init ==null)
-    				log.warning(mdecl.pos(), "state.not.initialized");
     			mdecl.mods.flags |=PRIVATE;
     			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, mdecl.vartype, mdecl.init);
     			state.switchToVar();
@@ -887,8 +885,6 @@ public class Enter extends JCTree.Visitor {
     			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
     			if(mdecl.mods.flags!=0)
     				log.error(mdecl.pos(), "illegal.state.modifiers");
-    			if(mdecl.init ==null)
-    				log.warning(mdecl.pos(), "state.not.initialized");
     			mdecl.mods.flags |=PRIVATE;
     			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, mdecl.vartype, mdecl.init);
     			state.switchToVar();
@@ -1119,8 +1115,6 @@ public class Enter extends JCTree.Visitor {
     			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
     			if(mdecl.mods.flags!=0)
     				log.error(mdecl.pos(), "illegal.state.modifiers");
-    			if(mdecl.init ==null)
-    				log.warning(mdecl.pos(), "state.not.initialized");
     			mdecl.mods.flags |=PRIVATE;
     			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, mdecl.vartype, mdecl.init);
     			state.switchToVar();
