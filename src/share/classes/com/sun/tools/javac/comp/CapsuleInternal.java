@@ -410,7 +410,7 @@ public class CapsuleInternal extends Internal {
 			if (s.getKind() == ElementKind.METHOD) {
 				MethodSymbol m = (MethodSymbol) s;
 				JCMethodDecl value;
-				if (m.isStatic()|| ((m.flags() & PUBLIC) ==0)) continue; //Do not wrap static methods.
+				if (m.isStatic() || ((m.flags() & PUBLIC)==0) || ((m.flags() & SYNTHETIC)!=0)) continue; //Do not wrap static methods.
 				if (!m.type.getReturnType().toString().equals("void")){
 					value = createFutureValueMethod(m, m.name);
 				}
@@ -623,7 +623,7 @@ public class CapsuleInternal extends Internal {
 						0,
 						List.<JCStatement> nil())));
 		JCMethodDecl value = method(
-				mods(PUBLIC),
+				mods(PUBLIC|FINAL),
 				"panini$get",
 				make.Ident(restype),
 				params,
