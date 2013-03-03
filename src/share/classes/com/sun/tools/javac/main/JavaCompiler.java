@@ -1292,9 +1292,39 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 		}
 
 		// Panini code
-		if (Attr.doGraphs) {
-			JCClassDecl root = env.enclClass;
+		JCClassDecl root = env.enclClass;
 
+		// confinement violation detection
+		// eliminate processing of duck classes
+		if (!root.sym.name.toString().contains("Panini$Duck")) {
+			// eliminate processing of task, thread versions except for
+			// capsule with run method
+			if (root.sym.isCapsule
+					&& !root.sym.name.toString().contains("$serial")
+					&& !root.sym.hasRun)
+				return env;
+
+			List<JCTree> defs = root.defs;
+			for (JCTree tree : defs) {
+				if (tree instanceof JCMethodDecl) {
+					JCMethodDecl m = (JCMethodDecl) tree;
+					if (m.body != null) {
+						// detect confinement violations
+						if (root instanceof JCCapsuleDecl) {
+							JCCapsuleDecl capsule = (JCCapsuleDecl)root;
+							if ((m.mods.flags & Flags.PRIVATE) == 0) {
+								org.paninij.analysis.ViolationDetector vd =
+									new org.paninij.analysis.ViolationDetector(
+											log, capsule.defs, capsule, m);
+								m.body.accept(vd);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (Attr.doGraphs) {
 			// eliminate processing of duck classes
 			if (!root.sym.name.toString().contains("Panini$Duck")) {
 				// eliminate processing of task, thread versions except for
@@ -1314,23 +1344,12 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 							 * System.out.println("m = " + m.name + "\tc = " +
 							 * root.name); System.out.println(m);
 							 */
-							tree.accept(new org.paninij.analysis.ASTCFGBuilder());
-							/*
-							 * System.out.println("digraph G {");
+							tree.accept(
+									new org.paninij.analysis.ASTCFGBuilder());
+							/* System.out.println("digraph G {");
 							 * m.body.accept(new
 							 * org.paninij.analysis.ASTCFGPrinter());
-							 * System.out.println("}"); System.out.println();
-							 */
-
-							// detect confinement violations
-							if (root instanceof JCCapsuleDecl) {
-								JCCapsuleDecl capsule = (JCCapsuleDecl)root;
-								if ((m.mods.flags & Flags.PRIVATE) == 0) {
-									org.paninij.analysis.ViolationDetector vd =
-										new org.paninij.analysis.ViolationDetector(log, capsule.defs, capsule, m);
-									m.body.accept(vd);
-								}
-							}
+							 * System.out.println("}"); System.out.println(); */
 						}
 					}
 				}
