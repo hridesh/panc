@@ -949,6 +949,7 @@ public class Enter extends JCTree.Visitor {
                     		tc.copy(mdecl.body),
                     		null
                     		);
+                    p.mods.annotations = tc.copy(mdecl.mods.annotations);
                     p.switchToMethod();
                     definitions.prepend(v);
                     tree.publicMethods = tree.publicMethods.append(p);
@@ -1070,6 +1071,7 @@ public class Enter extends JCTree.Visitor {
     	int indexer = 0;
         boolean hasRun = false;
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+        TreeCopier<Void> tc = new TreeCopier<Void>(make);
         for(int i=0;i<tree.defs.length();i++){
         	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
         		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
@@ -1090,13 +1092,14 @@ public class Enter extends JCTree.Visitor {
     					    make.Literal(indexer++));
                     JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC|FINAL),
                     		mdecl.name,
-                    		mdecl.restype,
-                    		mdecl.typarams,
-                    		mdecl.params,
-                    		mdecl.thrown,
-                    		mdecl.body,
+                    		tc.copy(mdecl.restype),
+                    		tc.copy(mdecl.typarams),
+                    		tc.copy(mdecl.params),
+                    		tc.copy(mdecl.thrown),
+                    		tc.copy(mdecl.body),
                     		null
                     		);
+                    p.mods.annotations = tc.copy(mdecl.mods.annotations);
                     p.switchToMethod();
                     definitions.prepend(v);
                     tree.publicMethods = tree.publicMethods.append(p);
@@ -1142,11 +1145,11 @@ public class Enter extends JCTree.Visitor {
 	            JCMethodDecl methodCopy = make.MethodDef(
 	            		make.Modifiers(PRIVATE|FINAL), 
 	            		mdecl.name.append(names.fromString("$Original")), 
-	            		mdecl.restype, 
-	            		mdecl.typarams, 
+	            		tc.copy(mdecl.restype), 
+	            		tc.copy(mdecl.typarams), 
 	            		vars.toList(),
-	            		mdecl.thrown, 
-	            		mdecl.body, 
+	            		tc.copy(mdecl.thrown), 
+	            		tc.copy(mdecl.body), 
 	            		null);
 	            methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name, mdecl.restype.type, tree.sym);
 	            mdecl.mods.flags |= FINAL;
@@ -1191,7 +1194,6 @@ public class Enter extends JCTree.Visitor {
 	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
 	            	args.append(make.Ident(v.name));
 	            }
-                TreeCopier<Void> tc = new TreeCopier<Void>(make);
 
 	            JCMethodDecl methodCopy = make.MethodDef(
 	            		make.Modifiers(PRIVATE|FINAL), 
