@@ -975,7 +975,7 @@ public class Enter extends JCTree.Visitor {
         			}
         		c.hasRun = false;
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
-	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("push")), List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))))));
+	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString(PaniniConstants.PANINI_PUSH)), List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))))));
 	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
 	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 	        	args.add(make.Ident(names.fromString(constantName)));
@@ -984,23 +984,14 @@ public class Enter extends JCTree.Visitor {
 	            	args.append(make.Ident(v.name));
 	            }
 	            
-	            if(!mdecl.restype.toString().equals("void")){
-	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
-	            			names.fromString(PaniniConstants.PANINI_DUCK_TYPE), 
-	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
-	            			make.NewClass(null, List.<JCExpression>nil(), 
-	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
-	            					args.toList(), null)));
+	            copyBody.prepend(make.VarDef(make.Modifiers(0), 
+            			names.fromString(PaniniConstants.PANINI_DUCK_TYPE), 
+            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
+            			make.NewClass(null, List.<JCExpression>nil(), 
+            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
+            					args.toList(), null)));
+	            if(!mdecl.restype.toString().equals("void"))
 	            	copyBody.append(make.Return(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))));
-	            }
-	            else{
-	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
-	            			names.fromString(PaniniConstants.PANINI_DUCK_TYPE), 
-	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
-	            			make.NewClass(null, List.<JCExpression>nil(), 
-	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
-	            					args.toList(), null)));
-	            }
 	            
 	            JCMethodDecl methodCopy = make.MethodDef(
 	            		make.Modifiers(PRIVATE|FINAL), 
@@ -1130,7 +1121,7 @@ public class Enter extends JCTree.Visitor {
         			}
         		c.hasRun = false;
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
-	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString("push")), List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))))));
+	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString(PaniniConstants.PANINI_PUSH)), List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))))));
 	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
 	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 	        	args.add(make.Ident(names.fromString(constantName)));
@@ -1139,23 +1130,14 @@ public class Enter extends JCTree.Visitor {
 	            	args.append(make.Ident(v.name));
 	            }
 	            
-	            if(!mdecl.restype.toString().equals("void")){
-	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
-	            			names.fromString(PaniniConstants.PANINI_DUCK_TYPE), 
-	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
-	            			make.NewClass(null, List.<JCExpression>nil(), 
-	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
-	            					args.toList(), null)));
+	            copyBody.prepend(make.VarDef(make.Modifiers(0), 
+            			names.fromString(PaniniConstants.PANINI_DUCK_TYPE), 
+            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
+            			make.NewClass(null, List.<JCExpression>nil(), 
+            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
+            					args.toList(), null)));
+	            if(!mdecl.restype.toString().equals("void"))
 	            	copyBody.append(make.Return(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))));
-	            }
-	            else{
-	            	copyBody.prepend(make.VarDef(make.Modifiers(0), 
-	            			names.fromString(PaniniConstants.PANINI_DUCK_TYPE), 
-	            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
-	            			make.NewClass(null, List.<JCExpression>nil(), 
-	            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
-	            					args.toList(), null)));
-	            }
 	            
 	            JCMethodDecl methodCopy = make.MethodDef(
 	            		make.Modifiers(PRIVATE|FINAL), 

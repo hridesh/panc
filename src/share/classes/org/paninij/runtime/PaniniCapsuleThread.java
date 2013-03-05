@@ -19,25 +19,25 @@
 
 package org.paninij.runtime;
 import java.util.concurrent.locks.ReentrantLock;
-
+import com.sun.tools.javac.util.*;
 import org.paninij.runtime.types.Panini$Duck;
 
 public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsule{
-   protected volatile Object[] objects = new Object[10];
-   protected volatile int head = 0, tail=0, size =0;
+   protected volatile Object[] panini$capsule$objects = new Object[10];
+   protected volatile int panini$capsule$head = 0, panini$capsule$tail=0, panini$capsule$size =0;
    protected final ReentrantLock queueLock = new ReentrantLock();
    
-   protected final void extendQueue() {
-       assert(tail>=objects.length);
-       Object[] newObjects = new Object[objects.length+10];
-       if(tail<=head){
-	       System.arraycopy(objects, head, newObjects, 0, objects.length-head);
-		   System.arraycopy(objects, 0, newObjects, objects.length-head, tail);
+   protected final void panini$extendQueue() {
+       assert(panini$capsule$tail>=panini$capsule$objects.length);
+       Object[] newObjects = new Object[panini$capsule$objects.length+10];
+       if(panini$capsule$tail<=panini$capsule$head){
+	       System.arraycopy(panini$capsule$objects, panini$capsule$head, newObjects, 0, panini$capsule$objects.length-panini$capsule$head);
+		   System.arraycopy(panini$capsule$objects, 0, newObjects, panini$capsule$objects.length-panini$capsule$head, panini$capsule$tail);
        }
        else
-    	   System.arraycopy(objects, head, newObjects, 0, tail-head);
-       head = 0; tail = size;        
-       objects = newObjects;
+    	   System.arraycopy(panini$capsule$objects, panini$capsule$head, newObjects, 0, panini$capsule$tail-panini$capsule$head);
+       panini$capsule$head = 0; panini$capsule$tail = panini$capsule$size;        
+       panini$capsule$objects = newObjects;
    }        
 
    /**
@@ -45,13 +45,13 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
     * number of elements, and if not extends it.
     * @param numElems 
     */
-   protected final void ensureSpace(int numElems) {
-	    if (head < tail) {
-	    	if (objects.length + (head - tail) < numElems) 
-	    		if (size != 0) extendQueue();
+   protected final void panini$ensureSpace(int numElems) {
+	    if (panini$capsule$head < panini$capsule$tail) {
+	    	if (panini$capsule$objects.length + (panini$capsule$head - panini$capsule$tail) < numElems) 
+	    		if (panini$capsule$size != 0) panini$extendQueue();
 	    }
-	    else if (head - tail < numElems) 
-	    			if (size != 0) extendQueue();
+	    else if (panini$capsule$head - panini$capsule$tail < numElems) 
+	    			if (panini$capsule$size != 0) panini$extendQueue();
    }
 
   	/**
@@ -65,15 +65,15 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
   	 */
    @SuppressWarnings("rawtypes")
   	protected final synchronized Panini$Duck get$Next$Duck() {
-   		if(this.size <= 0) blockCapsule();
-  			size--;
-  			Panini$Duck d = (Panini$Duck) objects[head++];
-  			if (head >= objects.length) head = 0;
+   		if(this.panini$capsule$size <= 0) blockCapsule();
+  			panini$capsule$size--;
+  			Panini$Duck d = (Panini$Duck) panini$capsule$objects[panini$capsule$head++];
+  			if (panini$capsule$head >= panini$capsule$objects.length) panini$capsule$head = 0;
   			return d;
   	}
 
    private final void blockCapsule() {
- 			nomessages: while (this.size <= 0) 
+ 			nomessages: while (this.panini$capsule$size <= 0) 
  				try {	
  					wait(); 
  				} catch (InterruptedException e) {
@@ -81,18 +81,18 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
  				}
    }
    
-   protected final boolean empty() { return size==0; }
+   protected final boolean empty() { return panini$capsule$size==0; }
    
    protected final void print() { 
        synchronized (System.out) {
-           System.out.println("size: " + size);
+           System.out.println("size: " + panini$capsule$size);
            System.out.print("[");
-           for (int i = 0; i < objects.length-1; i++) {
-               if (i==head) System.out.print("!!H!!");
-               if (i==tail) System.out.print("!!T!!");
-               System.out.print(objects[i] + ", ");
+           for (int i = 0; i < panini$capsule$objects.length-1; i++) {
+               if (i==panini$capsule$head) System.out.print("!!H!!");
+               if (i==panini$capsule$tail) System.out.print("!!T!!");
+               System.out.print(panini$capsule$objects[i] + ", ");
            }
-           if (objects.length>0) System.out.println(objects[objects.length-1] + "]");
+           if (panini$capsule$objects.length>0) System.out.println(panini$capsule$objects[panini$capsule$objects.length-1] + "]");
            else System.out.println("]");
            
        }
@@ -133,7 +133,7 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
   	public final void shutdown () {
   		 this.checkAccess();
 	   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-1);
-	   	push(d);
+	   	panini$push(d);
   	}
   	
   	/**
@@ -150,19 +150,19 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
   	public final void exit () {
   		 this.checkAccess();
 	   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-2);
-	   	push(d);
+	   	panini$push(d);
   	}
    /**
     * Pushes a single object on this capsule's queue.
     * @param o - Object to be stored.
     */
-   protected final synchronized void push(Object o) {
-   	ensureSpace(1);
-   	size = size + 1;
-   	objects[tail++] = o;
-   	if (tail >= objects.length)
-   		tail = 0;
-   	if(size==1) notifyAll();
+   protected final synchronized void panini$push(Object o) {
+   	panini$ensureSpace(1);
+   	panini$capsule$size = panini$capsule$size + 1;
+   	panini$capsule$objects[panini$capsule$tail++] = o;
+   	if (panini$capsule$tail >= panini$capsule$objects.length)
+   		panini$capsule$tail = 0;
+   	if(panini$capsule$size==1) notifyAll();
    }
 
    /**
@@ -170,16 +170,16 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
     * @param o1 - first object to be stored. 
     * @param o2 - second object to be stored.
     */
-   protected final synchronized void push(Object o1, Object o2) {
-   	ensureSpace(2);
-   	size = size + 2;
-   	objects[tail++] = o1;
-   	if (tail >= objects.length)
-   		tail = 0;
-   	objects[tail++] = o2;
-   	if (tail >= objects.length)
-   		tail = 0;
-   	if(size==2) notifyAll();
+   protected final synchronized void panini$push(Object o1, Object o2) {
+   	panini$ensureSpace(2);
+   	panini$capsule$size = panini$capsule$size + 2;
+   	panini$capsule$objects[panini$capsule$tail++] = o1;
+   	if (panini$capsule$tail >= panini$capsule$objects.length)
+   		panini$capsule$tail = 0;
+   	panini$capsule$objects[panini$capsule$tail++] = o2;
+   	if (panini$capsule$tail >= panini$capsule$objects.length)
+   		panini$capsule$tail = 0;
+   	if(panini$capsule$size==2) notifyAll();
    }
 
    /**
@@ -188,35 +188,35 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
     * @param o2 - second object to be stored.
     * @param o3 - third object to be stored.
     */
-   protected final synchronized void push(Object o1, Object o2, Object o3) {
-   	ensureSpace(3);
-   	size = size + 3;
-   	objects[tail++] = o1;
-   	if (tail >= objects.length)
-   		tail = 0;
-   	objects[tail++] = o2;
-   	if (tail >= objects.length)
-   		tail = 0;
-   	objects[tail++] = o3;
-   	if (tail >= objects.length)
-   		tail = 0;
-   	if(size==3) notifyAll();
+   protected final synchronized void panini$push(Object o1, Object o2, Object o3) {
+   	panini$ensureSpace(3);
+   	panini$capsule$size = panini$capsule$size + 3;
+   	panini$capsule$objects[panini$capsule$tail++] = o1;
+   	if (panini$capsule$tail >= panini$capsule$objects.length)
+   		panini$capsule$tail = 0;
+   	panini$capsule$objects[panini$capsule$tail++] = o2;
+   	if (panini$capsule$tail >= panini$capsule$objects.length)
+   		panini$capsule$tail = 0;
+   	panini$capsule$objects[panini$capsule$tail++] = o3;
+   	if (panini$capsule$tail >= panini$capsule$objects.length)
+   		panini$capsule$tail = 0;
+   	if(panini$capsule$size==3) notifyAll();
    }
 
    /**
     * Pushes multiple objects on this capsule's queue.
     * @param items - list of objects to be stored. 
     */
-   protected final synchronized void push(Object... items) {
+   protected final synchronized void panini$push(Object... items) {
    	int numItems = items.length;
-   	ensureSpace(numItems);
-   	size = size + numItems;
+   	panini$ensureSpace(numItems);
+   	panini$capsule$size = panini$capsule$size + numItems;
    	for(Object o: items) {
-   		objects[tail++] = o;
-   		if (tail >= objects.length)
-   			tail = 0;
+   		panini$capsule$objects[panini$capsule$tail++] = o;
+   		if (panini$capsule$tail >= panini$capsule$objects.length)
+   			panini$capsule$tail = 0;
    	}
-   	if(size==numItems) notifyAll(); 
+   	if(panini$capsule$size==numItems) notifyAll(); 
    }
 
 }

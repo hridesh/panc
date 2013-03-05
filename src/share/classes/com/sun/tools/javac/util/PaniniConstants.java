@@ -25,12 +25,12 @@ public class PaniniConstants {
 	public final static String PANINI_CAPSULE_SEQUENTIAL = "PaniniCapsuleSequential";
 	public final static String PANINI_CAPSULE_THREAD = "PaniniCapsuleThread";
 	public final static String PANINI_CAPSULE_TASK = "PaniniCapsuleTask";
-	public final static String PANINI_CAPSULE_OBJECTS = "objects";
-	public final static String PANINI_CAPSULE_HEAD = "head";
-	public final static String PANINI_CAPSULE_TAIL = "tail";
-	public final static String PANINI_CAPSULE_SIZE = "size";
+	public final static String PANINI_CAPSULE_OBJECTS = "panini$capsule$objects";
+	public final static String PANINI_CAPSULE_HEAD = "panini$capsule$head";
+	public final static String PANINI_CAPSULE_TAIL = "panini$capsule$tail";
+	public final static String PANINI_CAPSULE_SIZE = "panini$capsule$size";
 	public final static String PANINI_CAPSULE_QUEUELOCK = "queueLock";
-	public final static String PANINI_CAPSULE_EXTENDQUEUE = "extendQueue";
+	public final static String PANINI_CAPSULE_EXTENDQUEUE = "panini$extendQueue";
 	public final static String CAPSULE_CALL_QUEUES = "panini$msgNameQueue";
 	public final static String CAPSULE_ARG_QUEUES = "panini$msgArgsQueue";
 	public final static String CAPSULE_RETURN_QUEUES = "panini$msgDuckQueue";
@@ -44,6 +44,7 @@ public class PaniniConstants {
 	public final static String PANINI_METHOD_CONST = "panini$methodConst$";
 	public final static String PANINI_MESSAGE_ID = "panini$message$id";
 	public final static String PANINI_DUCK_TYPE = "panini$duck$future";
+	public final static String PANINI_PUSH = "panini$push";
 
 	public final static String PANINI_DUCK_HASHCODE = "hashCode";
 	public final static String PANINI_DUCK_EQUALS = "equals";

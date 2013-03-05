@@ -306,6 +306,18 @@ public class Internal
     protected JCPrimitiveTypeTree booleant() {
         return make0().TypeIdent(TypeTags.BOOLEAN);
     }
+    
+    protected JCPrimitiveTypeTree intt() {
+        return make0().TypeIdent(TypeTags.INT);
+    }
+    
+    protected JCPrimitiveTypeTree bytet() {
+        return make0().TypeIdent(TypeTags.BYTE);
+    }
+    
+    protected JCPrimitiveTypeTree longt() {
+        return make0().TypeIdent(TypeTags.LONG);
+    }
 
     protected JCLiteral truev() {
         return make0().Literal(new Boolean(true));

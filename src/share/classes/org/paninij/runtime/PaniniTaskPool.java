@@ -34,10 +34,10 @@ final class PaniniTaskPool extends Thread {
 		private final synchronized void _add(PaniniCapsuleTask t){
 			if(_headNode==null){
 				_headNode = t;
-				t.next = t;
+				t.panini$capsule$next = t;
 			}else{
-				t.next = _headNode.next;
-				_headNode.next = t;
+				t.panini$capsule$next = _headNode.panini$capsule$next;
+				_headNode.panini$capsule$next = t;
 			}
 		}
 		
@@ -46,12 +46,12 @@ final class PaniniTaskPool extends Thread {
 			PaniniCapsuleTask previous = _headNode;
 			while(current!=t){
 				previous = current;
-				current = current.next;
+				current = current.panini$capsule$next;
 			}
 			if(previous == current)
 				_headNode =null;
 			else	
-				previous.next = current.next;
+				previous.panini$capsule$next = current.panini$capsule$next;
 		}
 		
 		private PaniniCapsuleTask _headNode = null; 
@@ -59,14 +59,14 @@ final class PaniniTaskPool extends Thread {
 			// Implementation relies upon at least one capsule being present 
 			PaniniCapsuleTask current = _headNode;
 			while(true){
-				if(current.size!=0){
+				if(current.panini$capsule$size!=0){
 					if(current.run() == true)
 						remove(this, current);
 					if(_headNode == null)
 						break;
 				}
 				synchronized(this) {
-					current = current.next; 
+					current = current.panini$capsule$next; 
 				}
 			}
 		}

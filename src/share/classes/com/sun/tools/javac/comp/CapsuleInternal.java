@@ -91,9 +91,9 @@ public class CapsuleInternal extends Internal {
 			Type returnType = ((MethodType) method.sym.type).restype;
 			if (returnType.tag == TypeTags.VOID) {
 				caseStatements.append(es(createOriginalCall(method, args)));
-				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, "panini$finish", args(nullv()))));
+				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, PaniniConstants.PANINI_FINISH, args(nullv()))));
 			} else if (returnType.tag == TypeTags.CLASS) {
-				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, "panini$finish",
+				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, PaniniConstants.PANINI_FINISH,
 						args(createOriginalCall(method, args)))));
 			} else {
 				System.out.println("Unsupported return type in a public capsule method. Can only be void or non-primitive.");
@@ -154,9 +154,9 @@ public class CapsuleInternal extends Internal {
 			Type returnType = ((MethodType) method.sym.type).restype;
 			if (returnType.tag == TypeTags.VOID) {
 				caseStatements.append(es(createOriginalCall(method, args)));
-				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, "panini$finish", args(nullv()))));
+				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, PaniniConstants.PANINI_FINISH, args(nullv()))));
 			} else if (returnType.tag == TypeTags.CLASS) {
-				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, "panini$finish",
+				caseStatements.append(es(apply(PaniniConstants.PANINI_DUCK_TYPE, PaniniConstants.PANINI_FINISH,
 						args(createOriginalCall(method, args)))));
 			} else {
 				System.out.println("Unsupported return type in a public capsule method. Can only be void or non-primitive.");
@@ -174,9 +174,9 @@ public class CapsuleInternal extends Internal {
 		}
 
 		cases.append(case_(intlit(-1), ifs(
-				gt(select(thist(), "size"), intlit(0)),
+				gt(select(thist(), PaniniConstants.PANINI_CAPSULE_SIZE), intlit(0)),
 				body(
-						es(make.Apply(List.<JCExpression> nil(), id("push"),
+						es(make.Apply(List.<JCExpression> nil(), id(PaniniConstants.PANINI_PUSH),
 								List.<JCExpression> of(id(PaniniConstants.PANINI_DUCK_TYPE)))), returnt(falsev())))));
 
 		cases.append(case_(intlit(-2), es(assign(PaniniConstants.PANINI_TERMINATE, truev())),
@@ -202,9 +202,9 @@ public class CapsuleInternal extends Internal {
 	private ListBuffer<JCStatement> createShutdownLogic() {
 		ListBuffer<JCStatement> shutDownBody = new ListBuffer<JCStatement>();
 		shutDownBody.append(ifs(
-				gt(select(thist(), "size"), intlit(0)),
+				gt(select(thist(), PaniniConstants.PANINI_CAPSULE_SIZE), intlit(0)),
 				body(
-						es(make.Apply(List.<JCExpression> nil(), id("push"),
+						es(make.Apply(List.<JCExpression> nil(), id(PaniniConstants.PANINI_PUSH),
 								List.<JCExpression> of(id(PaniniConstants.PANINI_DUCK_TYPE)))), break_())));
 		return shutDownBody;
 	}
@@ -245,14 +245,14 @@ public class CapsuleInternal extends Internal {
 					List<JCExpression> implement;
 					ListBuffer<JCTree> wrappedMethods = new ListBuffer<JCTree>();
 
-					JCVariableDecl fieldMessageId = var(mods(PRIVATE | FINAL), "messageId", make.TypeIdent(TypeTags.INT));
+					JCVariableDecl fieldMessageId = var(mods(PRIVATE | FINAL), PaniniConstants.PANINI_MESSAGE_ID, make.TypeIdent(TypeTags.INT));
 					JCVariableDecl fieldRedeemed = var(mods(PRIVATE), PaniniConstants.REDEEMED, make.TypeIdent(TypeTags.BOOLEAN), make.Literal(TypeTags.BOOLEAN, 0));
 
 					wrappedMethods.add(constructor(
 							mods(PUBLIC),
-							params(var(mods(0), "messageId", make.TypeIdent(TypeTags.INT))),
+							params(var(mods(0), PaniniConstants.PANINI_MESSAGE_ID, make.TypeIdent(TypeTags.INT))),
 							body(es(supert()),
-									es(assign(select(thist(), "messageId"), id("messageId"))))));
+									es(assign(select(thist(), PaniniConstants.PANINI_MESSAGE_ID), id(PaniniConstants.PANINI_MESSAGE_ID))))));
 
 					wrappedMethods.add(createValueMethod());
 
@@ -279,8 +279,8 @@ public class CapsuleInternal extends Internal {
 					if (!method.params.isEmpty()) {
 						ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
 						ListBuffer<JCVariableDecl> consParams = new ListBuffer<JCVariableDecl>();
-						consParams.add(var(mods(0), "messageId", make.TypeIdent(TypeTags.INT)));
-						consBody.add(es(assign(select(thist(), "messageId"), id("messageId"))));
+						consParams.add(var(mods(0), PaniniConstants.PANINI_MESSAGE_ID, make.TypeIdent(TypeTags.INT)));
+						consBody.add(es(assign(select(thist(), PaniniConstants.PANINI_MESSAGE_ID), id(PaniniConstants.PANINI_MESSAGE_ID))));
 
 						for (JCVariableDecl par : method.params) {
 							consParams.add(var(mods(0), par.name, par.vartype));
@@ -343,8 +343,8 @@ public class CapsuleInternal extends Internal {
 			if (hasConstructor)
 				consBody.add(es(make.Apply(List.<JCExpression> nil(), id(names._super), inits.toList())));
 
-			consParams.add(var(mods(0), "messageId", make.TypeIdent(TypeTags.INT)));
-			consBody.add(es(assign(select(thist(), "messageId"), id("messageId"))));
+			consParams.add(var(mods(0), PaniniConstants.PANINI_MESSAGE_ID, make.TypeIdent(TypeTags.INT)));
+			consBody.add(es(assign(select(thist(), PaniniConstants.PANINI_MESSAGE_ID), id(PaniniConstants.PANINI_MESSAGE_ID))));
 
 			for (JCVariableDecl par : method.params) {
 				consParams.add(var(mods(0), par.name, par.vartype));
@@ -399,7 +399,7 @@ public class CapsuleInternal extends Internal {
 			typeExpressions.add(make.Ident(tp.name));
 		}
 		JCVariableDecl fieldWrapped = var(mods(PRIVATE), "wrapped", signatureType(typeExpressions, c), nullv());
-		JCVariableDecl fieldMessageId = var(mods(PRIVATE | FINAL), "messageId", make.TypeIdent(TypeTags.INT), null);
+		JCVariableDecl fieldMessageId = var(mods(PRIVATE | FINAL), PaniniConstants.PANINI_MESSAGE_ID, make.TypeIdent(TypeTags.INT), null);
 		JCVariableDecl fieldRedeemed = var(mods(PRIVATE), PaniniConstants.REDEEMED, make.TypeIdent(TypeTags.BOOLEAN), make.Literal(TypeTags.BOOLEAN, 0));
 
 		ListBuffer<JCTree> wrappedMethods = new ListBuffer<JCTree>();
@@ -476,8 +476,8 @@ public class CapsuleInternal extends Internal {
 				consBody.add(es(make.Apply(List.<JCExpression> nil(), id(names._super),
 						inits.toList())));
 			}
-			consParams.add(var(mods(0), "messageId", make.TypeIdent(TypeTags.INT)));
-			consBody.add(es(assign(select(thist(), "messageId"), id("messageId"))));
+			consParams.add(var(mods(0), PaniniConstants.PANINI_MESSAGE_ID, make.TypeIdent(TypeTags.INT)));
+			consBody.add(es(assign(select(thist(), PaniniConstants.PANINI_MESSAGE_ID), id(PaniniConstants.PANINI_MESSAGE_ID))));
 
 			for (JCVariableDecl par : method.params) {
 				consParams.add(var(mods(0), par.name, par.vartype));
@@ -521,7 +521,7 @@ public class CapsuleInternal extends Internal {
 		return method(mods(PUBLIC | FINAL),
 				names.fromString(PaniniConstants.PANINI_MESSAGE_ID),
 				make.TypeIdent(TypeTags.INT),
-				body(returnt(select(thist(), "messageId"))));
+				body(returnt(select(thist(), PaniniConstants.PANINI_MESSAGE_ID))));
 	}
 
 	private JCMethodDecl createHashCode() {
@@ -547,10 +547,10 @@ public class CapsuleInternal extends Internal {
 	private JCMethodDecl createDuckConstructor(ListBuffer<JCExpression> inits) {
 		return constructor(
 				mods(PUBLIC),
-				params(var(mods(0), "messageId", make.TypeIdent(TypeTags.INT))),
+				params(var(mods(0), PaniniConstants.PANINI_MESSAGE_ID, make.TypeIdent(TypeTags.INT))),
 				body(es(make.Apply(List.<JCExpression> nil(),
 						make.Ident(names._super), inits.toList())),
-						es(assign(select(thist(), "messageId"), id("messageId")))));
+						es(assign(select(thist(), PaniniConstants.PANINI_MESSAGE_ID), id(PaniniConstants.PANINI_MESSAGE_ID)))));
 	}
 
 	private JCMethodDecl createValueMethod() {
@@ -559,7 +559,7 @@ public class CapsuleInternal extends Internal {
 				"value",
 				id("Void"),
 				params(),
-				body(ifs(isFalse(PaniniConstants.REDEEMED), es(apply(thist(),"panini$get"))), 
+				body(ifs(isFalse(PaniniConstants.REDEEMED), es(apply(thist(),PaniniConstants.PANINI_DUCK_GET))), 
 						returnt(nullv())));
 	}
 	
@@ -579,7 +579,7 @@ public class CapsuleInternal extends Internal {
 			}
 		}
 		JCMethodDecl value = make.MethodDef(mods(PUBLIC | FINAL), method_name, restype, tp.toList(), params.toList(), List.<JCExpression>nil(), body(
-				ifs(isFalse(PaniniConstants.REDEEMED), es(apply(thist(),"panini$get"))),
+				ifs(isFalse(PaniniConstants.REDEEMED), es(apply(thist(),PaniniConstants.PANINI_DUCK_GET))),
 				returnt(apply("wrapped", method_name.toString(), args))), null);
 		return value;
 	}
@@ -599,7 +599,7 @@ public class CapsuleInternal extends Internal {
 			}
 		}
 		JCMethodDecl delegate = make.MethodDef(mods(PUBLIC | FINAL), method_name, make.Type(syms.voidType), tp.toList(), params.toList(), List.<JCExpression>nil(), body(
-				ifs(isFalse(PaniniConstants.REDEEMED), es(apply(thist(),"panini$get"))),
+				ifs(isFalse(PaniniConstants.REDEEMED), es(apply(thist(),PaniniConstants.PANINI_DUCK_GET))),
 				es(apply("wrapped", method_name.toString(), args))), null);
 //		JCMethodDecl delegate = method(
 //				mods(PUBLIC | FINAL),
@@ -607,7 +607,7 @@ public class CapsuleInternal extends Internal {
 //				make.Type(syms.voidType),
 //				params,
 //				body(
-//						ifs(isFalse(PaniniConstants.REDEEMED), es(apply(thist(),"panini$get"))), 
+//						ifs(isFalse(PaniniConstants.REDEEMED), es(apply(thist(),PaniniConstants.PANINI_DUCK_GET))), 
 //						es(apply("wrapped", method_name.toString(), args))));
 		return delegate;
 	}
@@ -624,7 +624,7 @@ public class CapsuleInternal extends Internal {
 						List.<JCStatement> nil())));
 		JCMethodDecl value = method(
 				mods(PUBLIC|FINAL),
-				"panini$get",
+				PaniniConstants.PANINI_DUCK_GET,
 				make.Ident(restype),
 				params,
 				body(whilel(isFalse(PaniniConstants.REDEEMED),
@@ -648,8 +648,8 @@ public class CapsuleInternal extends Internal {
 						0,
 						List.<JCStatement> nil())));
 		JCMethodDecl value = method(
-				mods(PUBLIC),
-				"panini$get",
+				mods(PUBLIC|FINAL),
+				PaniniConstants.PANINI_DUCK_GET,
 				id("Void"),
 				params,
 				body(whilel(isFalse(PaniniConstants.REDEEMED),
