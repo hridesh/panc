@@ -604,7 +604,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         	for(JCAnnotation annotation : tree.mods.annotations){
         		if(annotation.annotationType.toString().equals("Fresh")){
         			m.isFresh=true;
-        			((JCProcDecl)tree).isFresh = true;
+        			tree.isFresh = true;
         		}
         	}
         }

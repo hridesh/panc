@@ -1208,6 +1208,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public JCBlock body;
         public JCExpression defaultValue; // for annotation types
         public MethodSymbol sym;
+        // Panini code
+        public boolean isFresh;
+        // end Panini code
         protected JCMethodDecl(JCModifiers mods,
                             Name name,
                             JCExpression restype,
