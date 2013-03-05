@@ -601,6 +601,12 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         // Panini code
         if(!tree.name.toString().contains("$Original")&&m.owner.isCapsule&&!((tree.name.equals(names.fromString("run")) || (tree.name.equals(names.init))))){
         	m.isProcedure = true;
+        	for(JCAnnotation annotation : tree.mods.annotations){
+        		if(annotation.annotationType.toString().equals("Fresh")){
+        			m.isFresh=true;
+        			((JCProcDecl)tree).isFresh = true;
+        		}
+        	}
         }
         else
         	m.isProcedure = false;

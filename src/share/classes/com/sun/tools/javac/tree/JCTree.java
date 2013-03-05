@@ -510,6 +510,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 	public static class JCProcDecl extends JCMethodDecl implements ProcedureTree {
 		public Kind kind;
 		public Tag tag;
+		public boolean isFresh;
 
 		protected JCProcDecl(JCModifiers mods, Name name, JCExpression restype,
 				List<JCTypeParameter> typarams, List<JCVariableDecl> params,
