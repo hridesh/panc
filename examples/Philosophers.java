@@ -16,30 +16,24 @@
  * 
  * Contributor(s): 
  */
-
-interface BooleanI {
-	public boolean value();
-}
-
-class BooleanC implements BooleanI {
+class Bool {
 	private boolean v;
-	public BooleanC(boolean v) { this.v = v; }
+	public Bool(boolean v) { this.v = v; }
 	public boolean value() { return v; }
 }
 
 capsule Fork () {
 	boolean isTaken = false;
-	BooleanC take() {
-		if (isTaken) return new BooleanC(false);
+	Bool take() {
+		if (isTaken) return new Bool(false);
 		else {
-			isTaken = true; return new BooleanC(true);
+			isTaken = true; return new Bool(true);
 		}
 	}
 	void giveBack() { 
 		isTaken = false;
 	}
 }
-
 
 capsule Philosopher (Fork left, Fork right, String name) {
 	void run() {
@@ -74,7 +68,6 @@ capsule Philosopher (Fork left, Fork right, String name) {
 
 system Philosophers {
 	Fork f1, f2, f3; Philosopher p1, p2, p3;
-
 	p1(f1,f2, "Aristotle");
 	p2(f2,f3, "Demosthenes");
 	p3(f3,f1, "Socrates");

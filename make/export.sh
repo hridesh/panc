@@ -2,30 +2,40 @@
 
 cd `dirname $0`
 
-rm -rf panc
-rm -rf panc.zip
+rm -rf panini
+rm -rf panini.zip
 
-mkdir panc
-mkdir panc/lib
-mkdir panc/bin
-mkdir panc/editors
+mkdir panini
+mkdir panini/lib
+mkdir panini/bin
+mkdir panini/editors
+mkdir panini/examples 
 
-cp -r ../dist panc/lib/dist
-cp -r ../licenses panc/licenses
-cp export/panc panc/bin/panc
-cp export/panc.bat panc/bin/
-cp export/panini panc/bin/
-cp export/panini.bat panc/bin/
-cp export/panp panc/bin/
-cp export/panp.bat panc/bin/
-cp export/panini_rt.jar panc/lib/
-cp export/profile.jar panc/lib/
-cp export/profile.properties panc/lib/
-cp export/javac panc/lib/dist/bootstrap/bin/
-cp export/panini-mode.el panc/editors/
-cp export/panini.vim panc/editors/
-cp -r ../examples panc/
-cp ../README panc/
+cp -r ../dist panini/lib/dist
+cp -r ../licenses panini/licenses
+cp export/panc panini/bin/panc
+cp export/panc.bat panini/bin/
+cp export/panini panini/bin/
+cp export/panini.bat panini/bin/
+cp export/panp panini/bin/
+cp export/panp.bat panini/bin/
+cp export/panini_rt.jar panini/lib/
+cp export/profile.jar panini/lib/
+cp export/profile.properties panini/lib/
+cp export/javac panini/lib/dist/bootstrap/bin/
+cp export/panini-mode.el panini/editors/
+cp export/panini.vim panini/editors/
 
-find panc -name '.svn' -exec rm -Rf '{}' ';' 2>/dev/null
-zip -r panc.zip panc
+# Examples - new examples need to be included here to be part of the distribution.
+cp ../examples/HelloWorld.java panini/examples/
+cp ../examples/SignatureExample.java panini/examples/
+cp ../examples/Pi.java panini/examples/
+cp ../examples/Histogram.java panini/examples/
+cp ../examples/Pipeline.java panini/examples/
+cp ../examples/Philosophers.java panini/examples/
+ 
+cp export/README panini/
+cp export/README panini/README.txt
+
+find panini -name '.svn' -exec rm -Rf '{}' ';' 2>/dev/null
+zip -r panini.zip panini

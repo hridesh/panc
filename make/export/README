@@ -1,0 +1,50 @@
+/***
+ *  This folder contains the Panini compiler and examples.
+ *  
+ *  Part of this software is derived from the source code of the 
+ *  OpenJDK Java Compiler. Those parts are copyright of Oracle 
+ *  Corporation and others and are available under the licenses
+ *  contained in the directory licenses.
+ *
+ *  The rest of the compiler is developed at Iowa State University 
+ *  of Science and Technology by Hridesh Rajan and his students. 
+ *  These parts are Copyright 2009-13, Iowa State University of 
+ *  Science and Technology. All rights reserved.  
+ */
+
+This folder is organized as follows:
+
+bin:      This sub-directory contains the command-line version of the 
+          Panini compiler. 
+          > panc: use this command to compile Panini programs on  
+                  Unix-like systems.
+          > panc.bat: use this command to compile Panini programs on  
+                  Windows and derivatives. 
+
+          > panini: use this command to run Panini programs on 
+                  Unix-like systems.
+          > panini.bat: use this command to run Panini programs on 
+                  Windows and derivatives.
+
+          > panp: use this command to profile Panini programs on 
+                  Unix-like systems.
+          > panini.bat: use this command to profile Panini programs on 
+                  Windows and derivatives.
+
+examples: This sub-directory contains various examples of the usage of the 
+          Panini language. 
+          > HelloWorld.java: simplest illustrative example 
+          > Pi.java: An example of using Panini features to implement 
+                     master-worker style program design.
+          > Pipeline.java: an example of a pipeline design 
+
+licenses: This sub-directory contains licenses that apply to various parts 
+          of the Panini compiler.     
+
+Installing the Panini compiler.
+
+TODO: 
+
+Running examples.
+
+TODO: 

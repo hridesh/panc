@@ -17,15 +17,20 @@
  * Contributor(s): Hridesh Rajan
  */
 
-capsule Console () {
-	void printGreeting() { System.out.println("Hello World!"); }
+capsule Console () { //Capsule declaration
+	void printGreeting() { //Capsule procedure
+		System.out.println("Hello World!"); 
+	}
 }
 
-capsule Greeter (Console c) {
-	void run(){ c.printGreeting(); }
+capsule Greeter (Console c) { //Requires an instance of capsule Console to work
+	void run(){                  //An autonomous capsule procedure
+		c.printGreeting();          //Inter-capsule procedure call 
+	}
 }
 
 system HelloWorld {
-	Console c; Greeter g;
-	g(c);
+	Console c; //Capsule instance declaration 
+	Greeter g; //Another capsule instance declaration
+	g(c);      //Wiring, connecting capsule instance g to c 
 }

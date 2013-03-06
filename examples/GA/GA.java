@@ -19,7 +19,6 @@
 import AILib.*;
 
 capsule CrossOver (float probability) {
-
 	Generation compute(Generation g) {
 		int genSize = g.size();		
 		Generation g1 = new Generation(g);
@@ -32,7 +31,6 @@ capsule CrossOver (float probability) {
 }
 
 capsule Mutation (float probability) {
-
 	Generation mutate(Generation g) {
 		int genSize = g.size();
 		Generation g1 = new Generation(g);
@@ -45,9 +43,7 @@ capsule Mutation (float probability) {
 }
 
 capsule Fittest {
-
 	Generation last = null;
-	
 	void check(Generation g) {
 		if(last ==null) last = g;
 		else {
@@ -59,7 +55,6 @@ capsule Fittest {
 }
 
 capsule Logger {
-
 	void logit(Generation g) {
 		logGeneration(g);
 	}
@@ -74,7 +69,6 @@ capsule Logger {
 }
 
 capsule Controller (CrossOver c, Mutation m, Fittest f, Logger l, int maxIteration) {
-
 	void run() {
          Individual individual = new BooleanIndividual();
          Generation g = new Generation(100, individual);
@@ -83,7 +77,6 @@ capsule Controller (CrossOver c, Mutation m, Fittest f, Logger l, int maxIterati
          System.out.println("********FINAL***********RESULTS*************");
          System.out.println("********************************************");
 	}
-
 	private void explore (Generation g, int depth) {
 		if (depth > maxIteration) return;
 		Generation g1 = c.compute(g); 
@@ -97,7 +90,7 @@ capsule Controller (CrossOver c, Mutation m, Fittest f, Logger l, int maxIterati
 
 system GA {
 	CrossOver c; Mutation m; Fittest f; Logger l ; Controller cl;
-        c(0.9f);
+ c(0.9f);
 	m(0.0001f);
 	cl(c,m,f,l,5);
 }
