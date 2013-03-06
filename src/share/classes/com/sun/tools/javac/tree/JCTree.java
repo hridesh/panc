@@ -1210,6 +1210,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public MethodSymbol sym;
         // Panini code
         public boolean isFresh;
+        public boolean isCommutative;
         // end Panini code
         protected JCMethodDecl(JCModifiers mods,
                             Name name,

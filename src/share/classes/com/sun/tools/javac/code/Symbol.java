@@ -1051,6 +1051,7 @@ public abstract class Symbol implements Element {
     	// Panini code
     	public boolean isProcedure;
     	public boolean isFresh;
+    	public boolean isCommutative;
         public JCTree.JCMethodDecl tree;
         public static class MethodInfo {
             public MethodSymbol method;

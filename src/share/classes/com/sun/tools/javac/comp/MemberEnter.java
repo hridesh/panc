@@ -599,10 +599,21 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
             annotateDefaultValueLater(tree.defaultValue, localEnv, m);
         
         // Panini code
+        for(JCAnnotation annotation : tree.mods.annotations){
+    		if(annotation.annotationType.toString().equals("Fresh")){
+    			m.isFresh=true;
+    			tree.isFresh = true;
+    		}
+    		else if(annotation.annotationType.toString().equals("Commutative")){
+    			m.isCommutative=true;
+    			tree.isCommutative = true;
+    		}
+    	}
         if(!tree.name.toString().contains("$Original")&&m.owner.isCapsule&&!((tree.name.equals(names.fromString("run")) || (tree.name.equals(names.init))))){
         	m.isProcedure = true;
         	for(JCAnnotation annotation : tree.mods.annotations){
         		if(annotation.annotationType.toString().equals("Fresh")){
+        			System.out.println("freshdetected");
         			m.isFresh=true;
         			tree.isFresh = true;
         		}
