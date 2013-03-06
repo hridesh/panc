@@ -45,11 +45,12 @@ public class PaniniConstants {
 	public final static String PANINI_MESSAGE_ID = "panini$message$id";
 	public final static String PANINI_DUCK_TYPE = "panini$duck$future";
 	public final static String PANINI_PUSH = "panini$push";
+	public final static String PANINI_WRAPPED = "panini$wrapped";
 
 	public final static String PANINI_DUCK_HASHCODE = "hashCode";
 	public final static String PANINI_DUCK_EQUALS = "equals";
 
 	// To implement the flag in the duck.
-	public final static String REDEEMED = "redeemed";
+	public final static String REDEEMED = "panini$redeemed";
 	public final static String VALUE = "value";
 }
