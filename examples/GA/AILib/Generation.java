@@ -4,11 +4,6 @@ import java.util.ArrayList;
 
 public class Generation extends ArrayList<Individual> {
 	
-	public Generation() {
-		super(0);
-		this.depth = 0;
-	}
-
 	/***
 	 * Creates a generation of size <code>num</code> with individuals of type baseIndividual.
 	 * @param num
@@ -31,6 +26,11 @@ public class Generation extends ArrayList<Individual> {
 	public Generation(Generation g) {
 		super(g.size());
 		this.depth = g.depth + 1;
+	}
+	
+	public Generation() {
+		super(0);
+		this.depth = 0;
 	}
 
 	public int[] getFitnessArray() {
