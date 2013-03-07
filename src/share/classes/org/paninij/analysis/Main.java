@@ -22,10 +22,31 @@ public final class Main {
 	public static Env<AttrContext> attribute(Env<AttrContext> env, Log log) {
 		JCClassDecl root = env.enclClass;
 
-		// confinement violation detection
 		// eliminate processing of duck classes
 		if (!root.sym.name.toString().contains("Panini$Duck")) {
+			// System.out.println("Processing class: " + root.sym);
 			List<JCTree> defs = root.defs;
+			for (JCTree tree : defs) {
+				if (tree instanceof JCMethodDecl) {
+					JCMethodDecl m = (JCMethodDecl) tree;
+					if (m.body != null) {
+						/*
+						 * System.out.println("m = " + m.name + "\tc = " +
+						 * root.name); System.out.println(m);
+						 */
+						tree.accept(
+								new org.paninij.analysis.ASTCFGBuilder());
+						if (Attr.doGraphs) {
+							System.out.println("digraph G {");
+							m.body.accept(new
+									org.paninij.analysis.ASTCFGPrinter());
+							System.out.println("}"); System.out.println(); 
+						}
+					}
+				}
+			}
+
+			// confinement violation detection
 			for (JCTree tree : defs) {
 				if (tree instanceof JCMethodDecl) {
 					JCMethodDecl m = (JCMethodDecl) tree;
@@ -35,7 +56,8 @@ public final class Main {
 							JCCapsuleDecl capsule = (JCCapsuleDecl)root;
 							if ((m.mods.flags & Flags.PRIVATE) == 0) {
 								org.paninij.analysis.ViolationDetector vd =
-									new org.paninij.analysis.ViolationDetector(log, capsule.defs, capsule, m);
+									new org.paninij.analysis.ViolationDetector(
+											log, capsule.defs, capsule, m);
 								m.body.accept(vd);
 							}
 						}
@@ -44,31 +66,6 @@ public final class Main {
 			}
 		}
 
-		if (Attr.doGraphs) {
-			// eliminate processing of duck classes
-			if (!root.sym.name.toString().contains("Panini$Duck")) {
-				// System.out.println("Processing class: " + root.sym);
-				List<JCTree> defs = root.defs;
-				for (JCTree tree : defs) {
-					if (tree instanceof JCMethodDecl) {
-						JCMethodDecl m = (JCMethodDecl) tree;
-						if (m.body != null) {
-							/*
-							 * System.out.println("m = " + m.name + "\tc = " +
-							 * root.name); System.out.println(m);
-							 */
-							tree.accept(
-									new org.paninij.analysis.ASTCFGBuilder());
-							/* System.out.println("digraph G {");
-							 * m.body.accept(new
-							 * org.paninij.analysis.ASTCFGPrinter());
-							 * System.out.println("}"); System.out.println(); */
-						}
-					}
-				}
-			}
-		}
-		
 		// Compilation strategy analysis, 
 		// make sure this pass is called after CFG and SytemGraph construction phases
 		if (Attr.doGraphs) {

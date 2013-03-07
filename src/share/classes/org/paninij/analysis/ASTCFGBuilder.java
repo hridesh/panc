@@ -20,11 +20,8 @@
 package org.paninij.analysis;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map.Entry;
 
 import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
 
