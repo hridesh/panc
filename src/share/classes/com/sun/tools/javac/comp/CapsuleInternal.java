@@ -437,7 +437,8 @@ public class CapsuleInternal extends Internal {
 			ListBuffer<JCVariableDecl> consParams = new ListBuffer<JCVariableDecl>();
 
 			ListBuffer<JCExpression> inits = new ListBuffer<JCExpression>();
-			inits = superArgs(iter);
+			if(!method.restype.toString().equals("void"))
+				inits = superArgs(iter);
 			consBody.add(es(make.Apply(List.<JCExpression> nil(),
 					id(names._super), inits.toList())));
 

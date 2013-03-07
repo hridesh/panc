@@ -2057,6 +2057,28 @@ public class Attr extends JCTree.Visitor {
             Type mpt = newMethTemplate(argtypes, typeargtypes);
             localEnv.info.varArgs = false;
             Type mtype = attribExpr(tree.meth, localEnv, mpt);
+            
+            // Panini Code
+            if( (((MethodSymbol)TreeInfo.symbol(tree.meth)).flags()&Flags.PRIVATE)==0 &&(((MethodSymbol)TreeInfo.symbol(tree.meth)).flags()&Flags.PROTECTED)==0 ){
+            	if(env.enclClass.sym.isCapsule&&((env.enclClass.sym.flags_field&Flags.SERIAL)==0)&&((env.enclClass.sym.flags_field&Flags.MONITOR)==0)){
+            		if(tree.meth.hasTag(Tag.IDENT)){
+            			if(!tree.meth.toString().contains("$")){
+            				tree.meth = make.Ident(names.fromString(((JCIdent)tree.meth).name.toString().concat("$Original")));
+            				System.out.println("!");
+            				mtype = attribExpr(tree.meth, localEnv, mpt);
+            			}
+            		}else if(tree.meth.hasTag(Tag.SELECT)){
+            			JCFieldAccess clazz = (JCFieldAccess)tree.meth;
+            			if(clazz.selected.hasTag(Tag.IDENT)&&((JCIdent)clazz.selected).name.equals(names._this))
+            				if(!clazz.name.toString().contains("$")){
+            					clazz.name = clazz.name.append(names.fromString("$Original"));
+            					System.out.println("?");
+            					mtype = attribExpr(tree.meth, localEnv, mpt);
+            					}
+            		}
+        		}
+            }
+            // end Panini code
 
             // Compute the result type.
             Type restype = mtype.getReturnType();
