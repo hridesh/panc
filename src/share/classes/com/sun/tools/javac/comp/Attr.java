@@ -2064,7 +2064,6 @@ public class Attr extends JCTree.Visitor {
             		if(tree.meth.hasTag(Tag.IDENT)){
             			if(!tree.meth.toString().contains("$")){
             				tree.meth = make.Ident(names.fromString(((JCIdent)tree.meth).name.toString().concat("$Original")));
-            				System.out.println("!");
             				mtype = attribExpr(tree.meth, localEnv, mpt);
             			}
             		}else if(tree.meth.hasTag(Tag.SELECT)){
@@ -2072,7 +2071,6 @@ public class Attr extends JCTree.Visitor {
             			if(clazz.selected.hasTag(Tag.IDENT)&&((JCIdent)clazz.selected).name.equals(names._this))
             				if(!clazz.name.toString().contains("$")){
             					clazz.name = clazz.name.append(names.fromString("$Original"));
-            					System.out.println("?");
             					mtype = attribExpr(tree.meth, localEnv, mpt);
             					}
             		}
