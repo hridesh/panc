@@ -43,32 +43,8 @@ public class ASTCFGBuilder extends TreeScanner {
 
 	// methodCost
 	private int methodCost = 0;
-	private int enter = 0;
 	private int loop = 0;
-	private static final int threshold = 1000;
-	private java.util.List<String> invokedCapsuleProcs;
-	private java.util.List<String> blockingCalls; //TODO: deallocate memory
-	public static HashMap<String, Integer> costs = new HashMap<String, Integer>();
-	public static HashMap<JCMethodDecl, java.util.List<String>> invokedProcs = new HashMap<JCMethodDecl, java.util.List<String>>();
-	public static java.util.List<String> blockingCapsules = new ArrayList<String>();
-	public static java.util.List<String> highCostCapsules = new ArrayList<String>();
-
 	// methodCost
-
-	public static void finalizeCost() {
-		for (Entry<JCMethodDecl, java.util.List<String>> entry : invokedProcs.entrySet()) {
-			JCMethodDecl key = entry.getKey();
-			java.util.List<String> values = entry.getValue();
-			for (String value : values) {
-				if (costs.containsKey(value))
-					key.cost += costs.get(value);
-			}
-			if (key.cost > threshold) { // TODO: change 1000 to some valid number later
-				highCostCapsules.add(capsuleInstanceOwnerName(key));
-			}
-			//System.out.println("Final cost of "+ key.name +" : "+ key.cost);
-		}
-	}
 
 	public void connectNodes(JCMethodDecl m, CFG cfg) {
 		scan(m.body);
@@ -150,80 +126,15 @@ public class ASTCFGBuilder extends TreeScanner {
 		for (JCTree def : tree.defs) {
 			def.accept(this);
 		}
-	}
-
-	private static String capsuleInstanceOwnerName (JCMethodDecl tree) {
-		Symbol sym = tree.sym;
-		if (sym != null) {
-			ClassSymbol cls = (ClassSymbol) sym.owner;
-			String clsw = cls.fullname.toString();
-			if (clsw.contains("$")) {
-				int d = clsw.indexOf("$");
-				clsw = clsw.substring(0, d);
-				return clsw;
-			}
-		}
-		return null;
-	}
-	
+	}	
 	
 	public void visitMethodDef(JCMethodDecl tree) {
-		enter++;
-		invokedCapsuleProcs = new ArrayList<String>();
-		blockingCalls = new ArrayList<String>();
-		// DEBUG
-		/*System.out.println("Entering method: " + tree.getName() + " class: "
-				+ tree.sym.owner.name + " isCapsule: "
-				+ tree.sym.owner.isCapsule);*/
+		this.methodCost = 0; // reset methodCost
 		JCBlock body = tree.body;
 		if (body != null) {
 			body.accept(this);
 		}
-		// methodCost
-		if (enter == 1) {
-			if (invokedCapsuleProcs.size() > 0) {
-				invokedProcs.put(tree, invokedCapsuleProcs);
-				/*System.out.println("List of all invoked capsule procedures:");
-				for (String proc : invokedCapsuleProcs) {
-					System.out.println(proc + " cost: " + costs.get(proc));
-				}*/
-			}
-
-			if (blockingCalls.size() > 0) {
-				tree.hasBlocking = true;
-				/*System.out.println("List of all blocking calls:");
-				for (String call : blockingCalls) {
-					System.out.println(call);
-				}*/
-			} else
-				tree.hasBlocking = false;
-
-			Symbol sym = tree.sym;
-			if (sym != null) {
-				ClassSymbol cls = (ClassSymbol) sym.owner;
-				String type = tree.type.getReturnType().toString();
-				String clsw = cls.fullname.toString();
-				if (clsw.contains("$")) {
-					int d = clsw.indexOf("$");
-					clsw = clsw.substring(0, d);
-				}
-				String method = type + " " + clsw + "." + sym.toString();
-				//System.out.println("map put: " + method);
-				costs.put(method, this.methodCost);
-				if (tree.hasBlocking)
-					blockingCapsules.add(clsw);
-			}
-			//System.out.println("methodCost = " + methodCost);
-			tree.cost = this.methodCost; // saving the cost in JCTree
-			if (tree.cost > threshold) { // TODO: change 1000 to some valid number later
-				highCostCapsules.add(capsuleInstanceOwnerName(tree));
-			}
-			this.methodCost = 0;
-			// this.enter = 0;
-		}
-		enter--;
-		//System.out.println("Leaving method: " + tree.getName());
-		// methodCost
+		tree.cost = methodCost;
 	}
 
 	public void visitVarDef(JCVariableDecl tree) {
@@ -825,46 +736,7 @@ public class ASTCFGBuilder extends TreeScanner {
 	public void visitApply(JCMethodInvocation tree) {
 		JCExpression meth = tree.meth;
 		List<JCExpression> args = tree.args;
-		// methodCost
-		Symbol sym = null;
-		if (meth instanceof JCFieldAccess) {
-			JCFieldAccess m = (JCFieldAccess) meth;
-			sym = m.sym;
-		} /*else if (meth instanceof JCMethodInvocation) {
-			JCMethodInvocation m = (JCMethodInvocation) meth;
-		} else if (meth instanceof JCNewClass) {
-			JCNewClass m = (JCNewClass) meth;
-		} else if (meth instanceof JCTypeCast) {
-			JCTypeCast m = (JCTypeCast) meth;
-		} else if (meth instanceof JCParens) {
-			JCParens m = (JCParens) meth;
-		} else if (meth instanceof JCLiteral) {
-			JCLiteral m = (JCLiteral) meth; 
-		} else if (meth instanceof JCBinary) {
-			JCBinary m = (JCBinary) meth;
-		} else if (meth instanceof JCAssign) {
-			JCAssign m = (JCAssign) meth; 
-		} else if (meth instanceof JCArrayAccess) {
-			JCArrayAccess m = (JCArrayAccess) meth;
-		} */ else if (meth instanceof JCIdent) {
-			JCIdent m = (JCIdent) meth;
-			sym = m.sym;
-		}
-		
-		if (sym != null) {
-			ClassSymbol cls = (ClassSymbol) sym.owner;
-			String type = meth.type.getReturnType().toString();
-			String method = type + " " + cls.fullname + "." + sym.toString();
-			if (sym.owner.isCapsule) {
-				invokedCapsuleProcs.add(method); //TODO: library methods cost
-			} else {
-				for (String blkCall : Blocking.thread_methods) {
-					if (method.equals(blkCall))
-						blockingCalls.add(method); // TODO: currently not checking for blocking calls
-				}
-				
-			}
-		}
+
 		// TODO:need to identify type of invocation (static, virtual, special,
 		// interface or dynamic).
 		methodCost += Costs.invokespecial;
