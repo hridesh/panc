@@ -22,6 +22,7 @@ package org.paninij.analysis;
 import com.sun.tools.javac.util.*;
 
 import com.sun.tools.javac.tree.JCTree.*;
+import org.paninij.effects.EffectSet;
 
 public class CFGBuilder {
 	private static CFGNodeBuilder nodeBuilder = new CFGNodeBuilder();
@@ -30,6 +31,7 @@ public class CFGBuilder {
 	public static void setNames(Names n) { nodeBuilder.names = n; }
 
 	public static CFG buildCFG(JCCapsuleDecl capsule, JCMethodDecl m) {
+        buildASTCFG(m);
 		if (m.sym.cfg != null) 
 			return m.sym.cfg;
 		else {
@@ -44,12 +46,18 @@ public class CFGBuilder {
 	public static void buildASTCFG(JCMethodDecl m) {
 		/* m.body.accept(new CFGHeadTailNodesBuilder());
 		m.body.accept(new ASTNodeConnector()); */
-		if (m.body != null) {
-			m.body.accept(new ASTCFGBuilder());
+        ASTCFGBuilder b = new ASTCFGBuilder();
+        m.nodesInOrder = b.nodesInOrder;
+        m.effects = new EffectSet();
+
+		if (m.body != null && !m.cfgBuilt) {
+			m.body.accept(b);
+            m.nodesInOrder = b.nodesInOrder;
 
 			System.out.println("digraph G {");
 			m.body.accept(new ASTCFGPrinter());
 			System.out.println("}");
+            m.cfgBuilt = true;
 		}
 	}
 }

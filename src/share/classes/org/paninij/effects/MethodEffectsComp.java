@@ -33,45 +33,47 @@ import org.paninij.analysis.CFGNodeImpl;
 
 import java.util.LinkedList;
 
+import org.paninij.effects.EffectSet.*;
+
 public class MethodEffectsComp extends JCTree.Visitor {
-    private LinkedList<CFGNodeImpl> nodesToProcess;
+    private LinkedList<JCTree> nodesToProcess;
     private EffectSet visitResult;
-    private CFGNodeImpl currentNode;
-    private CFG cfg;
+    private JCTree currentNode;
+    private JCMethodDecl method;
     private Symbol capsuleSym;
 
-    public EffectSet computeEffectsForMethod(CFG cfg, Symbol capsuleSym) {
-        this.cfg = cfg;
+    public EffectSet computeEffectsForMethod(JCMethodDecl method, Symbol capsuleSym) {
+        this.method = method;
         this.capsuleSym = capsuleSym;
-        nodesToProcess = new LinkedList<CFGNodeImpl>(cfg.nodesInOrder);
+        nodesToProcess = new LinkedList<JCTree>(method.nodesInOrder);
 
         while (!nodesToProcess.isEmpty()) {
-            CFGNodeImpl node = nodesToProcess.poll();
+            JCTree node = nodesToProcess.poll();
 
             EffectSet newNodeEffects = new EffectSet();
-            for (CFGNodeImpl prev : node.successors) { 
+            for (JCTree prev : node.predecessors) { 
                 newNodeEffects.addAll(prev.effects);
             }
             
             newNodeEffects.addAll(computeEffectsForNode(node));
 
             if (!newNodeEffects.equals(node.effects)) {
-                nodesToProcess.addAll(node.predecessors);
+                nodesToProcess.addAll(node.successors);
             }
             node.effects = newNodeEffects;
         }
 
         EffectSet union = new EffectSet();
-        for (CFGNodeImpl node : cfg.nodesInOrder) {
+        for (JCTree node : method.nodesInOrder) {
             union.addAll(node.effects);
         }
         return union;
     }
 
-    public EffectSet computeEffectsForNode(CFGNodeImpl node) {
+    public EffectSet computeEffectsForNode(JCTree node) {
         visitResult = new EffectSet();
         currentNode = node;
-        node.tree.accept(this);
+        node.accept(this);
         return visitResult;
     }
 
@@ -100,11 +102,11 @@ public class MethodEffectsComp extends JCTree.Visitor {
     public void visitTypeTest(JCInstanceOf tree)         { visitTree(tree); }
     public void visitIndexed(JCArrayAccess tree)         { visitTree(tree); }
     public void visitSelect(JCFieldAccess tree) { 
-        if (!(cfg.endHeapRepresentation.locationForSymbol(TreeInfo.symbol(tree.selected))
+        if (!(method.endHeapRepresentation.locationForSymbol(TreeInfo.symbol(tree.selected))
               instanceof LocalHeapLocation)) {
             if (tree.sym != null) {
                 if (!(tree.sym instanceof MethodSymbol)) {
-                    if (currentNode.lhs) {
+                    if (currentNode.isLHS()) {
                         visitResult.add(new FieldWriteEffect(tree.sym));
                     } else {
                         visitResult.add(new FieldReadEffect(tree.sym));             
@@ -117,9 +119,9 @@ public class MethodEffectsComp extends JCTree.Visitor {
     public void visitIdent(JCIdent tree) {
         if (tree.sym.getKind() == ElementKind.FIELD) {
             if (!tree.sym.name.toString().equals("this")) {
-                if (!(cfg.endHeapRepresentation.locationForSymbol(tree.sym)
+                if (!(method.endHeapRepresentation.locationForSymbol(tree.sym)
                       instanceof LocalHeapLocation)) {
-                    if (currentNode.lhs) {
+                    if (currentNode.isLHS()) {
                         visitResult.add(new FieldWriteEffect(tree.sym));
                     } else {
                         visitResult.add(new FieldReadEffect(tree.sym));

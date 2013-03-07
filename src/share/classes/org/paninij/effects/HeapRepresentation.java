@@ -23,38 +23,6 @@ import java.util.HashMap;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Symbol;
 
-abstract class HeapLocation {
-    private int id;
-    private static int counter = 0;
-    public HeapLocation() { id = counter++; }
-
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        else if (o instanceof HeapLocation) {
-            return id==((HeapLocation)o).id;
-        } else return false;
-    }
-    public int hashCode() {
-        return id;
-    }
-
-    public HeapLocation union(HeapLocation l) {
-        if (equals(l)) return this;
-        else return null;
-    }
-}
-class LocalHeapLocation extends HeapLocation {
-    public static LocalHeapLocation instance = new LocalHeapLocation();
-}
-class ParameterHeapLocation extends HeapLocation {
-    
-}
-class ThisHeapLocation extends HeapLocation {
-    public static ThisHeapLocation instance = new ThisHeapLocation();
-}
-class UnknownHeapLocation extends HeapLocation {
-    public static UnknownHeapLocation instance = new UnknownHeapLocation();    
-}
 
 public class HeapRepresentation {
     private HashMap<Symbol, HeapLocation> locations = new HashMap<Symbol, HeapLocation>();

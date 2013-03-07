@@ -20,6 +20,7 @@
 package org.paninij.analysis;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -54,6 +55,9 @@ public class ASTCFGBuilder extends TreeScanner {
 	public static java.util.List<String> highCostCapsules = new ArrayList<String>();
 
 	// methodCost
+
+    public LinkedList<JCTree> nodesInOrder = new LinkedList<JCTree>();
+    boolean lhs = false;
 
 	public static void finalizeCost() {
 		for (Entry<JCMethodDecl, java.util.List<String>> entry : invokedProcs.entrySet()) {
@@ -990,7 +994,9 @@ public class ASTCFGBuilder extends TreeScanner {
 		methodCost += Costs.istore;
 		// methodCost
 		// fill the start/end/exit nodes
+        this.lhs = true;
 		lhs.accept(this);
+        this.lhs = false;
 
 		ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
 		rhs.accept(this);
@@ -1011,7 +1017,9 @@ public class ASTCFGBuilder extends TreeScanner {
 		JCExpression rhs = tree.rhs;
 
 		// fill the start/end/exit nodes
+        this.lhs = true;
 		lhs.accept(this);
+        this.lhs = false;
 		ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
 		rhs.accept(this);
 
@@ -1250,6 +1258,9 @@ public class ASTCFGBuilder extends TreeScanner {
 		tree.exitNodes = currentExitNodes;
 
 		init(tree);
+
+        nodesInOrder.add(tree);
+        tree._isLHS = this.lhs;
 	}
 
 	private static ArrayList<JCTree> getBreaks(ArrayList<JCTree> nodes) {

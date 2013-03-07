@@ -9,4 +9,9 @@ public interface CFGNode {
 
 	// return the predecessors of the current node in the control flow graph
 	public List<? extends CFGNode> getPredecessors();
+
+    public boolean isLHS();
+
+
+
 }

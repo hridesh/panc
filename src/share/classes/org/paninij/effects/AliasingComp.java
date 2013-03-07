@@ -27,38 +27,35 @@ import com.sun.tools.javac.tree.JCTree.*;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import org.paninij.analysis.CFG;
-import org.paninij.analysis.CFGNodeImpl;
 
 public class AliasingComp extends JCTree.Visitor {
-    private LinkedList<CFGNodeImpl> nodesToProcess;
-    private HashMap<CFGNodeImpl, EffectSet> effectsSoFar;
+    private LinkedList<JCTree> nodesToProcess;
     private HeapRepresentation visitResult;
 
-    public void fillInAliasingInfo(CFG cfg) {
-        nodesToProcess = new LinkedList<CFGNodeImpl>(cfg.nodesInOrder);
+    public void fillInAliasingInfo(JCMethodDecl m) {
+        nodesToProcess = new LinkedList<JCTree>(m.nodesInOrder);
 
         HeapRepresentation result = new HeapRepresentation();
 
         while (!nodesToProcess.isEmpty()) {
-            CFGNodeImpl node = nodesToProcess.poll();
+            JCTree node = nodesToProcess.poll();
 
             HeapRepresentation newNodeHR = new HeapRepresentation();
-            for (CFGNodeImpl prev : node.successors) { 
+            for (JCTree prev : node.predecessors) { 
                 newNodeHR = newNodeHR.union(prev.heapRepresentation);
             }
             
-            newNodeHR = newNodeHR.union(computeHeapRepresentationForTree(node.tree));
+            newNodeHR = newNodeHR.union(computeHeapRepresentationForTree(node));
 
             if (!newNodeHR.equals(node.heapRepresentation)) {
-                nodesToProcess.addAll(node.predecessors);
+                nodesToProcess.addAll(node.successors);
             }
             node.heapRepresentation = newNodeHR;
             
             result = result.union(newNodeHR);
         }
 
-        cfg.endHeapRepresentation = result;
+        m.endHeapRepresentation = result;
     }
 
     public HeapRepresentation computeHeapRepresentationForTree(JCTree tree) {

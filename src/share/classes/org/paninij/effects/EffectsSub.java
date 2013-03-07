@@ -41,7 +41,7 @@ import javax.lang.model.element.ElementKind;
 import org.paninij.analysis.CFG;
 import org.paninij.analysis.CFGNodeImpl;
 
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Iterator;
 
@@ -54,7 +54,7 @@ public class EffectsSub extends JCTree.Visitor {
     private EffectSet visitResult;
     private CFGNodeImpl currentNode;
     private CFG cfg;
-    HashMap<JCMethodDecl, EffectSet> methodEffects;
+    HashSet<JCMethodDecl> methods;
     private Names names;
     public JCCapsuleDecl capsule; 
 
@@ -70,23 +70,23 @@ public class EffectsSub extends JCTree.Visitor {
         names = Names.instance(context);
     }
 
-    public void substituteMethodEffects(HashMap<JCMethodDecl, EffectSet> methodEffects) {
-        this.methodEffects = methodEffects;
+    public void substituteMethodEffects(HashSet<JCMethodDecl> methods) {
+        this.methods = methods;
 
-        LinkedList<JCMethodDecl> methodsToProcess = new LinkedList<JCMethodDecl>(methodEffects.keySet());
+        LinkedList<JCMethodDecl> methodsToProcess = new LinkedList<JCMethodDecl>(methods);
 
         while (!methodsToProcess.isEmpty()) {
             JCMethodDecl method = methodsToProcess.poll();
 
-            EffectSet effects = methodEffects.get(method);
+            EffectSet effects = method.effects;
             EffectSet oldEffects = new EffectSet(effects);
             EffectSet toAdd = new EffectSet();
 
-            Iterator<Effect> it = effects.iterator();
+            Iterator<EffectSet.Effect> it = effects.iterator();
             while (it.hasNext()) {
-                Effect e = it.next();
-                if (e instanceof MethodEffect) {
-                    MethodEffect me = (MethodEffect)e;
+                EffectSet.Effect e = it.next();
+                if (e instanceof EffectSet.MethodEffect) {
+                    EffectSet.MethodEffect me = (EffectSet.MethodEffect)e;
                     MethodSymbol methSym = me.method;
 
                     it.remove();
@@ -95,19 +95,19 @@ public class EffectsSub extends JCTree.Visitor {
                             String methodName = methSym.toString();
                             methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
                             MethodSymbol methSymOrig = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
-                            toAdd.addAll(methodEffects.get(methSymOrig.tree));
+                            toAdd.addAll(methSymOrig.tree.effects);
                         } else {
                             if (methSym.tree == null) continue;
-                            toAdd.addAll(methodEffects.get(methSym.tree));
+                            toAdd.addAll(methSym.tree.effects);
                         }
                         
                         if (method.sym.toString().contains("$Original")) {
                             String s = method.sym.toString();
                             s = s.substring(0, s.indexOf("$"));
                             MethodSymbol ms = (MethodSymbol)((ClassSymbol)method.sym.owner).members_field.lookup(names.fromString(s)).sym;
-                            toAdd.remove(new MethodEffect(ms));
+                            toAdd.remove(new EffectSet.MethodEffect(ms));
                         } else {
-                            toAdd.remove(new MethodEffect(method.sym));
+                            toAdd.remove(new EffectSet.MethodEffect(method.sym));
                         }
                     }
                 }
@@ -126,45 +126,5 @@ public class EffectsSub extends JCTree.Visitor {
         }
     }
 
-    public void substituteProcEffects(HashMap<JCMethodDecl, EffectSet> methodEffects) {
-
-        this.methodEffects = methodEffects;
-
-        LinkedList<JCMethodDecl> methodsToProcess = new LinkedList<JCMethodDecl>(methodEffects.keySet());
-
-        while (!methodsToProcess.isEmpty()) {
-            JCMethodDecl method = methodsToProcess.poll();
-
-            EffectSet effects = methodEffects.get(method);
-            EffectSet oldEffects = new EffectSet(effects);
-            EffectSet toAdd = new EffectSet();
-
-            Iterator<Effect> it = effects.iterator();
-            while (it.hasNext()) {
-                Effect e = it.next();
-                if (e instanceof OpenEffect) {
-                    OpenEffect me = (OpenEffect)e;
-                    MethodSymbol methSym = me.method;
-
-                    it.remove();
-/*                    if (methSym != method.sym) {
-                        String methodName = methSym.toString();
-                        methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
-                        MethodSymbol methSymOrig = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
-                        toAdd.addAll(methodEffects.get(methSymOrig.tree));
-                        toAdd.remove(new OpenEffect(method.sym));
-                        }*/
-                }
-            }
-            effects.addAll(toAdd);
-
-            if (!oldEffects.equals(effects)) {
-                for (MethodSymbol callerMethod : method.sym.callerMethods) {
-                    if (callerMethod.tree == null) continue;
-                    if (callerMethod != method.sym)
-                        methodsToProcess.offer(callerMethod.tree);
-                }
-            }
-        }
-    }
+  
 }

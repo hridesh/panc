@@ -32,6 +32,7 @@ import java.util.LinkedList;
 import org.paninij.analysis.CFG;
 import org.paninij.analysis.CFGBuilder;
 import org.paninij.analysis.CFGPrinter;
+import org.paninij.analysis.ASTCFGPrinter;
 
 import static com.sun.tools.javac.code.Flags.*;
 
@@ -39,7 +40,7 @@ public class CapsuleEffectsComp {
     protected static final Context.Key<CapsuleEffectsComp> secKey =
         new Context.Key<CapsuleEffectsComp>();
 
-    public HashMap<JCMethodDecl, EffectSet> methodEffects = new HashMap<JCMethodDecl, EffectSet>();
+    public HashSet<JCMethodDecl> processedMethods = new HashSet<JCMethodDecl>();
     MethodEffectsComp methodEffectsComp = new MethodEffectsComp();
     EffectsSub effectsSub;
     ReachedProcsComp reachedProcsComp;
@@ -77,10 +78,17 @@ public class CapsuleEffectsComp {
             JCMethodDecl method = methodsToProcess.poll();
             visitedMethods.add(method);
 
-            CFG cfg = CFGBuilder.buildCFG(capsule, method);
-            new AliasingComp().fillInAliasingInfo(cfg);
+            CFGBuilder.buildCFG(capsule, method);
+            System.out.println(method.nodesInOrder);
+            new AliasingComp().fillInAliasingInfo(method);
             reachedProcsComp.todoReachedProcs(capsule);
-            new CFGPrinter().printCFG(cfg);
+//            new CFGPrinter().printCFG(cfg);
+            if (method.body != null) {
+                System.out.println("digraph G {");
+                method.body.accept(new ASTCFGPrinter());
+                System.out.println("}");
+            }
+
             
             for (MethodSymbol.MethodInfo calledMethodInfo : method.sym.calledMethods) {
                 MethodSymbol calledMethod = calledMethodInfo.method;
@@ -89,12 +97,13 @@ public class CapsuleEffectsComp {
                 if (!visitedMethods.contains(calledMethod.tree))
                     methodsToProcess.offer(calledMethod.tree);
             }
-            EffectSet effects = methodEffectsComp.computeEffectsForMethod(cfg, capsule.sym);
-            effects.cfg = cfg;
-            methodEffects.put(method, effects);
+            EffectSet effects = methodEffectsComp.computeEffectsForMethod(method, capsule.sym);
+            effects.method = method;
+            method.effects = effects;
+            processedMethods.add(method);
         }
         
         effectsSub.capsule = capsule;
-        effectsSub.substituteMethodEffects(methodEffects);
+        effectsSub.substituteMethodEffects(processedMethods);
     }
 }

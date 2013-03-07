@@ -49,6 +49,11 @@ import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
 import static com.sun.tools.javac.code.BoundKind.*;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
+
+// Panini code
+import org.paninij.effects.*;
+// end Panini code
+
 /**
  * Root class for abstract syntax tree nodes. It provides definitions
  * for specific tree nodes as subclasses nested inside.
@@ -83,9 +88,9 @@ import static com.sun.tools.javac.tree.JCTree.Tag.*;
  * @see Pretty
  */
 public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
-//Panini code
+// Panini code
 , org.paninij.analysis.CFGNode
-//end Panini code
+// end Panini code
 {
 
     /* Tree tag values, identifying kinds of trees */
@@ -398,10 +403,15 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
      * the control flow graph. */
     public java.util.List<JCTree> predecessors;
 	public java.util.List<JCTree> successors;
+    public boolean _isLHS;
+    public EffectSet effects;
+    public HeapRepresentation heapRepresentation;
 
 	public java.util.List<JCTree> getSuccessors() { return successors; }
 
 	public java.util.List<JCTree> getPredecessors() { return predecessors; }
+
+    public boolean isLHS() { return _isLHS; }
 
 	// The following fields are building the control flow graph.
 	public java.util.List<JCTree> startNodes;
@@ -1210,6 +1220,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public MethodSymbol sym;
         // Panini code
         public boolean isFresh;
+        public LinkedList<JCTree> nodesInOrder;
+        public HeapRepresentation endHeapRepresentation;
+        public boolean cfgBuilt = false;
         // end Panini code
         protected JCMethodDecl(JCModifiers mods,
                             Name name,

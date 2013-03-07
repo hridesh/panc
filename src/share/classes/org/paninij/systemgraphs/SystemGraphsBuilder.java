@@ -94,7 +94,7 @@ public class SystemGraphsBuilder extends TreeScanner {
         systemConstantNames = new HashSet<String>();
 
         scan(system.body);
-
+        
         for (Node capsule : capsuleNames.allNodes()) {
             for (Symbol s : capsule.sym.members_field.getElements()) {
                 if (s instanceof MethodSymbol) {
@@ -119,24 +119,34 @@ public class SystemGraphsBuilder extends TreeScanner {
 			}
 		}
 		
-        //System.out.println(graphs);
+        System.out.println(graphs);
 
         return graphs;
     }
 
     public void finishCallGraph() {
+//        System.out.println("FINISHING CALL GRAPH");
+//        System.out.println(".\n.\n.\n.\n");
         for (CFGNodeBuilder.TodoItem t : CFGNodeBuilder.callGraphTodos) {
             VarSymbol capsuleField = CFGNodeBuilder.capsuleField(t.tree); // doesn't handle capsule array calls
+//            System.out.println(capsuleField);
             MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(t.tree.meth);
             String methodName = TreeInfo.symbol(t.tree.meth).toString();
             methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
-            MethodSymbol origMethSym = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;
+
+            String ownerName = methSym.owner.toString();
+            ClassSymbol owner = (ClassSymbol)(methSym.owner.owner.members().lookup(names.fromString(ownerName+"$thread")).sym);
+
+
+            MethodSymbol origMethSym = (MethodSymbol)owner.members_field.lookup(names.fromString(methodName)).sym;
             if (origMethSym != null) {
+//                System.out.println("!= null");
                 t.method.sym.calledMethods.add(new MethodSymbol.MethodInfo(origMethSym,
                                                                        capsuleField));
                 origMethSym.callerMethods.add(t.method.sym);
             } // otherwise could be an already compiled method like print() or something
         }
+//        System.out.println(".\n.\n.\n.\n");
     }
 
     private static class NodeMethod {
@@ -166,6 +176,7 @@ public class SystemGraphsBuilder extends TreeScanner {
 //            System.out.println(calledMethodInfo.method + ":");
 
             if (calledMethodInfo.capsule != null) {
+//                System.out.println("capsule != null");
                 for (ConnectionEdge edge : graphs.forwardConnectionEdges.get(currentCapsule)) {
 //                    System.out.print(edge);
                     if (edge.varName.equals(calledMethodInfo.capsule.name.toString())) {
@@ -210,7 +221,7 @@ public class SystemGraphsBuilder extends TreeScanner {
             String capsuleName = type.elemtype.toString();
             String varName = tree.name.toString();
             if(syms.capsules.containsKey(names.fromString(capsuleName))) {
-                ClassSymbol c = syms.capsules.get(names.fromString(capsuleName));
+                ClassSymbol c = syms.capsules.get(names.fromString(capsuleName + "$thread"));
                 ArrayList<Node> nodes = new ArrayList<Node>(type.amount);
                 for (int i = 0; i < type.amount; i++) {
                     nodes.add(graphs.addCapsule(c, varName, i));
@@ -221,7 +232,7 @@ public class SystemGraphsBuilder extends TreeScanner {
             String capsuleName = tree.vartype.toString();
             String varName = tree.name.toString();
             if(syms.capsules.containsKey(names.fromString(capsuleName))) {
-                ClassSymbol c = syms.capsules.get(names.fromString(capsuleName));
+                ClassSymbol c = syms.capsules.get(names.fromString(capsuleName + "$thread"));
                 capsuleNames.put(varName, graphs.addCapsule(c, varName));
             } else {
                 systemConstantNames.add(varName);

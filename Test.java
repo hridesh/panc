@@ -1,4 +1,4 @@
-module M (M2 m2) {
+capsule M (M2 m2) {
     boolean stuff = false;
     boolean isSleeping = false;
 
@@ -20,7 +20,7 @@ module M (M2 m2) {
     }
 }
 
-module M2 () {
+capsule M2 () {
     int j = 5;
     void doSomethingElse() {
         int i = 0;

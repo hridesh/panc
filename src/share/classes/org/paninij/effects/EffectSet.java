@@ -23,86 +23,90 @@ import java.util.HashSet;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.tree.JCTree.*;
 
 import org.paninij.analysis.CFG;
 import org.paninij.systemgraphs.SystemGraphs.*;
 
-abstract class Effect {
-    public Node capsule;
-}
-class EmptyEffect extends Effect {}
-class FieldReadEffect extends Effect {
-    Symbol field; public FieldReadEffect(Symbol field) { this.field = field; }
-    public String toString() { return "read " + field; }
-    public boolean equals(Object o) {
-        if (!(o instanceof FieldReadEffect)) return false;
-        FieldReadEffect oe = (FieldReadEffect)o;
-        return this.field == oe.field;
+public class EffectSet extends HashSet<EffectSet.Effect> {
+    public static abstract class Effect {
+        public Node capsule;
     }
-    public int hashCode() { return field.hashCode(); }
-}
-class FieldWriteEffect extends Effect {
-    Symbol field; public FieldWriteEffect(Symbol field) { this.field = field; }
-    public String toString() { return "write " + field; }
-    public boolean equals(Object o) {
-        if (!(o instanceof FieldWriteEffect)) return false;
-        FieldWriteEffect oe = (FieldWriteEffect)o;
-        return this.field == oe.field;
-    }
-    public int hashCode() { return field.hashCode(); }
-}
-class OpenEffect extends Effect {
-    MethodSymbol method; EffectSet otherEffects; 
-    public OpenEffect(MethodSymbol method) { this.method = method; this.otherEffects = new EffectSet(); }
-    public String toString() { return "open: " + method; }
-    public boolean equals(Object o) {
-        if (!(o instanceof OpenEffect)) return false;
-        OpenEffect oe = (OpenEffect)o;
-        return this.method == oe.method;
-    }
-    public int hashCode() { return method.hashCode(); }
-}
-class MethodEffect extends Effect {
-    MethodSymbol method; 
-    public MethodEffect(MethodSymbol method) { if (method==null) Assert.error(); this.method = method; }
-    public String toString() { return "method: " + method; }
-    public boolean equals(Object o) {
-        if (!(o instanceof MethodEffect)) return false;
-        MethodEffect oe = (MethodEffect)o;
-        return this.method == oe.method;
-    }
-    public int hashCode() { return method.hashCode(); }
-}
-class LibMethodEffect extends Effect {
-    MethodSymbol method; 
-    public LibMethodEffect(MethodSymbol method) { if (method==null) Assert.error(); this.method = method; }
-    public String toString() { return "method: " + method; }
-    public boolean equals(Object o) {
-        if (!(o instanceof LibMethodEffect)) return false;
-        LibMethodEffect oe = (LibMethodEffect)o;
-        return this.method == oe.method;
-    }
-    public int hashCode() { return method.hashCode(); }
-}
-class BottomEffect extends Effect {
-    public String toString() { return "bottom"; }
+    public static class EmptyEffect extends Effect {}
+    public static class FieldReadEffect extends Effect {
+        Symbol field; public FieldReadEffect(Symbol field) { this.field = field; }
+        public String toString() { return "read " + field; }
         public boolean equals(Object o) {
-        if (!(o instanceof BottomEffect)) return false;
-        return true;
+            if (!(o instanceof FieldReadEffect)) return false;
+            FieldReadEffect oe = (FieldReadEffect)o;
+            return this.field == oe.field;
+        }
+        public int hashCode() { return field.hashCode(); }
     }
-    public int hashCode() { return 1; }
-}
+    public static class FieldWriteEffect extends Effect {
+        Symbol field; public FieldWriteEffect(Symbol field) { this.field = field; }
+        public String toString() { return "write " + field; }
+        public boolean equals(Object o) {
+            if (!(o instanceof FieldWriteEffect)) return false;
+            FieldWriteEffect oe = (FieldWriteEffect)o;
+            return this.field == oe.field;
+        }
+        public int hashCode() { return field.hashCode(); }
+    }
+    public static class OpenEffect extends Effect {
+        MethodSymbol method; EffectSet otherEffects; 
+        public OpenEffect(MethodSymbol method) { this.method = method; this.otherEffects = new EffectSet(); }
+        public String toString() { return "open: " + method; }
+        public boolean equals(Object o) {
+            if (!(o instanceof OpenEffect)) return false;
+            OpenEffect oe = (OpenEffect)o;
+            return this.method == oe.method;
+        }
+        public int hashCode() { return method.hashCode(); }
+    }
+    public static class MethodEffect extends Effect {
+        MethodSymbol method; 
+        public MethodEffect(MethodSymbol method) { if (method==null) Assert.error(); this.method = method; }
+        public String toString() { return "method: " + method; }
+        public boolean equals(Object o) {
+            if (!(o instanceof MethodEffect)) return false;
+            MethodEffect oe = (MethodEffect)o;
+            return this.method == oe.method;
+        }
+        public int hashCode() { return method.hashCode(); }
+    }
+    public static class LibMethodEffect extends Effect {
+        MethodSymbol method; 
+        public LibMethodEffect(MethodSymbol method) { if (method==null) Assert.error(); this.method = method; }
+        public String toString() { return "method: " + method; }
+        public boolean equals(Object o) {
+            if (!(o instanceof LibMethodEffect)) return false;
+            LibMethodEffect oe = (LibMethodEffect)o;
+            return this.method == oe.method;
+        }
+        public int hashCode() { return method.hashCode(); }
+    }
+    public static class BottomEffect extends Effect {
+        public String toString() { return "bottom"; }
+        public boolean equals(Object o) {
+            if (!(o instanceof BottomEffect)) return false;
+            return true;
+        }
+        public int hashCode() { return 1; }
+    }
 
 
-public class EffectSet extends HashSet<Effect> {
-    public CFG cfg;
+
+
+    public JCMethodDecl method;
 
     public EffectSet() { super(); }
     public EffectSet(EffectSet e) { super(e); }
 
     public boolean intersects(EffectSet es) {
-        for (Effect e : es) {
-            if ((contains(e) && !(e instanceof EmptyEffect)) || e instanceof BottomEffect) return true;
+        for (EffectSet.Effect e : es) {
+            if ((contains(e) && !(e instanceof EffectSet.EmptyEffect)) || 
+                e instanceof EffectSet.BottomEffect) return true;
         }
         return false;
     }
