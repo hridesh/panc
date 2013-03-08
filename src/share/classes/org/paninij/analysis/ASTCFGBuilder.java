@@ -341,8 +341,6 @@ public class ASTCFGBuilder extends TreeScanner {
 				ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
 				body.accept(this);
 
-				ArrayList<JCTree> currentEndNodes = new ArrayList<JCTree>(
-						this.currentEndNodes);
 				ArrayList<JCTree> currentExcEndNodes = new ArrayList<JCTree>(
 						this.currentExitNodes);
 
@@ -356,11 +354,8 @@ public class ASTCFGBuilder extends TreeScanner {
 				currentExcEndNodes = resolveContinues(tree, tempContinueNodes,
 						currentExcEndNodes);
 
-				finalEndNodes.addAll(currentEndNodes);
-
 				if (!step.isEmpty()) {
 					visitStatements(tree.step);
-					finalEndNodes.addAll(this.currentEndNodes);
 				}
 
 				this.currentStartNodes = currentStartNodes;
@@ -368,15 +363,10 @@ public class ASTCFGBuilder extends TreeScanner {
 				this.currentExitNodes = currentExcEndNodes;
 
 				addNode(tree);
-
-				// connect the nodes
-				connectStartNodesToEndNodesOf(body, cond);
 			} else { /* tree.cond == null, condition is empty. */
 				body.accept(this);
 
 				ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
-				ArrayList<JCTree> currentEndNodes = new ArrayList<JCTree>(
-						this.currentEndNodes);
 				ArrayList<JCTree> currentExcEndNodes = new ArrayList<JCTree>(
 						this.currentExitNodes);
 
@@ -390,11 +380,8 @@ public class ASTCFGBuilder extends TreeScanner {
 				currentExcEndNodes = resolveContinues(tree, tempContinueNodes,
 						currentExcEndNodes);
 
-				finalEndNodes.addAll(currentEndNodes);
-
 				if (!tree.step.isEmpty()) {
 					visitStatements(tree.step);
-					finalEndNodes.addAll(this.currentEndNodes);
 				}
 
 				this.currentStartNodes = currentStartNodes;
@@ -409,13 +396,15 @@ public class ASTCFGBuilder extends TreeScanner {
 			visitStatements(tree.init);
 			ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
 
-			if (tree.cond != null) {
-				tree.cond.accept(this);
+			if (cond != null) {
+				cond.accept(this);
 			}
 
-			body.accept(this);
 			ArrayList<JCTree> currentEndNodes = new ArrayList<JCTree>(
 					this.currentEndNodes);
+
+			body.accept(this);
+			
 			ArrayList<JCTree> currentExcEndNodes = new ArrayList<JCTree>(
 					this.currentExitNodes);
 
@@ -433,7 +422,6 @@ public class ASTCFGBuilder extends TreeScanner {
 
 			if (!tree.step.isEmpty()) {
 				visitStatements(tree.step);
-				finalEndNodes.addAll(this.currentEndNodes);
 			}
 
 			this.currentStartNodes = currentStartNodes;
@@ -453,22 +441,21 @@ public class ASTCFGBuilder extends TreeScanner {
 
 		// connect the nodes
 		JCTree nextStartNodeTree = null;
-
-		if (step.isEmpty()) {
-			if (cond != null) {
-				nextStartNodeTree = cond;
-			} else {
-				nextStartNodeTree = body;
-			}
+		if (cond != null) {
+			nextStartNodeTree = cond;
+			connectStartNodesToEndNodesOf(body, cond);
 		} else {
-			nextStartNodeTree = step.head;
+			nextStartNodeTree = body;
+		}
 
+		if (!step.isEmpty()) {
 			JCTree lastStatement = visitList(step);
 			if (cond != null) {
 				connectStartNodesToEndNodesOf(cond, lastStatement);
 			} else {
 				connectStartNodesToEndNodesOf(body, lastStatement);
 			}
+			connectStartNodesToEndNodesOf(lastStatement, body);
 		}
 
 		connectStartNodesToEndNodesOf(nextStartNodeTree, body);
