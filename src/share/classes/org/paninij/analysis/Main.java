@@ -1,9 +1,14 @@
 package org.paninij.analysis;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Stack;
+import java.util.TreeSet;
+
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.comp.Attr;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
@@ -26,6 +31,7 @@ public final class Main {
 		if (!root.sym.name.toString().contains("Panini$Duck")) {
 			// System.out.println("Processing class: " + root.sym);
 			List<JCTree> defs = root.defs;
+
 			for (JCTree tree : defs) {
 				if (tree instanceof JCMethodDecl) {
 					JCMethodDecl m = (JCMethodDecl) tree;
@@ -45,36 +51,18 @@ public final class Main {
 					}
 				}
 			}
-
-			// confinement violation detection
-			for (JCTree tree : defs) {
-				if (tree instanceof JCMethodDecl) {
-					JCMethodDecl m = (JCMethodDecl) tree;
-					if (m.body != null) {
-						// detect confinement violations
-						if (root instanceof JCCapsuleDecl) {
-							JCCapsuleDecl capsule = (JCCapsuleDecl)root;
-							if ((m.mods.flags & Flags.PRIVATE) == 0) {
-								org.paninij.analysis.ViolationDetector vd =
-									new org.paninij.analysis.ViolationDetector(
-											log, capsule.defs, capsule, m);
-								m.body.accept(vd);
-							}
-						}
-					}
-				}
-			}
 		}
 
 		// Compilation strategy analysis, 
-		// make sure this pass is called after CFG and SytemGraph construction phases
+		// make sure this pass is called after CFG and SytemGraph construction
+		// phases
 		if (Attr.doGraphs) {
 			analyzeCapsule(root);
 		}
 		
 		return env;
 	}
-	
+
 	private static void analyzeCapsule(JCClassDecl root) {
 		// eliminate processing of duck classes
 		if (!root.sym.name.toString().contains("Panini$Duck")) {

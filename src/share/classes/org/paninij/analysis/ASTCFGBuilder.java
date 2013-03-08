@@ -485,18 +485,25 @@ public class ASTCFGBuilder extends TreeScanner {
 		JCExpression pat = tree.pat;
 		List<JCStatement> stats = tree.stats;
 
-		// fill the start/end/exit nodes
-		pat.accept(this);
-		ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
+		// the default case does not have a pat
+		if (pat != null) {
+			// fill the start/end/exit nodes
+			pat.accept(this);
+			ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
 
-		visitStatements(stats);
+			visitStatements(stats);
 
-		this.currentStartNodes = currentStartNodes;
+			this.currentStartNodes = currentStartNodes;
 
-		addNode(tree);
+			addNode(tree);
 
-		// connect the nodes
-		switchAndCase(pat, stats);
+			// connect the nodes
+			switchAndCase(pat, stats);
+		} else {
+			visitStatements(stats);
+
+			addNode(tree);
+		}
 	}
 
 	public void visitSynchronized(JCSynchronized tree) {
