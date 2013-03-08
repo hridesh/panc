@@ -1103,7 +1103,7 @@ public class Attr extends JCTree.Visitor {
     		for(int j=0; j<mat.amount;j++){
     			submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
     					make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), 
-    							names.fromString("shutdown")), List.<JCExpression>nil())));
+    							names.fromString(PaniniConstants.PANINI_SHUTDOWN)), List.<JCExpression>nil())));
     		}
     	}
     	//					for(int j = 0; j<mat.amount; j++)
@@ -1163,7 +1163,7 @@ public class Attr extends JCTree.Visitor {
     		starts.prepend(startAssign);
     		submits.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
     				make.Select(make.Ident(vdecl.name), 
-    						names.fromString("shutdown")), List.<JCExpression>nil())));
+    						names.fromString(PaniniConstants.PANINI_SHUTDOWN)), List.<JCExpression>nil())));
     	}
     	//					tree.defs = tree.defs.append(
     	//							createOwnerInterface(
@@ -2062,14 +2062,21 @@ public class Attr extends JCTree.Visitor {
             if( (((MethodSymbol)TreeInfo.symbol(tree.meth)).flags()&Flags.PRIVATE)==0 &&(((MethodSymbol)TreeInfo.symbol(tree.meth)).flags()&Flags.PROTECTED)==0 ){
             	if(env.enclClass.sym.isCapsule&&((env.enclClass.sym.flags_field&Flags.SERIAL)==0)&&((env.enclClass.sym.flags_field&Flags.MONITOR)==0)){
             		if(tree.meth.hasTag(Tag.IDENT)){
-            			if(!tree.meth.toString().contains("$")){
+            			if(!tree.meth.toString().contains("$") 
+            					&& !tree.meth.toString().equals(PaniniConstants.PANINI_YIELD)
+            					&& !tree.meth.toString().equals(PaniniConstants.PANINI_SHUTDOWN)
+            					&& !tree.meth.toString().equals(PaniniConstants.PANINI_EXIT)){
             				tree.meth = make.Ident(names.fromString(((JCIdent)tree.meth).name.toString().concat("$Original")));
             				mtype = attribExpr(tree.meth, localEnv, mpt);
             			}
             		}else if(tree.meth.hasTag(Tag.SELECT)){
             			JCFieldAccess clazz = (JCFieldAccess)tree.meth;
             			if(clazz.selected.hasTag(Tag.IDENT)&&((JCIdent)clazz.selected).name.equals(names._this))
-            				if(!clazz.name.toString().contains("$")){
+            				if(!clazz.name.toString().contains("$") 
+            						&&!clazz.name.toString().equals(PaniniConstants.PANINI_YIELD)
+            						&&!clazz.name.toString().equals(PaniniConstants.PANINI_SHUTDOWN)
+            						&&!clazz.name.toString().equals(PaniniConstants.PANINI_EXIT)
+            						){
             					clazz.name = clazz.name.append(names.fromString("$Original"));
             					mtype = attribExpr(tree.meth, localEnv, mpt);
             					}

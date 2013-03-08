@@ -388,7 +388,7 @@ public class Enter extends JCTree.Visitor {
     			excp = make.Select(excp, names.fromString("InterruptedException"));
     			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString("start"), make.TypeIdent(TypeTags.VOID), 
     					List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>nil(), null, null));
-    			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString("shutdown"), make.TypeIdent(TypeTags.VOID), 
+    			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString(PaniniConstants.PANINI_SHUTDOWN), make.TypeIdent(TypeTags.VOID), 
     					List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>nil(), null, null));
     			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString("join"), make.TypeIdent(TypeTags.VOID), 
     					List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>of(excp), null, null));
