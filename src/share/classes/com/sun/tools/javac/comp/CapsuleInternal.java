@@ -406,7 +406,7 @@ public class CapsuleInternal extends Internal {
 					continue; // Is this correct?
 				if (constructor == null)
 					constructor = m;
-				else if (m.params.length() < constructor.params.length())
+				else if (m.params().length() < constructor.params().length())
 					constructor = m;
 			}
 		}
