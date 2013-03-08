@@ -212,7 +212,7 @@ public class ASTCFGPrinter extends TreeScanner {
 	private static void printCurrent(JCTree tree) {
 		if (tree.predecessors != null) {
 			for (JCTree next : tree.predecessors) {
-				System.out.println(nodeText(tree) + " -> " + nodeText(next));
+				System.out.println(nodeText(next) + " -> " + nodeText(tree));
 			}
 		}
 	}

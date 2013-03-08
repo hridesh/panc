@@ -189,7 +189,7 @@ public class ASTCFGBuilder extends TreeScanner {
 
 		// connect the nodes
 		if (init != null) {
-			connectToEndNodesOf(tree, init);
+			connectToEndNodesOf(init, tree);
 		}
 	}
 
@@ -532,8 +532,8 @@ public class ASTCFGBuilder extends TreeScanner {
 		addNode(tree);
 
 		// connect the nodes
-		connectToEndNodesOf(tree, expr);
-		connectToStartNodesOf(tree, expr);
+		connectToEndNodesOf(expr, tree);
+		// connectToStartNodesOf(tree, expr);
 
 		// connectStartNodesToContinuesOf(tree, body);
 		connectStartNodesToEndNodesOf(body, body);
@@ -847,7 +847,7 @@ public class ASTCFGBuilder extends TreeScanner {
 
 		// connect the nodes
 		if (expr != null) {
-			connectToEndNodesOf(tree, expr);
+			connectToEndNodesOf(expr, tree);
 		}
 	}
 
@@ -865,7 +865,7 @@ public class ASTCFGBuilder extends TreeScanner {
 
 		// connect the nodes
 		// if (expr != null) {
-		connectToEndNodesOf(tree, expr);
+		connectToEndNodesOf(expr, tree);
 		// }
 	}
 
@@ -897,9 +897,9 @@ public class ASTCFGBuilder extends TreeScanner {
 		if (!args.isEmpty()) {
 			JCTree lastArg = visitList(args);
 			connectStartNodesToEndNodesOf(lastArg, meth);
-			connectToEndNodesOf(tree, lastArg);
+			connectToEndNodesOf(lastArg, tree);
 		} else {
-			connectToEndNodesOf(tree, meth);
+			connectToEndNodesOf(meth, tree);
 		}
 	}
 
@@ -926,7 +926,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		// connect the nodes
 		if (!args.isEmpty()) {
 			JCTree lastArg = visitList(args);
-			connectToEndNodesOf(tree, lastArg);
+			connectToEndNodesOf(lastArg, tree);
 		}
 	}
 
@@ -973,12 +973,12 @@ public class ASTCFGBuilder extends TreeScanner {
 					JCTree lastElement = visitList(elems);
 
 					connectStartNodesToEndNodesOf(elems.head, lastDimension);
-					connectToEndNodesOf(tree, lastElement);
+					connectToEndNodesOf(lastElement, tree);
 				} else {
-					connectToEndNodesOf(tree, lastDimension);
+					connectToEndNodesOf(lastDimension, tree);
 				}
 			} else {
-				connectToEndNodesOf(tree, lastDimension);
+				connectToEndNodesOf(lastDimension, tree);
 			}
 		}
 	}
@@ -1011,7 +1011,7 @@ public class ASTCFGBuilder extends TreeScanner {
 
 		// connect the nodes
 		connectStartNodesToEndNodesOf(rhs, lhs);
-		connectToEndNodesOf(tree, rhs);
+		connectToEndNodesOf(rhs, tree);
 	}
 
 	public void visitAssignop(JCAssignOp tree) {
@@ -1031,7 +1031,7 @@ public class ASTCFGBuilder extends TreeScanner {
 
 		// connect the nodes
 		connectStartNodesToEndNodesOf(rhs, lhs);
-		connectToEndNodesOf(tree, rhs);
+		connectToEndNodesOf(rhs, tree);
 	}
 
 	public void visitUnary(JCUnary tree) {
@@ -1044,7 +1044,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		addNode(tree);
 
 		// connect the nodes
-		connectToEndNodesOf(tree, tree.arg);
+		connectToEndNodesOf(tree.arg, tree);
 	}
 
 	public void visitBinary(JCBinary tree) {
@@ -1064,7 +1064,7 @@ public class ASTCFGBuilder extends TreeScanner {
 
 		// connect the nodes
 		connectStartNodesToEndNodesOf(rhs, lhs);
-		connectToEndNodesOf(tree, rhs);
+		connectToEndNodesOf(rhs, tree);
 	}
 
 	public void visitTypeCast(JCTypeCast tree) {
@@ -1079,7 +1079,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		addNode(tree);
 
 		// connect the nodes
-		connectToEndNodesOf(tree, expr);
+		connectToEndNodesOf(expr, tree);
 	}
 
 	public void visitTypeTest(JCInstanceOf tree) {
@@ -1094,7 +1094,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		addNode(tree);
 
 		// connect the nodes
-		connectToEndNodesOf(tree, expr);
+		connectToEndNodesOf(expr, tree);
 	}
 
 	public void visitIndexed(JCArrayAccess tree) {
@@ -1122,7 +1122,7 @@ public class ASTCFGBuilder extends TreeScanner {
 
 		// connect the nodes
 		connectStartNodesToEndNodesOf(index, indexed);
-		connectToEndNodesOf(tree, index);
+		connectToEndNodesOf(index, tree);
 	}
 
 	public void visitSelect(JCFieldAccess tree) {
@@ -1145,7 +1145,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		addNode(tree);
 
 		// connect the nodes
-		connectToEndNodesOf(tree, selected);
+		connectToEndNodesOf(selected, tree);
 	}
 
 	public JCTree visitList(List<? extends JCTree> trees) {
@@ -1187,14 +1187,6 @@ public class ASTCFGBuilder extends TreeScanner {
 	}
 
 	private static void connectStartNodesToEndNodesOf(JCTree start, JCTree end) {
-if (end.endNodes == null) {
-	throw new Error("connectStartNodesToEndNodesOf end = " + end + "\t" +
-			end.getClass());
-}
-if (start.startNodes == null) {
-	throw new Error("connectStartNodesToEndNodesOf start = " + start + "\t" +
-			start.getClass());
-}
 		for (JCTree endNode : end.endNodes) {
 			for (JCTree startNode : start.startNodes) {
 				endNode.successors.add(startNode);
