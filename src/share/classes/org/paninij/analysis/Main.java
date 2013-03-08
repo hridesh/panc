@@ -1,19 +1,13 @@
 package org.paninij.analysis;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Stack;
-import java.util.TreeSet;
 
 import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.comp.Attr;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.tree.JCTree;
-import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 
@@ -25,6 +19,41 @@ public final class Main {
 	 * @returns the attributed parse tree
 	 */
 	public static Env<AttrContext> attribute(Env<AttrContext> env, Log log) {
+		JCClassDecl root = env.enclClass;
+
+		// eliminate processing of duck classes
+		if (!root.sym.name.toString().contains("Panini$Duck")) {
+			// System.out.println("Processing class: " + root.sym);
+			List<JCTree> defs = root.defs;
+
+			for (JCTree tree : defs) {
+				if (tree instanceof JCMethodDecl) {
+					JCMethodDecl m = (JCMethodDecl) tree;
+					if (m.body != null) {
+						/*
+						 * System.out.println("m = " + m.name + "\tc = " +
+						 * root.name); System.out.println(m);
+						 */
+						tree.accept(
+								new org.paninij.analysis.ASTCFGBuilder());
+						if (Attr.doGraphs) {
+							System.out.println("digraph G {");
+							m.body.accept(new
+									org.paninij.analysis.ASTCFGPrinter());
+							System.out.println("}"); System.out.println(); 
+						}
+					}
+				}
+			}
+		}
+
+		// Compilation strategy analysis, 
+		// make sure this pass is called after CFG and SytemGraph construction
+		// phases
+		if (Attr.doGraphs) {
+			analyzeCapsule(root);
+		}
+		
 		return env;
 	}
 

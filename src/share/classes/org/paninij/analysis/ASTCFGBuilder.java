@@ -47,75 +47,25 @@ public class ASTCFGBuilder extends TreeScanner {
 		scan(m.body);
 	}
 
-	public void visitTopLevel(JCCompilationUnit tree) {
-		Assert.error();
-	}
+	public void visitTopLevel(JCCompilationUnit tree) { Assert.error(); }
+	public void visitImport(JCImport tree) { Assert.error(); }
+	public void visitLetExpr(LetExpr tree) { Assert.error(); }
+	public void visitAnnotation(JCAnnotation tree) { Assert.error(); }
+	public void visitModifiers(JCModifiers tree) { Assert.error(); }
+	public void visitErroneous(JCErroneous tree) { Assert.error(); }
+	public void visitTypeIdent(JCPrimitiveTypeTree tree) { Assert.error(); }
+	public void visitTypeApply(JCTypeApply tree) { Assert.error(); }
+	public void visitTypeUnion(JCTypeUnion tree) { Assert.error(); }
+	public void visitTypeParameter(JCTypeParameter tree) { Assert.error(); }
+	public void visitWildcard(JCWildcard tree) { Assert.error(); }
+	public void visitTypeBoundKind(TypeBoundKind tree) { Assert.error(); }
 
-	public void visitImport(JCImport tree) {
-		Assert.error();
-	}
-
-	public void visitLetExpr(LetExpr tree) {
-		Assert.error();
-	}
-
-	public void visitAssert(JCAssert tree) {
-		Assert.error();
-	}
-
-	public void visitAnnotation(JCAnnotation tree) {
-		Assert.error();
-	}
-
-	public void visitModifiers(JCModifiers tree) {
-		Assert.error();
-	}
-
-	public void visitErroneous(JCErroneous tree) {
-		Assert.error();
-	}
-
-	public void visitTypeIdent(JCPrimitiveTypeTree tree) {
-		Assert.error();
-	}
-
-	public void visitTypeArray(JCArrayTypeTree tree) {
-		Assert.error();
-	}
-
-	public void visitTypeApply(JCTypeApply tree) {
-		Assert.error();
-	}
-
-	public void visitTypeUnion(JCTypeUnion tree) {
-		Assert.error();
-	}
-
-	public void visitTypeParameter(JCTypeParameter tree) {
-		Assert.error();
-	}
-
-	public void visitWildcard(JCWildcard tree) {
-		Assert.error();
-	}
-
-	public void visitTypeBoundKind(TypeBoundKind tree) {
-		Assert.error();
-	}
-
-	public void visitSkip(JCSkip tree) { /* do nothing */
-	}
-
-	public void visitLabelled(JCLabeledStatement tree) { /* do nothing */
-	}
-
-	public void visitIdent(JCIdent tree) {
-		singleton(tree);
-	}
-
-	public void visitLiteral(JCLiteral tree) {
-		singleton(tree);
-	}
+	public void visitIdent(JCIdent tree) { singleton(tree); }
+	public void visitLiteral(JCLiteral tree) { singleton(tree); }
+	// URL[].class
+	public void visitTypeArray(JCArrayTypeTree tree) { singleton(tree); }
+	// while (i != 0);
+	public void visitSkip(JCSkip tree) { singleton(tree); }
 
 	public void visitClassDef(JCClassDecl tree) {
 		singleton(tree);
@@ -123,8 +73,84 @@ public class ASTCFGBuilder extends TreeScanner {
 		for (JCTree def : tree.defs) {
 			def.accept(this);
 		}
-	}	
-	
+	}
+
+	public void visitLabelled(JCLabeledStatement tree) {
+		JCStatement body = tree.body;
+
+		assert (body != null);
+
+		if (body != null) {
+			body.accept(this);
+
+			ArrayList<JCTree> finalEndNodes =
+				new ArrayList<JCTree>(currentEndNodes);
+			ArrayList<JCTree> predecessors = new ArrayList<JCTree>();
+
+			// for breaks;
+			ArrayList<JCTree> finalExitNodes =
+				resolveBreaks(tree, finalEndNodes, currentExitNodes);
+
+			// for continues;
+			finalExitNodes =
+				resolveContinues(tree, predecessors, finalExitNodes);
+
+			currentExitNodes = finalExitNodes;
+			currentEndNodes = finalEndNodes;
+			currentStartNodes = new ArrayList<JCTree>(1);
+			currentStartNodes.add(tree);
+
+			addNode(tree);
+
+			connectToStartNodesOf(tree, body);
+			tree.predecessors.addAll(predecessors);
+		}
+	}
+
+	public void visitAssert(JCAssert tree) {
+		JCExpression cond = tree.cond;
+		ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
+
+		// fill the start/end/exit nodes
+		cond.accept(this);
+
+		JCExpression detail = tree.detail;
+		if (detail != null) {
+			detail.accept(this);
+
+			this.currentStartNodes = currentStartNodes;
+
+			ArrayList<JCTree> finalEndNodes = new ArrayList<JCTree>(1);
+			ArrayList<JCTree> finalExcEndNodes = new ArrayList<JCTree>(1);
+			
+			finalEndNodes.add(tree);
+			finalExcEndNodes.add(tree);
+
+			this.currentEndNodes = finalEndNodes;
+			this.currentExitNodes = finalExcEndNodes;
+			addNode(tree);
+
+			// connect the nodes
+			connectStartNodesToEndNodesOf(detail, cond);
+			connectToEndNodesOf(detail, tree);
+		} else {
+			this.currentStartNodes = currentStartNodes;
+
+			ArrayList<JCTree> finalEndNodes = new ArrayList<JCTree>(1);
+			ArrayList<JCTree> finalExcEndNodes = new ArrayList<JCTree>(1);
+			
+			finalEndNodes.add(tree);
+			finalExcEndNodes.add(tree);
+
+			this.currentEndNodes = finalEndNodes;
+			this.currentExitNodes = finalExcEndNodes;
+			addNode(tree);
+
+			// connect the nodes
+			connectToEndNodesOf(cond, tree);
+		}
+	}
+
 	public void visitMethodDef(JCMethodDecl tree) {
 		this.methodCost = 0; // reset methodCost
 		JCBlock body = tree.body;
@@ -200,9 +226,16 @@ public class ASTCFGBuilder extends TreeScanner {
 		ArrayList<JCTree> bodyEndNodes = new ArrayList<JCTree>(currentEndNodes);
 		ArrayList<JCTree> bodyExcEndNodes = new ArrayList<JCTree>(
 				currentExitNodes);
-		ArrayList<JCTree> breaks = getBreaks(bodyExcEndNodes);
-		bodyEndNodes.addAll(breaks);
-		bodyExcEndNodes.removeAll(breaks);
+
+		// for breaks;
+		ArrayList<JCTree> tempBreakNodes = new ArrayList<JCTree>();
+		ArrayList<JCTree> tempContinueNodes = new ArrayList<JCTree>();
+		bodyExcEndNodes = resolveBreaks(tree, tempBreakNodes, bodyExcEndNodes);
+
+		// for continues;
+		bodyEndNodes.addAll(tempBreakNodes);
+		bodyExcEndNodes = resolveContinues(tree, tempContinueNodes,
+				bodyExcEndNodes);
 
 		cond.accept(this);
 		finalEndNodes.addAll(bodyEndNodes);
@@ -219,7 +252,14 @@ public class ASTCFGBuilder extends TreeScanner {
 		// connect the nodes
 		connectStartNodesToEndNodesOf(cond, body);
 		connectStartNodesToEndNodesOf(body, cond);
-		connectStartNodesToContinuesOf(tree, body);
+		// connectStartNodesToContinuesOf(tree, body);
+		for (JCTree jct1 : tempContinueNodes) {
+			jct1.successors.addAll(bodyStartNodes);
+			for (JCTree jct2 : bodyStartNodes) {
+				jct2.predecessors.add(jct1);
+			}
+		}
+
 		// methodCost
 		this.loop--;
 		// methodCost
@@ -242,9 +282,15 @@ public class ASTCFGBuilder extends TreeScanner {
 		ArrayList<JCTree> bodyExcEndNodes = new ArrayList<JCTree>(
 				currentExitNodes);
 
-		ArrayList<JCTree> breaks = getBreaks(bodyExcEndNodes);
-		bodyEndNodes.addAll(breaks);
-		bodyExcEndNodes.removeAll(breaks);
+		// for breaks;
+		ArrayList<JCTree> tempBreakNodes = new ArrayList<JCTree>();
+		ArrayList<JCTree> tempContinueNodes = new ArrayList<JCTree>();
+		bodyExcEndNodes = resolveBreaks(tree, tempBreakNodes, bodyExcEndNodes);
+
+		// for continues;
+		bodyEndNodes.addAll(tempBreakNodes);
+		bodyExcEndNodes = resolveContinues(tree, tempContinueNodes,
+				bodyExcEndNodes);
 
 		ArrayList<JCTree> finalEndNodes = new ArrayList<JCTree>();
 		ArrayList<JCTree> finalExitNodes = new ArrayList<JCTree>();
@@ -262,7 +308,14 @@ public class ASTCFGBuilder extends TreeScanner {
 		// connect the nodes
 		connectStartNodesToEndNodesOf(cond, body);
 		connectStartNodesToEndNodesOf(body, cond);
-		connectStartNodesToContinuesOf(tree, body);
+		// connectStartNodesToContinuesOf(tree, body);
+		for (JCTree jct1 : tempContinueNodes) {
+			jct1.successors.addAll(condStartNodes);
+			for (JCTree jct2 : condStartNodes) {
+				jct2.predecessors.add(jct1);
+			}
+		}
+
 		// methodCost
 		this.loop--;
 		// methodCost
@@ -276,6 +329,8 @@ public class ASTCFGBuilder extends TreeScanner {
 		// methodCost
 		this.loop++;
 		// methodCost
+
+		ArrayList<JCTree> tempContinueNodes = new ArrayList<JCTree>();
 		if (init.isEmpty()) {
 			ArrayList<JCTree> finalEndNodes = new ArrayList<JCTree>();
 
@@ -292,9 +347,15 @@ public class ASTCFGBuilder extends TreeScanner {
 				ArrayList<JCTree> currentExcEndNodes = new ArrayList<JCTree>(
 						this.currentExitNodes);
 
-				ArrayList<JCTree> breaks = getBreaks(currentExcEndNodes);
-				currentEndNodes.addAll(breaks);
-				currentExcEndNodes.removeAll(breaks);
+				// for breaks;
+				ArrayList<JCTree> tempBreakNodes = new ArrayList<JCTree>();
+				currentExcEndNodes = resolveBreaks(tree, tempBreakNodes,
+						currentExcEndNodes);
+
+				// for continues;
+				finalEndNodes.addAll(tempBreakNodes);
+				currentExcEndNodes = resolveContinues(tree, tempContinueNodes,
+						currentExcEndNodes);
 
 				finalEndNodes.addAll(currentEndNodes);
 
@@ -312,7 +373,7 @@ public class ASTCFGBuilder extends TreeScanner {
 				// connect the nodes
 				connectStartNodesToEndNodesOf(body, cond);
 			} else { /* tree.cond == null, condition is empty. */
-				tree.body.accept(this);
+				body.accept(this);
 
 				ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
 				ArrayList<JCTree> currentEndNodes = new ArrayList<JCTree>(
@@ -320,9 +381,16 @@ public class ASTCFGBuilder extends TreeScanner {
 				ArrayList<JCTree> currentExcEndNodes = new ArrayList<JCTree>(
 						this.currentExitNodes);
 
-				ArrayList<JCTree> breaks = getBreaks(currentExcEndNodes);
-				currentEndNodes.addAll(breaks);
-				currentExcEndNodes.removeAll(breaks);
+				// for breaks;
+				ArrayList<JCTree> tempBreakNodes = new ArrayList<JCTree>();
+				currentExcEndNodes = resolveBreaks(tree, tempBreakNodes,
+						currentExcEndNodes);
+
+				// for continues;
+				finalEndNodes.addAll(tempBreakNodes);
+				currentExcEndNodes = resolveContinues(tree, tempContinueNodes,
+						currentExcEndNodes);
+
 				finalEndNodes.addAll(currentEndNodes);
 
 				if (!tree.step.isEmpty()) {
@@ -346,14 +414,22 @@ public class ASTCFGBuilder extends TreeScanner {
 				tree.cond.accept(this);
 			}
 
-			tree.body.accept(this);
+			body.accept(this);
 			ArrayList<JCTree> currentEndNodes = new ArrayList<JCTree>(
 					this.currentEndNodes);
 			ArrayList<JCTree> currentExcEndNodes = new ArrayList<JCTree>(
 					this.currentExitNodes);
-			ArrayList<JCTree> breaks = getBreaks(currentExcEndNodes);
-			currentEndNodes.addAll(breaks);
-			currentExcEndNodes.removeAll(breaks);
+
+			// for breaks;
+			ArrayList<JCTree> tempBreakNodes = new ArrayList<JCTree>();
+			currentExcEndNodes = resolveBreaks(tree, tempBreakNodes,
+					currentExcEndNodes);
+
+			// for continues;
+			finalEndNodes.addAll(tempBreakNodes);
+			currentExcEndNodes = resolveContinues(tree, tempContinueNodes,
+					currentExcEndNodes);
+
 			finalEndNodes.addAll(currentEndNodes);
 
 			if (!tree.step.isEmpty()) {
@@ -397,7 +473,24 @@ public class ASTCFGBuilder extends TreeScanner {
 		}
 
 		connectStartNodesToEndNodesOf(nextStartNodeTree, body);
-		connectStartNodesToContinuesOf(cond, body);
+		// connectStartNodesToContinuesOf(cond, body);
+		// connectStartNodesToContinuesOf(tree, body);
+		if (cond != null) {
+			for (JCTree jct1 : tempContinueNodes) {
+				jct1.successors.addAll(cond.startNodes);
+				for (JCTree jct2 : cond.startNodes) {
+					jct2.predecessors.add(jct1);
+				}
+			}
+		} else {
+			for (JCTree jct1 : tempContinueNodes) {
+				jct1.successors.addAll(body.startNodes);
+				for (JCTree jct2 : body.startNodes) {
+					jct2.predecessors.add(jct1);
+				}
+			}
+		}
+
 		// methodCost
 		this.loop--;
 		// methodCost
@@ -414,16 +507,44 @@ public class ASTCFGBuilder extends TreeScanner {
 		ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
 
 		body.accept(this);
+
+		ArrayList<JCTree> bodyExcEndNodes = currentExitNodes;
+
 		this.currentStartNodes = currentStartNodes;
-		this.currentEndNodes = new ArrayList<JCTree>(currentEndNodes);
-		this.currentEndNodes.add(tree);
+		currentEndNodes = new ArrayList<JCTree>(currentEndNodes);
+		currentEndNodes.add(tree);
+
+		// for breaks;
+		ArrayList<JCTree> tempBreakNodes = new ArrayList<JCTree>();
+		ArrayList<JCTree> tempContinueNodes = new ArrayList<JCTree>();
+		bodyExcEndNodes = resolveBreaks(tree, tempBreakNodes, bodyExcEndNodes);
+		for (JCTree jct : tempBreakNodes) {
+			jct.successors.add(tree);
+			tree.predecessors.add(jct);
+		}
+
+		// for continues;
+		bodyExcEndNodes = resolveContinues(tree, tempContinueNodes,
+				bodyExcEndNodes);
+		
+		currentExitNodes = bodyExcEndNodes;
 
 		addNode(tree);
 
 		// connect the nodes
 		connectToEndNodesOf(tree, expr);
 		connectToStartNodesOf(tree, expr);
-		connectStartNodesToContinuesOf(tree, body);
+
+		// connectStartNodesToContinuesOf(tree, body);
+		connectStartNodesToEndNodesOf(body, body);
+		connectToEndNodesOf(body, tree);
+		for (JCTree jct1 : tempContinueNodes) {
+			jct1.successors.addAll(body.startNodes);
+			for (JCTree jct2 : body.startNodes) {
+				jct2.predecessors.add(jct1);
+			}
+		}
+
 		// methodCost
 		this.loop--;
 		// methodCost
@@ -466,9 +587,11 @@ public class ASTCFGBuilder extends TreeScanner {
 		ArrayList<JCTree> currentExcEndNodes = new ArrayList<JCTree>(
 				this.currentExitNodes);
 
-		ArrayList<JCTree> breaks = getBreaks(currentExcEndNodes);
-		currentEndNodes.addAll(breaks);
-		currentExcEndNodes.removeAll(breaks);
+		// for breaks;
+		ArrayList<JCTree> tempBreakNodes = new ArrayList<JCTree>();
+		currentExcEndNodes =
+			resolveBreaks(tree, tempBreakNodes, currentExcEndNodes);
+
 		finalEndNodes.addAll(currentEndNodes);
 
 		this.currentStartNodes = currentStartNodes;
@@ -671,26 +794,35 @@ public class ASTCFGBuilder extends TreeScanner {
 
 	public void visitBreak(JCBreak tree) {
 		// fill the start/end/exit nodes
-		singleton(tree);
+		// singleton(tree);
+		currentEndNodes = emptyList;
+		currentExitNodes = new ArrayList<JCTree>(1);
+		currentExitNodes.add(tree);
+
+		currentStartNodes = new ArrayList<JCTree>(1);
+		currentStartNodes.add(tree);
+		addNode(tree);
+
 		// methodCost
 		this.methodCost += Costs.goto_;
 		// methodCost
 		// connect the nodes
-		if (tree.target != null) {
-			connectToEndNodesOf(tree, tree.target);
-		}
 	}
 
 	public void visitContinue(JCContinue tree) {
 		// fill the start/end/exit nodes
 		singleton(tree);
+		currentEndNodes = emptyList;
+		currentExitNodes = new ArrayList<JCTree>(1);
+		currentExitNodes.add(tree);
+
+		currentStartNodes = new ArrayList<JCTree>(1);
+		currentStartNodes.add(tree);
+		addNode(tree);
+
 		// methodCost
 		this.methodCost += Costs.goto_;
 		// methodCost
-		// connect the nodes
-		if (tree.target != null) {
-			connectToEndNodesOf(tree, tree.target);
-		}
 	}
 
 	public void visitReturn(JCReturn tree) {
@@ -1002,6 +1134,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		else
 			methodCost += Costs.getfield;
 		// methodCost
+
 		// fill the start/end/exit nodes
 		selected.accept(this);
 		currentEndNodes = new ArrayList<JCTree>(1);
@@ -1044,37 +1177,29 @@ public class ASTCFGBuilder extends TreeScanner {
 
 	private static void connectToEndNodesOf(JCTree start, JCTree end) {
 		for (JCTree endNode : start.endNodes) {
-			if (end.successors != null) {
-				end.successors.add(endNode);
+			if (endNode.successors != null) {
+				endNode.successors.add(end);
 			}
-			if (endNode.predecessors != null) {
-				endNode.predecessors.add(end);
+			if (end.predecessors != null) {
+				end.predecessors.add(endNode);
 			}
 		}
 	}
 
 	private static void connectStartNodesToEndNodesOf(JCTree start, JCTree end) {
+if (end.endNodes == null) {
+	throw new Error("connectStartNodesToEndNodesOf end = " + end + "\t" +
+			end.getClass());
+}
+if (start.startNodes == null) {
+	throw new Error("connectStartNodesToEndNodesOf start = " + start + "\t" +
+			start.getClass());
+}
 		for (JCTree endNode : end.endNodes) {
 			for (JCTree startNode : start.startNodes) {
 				endNode.successors.add(startNode);
 				startNode.predecessors.add(endNode);
 			}
-		}
-	}
-
-	private static void connectStartNodesToContinuesOf(JCTree start, JCTree end) {
-		for (JCTree endNode : end.exitNodes) {
-			if (endNode instanceof JCBreak) {
-				throw new Error("should not reach JCBreak");
-			} else if (endNode instanceof JCContinue) {
-				endNode.successors.addAll(start.startNodes);
-				for (JCTree startNode : start.startNodes) {
-					startNode.predecessors.add(endNode);
-				}
-			} else if (endNode instanceof JCReturn) {
-			} else if (endNode instanceof JCThrow) {
-			} else
-				throw new Error("this shouldn't happen");
 		}
 	}
 
@@ -1128,17 +1253,48 @@ public class ASTCFGBuilder extends TreeScanner {
 		init(tree);
 	}
 
-	private static ArrayList<JCTree> getBreaks(ArrayList<JCTree> nodes) {
+	/*private static ArrayList<JCTree> getBreaks(ArrayList<JCTree> nodes) {
 		ArrayList<JCTree> results = new ArrayList<JCTree>();
 		for (JCTree tree : nodes) {
 			if (tree instanceof JCBreak) {
-				JCBreak jcb = (JCBreak) tree;
+				results.add(tree);
+			}
+		}
+		return results;
+	}*/
+	private static ArrayList<JCTree> resolveBreaks(JCTree target,
+			ArrayList<JCTree> endNodes, ArrayList<JCTree> nodes) {
+		ArrayList<JCTree> remaining = new ArrayList<JCTree>();
+		for (JCTree tree : nodes) {
+			boolean found = false;
+			if (tree instanceof JCBreak) {
+				JCBreak jcb = (JCBreak)tree;
+				if (jcb.target == tree) {
+					endNodes.add(tree);
+					found = true;
+				}
+			}
+			if (!found) {
+				remaining.add(tree);
+			}
+		}
+		return remaining;
+	}
 
-				if (jcb.label == null || jcb.target == null)
-					results.add(tree);
-				else
-					throw new Error("jcb.label = " + jcb.label
-							+ "\tjcb.target = " + jcb.target);
+	private static ArrayList<JCTree> resolveContinues(JCTree target,
+			ArrayList<JCTree> targets, ArrayList<JCTree> nodes) {
+		ArrayList<JCTree> results = new ArrayList<JCTree>();
+		for (JCTree tree : nodes) {
+			boolean found = false;
+			if (tree instanceof JCContinue) {
+				JCContinue jcc = (JCContinue)tree;
+				if (jcc.target == target) {
+					jcc.successors.add(target);
+					targets.add(jcc);
+				}
+			}
+			if (!found) {
+				results.add(tree);
 			}
 		}
 		return results;
