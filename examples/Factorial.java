@@ -20,7 +20,7 @@
 class Number{
 	int number;
 	Number(int number){ this.number = number; }
-	int value(){ return number;}
+	int v(){ return number;}
 	public String toString() { return "" + number; }
 }
 
@@ -33,14 +33,14 @@ capsule Fact () {
 			return new Number(0);
 		Number recursiveTerm = fact(current-1, numIndents+1);
 		System.out.println(indents + "\tThe recursive term is " + recursiveTerm);
-		Number answer = new Number(current + recursiveTerm.value());
+		Number answer = new Number(current + recursiveTerm.v());
 		System.out.println(indents + "Factorial of " + current + " is " + answer);
 		return answer; 
 	}
 }
 
 capsule Main (Fact c) {
-	void run(){ System.out.println(c.fact(10, 0).value()); }
+	void run(){ System.out.println(c.fact(10, 0).v()); }
 }
 
 system Factorial {
