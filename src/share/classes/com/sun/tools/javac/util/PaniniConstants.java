@@ -49,6 +49,7 @@ public class PaniniConstants {
 	public final static String PANINI_SHUTDOWN = "shutdown";
 	public final static String PANINI_YIELD = "yield";
 	public final static String PANINI_EXIT = "exit";
+	public final static String PANINI_ORIGINAL_METHOD_SUFFIX = "$Original";
 
 	public final static String PANINI_DUCK_HASHCODE = "hashCode";
 	public final static String PANINI_DUCK_EQUALS = "equals";

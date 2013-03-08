@@ -96,12 +96,12 @@ public class Attr extends JCTree.Visitor {
     final JCDiagnostic.Factory diags;
     final Annotate annotate;
     final DeferredLintHandler deferredLintHandler;
-    // Ptolemy code
+    // Panini code
     CapsuleInternal capsuleInternal;
     SystemEffectsComp effects;
     SystemGraphsBuilder graphsBuilder;
     public static boolean doGraphs = false;
-    // end Ptolemy code
+    // end Panini code
 
     public static Attr instance(Context context) {
         Attr instance = context.get(attrKey);
