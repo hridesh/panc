@@ -533,7 +533,7 @@ public class CapsuleInternal extends Internal {
 			if (s.getKind() == ElementKind.METHOD) {
 				MethodSymbol m = (MethodSymbol) s;
 				JCMethodDecl value;
-				if (m.isStatic() || ((m.flags() & PUBLIC) == 0)
+				if (m.isStatic() || ((m.flags() & PROTECTED) != 0) ||((m.flags() & PRIVATE) != 0)
 						|| ((m.flags() & SYNTHETIC) != 0))
 					continue; // Do not wrap static methods.
 				if (!m.type.getReturnType().toString().equals("void")) {

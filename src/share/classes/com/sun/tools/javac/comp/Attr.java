@@ -96,12 +96,12 @@ public class Attr extends JCTree.Visitor {
     final JCDiagnostic.Factory diags;
     final Annotate annotate;
     final DeferredLintHandler deferredLintHandler;
-    // Ptolemy code
+    // Panini code
     CapsuleInternal capsuleInternal;
     SystemEffectsComp effects;
     SystemGraphsBuilder graphsBuilder;
     public static boolean doGraphs = false;
-    // end Ptolemy code
+    // end Panini code
 
     public static Attr instance(Context context) {
         Attr instance = context.get(attrKey);
@@ -766,7 +766,7 @@ public class Attr extends JCTree.Visitor {
     		if(def.getTag() == Tag.METHODDEF){
     			for(JCVariableDecl param : ((JCMethodDecl)def).params){
     				if(param.type.tsym.isCapsule&&!((JCMethodDecl)def).name.toString().contains("$Original")){
-    					log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.name);
+    					log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.name.subSequence(0, tree.name.toString().indexOf("$")));
     				}
     			}
 
@@ -1424,6 +1424,12 @@ public class Attr extends JCTree.Visitor {
         finally {
             chk.setLint(prevLint);
         }
+        // Panini code
+        if(env.enclClass.sym.isCapsule&&tree.init!=null){
+        	if(syms.capsules.containsKey(names.fromString(tree.init.type.toString())))
+        		log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
+        }
+        //end Panini code
     }
 
     public void visitSkip(JCSkip tree) {
@@ -2513,6 +2519,12 @@ public class Attr extends JCTree.Visitor {
         Type capturedType = capture(owntype);
         attribExpr(tree.rhs, env, owntype);
         result = check(tree, capturedType, VAL, resultInfo);
+        // Panini code
+        if(env.enclClass.sym.isCapsule){
+        	if(syms.capsules.containsKey(names.fromString(tree.rhs.type.toString())))
+        		log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
+        }
+        // end Panini code
     }
 
     public void visitAssignop(JCAssignOp tree) {
