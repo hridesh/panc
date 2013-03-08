@@ -984,13 +984,14 @@ public class Enter extends JCTree.Visitor {
 	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
 	            	args.append(make.Ident(v.name));
 	            }
-	            
-	            copyBody.prepend(make.VarDef(make.Modifiers(0), 
-            			names.fromString(PaniniConstants.PANINI_DUCK_TYPE), 
-            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
+	            copyBody.prepend(make.Try(make.Block(0, List.<JCStatement>of(make.Exec(make.Assign( 
+            			make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE)), 
             			make.NewClass(null, List.<JCExpression>nil(), 
             					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
-            					args.toList(), null)));
+            					args.toList(), null))))), List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), names.fromString("e"), make.Ident(names.fromString("RuntimeException")), null),
+            							make.Block(0, List.<JCStatement>nil())//this is catch clause body
+            							)), null));
+	            copyBody.prepend(make.VarDef(make.Modifiers(0), names.fromString(PaniniConstants.PANINI_DUCK_TYPE), make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), make.Literal(TypeTags.BOT, null)));
 	            if(!mdecl.restype.toString().equals("void"))
 	            	copyBody.append(make.Return(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))));
 	            
@@ -1132,13 +1133,14 @@ public class Enter extends JCTree.Visitor {
 	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
 	            	args.append(make.Ident(v.name));
 	            }
-	            
-	            copyBody.prepend(make.VarDef(make.Modifiers(0), 
-            			names.fromString(PaniniConstants.PANINI_DUCK_TYPE), 
-            			make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
+	            copyBody.prepend(make.Try(make.Block(0, List.<JCStatement>of(make.Exec(make.Assign( 
+            			make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE)), 
             			make.NewClass(null, List.<JCExpression>nil(), 
             					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
-            					args.toList(), null)));
+            					args.toList(), null))))), List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), names.fromString("e"), make.Ident(names.fromString("RuntimeException")), null),
+            							make.Block(0, List.<JCStatement>nil())//this is catch clause body
+            							)), null));
+	            copyBody.prepend(make.VarDef(make.Modifiers(0), names.fromString(PaniniConstants.PANINI_DUCK_TYPE), make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), make.Literal(TypeTags.BOT, null)));
 	            if(!mdecl.restype.toString().equals("void"))
 	            	copyBody.append(make.Return(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))));
 	            
