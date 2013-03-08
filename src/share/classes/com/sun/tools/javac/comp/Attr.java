@@ -766,7 +766,7 @@ public class Attr extends JCTree.Visitor {
     		if(def.getTag() == Tag.METHODDEF){
     			for(JCVariableDecl param : ((JCMethodDecl)def).params){
     				if(param.type.tsym.isCapsule&&!((JCMethodDecl)def).name.toString().contains("$Original")){
-    					log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.name);
+    					log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.name.subSequence(0, tree.name.toString().indexOf("$")));
     				}
     			}
 
