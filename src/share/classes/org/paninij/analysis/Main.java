@@ -53,7 +53,7 @@ public final class Main {
 		if (Attr.doGraphs) {
 			analyzeCapsule(root);
 		}
-		
+
 		return env;
 	}
 

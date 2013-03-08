@@ -518,10 +518,6 @@ public class ASTCFGBuilder extends TreeScanner {
 		ArrayList<JCTree> tempBreakNodes = new ArrayList<JCTree>();
 		ArrayList<JCTree> tempContinueNodes = new ArrayList<JCTree>();
 		bodyExcEndNodes = resolveBreaks(tree, tempBreakNodes, bodyExcEndNodes);
-		for (JCTree jct : tempBreakNodes) {
-			jct.successors.add(tree);
-			tree.predecessors.add(jct);
-		}
 
 		// for continues;
 		bodyExcEndNodes = resolveContinues(tree, tempContinueNodes,
@@ -530,6 +526,11 @@ public class ASTCFGBuilder extends TreeScanner {
 		currentExitNodes = bodyExcEndNodes;
 
 		addNode(tree);
+
+		for (JCTree jct : tempBreakNodes) {
+			jct.successors.add(tree);
+			tree.predecessors.add(jct);
+		}
 
 		// connect the nodes
 		connectToEndNodesOf(expr, tree);
@@ -593,6 +594,7 @@ public class ASTCFGBuilder extends TreeScanner {
 			resolveBreaks(tree, tempBreakNodes, currentExcEndNodes);
 
 		finalEndNodes.addAll(currentEndNodes);
+		finalEndNodes.addAll(tempBreakNodes);
 
 		this.currentStartNodes = currentStartNodes;
 		this.currentEndNodes = finalEndNodes;
@@ -763,7 +765,6 @@ public class ASTCFGBuilder extends TreeScanner {
 		thenpart.accept(this);
 		finalEndNodes.addAll(this.currentEndNodes);
 		finalExcEndNodes.addAll(currentExitNodes);
-
 		if (elsepart != null) {
 			elsepart.accept(this);
 			finalEndNodes.addAll(this.currentEndNodes);
@@ -775,7 +776,6 @@ public class ASTCFGBuilder extends TreeScanner {
 		this.currentStartNodes = currentStartNodes;
 		this.currentEndNodes = finalEndNodes;
 		this.currentExitNodes = finalExcEndNodes;
-
 		addNode(tree);
 
 		// connect the nodes
@@ -1220,7 +1220,6 @@ public class ASTCFGBuilder extends TreeScanner {
 				tail = tail.tail;
 			}
 			this.currentStartNodes = currentStartNodes;
-			finalExcEndNodes.addAll(this.currentExitNodes);
 			this.currentExitNodes = finalExcEndNodes;
 		} // else throw new Error("block should not be empty");
 	}
@@ -1245,23 +1244,14 @@ public class ASTCFGBuilder extends TreeScanner {
 		init(tree);
 	}
 
-	/*private static ArrayList<JCTree> getBreaks(ArrayList<JCTree> nodes) {
-		ArrayList<JCTree> results = new ArrayList<JCTree>();
-		for (JCTree tree : nodes) {
-			if (tree instanceof JCBreak) {
-				results.add(tree);
-			}
-		}
-		return results;
-	}*/
 	private static ArrayList<JCTree> resolveBreaks(JCTree target,
-			ArrayList<JCTree> endNodes, ArrayList<JCTree> nodes) {
+			ArrayList<JCTree> endNodes, ArrayList<JCTree> nodes) {		
 		ArrayList<JCTree> remaining = new ArrayList<JCTree>();
 		for (JCTree tree : nodes) {
 			boolean found = false;
 			if (tree instanceof JCBreak) {
 				JCBreak jcb = (JCBreak)tree;
-				if (jcb.target == tree) {
+				if (jcb.target == target) {
 					endNodes.add(tree);
 					found = true;
 				}

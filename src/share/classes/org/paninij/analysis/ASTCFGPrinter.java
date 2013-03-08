@@ -23,11 +23,15 @@ public class ASTCFGPrinter extends TreeScanner {
 	public void visitTypeBoundKind(TypeBoundKind tree)   { /* do nothing */ }
 
 	public void visitSkip(JCSkip tree)                   { /* do nothing */ }
-	public void visitLabelled(JCLabeledStatement tree)   { /* do nothing */ }
 	
 	public void visitClassDef(JCClassDecl tree)          { printCurrent(tree); }
 	public void visitIdent(JCIdent tree)                 { printCurrent(tree); }
-	public void visitLiteral(JCLiteral tree)             { printCurrent(tree); }    
+	public void visitLiteral(JCLiteral tree)             { printCurrent(tree); }
+
+	public void visitLabelled(JCLabeledStatement tree)   {
+		printCurrent(tree);
+		super.visitLabelled(tree);
+	}
 
 	public void visitVarDef(JCVariableDecl tree) {
 		printCurrent(tree);
