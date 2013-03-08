@@ -1424,6 +1424,12 @@ public class Attr extends JCTree.Visitor {
         finally {
             chk.setLint(prevLint);
         }
+        // Panini code
+        if(env.enclClass.sym.isCapsule&&tree.init!=null){
+        	if(syms.capsules.containsKey(names.fromString(tree.init.type.toString())))
+        		log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
+        }
+        //end Panini code
     }
 
     public void visitSkip(JCSkip tree) {
@@ -2513,6 +2519,12 @@ public class Attr extends JCTree.Visitor {
         Type capturedType = capture(owntype);
         attribExpr(tree.rhs, env, owntype);
         result = check(tree, capturedType, VAL, resultInfo);
+        // Panini code
+        if(env.enclClass.sym.isCapsule){
+        	if(syms.capsules.containsKey(names.fromString(tree.rhs.type.toString())))
+        		log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
+        }
+        // end Panini code
     }
 
     public void visitAssignop(JCAssignOp tree) {
