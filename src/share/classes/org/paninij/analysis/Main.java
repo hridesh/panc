@@ -25,41 +25,6 @@ public final class Main {
 	 * @returns the attributed parse tree
 	 */
 	public static Env<AttrContext> attribute(Env<AttrContext> env, Log log) {
-		JCClassDecl root = env.enclClass;
-
-		// eliminate processing of duck classes
-		if (!root.sym.name.toString().contains("Panini$Duck")) {
-			// System.out.println("Processing class: " + root.sym);
-			List<JCTree> defs = root.defs;
-
-			for (JCTree tree : defs) {
-				if (tree instanceof JCMethodDecl) {
-					JCMethodDecl m = (JCMethodDecl) tree;
-					if (m.body != null) {
-						/*
-						 * System.out.println("m = " + m.name + "\tc = " +
-						 * root.name); System.out.println(m);
-						 */
-						tree.accept(
-								new org.paninij.analysis.ASTCFGBuilder());
-						if (Attr.doGraphs) {
-							System.out.println("digraph G {");
-							m.body.accept(new
-									org.paninij.analysis.ASTCFGPrinter());
-							System.out.println("}"); System.out.println(); 
-						}
-					}
-				}
-			}
-		}
-
-		// Compilation strategy analysis, 
-		// make sure this pass is called after CFG and SytemGraph construction
-		// phases
-		if (Attr.doGraphs) {
-			analyzeCapsule(root);
-		}
-		
 		return env;
 	}
 
