@@ -14,27 +14,33 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  * 
- * Contributor(s): Hridesh Rajan
+ * Contributor(s): Eric Lin, Hridesh Rajan
  */
 
 class Number{
 	int number;
-	Number(int number){ this.number = number; 
-	}
+	Number(int number){ this.number = number; }
 	int value(){ return number;}
+	public String toString() { return "" + number; }
 }
 
 capsule Fact () {
-	Number fact(int current) { 
-	        if(current == 0) {
-		  return new Number(0);
-		}
-	 	return new Number(current + fact(current-1).value()); 
+	Number fact(int current, int numIndents) { 
+		String indents = "";
+		for(int i=0; i<numIndents; i++) indents+= "\t";
+		System.out.println(indents + "Computing factoring for " +  current);
+		if(current == 0) 
+			return new Number(0);
+		Number recursiveTerm = fact(current-1, numIndents+1);
+		System.out.println(indents + "\tThe recursive term is " + recursiveTerm);
+		Number answer = new Number(current + recursiveTerm.value());
+		System.out.println(indents + "Factorial of " + current + " is " + answer);
+		return answer; 
 	}
 }
 
 capsule Main (Fact c) {
-	void run(){ System.out.println(c.fact(10).value()); }
+	void run(){ System.out.println(c.fact(10, 0).value()); }
 }
 
 system Factorial {
