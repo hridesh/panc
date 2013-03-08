@@ -8,8 +8,7 @@ import com.sun.tools.javac.comp.Attr;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.tree.JCTree;
-import com.sun.tools.javac.tree.JCTree.JCClassDecl;
-import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
+import com.sun.tools.javac.tree.JCTree.*;
 
 public final class Main {
 	/**
@@ -40,7 +39,7 @@ public final class Main {
 							System.out.println("digraph G {");
 							m.body.accept(new
 									org.paninij.analysis.ASTCFGPrinter());
-							System.out.println("}"); System.out.println(); 
+							System.out.println("}"); System.out.println();
 						}
 					}
 				}
