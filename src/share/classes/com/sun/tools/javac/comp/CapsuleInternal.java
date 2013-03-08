@@ -265,7 +265,7 @@ public class CapsuleInternal extends Internal {
 				if (!alreadedAddedDuckClasses.containsKey(restype.toString())) {
 					JCClassDecl duckClass = generateNewDuckClass(
 							tree.name.toString(), method, constructors,
-							restype, iter, c);
+							restype, iter, c, env);
 					classes.add(duckClass);
 					alreadedAddedDuckClasses.put(restype.toString(), duckClass);
 				} else {
@@ -506,7 +506,7 @@ public class CapsuleInternal extends Internal {
 
 	private JCClassDecl generateNewDuckClass(String classNameSuffix,
 			JCMethodDecl method, ListBuffer<JCTree> constructors, Type restype,
-			Iterator<Symbol> iter, ClassSymbol c) {
+			Iterator<Symbol> iter, ClassSymbol c, Env<AttrContext> env) {
 		String rawClassName = trim(restype.toString());
 		ListBuffer<JCTypeParameter> typeParams = new ListBuffer<JCTypeParameter>();
 		for (TypeSymbol ts : c.getTypeParameters()) {
@@ -533,6 +533,10 @@ public class CapsuleInternal extends Internal {
 			if (s.getKind() == ElementKind.METHOD) {
 				MethodSymbol m = (MethodSymbol) s;
 				JCMethodDecl value;
+				if(c.packge()!=env.enclClass.sym.packge())
+					if (m.isStatic() || ((m.flags() & PUBLIC) == 0)
+							|| ((m.flags() & SYNTHETIC) != 0))
+						continue; // Do not wrap static methods.
 				if (m.isStatic() || ((m.flags() & PROTECTED) != 0) ||((m.flags() & PRIVATE) != 0)
 						|| ((m.flags() & SYNTHETIC) != 0))
 					continue; // Do not wrap static methods.
