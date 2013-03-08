@@ -238,7 +238,8 @@ public class ASTCFGBuilder extends TreeScanner {
 				bodyExcEndNodes);
 
 		cond.accept(this);
-		finalEndNodes.addAll(bodyEndNodes);
+		// finalEndNodes.addAll(bodyEndNodes);
+		finalEndNodes.addAll(tempBreakNodes);
 		finalEndNodes.addAll(currentEndNodes);
 		finalExcEndNodes.addAll(bodyExcEndNodes);
 		finalExcEndNodes.addAll(currentExitNodes);
@@ -254,8 +255,8 @@ public class ASTCFGBuilder extends TreeScanner {
 		connectStartNodesToEndNodesOf(body, cond);
 		// connectStartNodesToContinuesOf(tree, body);
 		for (JCTree jct1 : tempContinueNodes) {
-			jct1.successors.addAll(bodyStartNodes);
-			for (JCTree jct2 : bodyStartNodes) {
+			jct1.successors.addAll(currentStartNodes);
+			for (JCTree jct2 : currentStartNodes) {
 				jct2.predecessors.add(jct1);
 			}
 		}
