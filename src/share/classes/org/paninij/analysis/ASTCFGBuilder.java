@@ -276,9 +276,9 @@ public class ASTCFGBuilder extends TreeScanner {
 		ArrayList<JCTree> condStartNodes = currentStartNodes;
 		ArrayList<JCTree> condEndNodes = currentEndNodes;
 		ArrayList<JCTree> condExcEndNodes = currentExitNodes;
+		ArrayList<JCTree> finalEndNodes = new ArrayList<JCTree>();
 
 		body.accept(this);
-		ArrayList<JCTree> bodyEndNodes = new ArrayList<JCTree>(currentEndNodes);
 		ArrayList<JCTree> bodyExcEndNodes = new ArrayList<JCTree>(
 				currentExitNodes);
 
@@ -288,13 +288,12 @@ public class ASTCFGBuilder extends TreeScanner {
 		bodyExcEndNodes = resolveBreaks(tree, tempBreakNodes, bodyExcEndNodes);
 
 		// for continues;
-		bodyEndNodes.addAll(tempBreakNodes);
+		finalEndNodes.addAll(tempBreakNodes);
 		bodyExcEndNodes = resolveContinues(tree, tempContinueNodes,
 				bodyExcEndNodes);
 
-		ArrayList<JCTree> finalEndNodes = new ArrayList<JCTree>();
 		ArrayList<JCTree> finalExitNodes = new ArrayList<JCTree>();
-		finalEndNodes.addAll(bodyEndNodes);
+		// finalEndNodes.addAll(bodyEndNodes);
 		finalEndNodes.addAll(condEndNodes);
 		finalExitNodes.addAll(bodyExcEndNodes);
 		finalExitNodes.addAll(condExcEndNodes);
@@ -576,34 +575,61 @@ public class ASTCFGBuilder extends TreeScanner {
 
 		// fill the start/end/exit nodes
 		selector.accept(this);
-		ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
-		ArrayList<JCTree> finalEndNodes = new ArrayList<JCTree>();
-		finalEndNodes.addAll(currentEndNodes);
 
-		visitStatements(cases);
+		JCTree head = cases.head;
+		if (head != null) {
+			ArrayList<JCTree> finalEndNodes = new ArrayList<JCTree>();
+			ArrayList<JCTree> selectorEndNodes = currentEndNodes;
+			ArrayList<JCTree> finalExcEndNodes = new ArrayList<JCTree>();
 
-		this.currentStartNodes = currentStartNodes;
-		ArrayList<JCTree> currentEndNodes = new ArrayList<JCTree>(
-				this.currentEndNodes);
-		ArrayList<JCTree> currentExcEndNodes = new ArrayList<JCTree>(
-				this.currentExitNodes);
+			ArrayList<JCTree> previousEndNodes = null;
+			// for breaks;
+			ArrayList<JCTree> tempBreakNodes = new ArrayList<JCTree>();
 
-		// for breaks;
-		ArrayList<JCTree> tempBreakNodes = new ArrayList<JCTree>();
-		currentExcEndNodes =
-			resolveBreaks(tree, tempBreakNodes, currentExcEndNodes);
+			boolean hasDefault = false;
 
-		finalEndNodes.addAll(currentEndNodes);
-		finalEndNodes.addAll(tempBreakNodes);
+			for (List<JCCase> l = tree.cases; l.nonEmpty(); l = l.tail) {
+				JCCase c = l.head;
+				if (c.pat == null) {
+					hasDefault = true;
+				}
 
-		this.currentStartNodes = currentStartNodes;
-		this.currentEndNodes = finalEndNodes;
-		this.currentExitNodes = currentExcEndNodes;
+				c.accept(this);
+
+				if (previousEndNodes != null) {
+					for (JCTree pre : previousEndNodes) {
+						connectStartNodesToEndNodesOf(c, pre);
+					}
+				}
+
+				connectStartNodesToEndNodesOf(c, selector);
+
+				ArrayList<JCTree> currentExcEndNodes = currentExitNodes;
+
+                // for breaks;
+    			currentExcEndNodes =
+    				resolveBreaks(tree, tempBreakNodes, currentExcEndNodes);
+    			
+    			previousEndNodes = currentEndNodes;
+    			finalExcEndNodes.addAll(currentExcEndNodes);
+			}
+
+			if (!hasDefault) {
+				finalEndNodes.addAll(selectorEndNodes);
+			}
+
+			finalEndNodes.addAll(tempBreakNodes);
+
+			this.currentEndNodes = finalEndNodes;
+			this.currentExitNodes = finalExcEndNodes;
+		}
+
+		currentStartNodes = new ArrayList<JCTree>(1);
+		currentStartNodes.add(tree);
 
 		addNode(tree);
 
-		// connect the nodes
-		switchAndCase(selector, cases);
+		connectToStartNodesOf(tree, selector);
 	}
 
 	public void visitCase(JCCase tree) {
