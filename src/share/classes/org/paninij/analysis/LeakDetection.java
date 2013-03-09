@@ -8,57 +8,86 @@ import javax.lang.model.element.ElementKind;
 
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.List;
 
 public class LeakDetection {
-	public void getExits(JCMethodDecl meth) {
-		System.out.println("analyzing meth = " + meth.sym + "\tclass = " +
-				meth.sym.enclClass());
-		JCBlock body = meth.body;
-		System.out.println("end nodes");
-		for (JCTree end : body.endNodes) {
-			System.out.println("\t" + end);
-		}
-
-		System.out.println("exist nodes");
-		for (JCTree end : body.exitNodes) {
-			System.out.println("\t" + end);
-		}
-	}	
-
 	private List<JCTree> defs;
+	private HashMap<Symbol, HashSet<Symbol>> reversed =
+		new HashMap<Symbol, HashSet<Symbol>>();
+	private HashMap<Symbol, HashSet<Symbol>> result =
+		new HashMap<Symbol, HashSet<Symbol>>();
 
-	public void intra(JCCapsuleDecl capsule, JCMethodDecl meth) {
+	public void inter(JCCapsuleDecl capsule) {
+		defs = capsule.defs;
+		TreeSet<MethodWrapper> queue = new TreeSet<MethodWrapper>();
+		HashMap<JCMethodDecl, MethodWrapper> map =
+			new HashMap<JCMethodDecl, MethodWrapper>();
+
+		for (JCTree jct : defs) {
+			if (jct instanceof JCMethodDecl) {
+				if (((JCMethodDecl) jct).body != null) {
+					JCMethodDecl meth = (JCMethodDecl)jct;
+					MethodWrapper temp = new MethodWrapper(meth);
+					map.put(meth, temp);
+					queue.add(temp);
+				}
+			}
+		}
+
+		while (!queue.isEmpty()) {
+			MethodWrapper w = queue.first();
+			queue.remove(w);
+			JCMethodDecl curr = w.meth;
+
+			HashSet<Symbol> previous = result.get(curr.sym);
+
+			HashSet<Symbol> newResult = intra(capsule, curr);
+
+			if (previous == null || !previous.equals(newResult)) {
+				result.put(curr.sym, newResult);
+				HashSet<Symbol> callers = reversed.get(curr.sym);
+				if (callers != null) {
+					for (Symbol caller : callers) {
+						MethodSymbol ms = (MethodSymbol)caller;
+						queue.add(map.get(ms.tree));
+					}
+				}
+			}
+		}
+	}
+
+	public HashSet<Symbol> intra(JCCapsuleDecl capsule, JCMethodDecl meth) {
 		defs = capsule.defs;
 
 		JCBlock body = meth.body;
 		assert body != null;
 
-		TreeSet<JWrapper> queue = new TreeSet<JWrapper>();
-		HashMap<JCTree, JWrapper> map = new HashMap<JCTree, JWrapper>();
+		TreeSet<TreeWrapper> queue = new TreeSet<TreeWrapper>();
+		HashMap<JCTree, TreeWrapper> map = new HashMap<JCTree, TreeWrapper>();
 		for (JCTree tree : body.endNodes) {
-			JWrapper temp = new JWrapper(tree);
+			TreeWrapper temp = new TreeWrapper(tree);
 			map.put(tree, temp);
 			queue.add(temp);
 		}
 		for (JCTree tree : body.exitNodes) {
-			JWrapper temp = new JWrapper(tree);
+			TreeWrapper temp = new TreeWrapper(tree);
 			map.put(tree, temp);
 			queue.add(temp);
 		}
 
 		while (!queue.isEmpty()) {
-			JWrapper w = queue.first();
+			TreeWrapper w = queue.first();
 			queue.remove(w);
 			JCTree curr = w.tree;
 
 			HashSet<Symbol> preLeak = new HashSet<Symbol>();
 			for (JCTree succ : curr.successors) {
-				JWrapper temp = map.get(succ);
+				TreeWrapper temp = map.get(succ);
 				if (temp == null) {
-					temp = new JWrapper(succ);
+					temp = new TreeWrapper(succ);
 					map.put(succ, temp);
 				}
 
@@ -91,11 +120,15 @@ public class LeakDetection {
 						JCIdent jci = (JCIdent)receiver;
 						if (isInnerField(jci.sym)) {
 							innerCall = true;
+
+							addCallEdge(meth.sym, jci.sym);
 						}
 					} else if (receiver instanceof JCFieldAccess) {
 						JCFieldAccess field = (JCFieldAccess)receiver;
 						if (isInnerField(field.sym)) {
 							innerCall = true;
+
+							addCallEdge(meth.sym, field.sym);
 						}
 					}
 				}
@@ -130,25 +163,43 @@ public class LeakDetection {
 				w.leakVar.addAll(preLeak);
 				w.first = false;
 				for (JCTree predecessor : curr.predecessors) {
-					JWrapper temp = map.get(predecessor);
+					TreeWrapper temp = map.get(predecessor);
 					if (temp == null) {
-						temp = new JWrapper(predecessor);
+						temp = new TreeWrapper(predecessor);
 						map.put(predecessor, temp);
 					}
 					queue.add(temp);
 				}
 			}
 		}
+
+		HashSet<Symbol> intraResult = new HashSet<Symbol>();
+		for (JCTree jct : map.keySet()) {
+			TreeWrapper jw = map.get(jct);
+			intraResult.addAll(jw.leakVar);
+		}
+
+		return intraResult;
 	}
 
-	private static class JWrapper implements Comparable<JWrapper> {
+	private static class MethodWrapper implements Comparable<MethodWrapper> {
+		public final JCMethodDecl meth;
+
+		public MethodWrapper(JCMethodDecl meth) { this.meth = meth; }
+
+		public int compareTo(MethodWrapper o) {
+			return o.meth.hashCode() - meth.hashCode();
+		}
+	}
+
+	private static class TreeWrapper implements Comparable<TreeWrapper> {
 		public boolean first = true;
 		public HashSet<Symbol> leakVar = new HashSet<Symbol>();
 		public final JCTree tree;
 
-		public JWrapper(JCTree tree) { this.tree = tree; }
+		public TreeWrapper(JCTree tree) { this.tree = tree; }
 
-		public int compareTo(JWrapper o) {
+		public int compareTo(TreeWrapper o) {
 			return o.tree.hashCode() - tree.hashCode();
 		}
 	}
@@ -228,5 +279,14 @@ public class LeakDetection {
 			}
 		}
 		return false;
+	}
+
+	private void addCallEdge(Symbol caller, Symbol callee) {
+		HashSet<Symbol> callers = reversed.get(callee);
+		if (callers == null) {
+			callers = new HashSet<Symbol>();
+			reversed.put(callee, callers);
+		}
+		callers.add(caller);
 	}
 }

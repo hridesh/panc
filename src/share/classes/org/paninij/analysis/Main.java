@@ -44,6 +44,11 @@ public final class Main {
 					}
 				}
 			}
+
+			if (root instanceof JCCapsuleDecl) {
+				LeakDetection ld = new LeakDetection();
+				ld.inter((JCCapsuleDecl)root);
+			}
 		}
 
 		// Compilation strategy analysis, 
