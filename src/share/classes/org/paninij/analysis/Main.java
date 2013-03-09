@@ -46,8 +46,13 @@ public final class Main {
 			}
 
 			if (root instanceof JCCapsuleDecl) {
-				LeakDetection ld = new LeakDetection();
-				ld.inter((JCCapsuleDecl)root);
+				if (root.sym.toString().indexOf("$") == -1 ||
+							root.sym.toString().substring(
+									root.sym.toString().indexOf("$")
+									+ 1).compareTo("thread") == 0) {
+					LeakDetection ld = new LeakDetection();
+					ld.inter((JCCapsuleDecl)root, log);
+				}
 			}
 		}
 

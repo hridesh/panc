@@ -12,6 +12,7 @@ import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.List;
+import com.sun.tools.javac.util.Log;
 
 public class LeakDetection {
 	private List<JCTree> defs;
@@ -20,7 +21,7 @@ public class LeakDetection {
 	private HashMap<Symbol, HashSet<Symbol>> result =
 		new HashMap<Symbol, HashSet<Symbol>>();
 
-	public void inter(JCCapsuleDecl capsule) {
+	public void inter(JCCapsuleDecl capsule, Log log) {
 		defs = capsule.defs;
 		TreeSet<MethodWrapper> queue = new TreeSet<MethodWrapper>();
 		HashMap<JCMethodDecl, MethodWrapper> map =
@@ -53,6 +54,21 @@ public class LeakDetection {
 					for (Symbol caller : callers) {
 						MethodSymbol ms = (MethodSymbol)caller;
 						queue.add(map.get(ms.tree));
+					}
+				}
+			}
+		}
+
+		for (Symbol meth : result.keySet()) {
+			if ((meth.flags_field & Flags.PRIVATE) != 0) {
+				for (Symbol l : result.get(meth)){
+					if (l.getKind() == ElementKind.FIELD) {
+						log.useSource (capsule.sym.sourcefile);
+						log.warning(capsule.pos(), "confinement.violation", l,
+							capsule.sym.toString().substring(0,
+								capsule.sym.toString().indexOf("$")),
+								meth.toString().substring(0,
+									capsule.sym.toString().indexOf("$") + 1));
 					}
 				}
 			}
@@ -104,14 +120,38 @@ public class LeakDetection {
 			} else if (curr instanceof JCReturn) { // return exp;
 				warningCandidates(((JCReturn)curr).expr, preLeak);
 			} else if (curr instanceof JCMethodInvocation) {
-				JCMethodInvocation jcmd = (JCMethodInvocation)curr;
-				JCExpression currMeth = jcmd.meth;
+				JCMethodInvocation jcmi = (JCMethodInvocation)curr;
+				JCExpression currMeth = jcmi.meth;
 
 				boolean innerCall = false;
 
 				// if the method is not intra capsule method call
 				if (currMeth instanceof JCIdent) {
+					JCIdent jci = (JCIdent) currMeth;
 					innerCall = true;
+					addCallEdge(meth.sym, jci.sym);
+
+					HashSet<Symbol> leaks = result.get(jci.sym);
+					if (leaks != null) {
+						for (Symbol s : leaks) {
+							if (s != null) {
+								ElementKind symKind = s.getKind();
+								if (symKind == ElementKind.FIELD) {
+									preLeak.add(s);
+								} else if (symKind == ElementKind.PARAMETER) {
+									MethodSymbol ms = (MethodSymbol)jci.sym;
+									int i = 0;
+									for (Symbol para : ms.params) {
+										if (para == s) {
+											warningCandidates(jcmi.args.get(i),
+													preLeak);
+										}
+										i++;
+									}
+								}
+							}
+						}
+					}
 				} else if (currMeth instanceof JCFieldAccess) {
 					JCFieldAccess jcfa = (JCFieldAccess)currMeth;
 					JCExpression receiver = getEssentialExpr(jcfa.selected);
@@ -120,20 +160,16 @@ public class LeakDetection {
 						JCIdent jci = (JCIdent)receiver;
 						if (isInnerField(jci.sym)) {
 							innerCall = true;
-
-							addCallEdge(meth.sym, jci.sym);
 						}
 					} else if (receiver instanceof JCFieldAccess) {
 						JCFieldAccess field = (JCFieldAccess)receiver;
 						if (isInnerField(field.sym)) {
 							innerCall = true;
-
-							addCallEdge(meth.sym, field.sym);
 						}
 					}
 				}
 
-				if (!innerCall) { warningList(jcmd.args, preLeak); }
+				if (!innerCall) { warningList(jcmi.args, preLeak); }
 			} else if (curr instanceof JCAssign) {
 				JCAssign jca = (JCAssign)curr;
 				JCExpression lhs = getEssentialExpr(jca.lhs);
@@ -259,7 +295,7 @@ public class LeakDetection {
 			if (sym != null) {
 				ElementKind symKind = sym.getKind();
 				if (symKind == ElementKind.FIELD) {
-					if (sym.name.toString().compareTo("this")==0) {
+					if (sym.name.toString().compareTo("this") == 0) {
 						return true;
 					}
 				}
