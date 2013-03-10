@@ -271,11 +271,12 @@ public class LeakDetection {
 						output.add(jcfa.sym);
 					} else {
 						if (jcfa.sym.getKind() == ElementKind.FIELD) {
+							Symbol capSym = capsule.sym;
 							log.useSource (
 									jcfa.sym.outermostClass().sourcefile);
 							log.warning(tree.pos(), "confinement.violation",
-									jcfa.sym, capsule.sym.toString().substring(
-											0, capsule.sym.toString().indexOf("$")),
+									jcfa.sym, capSym.toString().substring(
+											0, capSym.toString().indexOf("$")),
 											currMeth.sym);
 						}
 					}
