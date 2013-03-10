@@ -21,7 +21,14 @@ public class LeakDetection {
 	private HashMap<Symbol, HashSet<Symbol>> result =
 		new HashMap<Symbol, HashSet<Symbol>>();
 
+	private boolean analyzingphase = true;
+	private Log log;
+	private JCCapsuleDecl capsule;
+	private JCMethodDecl currMeth;
+
 	public void inter(JCCapsuleDecl capsule, Log log) {
+		this.log = log;
+		this.capsule = capsule;
 		defs = capsule.defs;
 		TreeSet<MethodWrapper> queue = new TreeSet<MethodWrapper>();
 		HashMap<JCMethodDecl, MethodWrapper> map =
@@ -59,16 +66,14 @@ public class LeakDetection {
 			}
 		}
 
-		for (Symbol meth : result.keySet()) {
-			if ((meth.flags_field & Flags.PRIVATE) != 0) {
-				for (Symbol l : result.get(meth)){
-					if (l.getKind() == ElementKind.FIELD) {
-						log.useSource (capsule.sym.sourcefile);
-						log.warning(capsule.pos(), "confinement.violation", l,
-							capsule.sym.toString().substring(0,
-								capsule.sym.toString().indexOf("$")),
-								meth.toString().substring(0,
-									capsule.sym.toString().indexOf("$") + 1));
+		// output warnings
+		analyzingphase = false;
+		for (JCTree jct : defs) {
+			if (jct instanceof JCMethodDecl) {
+				JCMethodDecl jcmd = (JCMethodDecl) jct;
+				if ((jcmd.mods.flags & Flags.PRIVATE) != 0) {
+					if (jcmd.body != null) {
+						intra(capsule, jcmd);
 					}
 				}
 			}
@@ -76,6 +81,7 @@ public class LeakDetection {
 	}
 
 	public HashSet<Symbol> intra(JCCapsuleDecl capsule, JCMethodDecl meth) {
+		currMeth = meth;
 		defs = capsule.defs;
 
 		JCBlock body = meth.body;
@@ -261,7 +267,19 @@ public class LeakDetection {
 			} else if (tree instanceof JCFieldAccess) {
 				JCFieldAccess jcfa = (JCFieldAccess)tree;
 				if (!jcfa.type.isPrimitive()) {
-					output.add(jcfa.sym);
+					if (analyzingphase) {
+						output.add(jcfa.sym);
+					} else {
+						if (jcfa.sym.getKind() == ElementKind.FIELD) {
+							log.useSource (
+									jcfa.sym.outermostClass().sourcefile);
+							log.warning(tree.pos(), "confinement.violation",
+									jcfa.sym, capsule.sym.toString().substring(
+											0, capsule.sym.toString().indexOf("$")),
+											currMeth.sym);
+						}
+					}
+					
 				}
 			}
 		}
@@ -283,7 +301,17 @@ public class LeakDetection {
 		Symbol sym = tree.sym;
 		if (sym != null) {
 			if (!sym.type.isPrimitive()) {
-				output.add(sym);
+				if (analyzingphase) {
+					output.add(sym);
+				} else {
+					if (sym.getKind() == ElementKind.FIELD) {
+						log.useSource (sym.outermostClass().sourcefile);
+						log.warning(tree.pos(), "confinement.violation",
+								sym, capsule.sym.toString().substring(
+										0, capsule.sym.toString().indexOf("$")),
+										currMeth.sym);
+					}
+				}
 			}
 		}
 	}
