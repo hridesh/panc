@@ -89,7 +89,7 @@ public final class Main {
 		}
 		// TODO: assumes that all capsules and system are in the same file
 		// All capsules are processed before the system
-		if (root.sym.isConfig) {// inter-capsule cost update
+		if (root.sym.isSystem) {// inter-capsule cost update
 			org.paninij.analysis.StaticProfilePass.finalizeCost();
 
 			// Rules to decide execution model for capsules in the system

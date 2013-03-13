@@ -1255,7 +1255,7 @@ public class Enter extends JCTree.Visitor {
     	for(Map.Entry<Name, ClassSymbol> entry : classSymbols){
     		ClassSymbol classSymbol = entry.getValue();
     		if(classSymbol.classfile!=null)
-    			if(!classSymbol.classfile.toString().contains(".java"))
+    			if(classSymbol.classfile.getKind()== JavaFileObject.Kind.CLASS)
     				classSymbol.complete();
     		if(classSymbol.attributes_field.size()!=0){
     			for(Attribute.Compound compound : classSymbol.attributes_field){
