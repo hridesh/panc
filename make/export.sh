@@ -35,7 +35,7 @@ cp ../examples/Pipeline.java panini/examples/
 cp ../examples/Philosophers.java panini/examples/
  
 cp export/README panini/
-cp export/README panini/README.txt
+perl -pe 's/\r\n|\n|\r/\r\n/g' export/README > panini/README.txt
 
 find panini -name '.svn' -exec rm -Rf '{}' ';' 2>/dev/null
 zip -r panini.zip panini
