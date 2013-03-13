@@ -640,7 +640,7 @@ public class Enter extends JCTree.Visitor {
 //        classEnter(tree.defs, localEnv);
 
         tree.sym = c;
-        c.isConfig = true;
+        c.isSystem = true;
         result = c.type;
         tree.switchToClass();
     }

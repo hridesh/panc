@@ -64,7 +64,7 @@ public abstract class Symbol implements Element {
     // public Throwable debug = new Throwable();
 
 	// Panini code
-	public boolean isConfig;
+	public boolean isSystem;
 	public boolean isLibrary;
 	public boolean isCapsule;
 	public boolean hasRun;

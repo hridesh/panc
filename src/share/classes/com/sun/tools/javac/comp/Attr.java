@@ -3630,7 +3630,7 @@ public class Attr extends JCTree.Visitor {
                     log.error(env.tree.pos(), "enum.types.not.extensible");
                 }
                 // Panini code
-                if(c.isConfig){
+                if(c.isSystem){
                 	Env<AttrContext> oldEnv = this.env;
                 	this.env = env;
                 	((JCSystemDecl)env.tree).switchtoSystem();
