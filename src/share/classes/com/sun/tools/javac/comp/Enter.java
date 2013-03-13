@@ -381,7 +381,8 @@ public class Enter extends JCTree.Visitor {
     				}else if(capsuleDefs.getTag() == VARDEF){
     					interfaceBody.add(make.VarDef(tc.copy(((JCVariableDecl)capsuleDefs).mods), ((JCVariableDecl)capsuleDefs).name, 
     							tc.copy(((JCVariableDecl)capsuleDefs).vartype), null));
-    				}
+    				}else
+    					interfaceBody.add(tc.copy(capsuleDefs));
     			}
     			JCExpression excp = make.Ident(names.fromString("java"));
     			excp = make.Select(excp, names.fromString("lang"));
