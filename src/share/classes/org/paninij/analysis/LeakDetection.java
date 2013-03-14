@@ -270,14 +270,17 @@ public class LeakDetection {
 					if (analyzingphase) {
 						output.add(jcfa.sym);
 					} else {
-						if (jcfa.sym.getKind() == ElementKind.FIELD) {
-							Symbol capSym = capsule.sym;
-							log.useSource (
-									jcfa.sym.outermostClass().sourcefile);
-							log.warning(tree.pos(), "confinement.violation",
-									jcfa.sym, capSym.toString().substring(
-											0, capSym.toString().indexOf("$")),
-											currMeth.sym);
+						JCExpression selected = jcfa.selected;
+						if (isVarThis(selected) && isInnerField(jcfa.sym)) {
+							if (jcfa.sym.getKind() == ElementKind.FIELD) {
+								Symbol capSym = capsule.sym;
+								log.useSource (
+										jcfa.sym.outermostClass().sourcefile);
+								log.warning(tree.pos(), "confinement.violation",
+										jcfa.sym, capSym.toString().substring(0,
+												capSym.toString().indexOf("$")),
+												currMeth.sym);
+							}
 						}
 					}
 					
@@ -305,12 +308,14 @@ public class LeakDetection {
 				if (analyzingphase) {
 					output.add(sym);
 				} else {
-					if (sym.getKind() == ElementKind.FIELD) {
+					if (isInnerField(sym) &&
+							sym.getKind() == ElementKind.FIELD) {
 						log.useSource (sym.outermostClass().sourcefile);
 						log.warning(tree.pos(), "confinement.violation",
 								sym, capsule.sym.toString().substring(
 										0, capsule.sym.toString().indexOf("$")),
-										currMeth.sym);
+										currMeth.sym.toString().substring(0,
+											currMeth.sym.toString().indexOf("$")));
 					}
 				}
 			}
