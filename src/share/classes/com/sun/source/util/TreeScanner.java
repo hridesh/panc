@@ -454,5 +454,13 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
         r = scanAndReduce(node.getStatement(), p, r);
         return r;
 	}
+	
+	public R visitIPForeach(IPForeachTree node, P p)
+    {
+    	R r = scan(node.getVariable(), p);
+    	r = scanAndReduce(node.getCapsuleArray(), p, r);
+    	r = scanAndReduce(node.getMethod(), p, r);
+    	return r;
+    }
 	//end Panini code
 }

@@ -187,6 +187,14 @@ public class TreeTranslator extends JCTree.Visitor {
         tree.body = translate(tree.body);
         result = tree;
     }
+    
+    public void visitIPForeach(JCIPForeach tree)
+    {
+    	//tree.var = translate(tree.var);
+    	//tree.carr = translate(tree.carr);
+    	//tree.body = translate(tree.body)
+    	result = tree;
+    }
 
     public void visitLabelled(JCLabeledStatement tree) {
         tree.body = translate(tree.body);

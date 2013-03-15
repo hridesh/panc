@@ -180,6 +180,15 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         JCStatement body = copy(t.body, p);
         return M.at(t.pos).ForeachLoop(var, expr, body);
     }
+    
+    public JCTree visitIPForeach(IPForeachTree node, P p)
+    {
+    	JCIPForeach t = (JCIPForeach) node;
+    	JCVariableDecl var = copy(t.var, p);
+    	JCExpression carr = copy(t.carr, p);
+    	JCMethodInvocation body = copy(t.body, p);
+    	return M.at(t.pos).IPForeach(var, carr, body);
+    }
 
     public JCTree visitForLoop(ForLoopTree node, P p) {
         JCForLoop t = (JCForLoop) node;

@@ -138,6 +138,7 @@ public class Tokens {
         FINALLY("finally"),
         FLOAT("float", Tag.NAMED),
         FOR("for"),
+        FOREACH("foreach"),
         GOTO("goto"),
         IF("if"),
         IMPLEMENTS("implements"),
