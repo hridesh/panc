@@ -33,6 +33,8 @@ cp ../examples/Pi.java panini/examples/
 cp ../examples/Histogram.java panini/examples/
 cp ../examples/Pipeline.java panini/examples/
 cp ../examples/Philosophers.java panini/examples/
+cp ../examples/EchoClient.java panini/examples/
+cp ../examples/EchoServer.java panini/examples/
  
 cp export/README panini/
 perl -pe 's/\r\n|\n|\r/\r\n/g' export/README > panini/README.txt
