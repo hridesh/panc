@@ -118,5 +118,6 @@ public interface TreeVisitor<R,P> {
     R visitCapsule(CapsuleTree node, P p);
     R visitFree(FreeTree node, P p);
     R visitForAll(ForAllTree node, P p);
+    R visitIPForeach(IPForeachTree node, P p);
     //end Panini Code
 }

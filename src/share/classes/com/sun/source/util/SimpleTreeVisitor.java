@@ -308,5 +308,9 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 	public R visitForAll(ForAllTree node, P p) {
 		return defaultAction(node, p);
 	}
+	
+	public R visitIPForeach(IPForeachTree node, P p) {
+		return defaultAction(node, p);
+	}
 	// end Panini code
 }

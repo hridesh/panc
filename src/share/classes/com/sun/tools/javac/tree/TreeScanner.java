@@ -160,6 +160,14 @@ public class TreeScanner extends Visitor {
         scan(tree.expr);
         scan(tree.body);
     }
+    
+    public void visitIPForeach(JCIPForeach tree)
+    {
+    	scan(tree.var);
+    	scan(tree.carr);
+    	scan(tree.body);
+    	//visitApply(tree);
+    }
 
     public void visitLabelled(JCLabeledStatement tree) {
         scan(tree.body);

@@ -301,6 +301,13 @@ public class TreeMaker implements JCTree.Factory {
         tree.pos = pos;
         return tree;
     }
+    
+    public JCIPForeach IPForeach(JCVariableDecl var, JCExpression carr, JCMethodInvocation body)
+    {
+    	JCIPForeach tree= new JCIPForeach(var, carr, body);
+    	tree.pos = pos;
+    	return tree;
+    }
 
     public JCEnhancedForLoop ForeachLoop(JCVariableDecl var, JCExpression expr, JCStatement body) {
         JCEnhancedForLoop tree = new JCEnhancedForLoop(var, expr, body);

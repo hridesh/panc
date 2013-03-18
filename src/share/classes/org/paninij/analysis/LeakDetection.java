@@ -26,6 +26,10 @@ public class LeakDetection {
 	private JCCapsuleDecl capsule;
 	private JCMethodDecl currMeth;
 
+	// the intermediate result from the intra procedural analysis.
+	private HashMap<JCTree, TreeWrapper> intraMap =
+		new HashMap<JCTree, TreeWrapper>();
+
 	public void inter(JCCapsuleDecl capsule, Log log) {
 		this.log = log;
 		this.capsule = capsule;
@@ -51,7 +55,6 @@ public class LeakDetection {
 			JCMethodDecl curr = w.meth;
 
 			HashSet<Symbol> previous = result.get(curr.sym);
-
 			HashSet<Symbol> newResult = intra(capsule, curr);
 
 			if (previous == null || !previous.equals(newResult)) {
@@ -71,9 +74,11 @@ public class LeakDetection {
 		for (JCTree jct : defs) {
 			if (jct instanceof JCMethodDecl) {
 				JCMethodDecl jcmd = (JCMethodDecl) jct;
-				if ((jcmd.mods.flags & Flags.PRIVATE) != 0) {
-					if (jcmd.body != null) {
-						intra(capsule, jcmd);
+				if (jcmd.sym.name.toString().contains("$Original")) {
+					if ((jcmd.mods.flags & Flags.PRIVATE) != 0) {
+						if (jcmd.body != null) {
+							intra(capsule, jcmd);
+						}
 					}
 				}
 			}
@@ -88,34 +93,44 @@ public class LeakDetection {
 		assert body != null;
 
 		TreeSet<TreeWrapper> queue = new TreeSet<TreeWrapper>();
-		HashMap<JCTree, TreeWrapper> map = new HashMap<JCTree, TreeWrapper>();
+
 		for (JCTree tree : body.endNodes) {
 			TreeWrapper temp = new TreeWrapper(tree);
-			map.put(tree, temp);
+			if (analyzingphase) {
+				intraMap.put(tree, temp);
+			}
 			queue.add(temp);
 		}
 		for (JCTree tree : body.exitNodes) {
 			TreeWrapper temp = new TreeWrapper(tree);
-			map.put(tree, temp);
+			if (analyzingphase) {
+				intraMap.put(tree, temp);
+			}
 			queue.add(temp);
 		}
+
+		HashSet<JCTree> processed = new HashSet<JCTree>();
 
 		while (!queue.isEmpty()) {
 			TreeWrapper w = queue.first();
 			queue.remove(w);
 			JCTree curr = w.tree;
 
+			if (!analyzingphase) {
+				if (processed.contains(curr)) { continue; }
+				processed.add(curr);
+			}
+
 			HashSet<Symbol> preLeak = new HashSet<Symbol>();
 			for (JCTree succ : curr.successors) {
-				TreeWrapper temp = map.get(succ);
+				TreeWrapper temp = intraMap.get(succ);
 				if (temp == null) {
 					temp = new TreeWrapper(succ);
-					map.put(succ, temp);
+					intraMap.put(succ, temp);
 				}
 
 				preLeak.addAll(temp.leakVar);
 			}
-
 			HashSet<Symbol> previous = new HashSet<Symbol>(w.leakVar);
 
 			if (curr instanceof JCVariableDecl) { // T var = init;
@@ -201,23 +216,30 @@ public class LeakDetection {
 				warningList(((JCNewArray)curr).elems, preLeak);
 			}
 
-			if (!preLeak.equals(previous) || w.first) {
-				w.leakVar.addAll(preLeak);
-				w.first = false;
-				for (JCTree predecessor : curr.predecessors) {
-					TreeWrapper temp = map.get(predecessor);
-					if (temp == null) {
-						temp = new TreeWrapper(predecessor);
-						map.put(predecessor, temp);
+			if (analyzingphase) {
+				if (!preLeak.equals(previous) || w.first) {
+					w.leakVar.addAll(preLeak);
+					w.first = false;
+					for (JCTree predecessor : curr.predecessors) {
+						TreeWrapper temp = intraMap.get(predecessor);
+						if (temp == null) {
+							temp = new TreeWrapper(predecessor);
+							intraMap.put(predecessor, temp);
+						}
+						queue.add(temp);
 					}
+				}
+			} else {
+				for (JCTree predecessor : curr.predecessors) {
+					TreeWrapper temp = intraMap.get(predecessor);
 					queue.add(temp);
 				}
 			}
 		}
 
 		HashSet<Symbol> intraResult = new HashSet<Symbol>();
-		for (JCTree jct : map.keySet()) {
-			TreeWrapper jw = map.get(jct);
+		for (JCTree jct : intraMap.keySet()) {
+			TreeWrapper jw = intraMap.get(jct);
 			intraResult.addAll(jw.leakVar);
 		}
 
@@ -267,20 +289,22 @@ public class LeakDetection {
 			} else if (tree instanceof JCFieldAccess) {
 				JCFieldAccess jcfa = (JCFieldAccess)tree;
 				if (!jcfa.type.isPrimitive()) {
-					if (analyzingphase) {
-						output.add(jcfa.sym);
-					} else {
-						if (jcfa.sym.getKind() == ElementKind.FIELD) {
-							Symbol capSym = capsule.sym;
-							log.useSource (
+					output.add(jcfa.sym);
+					if (!analyzingphase) {
+						JCExpression selected = jcfa.selected;
+						if (isVarThis(selected) && isInnerField(jcfa.sym)) {
+							if (jcfa.sym.getKind() == ElementKind.FIELD) {
+								Symbol capSym = capsule.sym;
+								log.useSource (
 									jcfa.sym.outermostClass().sourcefile);
-							log.warning(tree.pos(), "confinement.violation",
-									jcfa.sym, capSym.toString().substring(
-											0, capSym.toString().indexOf("$")),
-											currMeth.sym);
+								log.warning(tree.pos(), "confinement.violation",
+									jcfa.sym, capSym.toString().substring(0,
+										capSym.toString().indexOf("$")),
+											currMeth.sym.toString().substring(0,
+												currMeth.sym.toString().indexOf("$")));
+							}
 						}
 					}
-					
 				}
 			}
 		}
@@ -302,15 +326,16 @@ public class LeakDetection {
 		Symbol sym = tree.sym;
 		if (sym != null) {
 			if (!sym.type.isPrimitive()) {
-				if (analyzingphase) {
-					output.add(sym);
-				} else {
-					if (sym.getKind() == ElementKind.FIELD) {
+				output.add(sym);
+				if (!analyzingphase) {
+					if (isInnerField(sym) &&
+							sym.getKind() == ElementKind.FIELD) {
 						log.useSource (sym.outermostClass().sourcefile);
 						log.warning(tree.pos(), "confinement.violation",
-								sym, capsule.sym.toString().substring(
-										0, capsule.sym.toString().indexOf("$")),
-										currMeth.sym);
+							sym, capsule.sym.toString().substring(
+								0, capsule.sym.toString().indexOf("$")),
+									currMeth.sym.toString().substring(
+										0, currMeth.sym.toString().indexOf("$")));
 					}
 				}
 			}

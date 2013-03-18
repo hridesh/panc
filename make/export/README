@@ -43,8 +43,30 @@ licenses: This sub-directory contains licenses that apply to various parts
 
 Installing the Panini compiler.
 
-TODO: 
+To install the Panini compiler simply move the contents of this folder to 
+a suitable location. In the rest of this document, we will refer to this 
+location as $PANC_HOME.
 
+- For unix-based systems, recommended locations are /usr/bin/panini, 
+  /usr/local/bin/panini, or ~/bin/panini. 
+- For Windows and derivative operating systems, recommended locations are 
+  C:\Program Files\Panini or C:\Documents and Settings\User\Panini
+ 
 Running examples.
 
-TODO: 
+To run examples change your current directory to $PANC_HOME, where 
+$PANC_HOME stands for the location where you installed the Panini compiler 
+distribution. The transcript below illustrates running some examples. 
+Windows users would have to replace `/' with '\' in commands below,
+e.g. "..\bin\panc" instead of "../bin/panc".
+
+[panini] $ ls
+README   bin      editors  examples lib      licenses
+[panini] $ cd examples 
+[examples] $ ../bin/panc HelloWorld.java 
+[examples] $ ../bin/panini HelloWorld
+Hello World!
+[examples] $ ../bin/panc Pi.java
+[examples] $ ../bin/panini Pi 8
+Pi : 3.14184132
+Time to compute Pi using 1.0E8 samples was:1112.0ms.

@@ -38,7 +38,6 @@ import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
 
 import static com.sun.tools.javac.code.Flags.*;
-import static com.sun.tools.javac.code.Flags.ANNOTATION;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
 /** Prints out a tree as an indented Java source program.
@@ -217,7 +216,7 @@ public class Pretty extends JCTree.Visitor {
         if ((flags & SYNTHETIC) != 0) print("/*synthetic*/ ");
         print(TreeInfo.flagNames(flags));
         if ((flags & StandardFlags) != 0) print(" ");
-        if ((flags & ANNOTATION) != 0) print("@");
+        if ((flags & Flags.ANNOTATION) != 0) print("@");
     }
 
     public void printAnnotations(List<JCAnnotation> trees) throws IOException {
@@ -770,6 +769,20 @@ public class Pretty extends JCTree.Visitor {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+    
+    public void visitIPForeach(JCIPForeach tree)
+    {
+    	try{
+    		print("foreach(");
+    		print(tree.var);
+    		print(" : ");
+    		printExpr(tree.carr);
+    		print(") ");
+    		printExpr(tree.body);
+    	}catch (IOException e){
+    		throw new UncheckedIOException(e);
+    	}
     }
 
     public void visitLabelled(JCLabeledStatement tree) {

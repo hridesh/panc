@@ -43,7 +43,6 @@ import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.parser.EndPosTable;
 
 import static com.sun.tools.javac.code.Flags.*;
-import static com.sun.tools.javac.code.Flags.BLOCK;
 import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.TypeTags.*;
 import static com.sun.tools.javac.jvm.ByteCodes.*;
@@ -112,7 +111,30 @@ public class Lower extends TreeTranslator {
         Options options = Options.instance(context);
         debugLower = options.isSet("debuglower");
         pkginfoOpt = PkgInfo.get(options);
+        
+        ipfeNameGen = new IPForeachHelperMethNameGen("ipForeachHelper");
     }
+    
+    private class IPForeachHelperMethNameGen
+    {
+    	private String base;
+    	private int count;
+    	
+    	IPForeachHelperMethNameGen(String s)
+    	{
+    		base = s;
+    		count = 0;
+    	}
+    	
+    	Name generateIPForeachMethodName()
+    	{
+    		String ret = base+target.syntheticNameChar()+count;
+    		count++;
+    		return names.fromString(ret);
+    	}
+    	
+    }
+    private IPForeachHelperMethNameGen ipfeNameGen;
 
     /** The currently enclosing class.
      */
@@ -3200,6 +3222,298 @@ public class Lower extends TreeTranslator {
     public void visitIdent(JCIdent tree) {
         result = access(tree.sym, tree, enclOp, false);
     }
+    
+    /**
+     * Given a method, if it is in the form c.proc() and c = var, then set c := placeHolder and return var.proc()
+     * otherwise return method
+     * @param method
+     * @param var
+     * @param placeHolder
+     * @return TODO hello
+     */
+        private JCExpression extractMethodCall(JCExpression method, JCVariableDecl var, JCIdent placeHolder)
+        {
+        	
+        	VarSymbol varSym = var.sym;
+        	JCExpression ret = method;
+        	if(method instanceof JCFieldAccess)
+        	{
+        		JCFieldAccess select = (JCFieldAccess)method;
+        		
+        		JCExpression selected = select.selected;
+        		JCExpression finalLevel = extractMethodCall(selected, var, placeHolder);
+        		if(finalLevel instanceof JCIdent)
+        		{
+        			JCIdent sel = (JCIdent)selected;
+        			if(sel.sym == varSym)
+        			{
+        				ret = make.Select(placeHolder, select.name);
+        				select.selected = placeHolder;
+        			}
+        			else
+        			{
+        				log.error("proc.cant.access", varSym, method);
+        			}
+        			
+        		}
+        	}
+        	
+        	
+        	return ret;
+        	
+        }
+        
+        private void assertHasCapsuleIdent(DiagnosticPosition pos, JCExpression e)
+        {
+        	if(!(e instanceof JCFieldAccess))
+        	{
+        		log.error(pos, "proc.cant.access", e);
+    	    		
+    	    	
+        	}
+        }
+        
+        /**
+         * Translate away IP foreach loop
+         * 
+         * where a statement of the form:
+         * 
+         * Type[] arr = foreach(Capsule c : capsules) c.method();
+         * 
+         * to
+         * 
+         * Type[] arr$res = new Type[capsules.length];
+         * for(int index$ = 0; index$ < capsules.length; index$++)
+         * {
+         * 		arr$res[index$] = capsules[index$].method();
+         * }
+         */
+        public void visitIPForeach(JCIPForeach tree)
+        {
+        	//TODO start
+        	JCMethodInvocation treeMeth  = tree.body;
+        	TreeCopier<Void> copier = new TreeCopier<Void>(make);
+        	
+        	DiagnosticPosition pos = tree.pos();
+        	make_at(pos);
+        	
+        	int adrCount = 0;
+        	int posCount = 0;
+        	
+        	Type newMethRetType = new ArrayType(tree.body.type, tree.body.type.tsym);
+        	
+        	Iterator<JCExpression> iterArgs = treeMeth.args.iterator();
+        	
+        	ListBuffer<Type> listBufferType = new ListBuffer<Type>(); //this will be the type args for the new method
+        	ListBuffer<JCExpression> listBufferArgs = new ListBuffer<JCExpression>();
+        	listBufferType.add(tree.carr.type); //add capsules as a parameter
+        	listBufferArgs.add(tree.carr);
+        	
+        	
+
+        	while(iterArgs.hasNext())
+        	{
+        		JCExpression next = iterArgs.next();
+        		listBufferArgs.add(next);
+        		listBufferType.add(next.type);
+        	}
+        	List<Type> listType = listBufferType.toList();
+        	List<JCExpression> listArgs = listBufferArgs.toList();
+        	
+        	
+        	Type newMethType = new Type.MethodType(listType, newMethRetType, List.<Type>nil(), syms.methodClass);
+        	Name newMethName = ipfeNameGen.generateIPForeachMethodName();
+        	MethodSymbol newMethSym = new Symbol.MethodSymbol(PRIVATE|STATIC, newMethName, newMethType, currentClass);
+        	
+        	
+        	ListBuffer<JCVariableDecl> declsBuffer = new ListBuffer<JCVariableDecl>(); //parameters to the synthetic method
+        	ListBuffer<JCExpression> litsBuffer = new ListBuffer<JCExpression>(); //literals passed into the method within body of new, synthetic method
+        	
+        	VarSymbol capsulesVar = new VarSymbol(0,
+                    names.fromString("capsules" + target.syntheticNameChar()),
+                    tree.carr.type,
+                    newMethSym);
+        	capsulesVar.adr = adrCount++;
+        	capsulesVar.pos = posCount++;
+        	
+        	VarSymbol len = new VarSymbol(0,
+        			names.fromString("len" + target.syntheticNameChar()),
+        			syms.intType,
+        			newMethSym);
+        	len.adr = adrCount++;
+        	len.pos = posCount++;
+        	
+        	// :: int len$ = capsules$.length
+        	JCVariableDecl lenDecl = make.VarDef(len, make.Select(make.Ident(capsulesVar), syms.lengthVar));
+        	
+        	// :: <CapsuleArrayType> capsules$
+        	JCVariableDecl capsules = make.Param(names.fromString("capsules"+ target.syntheticNameChar()), tree.carr.type, newMethSym);
+        	
+        	declsBuffer.add(capsules);
+        	
+        	for(int i = 1; i < listType.size(); i++) //populate synthetic parameter list and literal list
+        	{
+        		VarSymbol nextSym = new VarSymbol(0, names.fromString("arg"+target.syntheticNameChar()+(i-1)), listType.get(i), newMethSym);
+        		JCIdent next =make.Ident(nextSym);
+        		
+        		litsBuffer.add(next);
+        		nextSym.adr = adrCount++;
+        		nextSym.pos = posCount++;
+        		JCVariableDecl nextPara =make.Param(nextSym.name, nextSym.type, nextSym.owner);
+        		declsBuffer.add(nextPara);
+        		
+        	}
+        	List<JCVariableDecl> decls = declsBuffer.toList();
+        	List<JCExpression> declLits = litsBuffer.toList();
+        	
+     
+        	
+        	
+        	
+        	VarSymbol cap = new VarSymbol(0,
+                    names.fromString("carr" + target.syntheticNameChar()),
+                    tree.carr.type,
+                    newMethSym);
+        	cap.adr = adrCount++;
+        	cap.pos = posCount++;
+        	
+        	// :: <CapsuleArrayType> carr$ = capsules$
+        	JCVariableDecl capAss = make.VarDef(cap, make.Ident(capsulesVar));
+
+        	VarSymbol rescache = new VarSymbol(0, names.fromString("result" + target.syntheticNameChar()),
+        			newMethRetType, newMethSym); 
+        	rescache.adr = adrCount++;
+        	rescache.pos = posCount++;
+        	
+        	VarSymbol index = new VarSymbol(0,
+        			names.fromString("index" + target.syntheticNameChar()),
+        			syms.intType,
+        			newMethSym);
+
+        	index.adr = adrCount++;
+        	index.pos = posCount++;
+
+        	// :: index$ = 0;
+        	JCVariableDecl indexdef = make.VarDef(index, make.Literal(INT, 0));
+        	indexdef.init.type = indexdef.type = syms.intType.constType(0);
+
+        	VarSymbol placeHolderVar = new VarSymbol(0, names.fromString("placeHolder"+target.syntheticNameChar()), tree.var.type, newMethSym);
+        	placeHolderVar.adr = adrCount++;
+        	placeHolderVar.pos = posCount++;
+        	 
+
+        	// :: new <MethodReturnType>[len$]
+        	JCNewArray newArray = make.NewArray(make.Type(tree.body.type), List.<JCExpression>of(make.Ident(len)), null);
+        	newArray.type = newMethRetType;
+
+        	// :: <MethodReturnType>[] result$ = new <MethodReturnType>[len$];
+        	JCStatement rescachedef = make.VarDef(rescache, newArray);
+
+        	
+        	assertHasCapsuleIdent(pos, treeMeth.meth); //make sure treeMeth.meth is of the form c.proc(args)
+        	/*
+        	 * Assume treeMeth.meth is of the form c.proc(args)
+        	 * if tree.var = c, then set treeMeth.meth := placeHolder$.proc(args)
+        	 */
+        	extractMethodCall(treeMeth.meth, tree.var, make.Ident(placeHolderVar));
+        	
+        	// :: <MethodCall> (method call within body of new synthetic method)
+        	JCMethodInvocation reArg = make.Apply(List.<JCExpression>nil(), treeMeth.meth, declLits);
+        	reArg.type = tree.body.type;
+
+        	// :: carr$[index$]
+        	JCExpression carrAcc = make.Indexed(cap, make.Ident(index)).setType(tree.var.type); //TODO altered
+        	carrAcc.type = tree.var.type;
+
+        	// :: <CapsuleType> <placeHolder> = carr$[index$];
+        	JCVariableDecl placeHolderDec = make.VarDef(placeHolderVar, carrAcc);
+
+        	// :: result$[index$]
+        	JCArrayAccess resAcc = make.Indexed(make.Ident(rescache), make.Ident(index));
+        	resAcc.type = tree.body.type;
+
+        	// :: result$[index$] = <MethodCall>
+        	JCAssign bodyAssign = make.Assign(resAcc, reArg); 
+        	placeHolderDec.type = tree.var.type;
+        	bodyAssign.type = tree.body.type;
+
+        	// :: result$[index$] = <MethodCall>;
+        	JCStatement bodyAss = make.Exec(bodyAssign); 
+
+        	/*
+        	 *	{
+        	 *		<CapsuleType> <placeHolder> = carr$[index$];
+        	 * 		result$[index$] = <MethodCall>;
+        	 *	}
+        	 */
+        	JCStatement loopBody = make.Block(0, List.<JCStatement>of(placeHolderDec, bodyAss));
+
+
+
+        	// :: for(index$ = 0; ...
+        	List<JCStatement> loopinit = List.<JCStatement>of(indexdef);
+
+        	// :: ... index$ < len$; ...
+        	JCBinary cond = makeBinary(LT, make.Ident(index), make.Ident(len));
+
+        	// :: ... ++index$)
+        	JCExpressionStatement step = make.Exec(makeUnary(PREINC, make.Ident(index)));
+
+    	
+    		// :: return result$;
+            JCReturn ret = make.Return(make.Ident(rescache));
+
+        	
+            /*
+        	 * int len$ = capsules$.length;
+        	 * <CapsuleArrayType> carr$ = capsules$;
+        	 * <ReturnType>[] result$ = new <ReturnType>[len$];
+        	 * for(int index$ = 0; index$ < len$; ++index$)
+        	 * {
+        	 * 		<CapsuleType> <placeHolder> = carr$[index$];
+        	 * 		result$[index$] = <MethodCall>
+        	 * }
+        	 */
+        	JCBlock methBody = make.at(rescachedef.pos).Block(0, List.<JCStatement>of(lenDecl, capAss, rescachedef, make.
+        	        ForLoop(loopinit,
+        	                cond,
+        	                List.of(step),
+        	                loopBody), ret));
+        	
+        	
+        	JCClassDecl currentClassDecl = classDef(currentClass);
+        	
+        	/*private static <ReturnType>[] ipForeachHelper$i(<CapsuleArrayType> capsules$, ... args){
+        	 * 	int len$ = capsules$.length;
+        	 * 	<CapsuleArrayType> carr$ = capsules$;
+        	 *	 <ReturnType>[] result$ = new <ReturnType>[len$];
+        	 * 	for(int index$ = 0; index$ < len$; ++index$)
+        	 * 	{
+        	 * 			<CapsuleType> <placeHolder> = carr$[index$];
+        	 * 			result$[index$] = <MethodCall>
+        	 * 	}
+        	 * }
+        	 */
+        	JCMethodDecl newMeth = make_at(currentClassDecl.pos()).MethodDef(make.Modifiers(PRIVATE|STATIC|SYNTHETIC),
+        			newMethName, make.Type(newMethRetType), List.<JCTypeParameter>nil(), 
+        			decls, List.<JCExpression>nil(), methBody, null);
+        	newMeth.sym = newMethSym;
+        	newMeth.sym.owner= currentClass;
+
+        	
+        	currentClass.members().enter(newMethSym);
+        	
+        	currentClassDecl.defs = currentClassDecl.defs.prepend(newMeth);
+        	
+        	
+        	
+        	JCMethodInvocation accMeth = makeCall(make.QualIdent(currentClass), newMeth.name, listArgs);
+        	
+
+        	result = accMeth;
+        	
+
+        }
 
     /** Translate away the foreach loop.  */
     public void visitForeachLoop(JCEnhancedForLoop tree) {
@@ -3364,7 +3678,7 @@ public class Lower extends TreeTranslator {
         if (currentMethodSym == null) {
             // A class or instance field initializer.
             currentMethodSym =
-                new MethodSymbol((tree.mods.flags&STATIC) | BLOCK,
+                new MethodSymbol((tree.mods.flags&STATIC) | Flags.BLOCK,
                                  names.empty, null,
                                  currentClass);
         }
@@ -3378,7 +3692,7 @@ public class Lower extends TreeTranslator {
         if (currentMethodSym == null) {
             // Block is a static or instance initializer.
             currentMethodSym =
-                new MethodSymbol(tree.flags | BLOCK,
+                new MethodSymbol(tree.flags | Flags.BLOCK,
                                  names.empty, null,
                                  currentClass);
         }

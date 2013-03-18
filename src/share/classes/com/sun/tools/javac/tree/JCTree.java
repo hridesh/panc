@@ -45,6 +45,7 @@ import com.sun.tools.javac.parser.EndPosTable;
 import com.sun.source.tree.*;
 import com.sun.source.tree.LambdaExpressionTree.BodyKind;
 import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
+import com.sun.source.tree.Tree.Kind;
 
 import static com.sun.tools.javac.code.BoundKind.*;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
@@ -137,6 +138,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         /** Foreach-loops, of type ForeachLoop.
          */
         FOREACHLOOP,
+        
+        /** Implicitly parallel ForeachLoop
+         */
+        IPFOREACH,
 
         /** Labelled statements, of type Labelled.
          */
@@ -1486,6 +1491,65 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public Tag getTag() {
             return FOREACHLOOP;
         }
+    }
+    
+    /**
+     * 
+     * The implicitly parallel foreach loop
+     *
+     */
+    public static class JCIPForeach extends JCExpression implements IPForeachTree{
+    	
+    	public JCVariableDecl var;
+    	public JCExpression carr;
+    	public JCMethodInvocation body;
+    	protected JCIPForeach(JCVariableDecl p_var, JCExpression p_carr, JCMethodInvocation p_body)
+    	{
+    		//super(List.<JCExpression>nil(), p_body.meth, p_body.args.prepend(p_carr));
+    		var = p_var;
+    		carr = p_carr;
+    		body = p_body;
+    	}
+		@Override
+		public Kind getKind() {
+			
+			return Kind.IPFOREACH;
+		}
+
+		
+		
+		@Override
+		public VariableTree getVariable() {
+			return var;
+		}
+
+		@Override
+		public ExpressionTree getCapsuleArray() {
+			return carr;
+		}
+
+		@Override
+		public MethodInvocationTree getMethod() {
+			return body;
+		}
+
+		@Override
+		public Tag getTag() {
+			
+			return IPFOREACH;
+		}
+
+		@Override
+		public void accept(Visitor v) {
+			v.visitIPForeach(this);
+			
+		}
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitIPForeach(this, d);
+		}
+    	
     }
 
     /**
@@ -2922,6 +2986,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitCapsuleDef(JCCapsuleDecl that)	     { visitTree(that); }
         public void visitFree(JCFree that)	                 { visitTree(that); }
         public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }
+        public void visitIPForeach(JCIPForeach that)	 	 { visitTree(that); }
         // end Panini code
         public void visitTree(JCTree that)                   { Assert.error(); }
     }

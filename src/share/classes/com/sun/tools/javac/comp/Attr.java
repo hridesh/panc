@@ -26,7 +26,6 @@
 package com.sun.tools.javac.comp;
 
 import java.util.*;
-import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import javax.tools.JavaFileObject;
 
@@ -56,12 +55,8 @@ import org.paninij.consistency.ConsistencyCheck;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
-import static com.sun.tools.javac.code.Flags.ANNOTATION;
-import static com.sun.tools.javac.code.Flags.BLOCK;
 import static com.sun.tools.javac.code.Kinds.*;
-import static com.sun.tools.javac.code.Kinds.ERRONEOUS;
 import static com.sun.tools.javac.code.TypeTags.*;
-import static com.sun.tools.javac.code.TypeTags.WILDCARD;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
 /** This is the main context-dependent analysis phase in GJC. It
@@ -254,7 +249,7 @@ public class Attr extends JCTree.Visitor {
             ||
             ((owner.name == names.init ||    // i.e. we are in a constructor
               owner.kind == VAR ||           // i.e. we are in a variable initializer
-              (owner.flags() & BLOCK) != 0)  // i.e. we are in an initializer block
+              (owner.flags() & Flags.BLOCK) != 0)  // i.e. we are in an initializer block
              &&
              v.owner == owner.owner
              &&
@@ -1268,7 +1263,7 @@ public class Attr extends JCTree.Visitor {
                 localEnv.info.scope.enterIfAbsent(l.head.type.tsym);
 
             ClassSymbol owner = env.enclClass.sym;
-            if ((owner.flags() & ANNOTATION) != 0 &&
+            if ((owner.flags() & Flags.ANNOTATION) != 0 &&
                 tree.params.nonEmpty())
                 log.error(tree.params.head.pos(),
                           "intf.annotation.members.cant.have.params");
@@ -1287,7 +1282,7 @@ public class Attr extends JCTree.Visitor {
             chk.validate(tree.restype, localEnv);
 
             // annotation method checks
-            if ((owner.flags() & ANNOTATION) != 0) {
+            if ((owner.flags() & Flags.ANNOTATION) != 0) {
                 // annotation method cannot have throws clause
                 if (tree.thrown.nonEmpty()) {
                     log.error(tree.thrown.head.pos(),
@@ -1322,7 +1317,7 @@ public class Attr extends JCTree.Visitor {
                     !relax)
                     log.error(tree.pos(), "missing.meth.body.or.decl.abstract");
                 if (tree.defaultValue != null) {
-                    if ((owner.flags() & ANNOTATION) == 0)
+                    if ((owner.flags() & Flags.ANNOTATION) == 0)
                         log.error(tree.pos(),
                                   "default.allowed.in.intf.annotation.member");
                 }
@@ -1444,7 +1439,7 @@ public class Attr extends JCTree.Visitor {
             Env<AttrContext> localEnv =
                 env.dup(tree, env.info.dup(env.info.scope.dupUnshared()));
             localEnv.info.scope.owner =
-                new MethodSymbol(tree.flags | BLOCK, names.empty, null,
+                new MethodSymbol(tree.flags | Flags.BLOCK, names.empty, null,
                                  env.info.scope.owner);
             if ((tree.flags & STATIC) != 0) localEnv.info.staticLevel++;
             attribStats(tree.stats, localEnv);
@@ -1510,6 +1505,19 @@ public class Attr extends JCTree.Visitor {
         attribStat(tree.body, loopEnv);
         loopEnv.info.scope.leave();
         result = null;
+    }
+    
+    public void visitIPForeach(JCIPForeach tree)
+    {
+    	
+    	attribStat(tree.var, env);
+    	attribExpr(tree.carr, env);
+    	attribExpr(tree.body, env);
+    	Type retType = tree.body.meth.type.getReturnType();
+    	Type proto = new ArrayType(retType, syms.arrayClass);
+    	chk.checkType(tree.pos(), proto, resultInfo.pt);
+    	result = proto;
+ 
     }
 
     public void visitLabelled(JCLabeledStatement tree) {
@@ -2093,7 +2101,7 @@ public class Attr extends JCTree.Visitor {
 
             // Compute the result type.
             Type restype = mtype.getReturnType();
-            if (restype.tag == WILDCARD)
+            if (restype.tag == TypeTags.WILDCARD)
                 throw new AssertionError(mtype);
 
             // as a special case, array.clone() has a result that is
@@ -2374,7 +2382,7 @@ public class Attr extends JCTree.Visitor {
                     typeargtypes, true, useVarargs);
                 Assert.check(sym.kind < AMBIGUOUS || tree.constructor.type.isErroneous());
                 tree.constructor = sym;
-                if (tree.constructor.kind > ERRONEOUS) {
+                if (tree.constructor.kind > Kinds.ERRONEOUS) {
                     tree.constructorType =  syms.errType;
                 }
                 else {
@@ -2944,11 +2952,11 @@ public class Attr extends JCTree.Visitor {
                 } else {
                     // We are seeing a plain identifier as selector.
                     Symbol sym = rs.findIdentInType(env, site, name, resultInfo.pkind);
-                    if ((resultInfo.pkind & ERRONEOUS) == 0)
+                    if ((resultInfo.pkind & Kinds.ERRONEOUS) == 0)
                         sym = rs.access(sym, pos, location, site, name, true);
                     return sym;
                 }
-            case WILDCARD:
+            case TypeTags.WILDCARD:
                 throw new AssertionError(tree);
             case TYPEVAR:
                 // Normally, site.getUpperBound() shouldn't be null.
@@ -3237,7 +3245,7 @@ public class Attr extends JCTree.Visitor {
         private boolean canOwnInitializer(Symbol sym) {
             return
                 (sym.kind & (VAR | TYP)) != 0 ||
-                (sym.kind == MTH && (sym.flags() & BLOCK) != 0);
+                (sym.kind == MTH && (sym.flags() & Flags.BLOCK) != 0);
         }
 
     Warner noteWarner = new Warner();
@@ -3685,7 +3693,7 @@ public class Attr extends JCTree.Visitor {
                 chk.checkAllDefined(tree.pos(), c);
         }
 
-        if ((c.flags() & ANNOTATION) != 0) {
+        if ((c.flags() & Flags.ANNOTATION) != 0) {
             if (tree.implementing.nonEmpty())
                 log.error(tree.implementing.head.pos(),
                           "cant.extend.intf.annotation");
