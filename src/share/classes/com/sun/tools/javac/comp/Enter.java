@@ -396,30 +396,30 @@ public class Enter extends JCTree.Visitor {
     			JCCapsuleDecl copyActive =
     					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.ACTIVE, capsule)), names.fromString(capsule.name + "$thread"), 
     							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-    			JCCapsuleDecl copyTask =
-    					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.TASK, capsule)), names.fromString(capsule.name + "$task"), 
-    							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-    			JCCapsuleDecl copySerial =
-    					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.SERIAL, capsule)), names.fromString(capsule.name + "$serial"), 
-    							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-    			JCCapsuleDecl copyMonitor =
-    					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.MONITOR, capsule)), names.fromString(capsule.name + "$monitor"), 
-    							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-//    			interfaceBody.add(copyActive);
-    			if(!hasRun){
-//    				interfaceBody.add(copyTask);
-//    				interfaceBody.add(copySerial);
-//    				interfaceBody.add(copyMonitor);
-	    			copiedDefs.add(copyTask);
-	    			copiedDefs.add(copySerial);
-	    			copiedDefs.add(copyMonitor);
-    			}
     			JCCapsuleDecl copyCapsule = 
     					make.CapsuleDef(make.Modifiers(INTERFACE, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclInterface")), 
                     			List.<JCExpression>of(make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())))))), 
     							capsule.name, tc.copy(capsule.params), tc.copy(capsule.implementing), interfaceBody.toList());
     			copiedDefs.add(copyCapsule);
     			copiedDefs.add(copyActive);
+    			copyActive.parentCapsule = copyCapsule;
+    			if(!hasRun){
+    				JCCapsuleDecl copyTask =
+        					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.TASK, capsule)), names.fromString(capsule.name + "$task"), 
+        							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
+        			JCCapsuleDecl copySerial =
+        					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.SERIAL, capsule)), names.fromString(capsule.name + "$serial"), 
+        							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
+        			JCCapsuleDecl copyMonitor =
+        					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.MONITOR, capsule)), names.fromString(capsule.name + "$monitor"), 
+        							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
+	    			copiedDefs.add(copyTask);
+	    			copyTask.parentCapsule = copyCapsule;
+	    			copiedDefs.add(copySerial);
+	    			copySerial.parentCapsule = copyCapsule;
+	    			copiedDefs.add(copyMonitor);
+	    			copyMonitor.parentCapsule = copyCapsule;
+    			}
     		}
     		else
     			copiedDefs.add(tc.copy(def));
@@ -677,13 +677,13 @@ public class Enter extends JCTree.Visitor {
     	}
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
-        ClassSymbol c;
+        CapsuleSymbol c;
         if (owner.kind == PCK) {
             // We are seeing a toplevel class.
             PackageSymbol packge = (PackageSymbol)owner;
             for (Symbol q = packge; q != null && q.kind == PCK; q = q.owner)
                 q.flags_field |= EXISTS;
-            c = reader.enterClass(tree.name, packge);
+            c = reader.enterCapsule(tree.name, packge);
             packge.members().enterIfAbsent(c);
             if ((tree.mods.flags & PUBLIC) != 0 && !classNameMatchesFileName(c, env)) {
                 log.error(tree.pos(),
@@ -697,18 +697,19 @@ public class Enter extends JCTree.Visitor {
             }
             if (owner.kind == TYP) {
                 // We are seeing a member class.
-                c = reader.enterClass(tree.name, (TypeSymbol)owner);
+                c = reader.enterCapsule(tree.name, (TypeSymbol)owner);
                 if ((owner.flags_field & INTERFACE) != 0) {
                     tree.mods.flags |= PUBLIC | STATIC;
                 }
             } else {
                 // We are seeing a local class.
-                c = reader.defineClass(tree.name, owner);
+                c = reader.defineCapsule(tree.name, owner);
                 c.flatname = chk.localClassName(c);
                 if (!c.name.isEmpty())
                     chk.checkTransparentClass(tree.pos(), c, env.info.scope);
             }
         }
+        c.isCapsule = true;
         tree.sym = c;
         tree.sym.tree = tree;
 
@@ -762,14 +763,21 @@ public class Enter extends JCTree.Visitor {
 	        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
 	        if((c.flags_field & SERIAL)!=0){
 	        	definitions = translateSerialCapsule(tree, c, localEnv);
+	        	((CapsuleSymbol)tree.parentCapsule.sym).translated_serial = c;
 	        }else if((c.flags_field & ACTIVE)!=0){
 	        	definitions = translateActiveCapsule(tree, c, localEnv);
+	        	((CapsuleSymbol)tree.parentCapsule.sym).translated_thread = c;
 	        }else if((c.flags_field & TASK)!=0){
 	        	definitions = translateTaskCapsule(tree, c, localEnv);
+	        	((CapsuleSymbol)tree.parentCapsule.sym).translated_task = c;
 	        }else if((c.flags_field & MONITOR)!=0){
 	        	definitions = translateMonitorCapsule(tree, c, localEnv);
-	        }else //default action
+	        	((CapsuleSymbol)tree.parentCapsule.sym).translated_monitor = c;
+	        }else{ //default action
 	        	definitions = translateActiveCapsule(tree, c, localEnv);
+	        	((CapsuleSymbol)tree.parentCapsule.sym).translated_thread = c;
+	        }
+	        c.parentCapsule = (CapsuleSymbol)tree.parentCapsule.sym;
 	    	List<JCVariableDecl> fields = tree.getParameters();
 	    	while(fields.nonEmpty()){
 	    		definitions.prepend(make.VarDef(make.Modifiers(PUBLIC),
@@ -790,15 +798,14 @@ public class Enter extends JCTree.Visitor {
 	    	}
         	c.hasRun = true;
         }
-        c.isCapsule = true;
         ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
         params.appendList(tree.params);
-        c.params = params.toList();
+        c.capsuleParameters = params.toList();
         tree.sym = c;
         syms.capsules.put(c.name, c);
-        syms.capsuleparams.put(c, tree.params);
         classEnter(tree.defs, localEnv);
         result = c.type;
+//        c.fillIn();//fill in fields?
         tree.switchToClass();
     }
     
@@ -900,7 +907,7 @@ public class Enter extends JCTree.Visitor {
         return definitions;
     }
     
-    public ListBuffer<JCTree> translateActiveCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
+    public ListBuffer<JCTree> translateActiveCapsule(JCCapsuleDecl tree, CapsuleSymbol c, Env<AttrContext> localEnv){
     	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_THREAD));
     	int indexer = 0;
         boolean hasRun = false;
@@ -968,6 +975,7 @@ public class Enter extends JCTree.Visitor {
     			definitions.add(state);
     		}else definitions.add(tc.copy(tree.defs.get(i)));
         }
+        c.definedRun = hasRun;
         if(!hasRun){
         	for(JCMethodDecl mdecl : tree.publicMethods){
         		String constantName = PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString();
@@ -1062,7 +1070,6 @@ public class Enter extends JCTree.Visitor {
 	            methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name, mdecl.restype.type, tree.sym);
 	            definitions.add(methodCopy);
         	}
-
         	//add from public methods
         }
         return definitions;
@@ -1255,15 +1262,16 @@ public class Enter extends JCTree.Visitor {
     	for(Map.Entry<Name, ClassSymbol> entry : classSymbols){
     		ClassSymbol classSymbol = entry.getValue();
     		if(classSymbol.classfile!=null)
-    			if(classSymbol.classfile.getKind()== JavaFileObject.Kind.CLASS)
+    			if(classSymbol.classfile.getKind()== JavaFileObject.Kind.CLASS){
     				classSymbol.complete();
+    			}
     		if(classSymbol.attributes_field.size()!=0){
     			for(Attribute.Compound compound : classSymbol.attributes_field){
     				if(compound.type.tsym.getQualifiedName().toString().contains("PaniniCapsuleDecl")){
-    					annotationProcessor.translate(classSymbol, compound);
-    					classSymbol.isCapsule = true;
-	    				syms.capsules.put(classSymbol.name, classSymbol);
-	    				syms.capsuleparams.put(classSymbol, classSymbol.params);
+    					CapsuleSymbol capsuleSymbol = CapsuleSymbol.fromClassSymbol(classSymbol);
+    					annotationProcessor.translate(capsuleSymbol, compound);
+    					capsuleSymbol.isCapsule = true;
+	    				syms.capsules.put(capsuleSymbol.name, capsuleSymbol);
     				}
     			}
     		}

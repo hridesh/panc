@@ -728,18 +728,18 @@ public class Attr extends JCTree.Visitor {
     			.fromString(mi.meth.toString()))==null){
     		log.error(mi.pos(), "capsule.array.type.error", mi.meth);
     	}
-    	ClassSymbol c = syms.capsules.get(variables.get(names
+    	CapsuleSymbol c = syms.capsules.get(variables.get(names
 				.fromString(mi.meth.toString())));
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
 
-    	if (mi.args.length() != syms.capsuleparams.get(c).length()) {
+    	if (mi.args.length() != c.capsuleParameters.length()) {
     		log.error(mi.pos(), "arguments.of.wiring.mismatch");
     	} else {
     		for (int j = 0; j < mi.args.length(); j++) {
     			JCAssign newAssign = make
     					.at(mi.pos())
     					.Assign(make.Select(make.TypeCast(make.Ident(c), mi.meth),
-    							syms.capsuleparams.get(c).get(j)
+    							c.capsuleParameters.get(j)
     							.getName()), mi.args.get(j));
     			JCExpressionStatement assignAssign = make
     					.Exec(newAssign);
@@ -790,7 +790,7 @@ public class Attr extends JCTree.Visitor {
                 cc.checkConsistency(tree.sym.graphs, n);
                 }
         }*/
-    	tree.sym.graphs = graphsBuilder.buildGraphs(tree);
+//    	tree.sym.graphs = graphsBuilder.buildGraphs(tree);
     	ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     	ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
@@ -932,7 +932,7 @@ public class Attr extends JCTree.Visitor {
     			.fromString(mi.name.toString()))){
     		log.error(mi.pos(), "symbol.not.found");
     	}
-    	ClassSymbol c = (ClassSymbol) rs
+    	CapsuleSymbol c = (CapsuleSymbol) rs
     			.findType(env, variables.get(names
     					.fromString(mi.name.toString())));
     	if(mi.index.getTag()!=Tag.LITERAL)
@@ -944,7 +944,7 @@ public class Attr extends JCTree.Visitor {
     		log.error(mi.index.pos(), "capsule.array.call.index.out.of.bound", ind.value, modArrays.get(names
     				.fromString(mi.name.toString())));
     	}
-    	if (mi.arguments.length() != syms.capsuleparams.get(c).length()) {
+    	if (mi.arguments.length() != c.capsuleParameters.length()) {
     		log.error(mi.pos(), "arguments.of.wiring.mismatch");
     	} else {
     		for (int j = 0; j < mi.arguments.length(); j++) {
@@ -955,7 +955,7 @@ public class Attr extends JCTree.Visitor {
     									.fromString(mi.indexed.toString()))), make.Indexed
     									(mi.indexed, 
     											mi.index)),
-    											syms.capsuleparams.get(c).get(j)
+    											c.capsuleParameters.get(j)
     											.getName()), mi.arguments.get(j));
     			JCExpressionStatement assignAssign = make
     					.Exec(newAssign);
@@ -965,11 +965,11 @@ public class Attr extends JCTree.Visitor {
     }
 
     private void processForEachLoop(JCEnhancedForLoop loop, ListBuffer<JCStatement> assigns, Map<Name, Name> variables) {
-    	ClassSymbol c = syms.capsules.get(names.fromString(loop.var.vartype.toString()));
+    	CapsuleSymbol c = syms.capsules.get(names.fromString(loop.var.vartype.toString()));
     	if(c==null){
     		log.error(loop.pos(), "capsule.array.type.error", loop.var.vartype);
     	}
-    	ClassSymbol d = syms.capsules.get(variables.get(names.fromString(loop.expr.toString())));
+    	CapsuleSymbol d = syms.capsules.get(variables.get(names.fromString(loop.expr.toString())));
     	if(d==null)
     		log.error(loop.expr.pos(), "symbol.not.found");
     	variables.put(loop.var.name, names.fromString(d.name.toString()));
@@ -1039,7 +1039,7 @@ public class Attr extends JCTree.Visitor {
     		initName = mat.elemtype.toString()+"$serial";
     	else if((vdecl.mods.flags & Flags.MONITOR) !=0)
     		initName = mat.elemtype.toString()+"$monitor";
-    	ClassSymbol c = syms.capsules.get(names.fromString(initName));
+    	CapsuleSymbol c = syms.capsules.get(names.fromString(initName));
     	if(c==null){
     		log.error(vdecl.pos(), "capsule.array.type.error", mat.elemtype);
     	}
@@ -1127,7 +1127,7 @@ public class Attr extends JCTree.Visitor {
     		initName = vdecl.vartype.toString()+"$serial";
     	else if((vdecl.mods.flags & Flags.MONITOR) !=0)
     		initName = vdecl.vartype.toString()+"$monitor";
-    	ClassSymbol c = syms.capsules.get(names.fromString((initName)));
+    	CapsuleSymbol c = syms.capsules.get(names.fromString((initName)));
     	decls.add(vdecl);
     	JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
     			make.Ident(c.type.tsym), List.<JCExpression>nil(), null);

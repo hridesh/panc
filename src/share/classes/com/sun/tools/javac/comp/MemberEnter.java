@@ -599,22 +599,34 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
             annotateDefaultValueLater(tree.defaultValue, localEnv, m);
         
         // Panini code
+        CapsuleProcedure capsuleProcedure = new CapsuleProcedure();
+        if(m.owner.isCapsule){
+        	CapsuleSymbol capsule = (CapsuleSymbol)m.owner;
+        	capsuleProcedure = new CapsuleProcedure(capsule, tree.params);
+        	capsule.capsuleProcedures = capsule.capsuleProcedures.append(capsuleProcedure); 
+        }
+        //////////
         for(JCAnnotation annotation : tree.mods.annotations){
     		if(annotation.annotationType.toString().equals("Fresh")){
     			m.isFresh=true;
     			tree.isFresh = true;
+    			capsuleProcedure.isFresh = true;
     		}
     		else if(annotation.annotationType.toString().equals("Commutative")){
     			m.isCommutative=true;
     			tree.isCommutative = true;
+    			capsuleProcedure.isCommunitive = true;
     		}
     	}
-        if(!tree.name.toString().contains("$Original")&&m.owner.isCapsule&&!((tree.name.equals(names.fromString("run")) || (tree.name.equals(names.init))))){
-        	m.isProcedure = true;
-        }
-        else
-        	m.isProcedure = false;
-        // end Panini code
+        ////////////
+		if (!tree.name.toString().contains("$Original")
+				&& m.owner.isCapsule
+				&& !((tree.name.equals(names.fromString("run")) || (tree.name
+						.equals(names.init))))) {
+			m.isProcedure = true;
+		} else
+			m.isProcedure = false;
+		// end Panini code
     }
 
     /** Create a fresh environment for method bodies.

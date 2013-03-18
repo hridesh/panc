@@ -64,11 +64,11 @@ public class CapsuleAnnotationProcessor {
 		return ann;
 	}
 
-	public void translate(ClassSymbol e, Attribute.Compound annotation) {
+	public void translate(CapsuleSymbol e, Attribute.Compound annotation) {
 		String paramsString = "(" + annotation.values.get(0).snd.getValue() + ")";
 		JavacParser parser = (JavacParser)parserFactory.newParser(paramsString, false, false, false);
 		List<JCVariableDecl> params = parser.capsuleParameters();
-		e.params = params;
+		e.capsuleParameters = params;
 	}
 
 }

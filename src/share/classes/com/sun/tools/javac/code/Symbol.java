@@ -72,7 +72,6 @@ public abstract class Symbol implements Element {
     public List<Symbol> capsules; // for System symbols
     public SystemGraphs graphs; // for System symbols
     public JCTree tree;
-    public List<JCTree.JCVariableDecl> params;
 
 	// end Panini code
 
@@ -126,7 +125,7 @@ public abstract class Symbol implements Element {
     public ClassSymbol ownerCapsule() {
         Symbol owner = this.owner;
         while (owner != null) {
-            if (owner.isCapsule) return (ClassSymbol)owner;
+            if (owner.isCapsule) return (CapsuleSymbol)owner;
             else owner = owner.owner;
         }
         return null;
@@ -717,6 +716,59 @@ public abstract class Symbol implements Element {
             return v.visitPackageSymbol(this, p);
         }
     }
+    // Panini code
+    /**
+     * A class for capsule symbols
+     */
+    public static class CapsuleSymbol extends ClassSymbol{
+    	
+    	public List<CapsuleProcedure> capsuleProcedures = List.<CapsuleProcedure>nil();
+    	public CapsuleSymbol translated_serial;
+    	public CapsuleSymbol translated_monitor;
+    	public CapsuleSymbol translated_task;
+    	public CapsuleSymbol translated_thread;
+    	public CapsuleSymbol parentCapsule;
+    	public boolean definedRun;
+    	public List<JCTree.JCVariableDecl> capsuleParameters;
+    	
+    	public CapsuleSymbol getTranslatedSerial(){
+    		return translated_serial;
+    	}
+    	public CapsuleSymbol getTranslatedMonitor(){
+    		return translated_monitor;
+    	}
+    	public CapsuleSymbol getTranslatedTask(){
+    		return translated_task;
+    	}
+    	public CapsuleSymbol getTranslatedThread(){
+    		return translated_thread;
+    	}
+
+		public CapsuleSymbol(long flags, Name name, Type type, Symbol owner) {
+            super(flags, name, type, owner);
+        }
+
+        public CapsuleSymbol(long flags, Name name, Symbol owner) {
+            super(flags, name, owner);
+        }
+        
+        public static CapsuleSymbol fromClassSymbol(ClassSymbol c){
+        	CapsuleSymbol capsule = new CapsuleSymbol(c.flags_field, c.name, c.owner);
+        	capsule.attributes_field = c.attributes_field;
+        	capsule.members_field = c.members_field;
+        	capsule.erasure_field = c.erasure_field;
+        	capsule.classfile = c.classfile;
+        	capsule.sourcefile = c.sourcefile;
+        	capsule.type = c.type;
+        	c = capsule;
+        	return capsule;
+        }
+        
+        // fills in the fields of the capsule symbol, use this instead of translating it in enter?
+        public void fillIn(){
+        }
+    }
+    //end Panini code
     /** A class for class symbols
      */
     public static class ClassSymbol extends TypeSymbol implements TypeElement {
