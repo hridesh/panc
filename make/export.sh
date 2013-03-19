@@ -31,6 +31,7 @@ cp ../examples/HelloWorld.java panini/examples/
 cp ../examples/SignatureExample.java panini/examples/
 cp ../examples/Pi.java panini/examples/
 cp ../examples/Histogram.java panini/examples/
+cp ../examples/shaks12.txt panini/examples/
 cp ../examples/Pipeline.java panini/examples/
 cp ../examples/Philosophers.java panini/examples/
 cp ../examples/EchoClient.java panini/examples/
