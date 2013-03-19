@@ -16,7 +16,7 @@
  *
  * Contributor(s): Eric Lin
  */
-package com.sun.tools.javac.comp;
+package org.paninij.comp;
 
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.*;

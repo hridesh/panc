@@ -50,6 +50,7 @@ import static com.sun.tools.javac.parser.Tokens.TokenKind.STAR;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 // Panini code
 import com.sun.tools.javac.parser.ParserFactory;
+import org.paninij.comp.CapsuleAnnotationProcessor;
 // end Panini code
 
 /** This class enters symbols for all encountered definitions into
