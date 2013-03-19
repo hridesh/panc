@@ -1278,6 +1278,31 @@ public class Enter extends JCTree.Visitor {
     	}
     }
     
+    private void fillInCapsuleSymbolRest(){
+    	for(CapsuleSymbol capsule : syms.capsules.values()){
+    		CapsuleSymbol c = syms.capsules.get(names.fromString(capsule+"$thread"));
+    		if(c!=null){
+    			capsule.translated_thread = c;
+    			c.parentCapsule = capsule;
+    		}
+    		c = syms.capsules.get(names.fromString(capsule+"$task"));
+    		if(c!=null){
+    			capsule.translated_task = c;
+    			c.parentCapsule = capsule;
+    		}
+    		c = syms.capsules.get(names.fromString(capsule+"$monitor"));
+    		if(c!=null){
+    			capsule.translated_monitor = c;
+    			c.parentCapsule = capsule;
+    		}
+    		c = syms.capsules.get(names.fromString(capsule+"$serial"));
+    		if(c!=null){
+    			capsule.translated_serial = c;
+    			c.parentCapsule = capsule;
+    		}
+    	}
+    }
+    
     // end Panini code
     /** Main method: enter all classes in a list of toplevel trees.
      *  @param trees      The list of trees to be processed.
@@ -1287,6 +1312,7 @@ public class Enter extends JCTree.Visitor {
         
         // Panini code
         translateCapsuleAnnotations();
+        fillInCapsuleSymbolRest();
         // end Panini code
     }
 

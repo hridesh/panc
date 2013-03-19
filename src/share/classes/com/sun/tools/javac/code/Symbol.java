@@ -742,6 +742,9 @@ public abstract class Symbol implements Element {
     	public CapsuleSymbol getTranslatedThread(){
     		return translated_thread;
     	}
+    	public CapsuleSymbol getParent(){
+    		return parentCapsule;
+    	}
 
 		public CapsuleSymbol(long flags, Name name, Type type, Symbol owner) {
             super(flags, name, type, owner);
