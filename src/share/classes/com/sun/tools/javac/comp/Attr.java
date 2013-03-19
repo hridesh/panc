@@ -1138,7 +1138,7 @@ public class Attr extends JCTree.Visitor {
     	JCExpressionStatement startAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
     			make.Select(make.Ident(vdecl.name), names.fromString("start")), 
     			List.<JCExpression>nil()));
-    	if(c.hasRun){
+    	if(c.definedRun){
     		if(tree.activeCapsuleCount==0)
 	    		starts.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
 	    				make.Select(make.Ident(vdecl.name), names.fromString("run")), 
