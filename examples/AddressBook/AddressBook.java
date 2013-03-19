@@ -25,7 +25,7 @@
  * are decoupled.
  */
 system AddressBook {
-	CSVBook csv; XMLBook xml; DexBook dex; YellowBook yellow; ISUBook isu; 	//SQLBook sql;
+	CSVBook csv; XMLBook xml; DexBook dex; YellowBook yellow; ISUBook isu;
 	UI ui;
 	csv("AddressBook.csv");
 	xml("AddressBook.xml");

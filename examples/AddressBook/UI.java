@@ -20,11 +20,12 @@
 capsule UI (Book[] books) {
 	void run() {
 		AddressRequest[] requests = new AddressRequest[] {
-				new AddressRequest("Hridesh", "Rajan"),
-				new AddressRequest("Steven", "Kautz"),
-				new AddressRequest("Eric", "Lin"),
-				new AddressRequest("Sarah", "Kabala"),
-				new AddressRequest("Sean", "Jones")
+				new AddressRequest("Barack", "Obama"),
+				new AddressRequest("William", "Clinton"),
+				new AddressRequest("George", "Bush"),
+				new AddressRequest("Ronald", "Reagan"),
+				new AddressRequest("James", "Carter"),
+				new AddressRequest("Gerald", "Ford")
 		};
 		for(int j=0; j<requests.length; j++) {
 			Address[] results = new Address[books.length];

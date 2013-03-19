@@ -26,7 +26,7 @@ import org.htmlparser.util.ParserException;
  * This AddressBook searches for the name in the white pages provided by
  * the DEX company.
  * 
- * @author Hridesh Rajan
+ * @author Hridesh Rajan, Spencer Morrison
  */
 capsule DexBook() implements Book {
 

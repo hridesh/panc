@@ -27,7 +27,7 @@ import org.htmlparser.util.ParserException;
  * This AddressBook handler searches for the name in the Iowa State Phone/E-mail
  * Book.
  * 
- * @author Hridesh Rajan
+ * @author Hridesh Rajan, Spencer Morrison
  */
 capsule ISUBook() implements Book {
 
