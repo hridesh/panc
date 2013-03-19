@@ -66,7 +66,6 @@ public abstract class Symbol implements Element {
 	// Panini code
 	public boolean isSystem;
 	public boolean isLibrary;
-	public boolean isCapsule;
 	public boolean hasRun;
 
     public List<Symbol> capsules; // for System symbols
@@ -125,7 +124,7 @@ public abstract class Symbol implements Element {
     public ClassSymbol ownerCapsule() {
         Symbol owner = this.owner;
         while (owner != null) {
-            if (owner.isCapsule) return (CapsuleSymbol)owner;
+            if (owner instanceof CapsuleSymbol) return (CapsuleSymbol)owner;
             else owner = owner.owner;
         }
         return null;

@@ -707,7 +707,6 @@ public class Enter extends JCTree.Visitor {
                     chk.checkTransparentClass(tree.pos(), c, env.info.scope);
             }
         }
-        c.isCapsule = true;
         tree.sym = c;
         tree.sym.tree = tree;
 
@@ -1271,7 +1270,6 @@ public class Enter extends JCTree.Visitor {
     					else
     						capsuleSymbol = CapsuleSymbol.fromClassSymbol(classSymbol);
     					annotationProcessor.translate(capsuleSymbol, compound);
-    					capsuleSymbol.isCapsule = true;
 	    				syms.capsules.put(capsuleSymbol.name, capsuleSymbol);
     				}
     			}

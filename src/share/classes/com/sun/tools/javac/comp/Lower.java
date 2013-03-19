@@ -2835,7 +2835,7 @@ public class Lower extends TreeTranslator {
     	
     	//check intra capsule calls
     	if(meth.owner.toString().equals(outermostClassDef.sym.toString())&&
-        		outermostClassDef.sym.isCapsule&&
+        		outermostClassDef.sym instanceof CapsuleSymbol&&
         		(currentMethodSym.flags()&PRIVATE)!=0&&
         		(meth.flags()&PUBLIC)!=0&&tree.meth.getTag()!=SELECT){
         	JCIdent id = (JCIdent)tree.meth;
@@ -2847,7 +2847,7 @@ public class Lower extends TreeTranslator {
     public void visitApply(JCMethodInvocation tree) {
         Symbol meth = TreeInfo.symbol(tree.meth);
         // Panini code
-        if(meth.owner.isCapsule){
+        if(meth.owner instanceof CapsuleSymbol){
         	JCProcInvocation pi;
         	try{
         	pi = (JCProcInvocation) tree;

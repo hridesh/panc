@@ -83,21 +83,6 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
    
    protected final boolean empty() { return panini$capsule$size==0; }
    
-   protected final void print() { 
-       synchronized (System.out) {
-           System.out.println("size: " + panini$capsule$size);
-           System.out.print("[");
-           for (int i = 0; i < panini$capsule$objects.length-1; i++) {
-               if (i==panini$capsule$head) System.out.print("!!H!!");
-               if (i==panini$capsule$tail) System.out.print("!!T!!");
-               System.out.print(panini$capsule$objects[i] + ", ");
-           }
-           if (panini$capsule$objects.length>0) System.out.println(panini$capsule$objects[panini$capsule$objects.length-1] + "]");
-           else System.out.println("]");
-           
-       }
-   }
-   
   	/**
   	 * Causes the current capsule to sleep (temporarily cease execution) 
   	 * for the specified number of milliseconds, subject to the precision 

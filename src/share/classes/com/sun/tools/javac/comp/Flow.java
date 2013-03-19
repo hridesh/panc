@@ -362,7 +362,7 @@ public class Flow {
                  exit != null;
                  exit = pendingExits.next()) {
             	// Panini code
-            	if (classDef.sym.isCapsule)
+            	if (classDef.sym instanceof CapsuleSymbol)
             		log.error(exit.tree.pos(),
                             "capsule.procedure.may.not.throw.exceptions");
             	else

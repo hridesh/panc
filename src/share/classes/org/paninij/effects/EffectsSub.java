@@ -91,7 +91,7 @@ public class EffectsSub extends JCTree.Visitor {
 
                     it.remove();
                     if (methSym != method.sym) {
-                        if ((methSym.flags() & PRIVATE) == 0 && methSym.owner.isCapsule) {
+                        if ((methSym.flags() & PRIVATE) == 0 && methSym.owner instanceof CapsuleSymbol) {
                             String methodName = methSym.toString();
                             methodName = methodName.substring(0, methodName.indexOf("("))+"$Original";
                             MethodSymbol methSymOrig = (MethodSymbol)((ClassSymbol)methSym.owner).members_field.lookup(names.fromString(methodName)).sym;

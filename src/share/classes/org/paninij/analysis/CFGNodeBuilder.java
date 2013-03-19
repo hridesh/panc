@@ -527,7 +527,7 @@ public class CFGNodeBuilder extends TreeScanner {
 			if (TreeInfo.symbol(tree.meth) != null) {
 				MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(tree.meth);
 				if ((methSym.flags() & PRIVATE) == 0 &&
-						methSym.owner.isCapsule) {
+						methSym.owner instanceof CapsuleSymbol) {
 					VarSymbol capsuleField = capsuleField(tree);
 					if (methSym.owner == capsule.sym) {
 						String methodName =

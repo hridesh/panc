@@ -84,16 +84,17 @@ public final class Attr extends CapsuleInternal {
     	for(JCTree def : tree.defs){
     		if(def.getTag() == Tag.METHODDEF){
     			for(JCVariableDecl param : ((JCMethodDecl)def).params){
-    				if(param.type.tsym.isCapsule&&!((JCMethodDecl)def).name.toString().contains("$Original")){
+    				if(param.type.tsym instanceof CapsuleSymbol&&!((JCMethodDecl)def).name.toString().contains("$Original")){
     					log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.name.subSequence(0, tree.name.toString().indexOf("$")));
     				}
     			}
 
     		}else if(def.getTag() == Tag.VARDEF){
-    				if(((JCVariableDecl)def).type.tsym.isCapsule)
+    				if(((JCVariableDecl)def).type.tsym instanceof CapsuleSymbol)
     					((JCVariableDecl)def).mods.flags |= FINAL;
     		}
     	}
+    	
         /*if (doGraphs)
             effects.computeEffects(tree);*/
     }
@@ -184,7 +185,7 @@ public final class Attr extends CapsuleInternal {
    
     public void visitProcDef(JCProcDecl tree){
     	Type restype = ((MethodType)tree.sym.type).restype;
-    	if(restype.tsym.isCapsule||tree.sym.getReturnType().isPrimitive()||
+    	if(restype.tsym instanceof CapsuleSymbol||tree.sym.getReturnType().isPrimitive()||
     			tree.sym.getReturnType().toString().equals("java.lang.String"))
     	{
     		log.error("procedure.restype.illegal", tree.sym.getReturnType(), tree.sym);

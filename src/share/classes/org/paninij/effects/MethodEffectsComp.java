@@ -79,7 +79,7 @@ public class MethodEffectsComp extends JCTree.Visitor {
     public void visitApply(JCMethodInvocation tree) { 
         MethodSymbol sym = (MethodSymbol)TreeInfo.symbol(tree.meth);
         if (capsuleSym != null) { // otherwise this is in a library
-            if (sym.owner.isCapsule && sym.owner != capsuleSym) {
+            if (sym.owner instanceof CapsuleSymbol && sym.owner != capsuleSym) {
                 visitResult.add(new OpenEffect(sym));
             } else if (sym.ownerCapsule() != capsuleSym) {
 //                System.out.println("LIBRARY CALL: " + tree);

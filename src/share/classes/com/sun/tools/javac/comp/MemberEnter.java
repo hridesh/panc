@@ -600,7 +600,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         
         // Panini code
         CapsuleProcedure capsuleProcedure = new CapsuleProcedure();
-        if(m.owner.isCapsule){
+        if(m.owner instanceof CapsuleSymbol){
         	CapsuleSymbol capsule = (CapsuleSymbol)m.owner;
         	capsuleProcedure = new CapsuleProcedure(capsule, tree.params);
         	capsule.capsuleProcedures = capsule.capsuleProcedures.append(capsuleProcedure); 
@@ -620,7 +620,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
     	}
         ////////////
 		if (!tree.name.toString().contains("$Original")
-				&& m.owner.isCapsule
+				&& m.owner instanceof CapsuleSymbol
 				&& !((tree.name.equals(names.fromString("run")) || (tree.name
 						.equals(names.init))))) {
 			m.isProcedure = true;

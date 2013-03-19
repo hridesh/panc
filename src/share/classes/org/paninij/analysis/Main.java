@@ -71,8 +71,7 @@ public final class Main {
 		if (!root.sym.name.toString().contains("Panini$Duck")) {
 			// eliminate processing of task, thread versions except for
 			// capsule with run method
-			if (root.sym.isCapsule
-					&& !root.sym.name.toString().contains("$serial")
+			if (!root.sym.name.toString().contains("$serial")
 					&& !root.sym.hasRun)
 				return;
 
