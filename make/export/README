@@ -33,18 +33,33 @@ bin:      This sub-directory contains the command-line version of the
 
 examples: This sub-directory contains various examples of the usage of the 
           Panini language. 
-          > HelloWorld.java: simplest illustrative example 
-          > SignatureExample.java: illustrates signatures in Panini 
-          > Pi.java: an example of using Panini features to implement 
-                     master-worker style program design
-          > Pipeline.java: an example of a pipeline design
-          > Philosophers.java: classic dining philosophers example in 
-                     Panini that illustrates access to shared resources  
-          > EchoServer.java: an example of using Panini features to 
-                     build implicitly-concurrent servers 
-          > EchoClient.java: client of the EchoServer
-          > Histogram.java: another example of master-worker style 
-                     program design 
+          
+          * HelloWorld.java: simplest illustrative example 
+          
+          * SignatureExample.java: illustrates signatures in Panini 
+          
+          * Pi.java: an example of using Panini features to implement 
+                master-worker style program design that computes the value of
+                Pi using the Monte Carlo simulation method.
+                     
+          * Pipeline.java: an example of a pipeline design
+          
+          * Philosophers.java: classic dining philosophers example in 
+                Panini that illustrates access to shared resources 
+                      
+          * EchoServer.java: an example of using Panini features to 
+                build implicitly-concurrent servers that uses a collection 
+                of workers organized in a leader-follower style resource pool.
+                     
+          * EchoClient.java: client of the EchoServer.
+          
+          * Histogram.java: another example of master-worker style program that
+                builds a histogram of ASCII character occurences in the 
+                entire works of Shakespeare. 
+                     
+          * AddressBook: illustration of coarse-grained implicit concurrency
+                in a larger application that given a name searches for that name 
+                in five different kinds of address books.
 
 licenses: This sub-directory contains licenses that apply to various parts 
           of the Panini compiler.     
