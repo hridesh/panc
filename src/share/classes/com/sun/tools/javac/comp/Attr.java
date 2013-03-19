@@ -93,7 +93,7 @@ public class Attr extends JCTree.Visitor {
     final Annotate annotate;
     final DeferredLintHandler deferredLintHandler;
     // Panini code
-    CapsuleInternal capsuleInternal;
+    org.paninij.comp.Attr pAttr;
     SystemEffectsComp effects;
     SystemGraphsBuilder graphsBuilder;
     public static boolean doGraphs = false;
@@ -148,7 +148,7 @@ public class Attr extends JCTree.Visitor {
         unknownTypeInfo = new ResultInfo(TYP, Type.noType);
 
         // Panini code
-        capsuleInternal = new CapsuleInternal(make, names, enter, memberEnter, syms);
+        pAttr = new org.paninij.comp.Attr(make, names, enter, env, memberEnter, syms, log, annotate);
         effects = SystemEffectsComp.instance(context);
         graphsBuilder = SystemGraphsBuilder.instance(context);
         // end Panini code
@@ -720,15 +720,15 @@ public class Attr extends JCTree.Visitor {
     
     // Panini code
     public final void visitCapsuleDef(final JCCapsuleDecl tree){
-    	org.paninij.comp.Attr.visitCapsuleDef(tree, capsuleInternal, enter, this, rs, env, log);
+    	pAttr.visitCapsuleDef(tree, this, rs);
     }
 
     public final void visitSystemDef(final JCSystemDecl tree){
-    	org.paninij.comp.Attr.visitSystemDef(tree, make, names, syms, rs, env, log, annotate, memberEnter, doGraphs);
+    	pAttr.visitSystemDef(tree, rs, doGraphs);
     }
     
     public void visitProcDef(JCProcDecl tree){
-    	org.paninij.comp.Attr.visitProcDef(tree, log);
+    	pAttr.visitProcDef(tree);
     }
     // end Panini code
 

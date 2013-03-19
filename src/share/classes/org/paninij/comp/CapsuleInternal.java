@@ -17,7 +17,7 @@
  * Contributor(s): Rex Fernando
  */
 
-package com.sun.tools.javac.comp;
+package org.paninij.comp;
 
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
@@ -36,6 +36,7 @@ import java.util.Map;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.TypeTags;
+import com.sun.tools.javac.comp.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.PaniniConstants;
 
@@ -46,10 +47,9 @@ import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
 
 public class CapsuleInternal extends Internal {
-	ListBuffer<JCTree> contractDefs;
-	Symtab syms;
-	Enter enter;
-	MemberEnter memberEnter;
+	protected Symtab syms;
+	protected Enter enter;
+	protected MemberEnter memberEnter;
 
 	public CapsuleInternal(TreeMaker make, Names names, Enter enter,
 			MemberEnter memberEnter, Symtab syms) {
@@ -58,10 +58,9 @@ public class CapsuleInternal extends Internal {
 		this.syms = syms;
 		this.memberEnter = memberEnter;
 		specCounter = 0;
-		contractDefs = new ListBuffer<JCTree>();
 	}
 
-	public JCBlock generateThreadCapsuleComputeMethodBody(JCCapsuleDecl tree) {
+	protected JCBlock generateThreadCapsuleComputeMethodBody(JCCapsuleDecl tree) {
 		JCModifiers noMods = mods(0);
 		ListBuffer<JCStatement> messageLoopBody = new ListBuffer<JCStatement>();
 		messageLoopBody.append(var(noMods, PaniniConstants.PANINI_DUCK_TYPE,
@@ -138,7 +137,7 @@ public class CapsuleInternal extends Internal {
 		return b;
 	}
 
-	public JCBlock generateTaskCapsuleComputeMethodBody(JCCapsuleDecl tree) {
+	protected JCBlock generateTaskCapsuleComputeMethodBody(JCCapsuleDecl tree) {
 		JCModifiers noMods = mods(0);
 		ListBuffer<JCStatement> messageLoopBody = new ListBuffer<JCStatement>();
 

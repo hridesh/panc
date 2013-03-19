@@ -54,23 +54,36 @@ import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
 
-public class Attr {
+public final class Attr extends CapsuleInternal {
+	Env<AttrContext> env;
+	Log log;
+	Annotate annotate;
+	//boolean doGraphs;
+	public Attr(TreeMaker make, Names names, Enter enter, Env<AttrContext> env,
+			MemberEnter memberEnter, Symtab syms, Log log,  
+			Annotate annotate) {
+		super(make, names, enter, memberEnter, syms);
+		this.env = env;
+		this.log = log;
+		this.annotate = annotate;
+	}
+
 	// Visitor functions, dispatched here to separate Panini code
 	
-    public static void visitCapsuleDef(final JCCapsuleDecl tree, CapsuleInternal capsuleInternal, Enter enter,
-    		com.sun.tools.javac.comp.Attr attr, Resolve rs, Env<AttrContext> env, Log log){
+    public void visitCapsuleDef(final JCCapsuleDecl tree, com.sun.tools.javac.comp.Attr attr, Resolve rs){
     	if (tree.needsDefaultRun){
-    		List<JCClassDecl> wrapperClasses = capsuleInternal.generateClassWrappers(tree, env, rs);
+    		List<JCClassDecl> wrapperClasses = generateClassWrappers(tree, env, rs);
     		enter.classEnter(wrapperClasses, env.outer);
     		//        	System.out.println(wrapperClasses);
     		attr.attribClassBody(env, tree.sym);
     		if((tree.sym.flags_field & TASK) !=0)
-    			tree.computeMethod.body = capsuleInternal.generateTaskCapsuleComputeMethodBody(tree);
+    			tree.computeMethod.body = generateTaskCapsuleComputeMethodBody(tree);
     		else
-    			tree.computeMethod.body = capsuleInternal.generateThreadCapsuleComputeMethodBody(tree);
+    			tree.computeMethod.body = generateThreadCapsuleComputeMethodBody(tree);
     	}
-    	else
+    	else {
     		attr.attribClassBody(env, tree.sym);
+    	}
     	for(JCTree def : tree.defs){
     		if(def.getTag() == Tag.METHODDEF){
     			for(JCVariableDecl param : ((JCMethodDecl)def).params){
@@ -88,8 +101,7 @@ public class Attr {
             effects.computeEffects(tree);*/
     }
 
-    public static void visitSystemDef(final JCSystemDecl tree, TreeMaker make, Names names, Symtab syms, 
-    		Resolve rs, Env<AttrContext> env, Log log, Annotate annotate, MemberEnter memberEnter, boolean doGraphs){
+    public void visitSystemDef(final JCSystemDecl tree, Resolve rs, boolean doGraphs){
         /*if (doGraphs) {
             tree.sym.graphs = graphsBuilder.buildGraphs(tree);
             effects.substituteProcEffects(tree);
@@ -117,10 +129,10 @@ public class Attr {
     			JCVariableDecl vdecl = (JCVariableDecl) currentSystemStmt;
     			Name vdeclTypeName = names.fromString(vdecl.vartype.toString());
     			if(syms.capsules.containsKey(vdeclTypeName))
-    				org.paninij.comp.Attr.processCapsuleDef(tree, decls, inits, submits, starts, joins, variables, vdecl, make, names, syms, rs, env);
+    				processCapsuleDef(tree, decls, inits, submits, starts, joins, variables, vdecl, rs);
     			else{
     				if(vdecl.vartype.getTag()==CAPSULEARRAY){
-    					org.paninij.comp.Attr.processCapsuleArray(tree, decls, assigns, submits, starts, joins, variables, modArrays, vdecl, make, names, syms, rs, env, log);
+    					processCapsuleArray(tree, decls, assigns, submits, starts, joins, variables, modArrays, vdecl, rs);
     				}
     				else{
     					if(vdecl.vartype.getTag()==TYPEIDENT || vdecl.vartype.toString().equals("String")){
@@ -133,21 +145,21 @@ public class Attr {
     		} else if(systemStmtKind == EXEC){
     			JCExpressionStatement currentExprStmt = (JCExpressionStatement) currentSystemStmt;
     			if(currentExprStmt.expr.getTag()==APPLY){
-    				processCapsuleWiring(currentExprStmt.expr, assigns, variables, make, names, syms, log);
+    				processCapsuleWiring(currentExprStmt.expr, assigns, variables);
     			}
     		}else if(systemStmtKind == FOREACHLOOP)
-    			org.paninij.comp.Attr.processForEachLoop((JCEnhancedForLoop) currentSystemStmt, assigns, variables, make, names, syms, rs, env, log);
+    			processForEachLoop((JCEnhancedForLoop) currentSystemStmt, assigns, variables);
     		else if(systemStmtKind == MAAPPLY)
-    			org.paninij.comp.Attr.processCapsuleArrayWiring((JCCapsuleArrayCall) currentSystemStmt, assigns, variables, modArrays, make, names, syms, rs, env, log);
+    			processCapsuleArrayWiring((JCCapsuleArrayCall) currentSystemStmt, assigns, variables, modArrays, rs);
     		else  			
     			throw new AssertionError("Invalid statement gone through the parser");
     	}
     	if(tree.hasTaskCapsule)
-    		Attr.processSystemAnnotation(tree, inits, make, names, syms, rs, env, log, annotate);
+    		processSystemAnnotation(tree, inits);
 
     	List<JCStatement> mainStmts;
 		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
-    	JCMethodDecl maindecl = org.paninij.comp.Attr.createMainMethod(tree.sym, tree.body, tree.params, mainStmts, make, names, syms);
+    	JCMethodDecl maindecl = createMainMethod(tree.sym, tree.body, tree.params, mainStmts);
     	tree.defs = tree.defs.append(maindecl);
     	
     	tree.switchToClass();
@@ -173,7 +185,7 @@ public class Attr {
         }
     }
    
-    public static void visitProcDef(JCProcDecl tree, Log log){
+    public void visitProcDef(JCProcDecl tree){
     	Type restype = ((MethodType)tree.sym.type).restype;
     	if(restype.tsym.isCapsule||tree.sym.getReturnType().isPrimitive()||
     			tree.sym.getReturnType().toString().equals("java.lang.String"))
@@ -185,8 +197,7 @@ public class Attr {
     }
 
 	// Helper functions
-    private static void processSystemAnnotation(JCSystemDecl tree, ListBuffer<JCStatement> stats, TreeMaker make, Names names, Symtab syms, 
-    		Resolve rs, Env<AttrContext> env, Log log, Annotate annotate){
+    private void processSystemAnnotation(JCSystemDecl tree, ListBuffer<JCStatement> stats){
     	int numberOfPools = 1;
     	for(JCAnnotation annotation : tree.mods.annotations){
     		if(annotation.annotationType.toString().equals("Parallelism")){
@@ -215,8 +226,7 @@ public class Attr {
     											List.<JCStatement> nil()))), null));
     }
 
-    public static JCMethodDecl createMainMethod(final ClassSymbol containingClass, final JCBlock methodBody, final List<JCVariableDecl> params, final List<JCStatement> mainStmts, 
-    		TreeMaker make, Names names, Symtab syms) {
+    private JCMethodDecl createMainMethod(final ClassSymbol containingClass, final JCBlock methodBody, final List<JCVariableDecl> params, final List<JCStatement> mainStmts) {
     	Type arrayType = new ArrayType(syms.stringType, syms.arrayClass);
     	MethodSymbol msym = new MethodSymbol(
     			PUBLIC|STATIC,
@@ -240,10 +250,9 @@ public class Attr {
     	return maindecl;
     }
 
-    private static void processCapsuleArrayWiring(JCCapsuleArrayCall mi,
+    private void processCapsuleArrayWiring(JCCapsuleArrayCall mi,
     		ListBuffer<JCStatement> assigns, Map<Name, Name> variables,
-    		Map<Name, Integer> modArrays, TreeMaker make, Names names, Symtab syms, 
-    		Resolve rs, Env<AttrContext> env, Log log) {
+    		Map<Name, Integer> modArrays, Resolve rs) {
     	if(!variables.containsKey(names
     			.fromString(mi.name.toString()))){
     		log.error(mi.pos(), "symbol.not.found");
@@ -280,8 +289,7 @@ public class Attr {
     	}
     }
 
-    public static void processForEachLoop(JCEnhancedForLoop loop, ListBuffer<JCStatement> assigns, Map<Name, Name> variables, TreeMaker make, Names names, Symtab syms, 
-    		Resolve rs, Env<AttrContext> env, Log log) {
+    private void processForEachLoop(JCEnhancedForLoop loop, ListBuffer<JCStatement> assigns, Map<Name, Name> variables) {
     	CapsuleSymbol c = syms.capsules.get(names.fromString(loop.var.vartype.toString()));
     	if(c==null){
     		log.error(loop.pos(), "capsule.array.type.error", loop.var.vartype);
@@ -320,7 +328,7 @@ public class Attr {
     				log.error(s.pos(),"foreachloop.statement.error");
     			}
     			JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)s).expr;
-    			loopBody.appendList(transWiring(mi,variables, make, names, syms, log));
+    			loopBody.appendList(transWiring(mi,variables));
     		}
     	}
     	else{
@@ -330,7 +338,7 @@ public class Attr {
     			log.error(loop.body.pos(),"foreachloop.statement.error");
     		}
     		JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)loop.body).expr;
-    		loopBody.appendList(transWiring(mi,variables, make, names, syms, log));
+    		loopBody.appendList(transWiring(mi,variables));
     	}
 
     	JCForLoop floop = 
@@ -341,16 +349,16 @@ public class Attr {
     	assigns.append(floop);
     }
     
-    public static void processCapsuleWiring(final JCExpression wiring, final ListBuffer<JCStatement> assigns, final Map<Name, Name> variables, TreeMaker make, Names names, Symtab syms, Log log) {
+    private void processCapsuleWiring(final JCExpression wiring, final ListBuffer<JCStatement> assigns, final Map<Name, Name> variables) {
     	JCMethodInvocation mi = (JCMethodInvocation) wiring;
     	try{
-    		assigns.appendList(transWiring(mi, variables, make, names, syms, log));
+    		assigns.appendList(transWiring(mi, variables));
     	}catch (NullPointerException e){
     		log.error(mi.pos(), "only.capsule.types.allowed");
     	}
     }
 
-    private static List<JCStatement> transWiring(final JCMethodInvocation mi, final Map<Name, Name> variables, TreeMaker make, Names names, Symtab syms, Log log){
+    private List<JCStatement> transWiring(final JCMethodInvocation mi, final Map<Name, Name> variables){
     	if(variables.get(names
     			.fromString(mi.meth.toString()))==null){
     		log.error(mi.pos(), "capsule.array.type.error", mi.meth);
@@ -376,13 +384,11 @@ public class Attr {
     	return assigns.toList();
     }
 
-    public static void processCapsuleArray(JCSystemDecl tree,
+    private void processCapsuleArray(JCSystemDecl tree,
     		ListBuffer<JCStatement> decls, ListBuffer<JCStatement> assigns,
     		ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
     		ListBuffer<JCStatement> joins, Map<Name, Name> variables,
-    		Map<Name, Integer> modArrays, JCVariableDecl vdecl,
-    		TreeMaker make, Names names, Symtab syms, 
-    		Resolve rs, Env<AttrContext> env, Log log) {
+    		Map<Name, Integer> modArrays, JCVariableDecl vdecl, Resolve rs) {
     	JCCapsuleArray mat = (JCCapsuleArray)vdecl.vartype;
     	String initName = mat.elemtype.toString()+"$thread";
     	if((vdecl.mods.flags & Flags.TASK) !=0){
@@ -467,12 +473,11 @@ public class Attr {
     	modArrays.put(vdecl.name, mat.amount);
     }
 
-    public static void processCapsuleDef(JCSystemDecl tree,
+    private void processCapsuleDef(JCSystemDecl tree,
     		ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
     		ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
     		ListBuffer<JCStatement> joins, Map<Name, Name> variables,
-    		JCVariableDecl vdecl, TreeMaker make, Names names, Symtab syms, 
-    		Resolve rs, Env<AttrContext> env) {
+    		JCVariableDecl vdecl, Resolve rs) {
     	String initName = vdecl.vartype.toString()+"$thread";
     	if((vdecl.mods.flags & Flags.TASK) !=0){
     		initName = vdecl.vartype.toString()+"$task";
@@ -528,8 +533,7 @@ public class Attr {
     	variables.put(vdecl.name, c.name);
     }
 
-    public static JCClassDecl createOwnerInterface(final String interfaceName, 
-    		TreeMaker make, Names names) {
+    private JCClassDecl createOwnerInterface(final String interfaceName) {
     	JCClassDecl typeInterface = 
     			make.ClassDef(
     					make.Modifiers(PUBLIC|INTERFACE|SYNTHETIC), 

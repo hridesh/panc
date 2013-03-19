@@ -17,24 +17,16 @@
  * Contributor(s): Rex Fernando
  */
 
-package com.sun.tools.javac.comp;
+package org.paninij.comp;
 
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.util.List;
 import java.util.HashMap;
-import java.util.Iterator;
-
-import com.sun.tools.javac.code.Type.*;
-import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
-import com.sun.tools.javac.code.Symtab;
-import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
-
-public class Internal
-{
+public class Internal {
     protected TreeMaker make;
     protected Names names;
     protected int closureCounter;

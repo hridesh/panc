@@ -113,7 +113,7 @@ public class Enter extends JCTree.Visitor {
     JavaFileManager fileManager;
     PkgInfo pkginfoOpt;
     // Panini code
-    CapsuleInternal capsuleInternal;
+    org.paninij.comp.Attr pAttr;
     CapsuleAnnotationProcessor annotationProcessor;
     // end Panini code
 
@@ -151,7 +151,7 @@ public class Enter extends JCTree.Visitor {
         pkginfoOpt = PkgInfo.get(options);
 
         // Panini code
-        capsuleInternal = new CapsuleInternal(make, names, this, memberEnter, syms);
+        pAttr = new org.paninij.comp.Attr(make, names, this, env, memberEnter, syms, log, annotate);
         annotationProcessor = new CapsuleAnnotationProcessor(names, make, ParserFactory.instance(context));
         // end Panini code
     }
