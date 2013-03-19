@@ -67,7 +67,7 @@ public final class Attr extends CapsuleInternal {
 
 	// Visitor functions, dispatched here to separate Panini code
 	
-    public void visitCapsuleDef(final JCCapsuleDecl tree, com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env, Resolve rs){
+    public void visitCapsuleDef(final JCCapsuleDecl tree, final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env, Resolve rs){
     	if (tree.needsDefaultRun){
     		List<JCClassDecl> wrapperClasses = generateClassWrappers(tree, env, rs);
     		enter.classEnter(wrapperClasses, env.outer);
