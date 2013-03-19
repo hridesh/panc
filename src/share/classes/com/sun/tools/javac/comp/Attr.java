@@ -1069,7 +1069,7 @@ public class Attr extends JCTree.Visitor {
     					List.of(step), 
     					make.Block(0, loopBody.toList()));
     	assigns.append(floop);
-    	if(c.hasRun){
+    	if(c.definedRun){
     		for(int j = mat.amount-1; j>=0;j--){
     			if(tree.activeCapsuleCount==0)
     				starts.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
