@@ -49,6 +49,7 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
+import org.paninij.comp.*;
 import org.paninij.effects.*;
 import org.paninij.systemgraphs.*;
 import org.paninij.consistency.ConsistencyCheck;
@@ -1160,35 +1161,16 @@ public class Attr extends JCTree.Visitor {
     				make.Select(make.Ident(vdecl.name), 
     						names.fromString(PaniniConstants.PANINI_SHUTDOWN)), List.<JCExpression>nil())));
     	}
-    	//					tree.defs = tree.defs.append(
-    	//							createOwnerInterface(
-    	//									vdecl.vartype.toString()+"_"+vdecl.name.toString()));
+//    	JCClassDecl ownerIface = org.paninij.comp.Attr.createOwnerInterface(
+//    			vdecl.vartype.toString()+"_"+vdecl.name.toString(), make, names);
+//    	enter.classEnter(ownerIface, env);
+//    	tree.defs = tree.defs.append(ownerIface);
 
     	variables.put(vdecl.name, c.name);
     }
 
-    private JCClassDecl createOwnerInterface(final String interfaceName) {
-    	JCClassDecl typeInterface = 
-    			make.ClassDef(
-    					make.Modifiers(PUBLIC|INTERFACE|SYNTHETIC), 
-    					names.fromString(interfaceName), 
-    					List.<JCTypeParameter>nil(), null, 
-    					List.<JCExpression>nil(), 
-    					List.<JCTree>nil());
-    	enter.classEnter(typeInterface, env);
-    	return typeInterface;
-    }
-
-
     public void visitProcDef(JCProcDecl tree){
-    	Type restype = ((MethodType)tree.sym.type).restype;
-    	if(restype.tsym.isCapsule||tree.sym.getReturnType().isPrimitive()||
-    			tree.sym.getReturnType().toString().equals("java.lang.String"))
-    	{
-    		log.error("procedure.restype.illegal", tree.sym.getReturnType(), tree.sym);
-    		System.exit(1);
-    	}
-    	tree.switchToMethod();
+    	org.paninij.comp.Attr.visitProcDef(tree, log);
     }
     // end Panini code
 
