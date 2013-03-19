@@ -148,7 +148,7 @@ public class Attr extends JCTree.Visitor {
         unknownTypeInfo = new ResultInfo(TYP, Type.noType);
 
         // Panini code
-        pAttr = new org.paninij.comp.Attr(make, names, enter, env, memberEnter, syms, log, annotate);
+        pAttr = new org.paninij.comp.Attr(make, names, enter, memberEnter, syms, log, annotate);
         effects = SystemEffectsComp.instance(context);
         graphsBuilder = SystemGraphsBuilder.instance(context);
         // end Panini code
@@ -720,11 +720,11 @@ public class Attr extends JCTree.Visitor {
     
     // Panini code
     public final void visitCapsuleDef(final JCCapsuleDecl tree){
-    	pAttr.visitCapsuleDef(tree, this, rs);
+    	pAttr.visitCapsuleDef(tree, this, env, rs);
     }
 
     public final void visitSystemDef(final JCSystemDecl tree){
-    	pAttr.visitSystemDef(tree, rs, doGraphs);
+    	pAttr.visitSystemDef(tree, rs, env, doGraphs);
     }
     
     public void visitProcDef(JCProcDecl tree){
