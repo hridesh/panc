@@ -1625,7 +1625,7 @@ public class Attr extends JCTree.Visitor {
             			}
             		}else if(tree.meth.hasTag(Tag.SELECT)){
             			JCFieldAccess clazz = (JCFieldAccess)tree.meth;
-            			if(clazz.selected.hasTag(Tag.IDENT)&&((JCIdent)clazz.selected).name.equals(names._this))
+            			if(clazz.selected.hasTag(Tag.IDENT)&&((JCIdent)clazz.selected).name.equals(names._this)&&clazz.sym.owner == env.enclClass.sym)
             				if(!clazz.name.toString().contains("$") 
             						&&!clazz.name.toString().equals(PaniniConstants.PANINI_YIELD)
             						&&!clazz.name.toString().equals(PaniniConstants.PANINI_SHUTDOWN)
