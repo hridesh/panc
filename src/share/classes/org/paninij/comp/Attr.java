@@ -55,22 +55,19 @@ import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
 
 public final class Attr extends CapsuleInternal {
-	Env<AttrContext> env;
 	Log log;
 	Annotate annotate;
-	//boolean doGraphs;
 	public Attr(TreeMaker make, Names names, Enter enter, Env<AttrContext> env,
 			MemberEnter memberEnter, Symtab syms, Log log,  
 			Annotate annotate) {
 		super(make, names, enter, memberEnter, syms);
-		this.env = env;
 		this.log = log;
 		this.annotate = annotate;
 	}
 
 	// Visitor functions, dispatched here to separate Panini code
 	
-    public void visitCapsuleDef(final JCCapsuleDecl tree, com.sun.tools.javac.comp.Attr attr, Resolve rs){
+    public void visitCapsuleDef(final JCCapsuleDecl tree, com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env, Resolve rs){
     	if (tree.needsDefaultRun){
     		List<JCClassDecl> wrapperClasses = generateClassWrappers(tree, env, rs);
     		enter.classEnter(wrapperClasses, env.outer);
@@ -101,7 +98,7 @@ public final class Attr extends CapsuleInternal {
             effects.computeEffects(tree);*/
     }
 
-    public void visitSystemDef(final JCSystemDecl tree, Resolve rs, boolean doGraphs){
+    public void visitSystemDef(final JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs){
         /*if (doGraphs) {
             tree.sym.graphs = graphsBuilder.buildGraphs(tree);
             effects.substituteProcEffects(tree);
@@ -129,10 +126,10 @@ public final class Attr extends CapsuleInternal {
     			JCVariableDecl vdecl = (JCVariableDecl) currentSystemStmt;
     			Name vdeclTypeName = names.fromString(vdecl.vartype.toString());
     			if(syms.capsules.containsKey(vdeclTypeName))
-    				processCapsuleDef(tree, decls, inits, submits, starts, joins, variables, vdecl, rs);
+    				processCapsuleDef(tree, decls, inits, submits, starts, joins, variables, vdecl, rs, env);
     			else{
     				if(vdecl.vartype.getTag()==CAPSULEARRAY){
-    					processCapsuleArray(tree, decls, assigns, submits, starts, joins, variables, modArrays, vdecl, rs);
+    					processCapsuleArray(tree, decls, assigns, submits, starts, joins, variables, modArrays, vdecl, rs, env);
     				}
     				else{
     					if(vdecl.vartype.getTag()==TYPEIDENT || vdecl.vartype.toString().equals("String")){
@@ -150,12 +147,12 @@ public final class Attr extends CapsuleInternal {
     		}else if(systemStmtKind == FOREACHLOOP)
     			processForEachLoop((JCEnhancedForLoop) currentSystemStmt, assigns, variables);
     		else if(systemStmtKind == MAAPPLY)
-    			processCapsuleArrayWiring((JCCapsuleArrayCall) currentSystemStmt, assigns, variables, modArrays, rs);
+    			processCapsuleArrayWiring((JCCapsuleArrayCall) currentSystemStmt, assigns, variables, modArrays, rs, env);
     		else  			
     			throw new AssertionError("Invalid statement gone through the parser");
     	}
     	if(tree.hasTaskCapsule)
-    		processSystemAnnotation(tree, inits);
+    		processSystemAnnotation(tree, inits, env);
 
     	List<JCStatement> mainStmts;
 		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
@@ -197,7 +194,7 @@ public final class Attr extends CapsuleInternal {
     }
 
 	// Helper functions
-    private void processSystemAnnotation(JCSystemDecl tree, ListBuffer<JCStatement> stats){
+    private void processSystemAnnotation(JCSystemDecl tree, ListBuffer<JCStatement> stats, Env<AttrContext> env){
     	int numberOfPools = 1;
     	for(JCAnnotation annotation : tree.mods.annotations){
     		if(annotation.annotationType.toString().equals("Parallelism")){
@@ -252,7 +249,7 @@ public final class Attr extends CapsuleInternal {
 
     private void processCapsuleArrayWiring(JCCapsuleArrayCall mi,
     		ListBuffer<JCStatement> assigns, Map<Name, Name> variables,
-    		Map<Name, Integer> modArrays, Resolve rs) {
+    		Map<Name, Integer> modArrays, Resolve rs, Env<AttrContext> env) {
     	if(!variables.containsKey(names
     			.fromString(mi.name.toString()))){
     		log.error(mi.pos(), "symbol.not.found");
@@ -388,7 +385,7 @@ public final class Attr extends CapsuleInternal {
     		ListBuffer<JCStatement> decls, ListBuffer<JCStatement> assigns,
     		ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
     		ListBuffer<JCStatement> joins, Map<Name, Name> variables,
-    		Map<Name, Integer> modArrays, JCVariableDecl vdecl, Resolve rs) {
+    		Map<Name, Integer> modArrays, JCVariableDecl vdecl, Resolve rs, Env<AttrContext> env) {
     	JCCapsuleArray mat = (JCCapsuleArray)vdecl.vartype;
     	String initName = mat.elemtype.toString()+"$thread";
     	if((vdecl.mods.flags & Flags.TASK) !=0){
@@ -477,7 +474,7 @@ public final class Attr extends CapsuleInternal {
     		ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
     		ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
     		ListBuffer<JCStatement> joins, Map<Name, Name> variables,
-    		JCVariableDecl vdecl, Resolve rs) {
+    		JCVariableDecl vdecl, Resolve rs, Env<AttrContext> env) {
     	String initName = vdecl.vartype.toString()+"$thread";
     	if((vdecl.mods.flags & Flags.TASK) !=0){
     		initName = vdecl.vartype.toString()+"$task";
