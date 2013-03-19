@@ -396,8 +396,7 @@ public class Enter extends JCTree.Visitor {
     					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.ACTIVE, capsule)), names.fromString(capsule.name + "$thread"), 
     							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
     			JCCapsuleDecl copyCapsule = 
-    					make.CapsuleDef(make.Modifiers(INTERFACE, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclInterface")), 
-                    			List.<JCExpression>of(make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())))))), 
+    					make.CapsuleDef(make.Modifiers(INTERFACE, annotationProcessor.createCapsuleAnnotation(Flags.INTERFACE, capsule)), 
     							capsule.name, tc.copy(capsule.params), tc.copy(capsule.implementing), interfaceBody.toList());
     			copiedDefs.add(copyCapsule);
     			copiedDefs.add(copyActive);
@@ -803,6 +802,7 @@ public class Enter extends JCTree.Visitor {
         syms.capsules.put(c.name, c);
         classEnter(tree.defs, localEnv);
         result = c.type;
+        annotationProcessor.setDefinedRun(tree, c.definedRun);
 //        c.fillIn();//fill in fields?
         tree.switchToClass();
     }
