@@ -34,9 +34,17 @@ bin:      This sub-directory contains the command-line version of the
 examples: This sub-directory contains various examples of the usage of the 
           Panini language. 
           > HelloWorld.java: simplest illustrative example 
-          > Pi.java: An example of using Panini features to implement 
-                     master-worker style program design.
-          > Pipeline.java: an example of a pipeline design 
+          > SignatureExample.java: illustrates signatures in Panini 
+          > Pi.java: an example of using Panini features to implement 
+                     master-worker style program design
+          > Pipeline.java: an example of a pipeline design
+          > Philosophers.java: classic dining philosophers example in 
+                     Panini that illustrates access to shared resources  
+          > EchoServer.java: an example of using Panini features to 
+                     build implicitly-concurrent servers 
+          > EchoClient.java: client of the EchoServer
+          > Histogram.java: another example of master-worker style 
+                     program design 
 
 licenses: This sub-directory contains licenses that apply to various parts 
           of the Panini compiler.     
