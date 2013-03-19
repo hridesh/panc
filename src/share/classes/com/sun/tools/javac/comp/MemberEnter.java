@@ -396,7 +396,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
     /** Enter field and method definitions and process import
      *  clauses, catching any completion failure exceptions.
      */
-    protected void memberEnter(JCTree tree, Env<AttrContext> env) {
+    public void memberEnter(JCTree tree, Env<AttrContext> env) {
         Env<AttrContext> prevEnv = this.env;
         try {
             this.env = env;

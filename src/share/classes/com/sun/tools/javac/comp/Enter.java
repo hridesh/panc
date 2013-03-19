@@ -282,7 +282,7 @@ public class Enter extends JCTree.Visitor {
 
     /** Visitor method: enter classes of a list of trees, returning a list of types.
      */
-    <T extends JCTree> List<Type> classEnter(List<T> trees, Env<AttrContext> env) {
+    public <T extends JCTree> List<Type> classEnter(List<T> trees, Env<AttrContext> env) {
         ListBuffer<Type> ts = new ListBuffer<Type>();
         for (List<T> l = trees; l.nonEmpty(); l = l.tail) {
             Type t = classEnter(l.head, env);

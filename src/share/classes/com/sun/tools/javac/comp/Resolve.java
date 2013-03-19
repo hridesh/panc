@@ -1389,7 +1389,7 @@ public class Resolve {
      *  @param env       The current environment.
      *  @param name      The type's name.
      */
-    Symbol findType(Env<AttrContext> env, Name name) {
+    public Symbol findType(Env<AttrContext> env, Name name) {
         Symbol bestSoFar = typeNotFound;
         Symbol sym;
         boolean staticOnly = false;
@@ -1958,7 +1958,7 @@ public class Resolve {
      *  @param allowBoxing Allow boxing and varargs conversions.
      *  @param useVarargs Box trailing arguments into an array for varargs.
      */
-    Symbol resolveConstructor(DiagnosticPosition pos, Env<AttrContext> env,
+    public Symbol resolveConstructor(DiagnosticPosition pos, Env<AttrContext> env,
                               Type site, List<Type> argtypes,
                               List<Type> typeargtypes,
                               boolean allowBoxing,

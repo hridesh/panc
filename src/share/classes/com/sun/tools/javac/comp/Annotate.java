@@ -133,7 +133,7 @@ public class Annotate {
      *  Attribute. Used from MemberEnter for attaching the attributes
      *  to the annotated symbol.
      */
-    Attribute.Compound enterAnnotation(JCAnnotation a,
+    public Attribute.Compound enterAnnotation(JCAnnotation a,
                                        Type expected,
                                        Env<AttrContext> env) {
         // The annotation might have had its type attributed (but not checked)
