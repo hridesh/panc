@@ -434,7 +434,7 @@ public final class Attr extends CapsuleInternal {
     					List.of(step), 
     					make.Block(0, loopBody.toList()));
     	assigns.append(floop);
-    	if(c.hasRun){
+    	if(c.definedRun){
     		for(int j = mat.amount-1; j>=0;j--){
     			if(tree.activeCapsuleCount==0)
     				starts.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
@@ -503,7 +503,7 @@ public final class Attr extends CapsuleInternal {
     	JCExpressionStatement startAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
     			make.Select(make.Ident(vdecl.name), names.fromString("start")), 
     			List.<JCExpression>nil()));
-    	if(c.hasRun){
+    	if(c.definedRun){
     		if(tree.activeCapsuleCount==0)
 	    		starts.append(make.Exec(make.Apply(List.<JCExpression>nil(), 
 	    				make.Select(make.Ident(vdecl.name), names.fromString("run")), 

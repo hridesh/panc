@@ -796,7 +796,7 @@ public class Enter extends JCTree.Visitor {
 	    				null));
 	    		fields = fields.tail;
 	    	}
-        	c.hasRun = true;
+        	c.definedRun = true;
         }
         ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
         params.appendList(tree.params);
@@ -825,7 +825,7 @@ public class Enter extends JCTree.Visitor {
     	return stats.toList();
     }
     
-    public ListBuffer<JCTree> translateSerialCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
+    public ListBuffer<JCTree> translateSerialCapsule(JCCapsuleDecl tree, CapsuleSymbol c, Env<AttrContext> localEnv){
     	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_SEQUENTIAL));
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
         for(int i=0;i<tree.defs.length();i++){
@@ -858,7 +858,7 @@ public class Enter extends JCTree.Visitor {
     			definitions.add(state);
     		}else definitions.add(tree.defs.get(i));
         }
-        c.hasRun = false;
+        c.definedRun = false;
         for(JCMethodDecl d : tree.publicMethods){
     		definitions.add(d);
     	}
@@ -866,7 +866,7 @@ public class Enter extends JCTree.Visitor {
         return definitions;
     }
     
-    public ListBuffer<JCTree> translateMonitorCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
+    public ListBuffer<JCTree> translateMonitorCapsule(JCCapsuleDecl tree, CapsuleSymbol c, Env<AttrContext> localEnv){
     	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_SEQUENTIAL));
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
         for(int i=0;i<tree.defs.length();i++){
@@ -899,7 +899,7 @@ public class Enter extends JCTree.Visitor {
     			definitions.add(state);
     		}else definitions.add(tree.defs.get(i));
         }
-        c.hasRun = false;
+        c.definedRun = false;
         for(JCMethodDecl d : tree.publicMethods){
     		definitions.add(d);
     	}
@@ -975,7 +975,6 @@ public class Enter extends JCTree.Visitor {
     			definitions.add(state);
     		}else definitions.add(tc.copy(tree.defs.get(i)));
         }
-        c.definedRun = hasRun;
         if(!hasRun){
         	for(JCMethodDecl mdecl : tree.publicMethods){
         		String constantName = PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString();
@@ -983,7 +982,7 @@ public class Enter extends JCTree.Visitor {
         			for(JCVariableDecl param: mdecl.params){
         				constantName = constantName + "$" + param.vartype.toString();
         			}
-        		c.hasRun = false;
+        		c.definedRun = false;
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
 	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString(PaniniConstants.PANINI_PUSH)), List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))))));
 	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
@@ -1043,7 +1042,7 @@ public class Enter extends JCTree.Visitor {
             tree.computeMethod = m;
     	}
         else{
-        	c.hasRun = true;
+        	c.definedRun = true;
         	for(JCMethodDecl d : tree.publicMethods){
         		definitions.add(d);
         	}
@@ -1075,7 +1074,7 @@ public class Enter extends JCTree.Visitor {
         return definitions;
     }
     
-    public ListBuffer<JCTree> translateTaskCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
+    public ListBuffer<JCTree> translateTaskCapsule(JCCapsuleDecl tree, CapsuleSymbol c, Env<AttrContext> localEnv){
     	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_TASK));
     	int indexer = 0;
         boolean hasRun = false;
@@ -1131,7 +1130,7 @@ public class Enter extends JCTree.Visitor {
         			for(JCVariableDecl param: mdecl.params){
         				constantName = constantName + "$" + param.vartype.toString();
         			}
-        		c.hasRun = false;
+        		c.definedRun = false;
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
 	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString(PaniniConstants.PANINI_PUSH)), List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))))));
 	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
@@ -1191,7 +1190,7 @@ public class Enter extends JCTree.Visitor {
             tree.computeMethod = m;
     	}
         else{
-        	c.hasRun = true;
+        	c.definedRun = true;
         	for(JCMethodDecl d : tree.publicMethods){
         		definitions.add(d);
         	}
@@ -1268,7 +1267,11 @@ public class Enter extends JCTree.Visitor {
     		if(classSymbol.attributes_field.size()!=0){
     			for(Attribute.Compound compound : classSymbol.attributes_field){
     				if(compound.type.tsym.getQualifiedName().toString().contains("PaniniCapsuleDecl")){
-    					CapsuleSymbol capsuleSymbol = CapsuleSymbol.fromClassSymbol(classSymbol);
+    					CapsuleSymbol capsuleSymbol;
+    					if(classSymbol instanceof CapsuleSymbol)
+    						capsuleSymbol = (CapsuleSymbol)classSymbol;
+    					else
+    						capsuleSymbol = CapsuleSymbol.fromClassSymbol(classSymbol);
     					annotationProcessor.translate(capsuleSymbol, compound);
     					capsuleSymbol.isCapsule = true;
 	    				syms.capsules.put(capsuleSymbol.name, capsuleSymbol);

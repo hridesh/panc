@@ -1515,8 +1515,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 			
 			return Kind.IPFOREACH;
 		}
-
-		
 		
 		@Override
 		public VariableTree getVariable() {
