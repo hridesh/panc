@@ -41,24 +41,54 @@ public class CapsuleAnnotationProcessor {
 		this.parserFactory = parserFactory;
 	}
 	
+	//Can only be called if capsule annotation is defined.
+	public void setDefinedRun(JCCapsuleDecl capsule, boolean definedRun){
+		for(JCAnnotation ann : capsule.mods.annotations){
+			if(ann.toString().contains("PaniniCapsuleDecl")){
+				for(JCExpression exp : ann.args){
+					if(exp.getTag() == Tag.ASSIGN && ((JCAssign)exp).lhs.toString().equals("definedRun"))
+						((JCAssign)exp).rhs = make.Literal(new Boolean(definedRun));
+				}
+			}
+		}
+	}
+	
 	public List<JCAnnotation> createCapsuleAnnotation(long flag, JCCapsuleDecl capsule){
 		List<JCAnnotation> ann = List.<JCAnnotation>nil();
 		if(flag == Flags.SERIAL)
 			ann = List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
 					List.<JCExpression>of(make.Literal("SERIAL"))), make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclSequential")), 
-							List.<JCExpression>of(make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())))));
+							List.<JCExpression>of(
+									make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())),
+									make.Assign(make.Ident(names.fromString("definedRun")), make.Literal(new Boolean(false)))
+									)));
 		else if(flag == Flags.MONITOR)
 			ann = List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
 					List.<JCExpression>of(make.Literal("MONITOR"))), make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclSynchronized")), 
-							List.<JCExpression>of(make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())))));
+							List.<JCExpression>of(
+									make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())),
+									make.Assign(make.Ident(names.fromString("definedRun")), make.Literal(new Boolean(false)))
+									)));
 		else if(flag == Flags.ACTIVE)
 			ann = List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
 					List.<JCExpression>of(make.Literal("ACTIVE"))), make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclThread")), 
-							List.<JCExpression>of(make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())))));
+							List.<JCExpression>of(
+									make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())),
+									make.Assign(make.Ident(names.fromString("definedRun")), make.Literal(new Boolean(false)))
+									)));
 		else if(flag == Flags.TASK)
 			ann = List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
 					List.<JCExpression>of(make.Literal("TASK"))), make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclTask")), 
-							List.<JCExpression>of(make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())))));
+							List.<JCExpression>of(
+									make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())),
+									make.Assign(make.Ident(names.fromString("definedRun")), make.Literal(new Boolean(false)))
+									)));
+		else if(flag == Flags.INTERFACE)
+			ann = List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclInterface")), 
+        			List.<JCExpression>of(
+        					make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())),
+        					make.Assign(make.Ident(names.fromString("definedRun")), make.Literal(new Boolean(false)))
+        					)));
 		else 
 			throw new AssertionError("Not a capsuleKind flag");
 		return ann;
@@ -68,7 +98,9 @@ public class CapsuleAnnotationProcessor {
 		String paramsString = "(" + annotation.values.get(0).snd.getValue() + ")";
 		JavacParser parser = (JavacParser)parserFactory.newParser(paramsString, false, false, false);
 		List<JCVariableDecl> params = parser.capsuleParameters();
+		boolean definedRun = (Boolean)annotation.values.get(1).snd.getValue();
 		e.capsuleParameters = params;
+		e.definedRun = definedRun;
 	}
 
 }

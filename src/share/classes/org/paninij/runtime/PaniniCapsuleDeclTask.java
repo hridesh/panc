@@ -19,5 +19,6 @@ import java.lang.annotation.Target;
 @Inherited()
 public @interface PaniniCapsuleDeclTask {
 	String params();
+	boolean definedRun();
 }
 
