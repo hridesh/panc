@@ -189,8 +189,7 @@ public class TreeTranslator extends JCTree.Visitor {
     }
     
     // Panini code
-    public void visitIPForeach(JCIPForeach tree)
-    {
+    public void visitIPForeach(JCIPForeach tree) {
     	//tree.var = translate(tree.var);
     	//tree.carr = translate(tree.carr);
     	//tree.body = translate(tree.body)

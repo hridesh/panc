@@ -455,8 +455,7 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
         return r;
 	}
 	
-	public R visitIPForeach(IPForeachTree node, P p)
-    {
+	public R visitIPForeach(IPForeachTree node, P p){
     	R r = scan(node.getVariable(), p);
     	r = scanAndReduce(node.getCapsuleArray(), p, r);
     	r = scanAndReduce(node.getMethod(), p, r);

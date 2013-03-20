@@ -735,8 +735,7 @@ public class Attr extends JCTree.Visitor {
     	pAttr.visitProcDef(tree);
     }
     
-    public void visitIPForeach(JCIPForeach tree)
-    {
+    public void visitIPForeach(JCIPForeach tree){
     	
     	attribStat(tree.var, env);
     	attribExpr(tree.carr, env);
