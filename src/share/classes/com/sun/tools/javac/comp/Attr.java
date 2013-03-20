@@ -745,7 +745,11 @@ public class Attr extends JCTree.Visitor {
     	Type proto = new ArrayType(retType, syms.arrayClass);
     	chk.checkType(tree.pos(), proto, resultInfo.pt);
     	result = proto;
- 
+    	tree.endNodes = new java.util.LinkedList<JCTree>();
+    	tree.successors = new java.util.LinkedList<JCTree>();
+    	tree.predecessors = new java.util.LinkedList<JCTree>();
+    	tree.startNodes = new java.util.LinkedList<JCTree>();
+    	tree.type = proto;
     }
     // end Panini code
 

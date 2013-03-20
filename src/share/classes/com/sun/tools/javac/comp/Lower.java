@@ -3234,24 +3234,20 @@ public class Lower extends TreeTranslator {
      * @param method
      * @param var
      * @param placeHolder
-     * @return TODO hello
+     * @return 
      */
-    private JCExpression extractMethodCall(JCExpression method, JCVariableDecl var, JCIdent placeHolder)
-    {
+    private JCExpression extractMethodCall(JCExpression method, JCVariableDecl var, JCIdent placeHolder){
 
     	VarSymbol varSym = var.sym;
     	JCExpression ret = method;
-    	if(method instanceof JCFieldAccess)
-    	{
+    	if(method instanceof JCFieldAccess){
     		JCFieldAccess select = (JCFieldAccess)method;
 
     		JCExpression selected = select.selected;
     		JCExpression finalLevel = extractMethodCall(selected, var, placeHolder);
-    		if(finalLevel instanceof JCIdent)
-    		{
+    		if(finalLevel instanceof JCIdent){
     			JCIdent sel = (JCIdent)selected;
-    			if(sel.sym == varSym)
-    			{
+    			if(sel.sym == varSym){
     				ret = make.Select(placeHolder, select.name);
     				select.selected = placeHolder;
     			}
@@ -3268,8 +3264,7 @@ public class Lower extends TreeTranslator {
 
     }
 
-    private void assertHasCapsuleIdent(DiagnosticPosition pos, JCExpression e)
-    {
+    private void assertHasCapsuleIdent(DiagnosticPosition pos, JCExpression e){
     	if(!(e instanceof JCFieldAccess))
     	{
     		log.error(pos, "proc.cant.access", e);
@@ -3294,9 +3289,8 @@ public class Lower extends TreeTranslator {
      * 		arr$res[index$] = capsules[index$].method();
      * }
      */
-    public void visitIPForeach(JCIPForeach tree)
-    {
-    	//TODO start
+    public void visitIPForeach(JCIPForeach tree){
+    	
     	JCMethodInvocation treeMeth  = tree.body;
     	TreeCopier<Void> copier = new TreeCopier<Void>(make);
 
@@ -3315,8 +3309,7 @@ public class Lower extends TreeTranslator {
     	listBufferType.add(tree.carr.type); //add capsules as a parameter
     	listBufferArgs.add(tree.carr);
 
-    	while(iterArgs.hasNext())
-    	{
+    	while(iterArgs.hasNext()){
     		JCExpression next = iterArgs.next();
     		listBufferArgs.add(next);
     		listBufferType.add(next.type);
@@ -3353,8 +3346,7 @@ public class Lower extends TreeTranslator {
 
     	declsBuffer.add(capsules);
 
-    	for(int i = 1; i < listType.size(); i++) //populate synthetic parameter list and literal list
-    	{
+    	for(int i = 1; i < listType.size(); i++){ //populate synthetic parameter list and literal list
     		VarSymbol nextSym = new VarSymbol(0, names.fromString("arg"+target.syntheticNameChar()+(i-1)), listType.get(i), newMethSym);
     		JCIdent next =make.Ident(nextSym);
 
@@ -3419,7 +3411,7 @@ public class Lower extends TreeTranslator {
     	reArg.type = tree.body.type;
 
     	// :: carr$[index$]
-    	JCExpression carrAcc = make.Indexed(cap, make.Ident(index)).setType(tree.var.type); //TODO altered
+    	JCExpression carrAcc = make.Indexed(cap, make.Ident(index)).setType(tree.var.type); 
     	carrAcc.type = tree.var.type;
 
     	// :: <CapsuleType> <placeHolder> = carr$[index$];
@@ -3499,7 +3491,6 @@ public class Lower extends TreeTranslator {
     	JCMethodInvocation accMeth = makeCall(make.QualIdent(currentClass), newMeth.name, listArgs);
 
     	result = accMeth;
-
 
     }
     // end Panini code

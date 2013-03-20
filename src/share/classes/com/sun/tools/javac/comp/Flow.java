@@ -35,6 +35,7 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 
 import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.comp.Flow.AssignAnalyzer.AssignPendingExit;
 import com.sun.tools.javac.tree.JCTree.*;
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -1647,6 +1648,41 @@ public class Flow {
             scanExpr(tree.meth);
             scanExprs(tree.args);
         }
+        
+        // Panini code
+        public void visitIPForeach(JCIPForeach tree)
+        {
+        	visitVarDef(tree.var);
+        	
+            ListBuffer<AssignPendingExit> prevPendingExits = pendingExits;
+            boolean prevLoopPassTwo = loopPassTwo;
+            int nextadrPrev = nextadr;
+            scan(tree.carr);
+            Bits initsStart = inits.dup();
+            Bits uninitsStart = uninits.dup();
+
+            letInit(tree.pos(), tree.var.sym);
+            pendingExits = new ListBuffer<AssignPendingExit>();
+            int prevErrors = log.nerrors;
+            do {
+                Bits uninitsEntry = uninits.dup();
+                uninitsEntry.excludeFrom(nextadr);
+                scan(tree.body);
+                resolveContinues(tree);
+                if (log.nerrors != prevErrors ||
+                    loopPassTwo ||
+                    uninitsEntry.dup().diffSet(uninits).nextBit(firstadr) == -1)
+                    break;
+                uninits = uninitsEntry.andSet(uninits);
+                loopPassTwo = true;
+            } while (true);
+            loopPassTwo = prevLoopPassTwo;
+            inits = initsStart;
+            uninits = uninitsStart.andSet(uninits);
+            resolveBreaks(tree, prevPendingExits);
+            nextadr = nextadrPrev;   
+        }
+        // end Panini code
 
         public void visitNewClass(JCNewClass tree) {
             scanExpr(tree.encl);
