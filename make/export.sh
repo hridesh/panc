@@ -12,8 +12,9 @@ mkdir panini/editors
 mkdir panini/examples 
 
 cp -r ../dist panini/lib/dist
+rm panini/lib/dist/lib/src.zip
 cp -r ../licenses panini/licenses
-cp export/panc panini/bin/panc
+cp export/panc panini/bin/
 cp export/panc.bat panini/bin/
 cp export/panini panini/bin/
 cp export/panini.bat panini/bin/
@@ -40,6 +41,9 @@ cp -pr ../examples/AddressBook panini/examples/
  
 cp export/README panini/
 perl -pe 's/\r\n|\n|\r/\r\n/g' export/README > panini/README.txt
+
+cp export/RELEASE_NOTES panini/
+perl -pe 's/\r\n|\n|\r/\r\n/g' export/RELEASE_NOTES > panini/RELEASE_NOTES.txt
 
 find panini -name '.svn' -exec rm -Rf '{}' ';' 2>/dev/null
 zip -r panini.zip panini
