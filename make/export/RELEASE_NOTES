@@ -1,0 +1,41 @@
+RELEASE NOTES FOR PANINI 0.9.0
+
+These release notes summarizes changes in Panini 0.9.0 release.
+Note that bug fixes are cumulative, that is, bug fixes in previous 
+update versions are included in subsequent update versions.
+
+** Features included in this release
+
+* Support for capsule declarations 
+	capsule C ( D d1, ... ) {
+    	t s; 
+        ...
+        void m ( ... ) {    …   }
+    } 
+
+* Support for system declarations 
+	system S1 {
+		C c1; D d1; … // Declaration of capsule instances in this system
+        c1 ( d1 ) ;  // Wiring capsule instances together.
+	}
+
+* Support for signature declarations
+	signature S {
+		void m ( ... );
+	}
+	capsule D implement Signature S {
+	 	void m ( ... ) {
+	 		...
+	 	}
+	}
+
+* Support for thread-based implementation of capsules.
+
+* Support for sequential consistency at a capsule instance-level. 
+  Capsule procedure calls to a single capsule instance are processed in 
+  the order in which they are made. 
+
+* Basic support for confinement violation detection, where the Panini 
+  compiler warns users about potentially leaking references to the 
+  internal states of the capsule instance.
+  
