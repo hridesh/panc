@@ -3264,8 +3264,6 @@ public class Lower extends TreeTranslator {
     	if(!(e instanceof JCFieldAccess))
     	{
     		log.error(pos, "proc.cant.access", e);
-
-
     	}
     }
 
@@ -3327,16 +3325,6 @@ public class Lower extends TreeTranslator {
     	capsulesVar.adr = adrCount++;
     	capsulesVar.pos = posCount++;
 
-    	VarSymbol len = new VarSymbol(0,
-    			names.fromString("len" + target.syntheticNameChar()),
-    			syms.intType,
-    			newMethSym);
-    	len.adr = adrCount++;
-    	len.pos = posCount++;
-
-    	// :: int len$ = capsules$.length
-    	JCVariableDecl lenDecl = make.VarDef(len, make.Select(make.Ident(capsulesVar), syms.lengthVar));
-
     	// :: <CapsuleArrayType> capsules$
     	JCVariableDecl capsules = make.Param(names.fromString("capsules"+ target.syntheticNameChar()), tree.carr.type, newMethSym);
 
@@ -3345,7 +3333,7 @@ public class Lower extends TreeTranslator {
     	for(int i = 1; i < listType.size(); i++){ //populate synthetic parameter list and literal list
     		VarSymbol nextSym = new VarSymbol(0, names.fromString("arg"+target.syntheticNameChar()+(i-1)), listType.get(i), newMethSym);
     		JCIdent next =make.Ident(nextSym);
-
+    		next.sym = nextSym;
     		litsBuffer.add(next);
     		nextSym.adr = adrCount++;
     		nextSym.pos = posCount++;
@@ -3356,6 +3344,15 @@ public class Lower extends TreeTranslator {
     	List<JCVariableDecl> decls = declsBuffer.toList();
     	List<JCExpression> declLits = litsBuffer.toList();
 
+    	VarSymbol len = new VarSymbol(0,
+    			names.fromString("len" + target.syntheticNameChar()),
+    			syms.intType,
+    			newMethSym);
+    	len.adr = adrCount++;
+    	len.pos = posCount++;
+
+    	// :: int len$ = capsules$.length
+    	JCVariableDecl lenDecl = make.VarDef(len, make.Select(make.Ident(capsulesVar), syms.lengthVar));
 
     	VarSymbol cap = new VarSymbol(0,
     			names.fromString("carr" + target.syntheticNameChar()),
