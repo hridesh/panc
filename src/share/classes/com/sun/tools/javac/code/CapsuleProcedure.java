@@ -1,19 +1,19 @@
 package com.sun.tools.javac.code;
 import com.sun.tools.javac.tree.*;
-import java.util.List;
+import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.util.*;
 
 public class CapsuleProcedure {
-	public boolean isFresh;
-	public boolean isCommunitive;
-	Symbol.CapsuleSymbol owner;
-	List<JCTree.JCVariableDecl > params;
-	Type restype;
+	public Symbol.CapsuleSymbol owner;
+	public List<Symbol.VarSymbol> params;
+	public Name name;
+	public Type restype;//unused
+	public boolean isFresh;//unused
+	public boolean isCommunitive;//unused
 	
-	public CapsuleProcedure(){
-	}
-	
-	public CapsuleProcedure(Symbol.CapsuleSymbol owner, List<JCTree.JCVariableDecl> params){
+	public CapsuleProcedure(Symbol.CapsuleSymbol owner, Name name, List<Symbol.VarSymbol> params){
 		this.owner = owner;
 		this.params = params;
+		this.name = name;
 	}
 }

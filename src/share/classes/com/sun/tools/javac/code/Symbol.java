@@ -42,6 +42,7 @@ import com.sun.tools.javac.tree.JCTree;
 
 // Panini code
 import java.util.HashSet;
+import java.util.HashMap;
 import org.paninij.systemgraphs.SystemGraphs;
 import org.paninij.analysis.CFG;
 // end Panini code
@@ -718,7 +719,8 @@ public abstract class Symbol implements Element {
      */
     public static class CapsuleSymbol extends ClassSymbol{
     	
-    	public List<CapsuleProcedure> capsuleProcedures = List.<CapsuleProcedure>nil();
+    	public Set<MethodSymbol> capsuleProcedures = new HashSet<MethodSymbol>();
+    	public HashMap<MethodSymbol, CapsuleProcedure> procedures = new HashMap<MethodSymbol, CapsuleProcedure>(); 
     	public CapsuleSymbol translated_serial;
     	public CapsuleSymbol translated_monitor;
     	public CapsuleSymbol translated_task;
@@ -763,7 +765,7 @@ public abstract class Symbol implements Element {
         	return capsule;
         }
         
-        // fills in the fields of the capsule symbol, use this instead of translating it in enter?
+        // fills in the fields of the capsule symbol
         public void fillIn(){
         }
     }

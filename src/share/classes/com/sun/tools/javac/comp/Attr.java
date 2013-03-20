@@ -924,6 +924,12 @@ public class Attr extends JCTree.Visitor {
             chk.setLint(prevLint);
             chk.setMethod(prevMethod);
         }
+        // Panini code
+        if(tree.sym.owner instanceof CapsuleSymbol){
+        	CapsuleProcedure cp = new CapsuleProcedure((CapsuleSymbol)tree.sym.owner, tree.name, tree.sym.params);
+        	((CapsuleSymbol)tree.sym.owner).procedures.put(tree.sym, cp);
+        }
+        // end Panini code
     }
 
     public void visitVarDef(JCVariableDecl tree) {

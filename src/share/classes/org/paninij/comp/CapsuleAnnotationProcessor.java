@@ -18,6 +18,8 @@
  */
 package org.paninij.comp;
 
+import java.util.Iterator;
+
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.*;
 
@@ -94,13 +96,24 @@ public class CapsuleAnnotationProcessor {
 		return ann;
 	}
 
-	public void translate(CapsuleSymbol e, Attribute.Compound annotation) {
+	public void translate(CapsuleSymbol c, Attribute.Compound annotation) {
+		fillInProcedures(c);
 		String paramsString = "(" + annotation.values.get(0).snd.getValue() + ")";
 		JavacParser parser = (JavacParser)parserFactory.newParser(paramsString, false, false, false);
 		List<JCVariableDecl> params = parser.capsuleParameters();
 		boolean definedRun = (Boolean)annotation.values.get(1).snd.getValue();
-		e.capsuleParameters = params;
-		e.definedRun = definedRun;
+		c.capsuleParameters = params;
+		c.definedRun = definedRun;
 	}
 
+	private void fillInProcedures(CapsuleSymbol c){
+		Iterator<Symbol> iter = c.members().getElements().iterator();
+		while(iter.hasNext()){
+			Symbol s = iter.next();
+			if(s instanceof MethodSymbol){
+				CapsuleProcedure cp = new CapsuleProcedure(c, s.name, ((MethodSymbol)s).params);
+	        	c.procedures.put((MethodSymbol)s, cp);
+			}
+		}
+	}
 }
