@@ -43,6 +43,7 @@ import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.parser.EndPosTable;
 
 import static com.sun.tools.javac.code.Flags.*;
+import static com.sun.tools.javac.code.Flags.BLOCK;
 import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.TypeTags.*;
 import static com.sun.tools.javac.jvm.ByteCodes.*;
@@ -3666,7 +3667,7 @@ public class Lower extends TreeTranslator {
         if (currentMethodSym == null) {
             // A class or instance field initializer.
             currentMethodSym =
-                new MethodSymbol((tree.mods.flags&STATIC) | Flags.BLOCK,
+                new MethodSymbol((tree.mods.flags&STATIC) | BLOCK,
                                  names.empty, null,
                                  currentClass);
         }
@@ -3680,7 +3681,7 @@ public class Lower extends TreeTranslator {
         if (currentMethodSym == null) {
             // Block is a static or instance initializer.
             currentMethodSym =
-                new MethodSymbol(tree.flags | Flags.BLOCK,
+                new MethodSymbol(tree.flags | BLOCK,
                                  names.empty, null,
                                  currentClass);
         }
