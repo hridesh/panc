@@ -181,6 +181,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         return M.at(t.pos).ForeachLoop(var, expr, body);
     }
     
+    // Panini code
     public JCTree visitIPForeach(IPForeachTree node, P p)
     {
     	JCIPForeach t = (JCIPForeach) node;
@@ -189,6 +190,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     	JCMethodInvocation body = copy(t.body, p);
     	return M.at(t.pos).IPForeach(var, carr, body);
     }
+    // end Panini code
 
     public JCTree visitForLoop(ForLoopTree node, P p) {
         JCForLoop t = (JCForLoop) node;

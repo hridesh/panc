@@ -771,6 +771,7 @@ public class Pretty extends JCTree.Visitor {
         }
     }
     
+    // Panini code
     public void visitIPForeach(JCIPForeach tree)
     {
     	try{
@@ -784,6 +785,7 @@ public class Pretty extends JCTree.Visitor {
     		throw new UncheckedIOException(e);
     	}
     }
+    // end Panini code
 
     public void visitLabelled(JCLabeledStatement tree) {
         try {

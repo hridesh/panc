@@ -161,6 +161,7 @@ public class TreeScanner extends Visitor {
         scan(tree.body);
     }
     
+    // Panini code
     public void visitIPForeach(JCIPForeach tree)
     {
     	scan(tree.var);
@@ -168,6 +169,7 @@ public class TreeScanner extends Visitor {
     	scan(tree.body);
     	//visitApply(tree);
     }
+    // end Panini code
 
     public void visitLabelled(JCLabeledStatement tree) {
         scan(tree.body);

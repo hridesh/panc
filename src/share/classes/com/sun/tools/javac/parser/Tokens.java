@@ -138,7 +138,9 @@ public class Tokens {
         FINALLY("finally"),
         FLOAT("float", Tag.NAMED),
         FOR("for"),
+        // Panini code
         FOREACH("foreach"),
+        // end Panini code
         GOTO("goto"),
         IF("if"),
         IMPLEMENTS("implements"),

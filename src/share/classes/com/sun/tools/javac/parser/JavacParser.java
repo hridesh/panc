@@ -1080,6 +1080,7 @@ public class JavacParser implements Parser {
                 typeArgs = null;
             } else return illegal();
             break;
+        // Panini code
         case FOREACH:
         	if ((mode & EXPR) != 0) {
         		mode = EXPR;
@@ -1099,6 +1100,7 @@ public class JavacParser implements Parser {
         		t = toP(F.at(pos).IPForeach(var, capI, (JCMethodInvocation)body));
         	} else return illegal();
         	break;
+        // end Panini code
         case IDENTIFIER: case ASSERT: case ENUM:
             if (typeArgs != null) return illegal();
             if ((mode & EXPR) != 0 && peekToken(ARROW)) {

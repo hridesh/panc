@@ -139,9 +139,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
          */
         FOREACHLOOP,
         
+        // Panini code
         /** Implicitly parallel ForeachLoop
          */
         IPFOREACH,
+        // end Panini code
 
         /** Labelled statements, of type Labelled.
          */
@@ -1493,6 +1495,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         }
     }
     
+    // Panini code
     /**
      * 
      * The implicitly parallel foreach loop
@@ -1549,6 +1552,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		}
     	
     }
+    // end Panini code
 
     /**
      * A labelled expression or statement.

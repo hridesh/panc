@@ -730,6 +730,19 @@ public class Attr extends JCTree.Visitor {
     public void visitProcDef(JCProcDecl tree){
     	pAttr.visitProcDef(tree);
     }
+    
+    public void visitIPForeach(JCIPForeach tree)
+    {
+    	
+    	attribStat(tree.var, env);
+    	attribExpr(tree.carr, env);
+    	attribExpr(tree.body, env);
+    	Type retType = tree.body.meth.type.getReturnType();
+    	Type proto = new ArrayType(retType, syms.arrayClass);
+    	chk.checkType(tree.pos(), proto, resultInfo.pt);
+    	result = proto;
+ 
+    }
     // end Panini code
 
     public void visitClassDef(JCClassDecl tree) {
@@ -1045,19 +1058,6 @@ public class Attr extends JCTree.Visitor {
         attribStat(tree.body, loopEnv);
         loopEnv.info.scope.leave();
         result = null;
-    }
-    
-    public void visitIPForeach(JCIPForeach tree)
-    {
-    	
-    	attribStat(tree.var, env);
-    	attribExpr(tree.carr, env);
-    	attribExpr(tree.body, env);
-    	Type retType = tree.body.meth.type.getReturnType();
-    	Type proto = new ArrayType(retType, syms.arrayClass);
-    	chk.checkType(tree.pos(), proto, resultInfo.pt);
-    	result = proto;
- 
     }
 
     public void visitLabelled(JCLabeledStatement tree) {

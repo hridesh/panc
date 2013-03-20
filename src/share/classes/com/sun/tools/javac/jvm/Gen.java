@@ -1101,11 +1101,11 @@ public class Gen extends JCTree.Visitor {
     public void visitForeachLoop(JCEnhancedForLoop tree) {
         throw new AssertionError(); // should have been removed by Lower.
     }
-    
+    // Panini code
     public void visitIPForeach(JCIPForeach tree) {
         throw new AssertionError(); // should have been removed by Lower.
     }
-
+    // end Panini code
     public void visitLabelled(JCLabeledStatement tree) {
         Env<GenContext> localEnv = env.dup(tree, new GenContext());
         genStat(tree.body, localEnv, CRT_STATEMENT);

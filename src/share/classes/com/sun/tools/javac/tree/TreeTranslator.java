@@ -188,6 +188,7 @@ public class TreeTranslator extends JCTree.Visitor {
         result = tree;
     }
     
+    // Panini code
     public void visitIPForeach(JCIPForeach tree)
     {
     	//tree.var = translate(tree.var);
@@ -195,6 +196,7 @@ public class TreeTranslator extends JCTree.Visitor {
     	//tree.body = translate(tree.body)
     	result = tree;
     }
+    // end Panini code
 
     public void visitLabelled(JCLabeledStatement tree) {
         tree.body = translate(tree.body);
