@@ -118,24 +118,20 @@ public class Lower extends TreeTranslator {
         // end Panini code
     }
     // Panini code
-    private class IPForeachHelperMethNameGen
-    {
+    private class IPForeachHelperMethNameGen {
     	private String base;
     	private int count;
     	
-    	IPForeachHelperMethNameGen(String s)
-    	{
+    	IPForeachHelperMethNameGen(String s) {
     		base = s;
     		count = 0;
     	}
     	
-    	Name generateIPForeachMethodName()
-    	{
+    	Name generateIPForeachMethodName() {
     		String ret = base+target.syntheticNameChar()+count;
     		count++;
     		return names.fromString(ret);
-    	}
-    	
+    	} 	
     }
     private IPForeachHelperMethNameGen ipfeNameGen;
     // end Panini code

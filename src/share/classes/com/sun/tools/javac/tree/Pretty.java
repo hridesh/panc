@@ -773,8 +773,7 @@ public class Pretty extends JCTree.Visitor {
     }
     
     // Panini code
-    public void visitIPForeach(JCIPForeach tree)
-    {
+    public void visitIPForeach(JCIPForeach tree) {
     	try{
     		print("foreach(");
     		print(tree.var);
