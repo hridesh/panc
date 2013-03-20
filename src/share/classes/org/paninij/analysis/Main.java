@@ -9,6 +9,8 @@ import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
+import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Symbol;
 
 public final class Main {
 	/**
@@ -72,7 +74,7 @@ public final class Main {
 			// eliminate processing of task, thread versions except for
 			// capsule with run method
 			if (!root.sym.name.toString().contains("$serial")
-					&& !root.sym.hasRun)
+					&& (root.sym instanceof Symbol.CapsuleSymbol && !((Symbol.CapsuleSymbol)root.sym).definedRun))
 				return;
 
 			// System.out.println("Processing class: " + root.sym);
@@ -123,7 +125,7 @@ public final class Main {
 	}
 
 	private static void decide(org.paninij.systemgraphs.SystemGraphs.Node node) {
-		if ((node.sym.hasRun && (node.indegree == 0))
+		if (((node.sym instanceof Symbol.CapsuleSymbol && ((Symbol.CapsuleSymbol)node.sym).definedRun) && (node.indegree == 0))
 				|| org.paninij.analysis.StaticProfilePass.blockingCapsules
 						.contains(node.sym.name)) {
 			// thread

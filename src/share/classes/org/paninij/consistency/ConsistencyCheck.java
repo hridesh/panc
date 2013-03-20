@@ -64,7 +64,7 @@ public class ConsistencyCheck {
                 MethodSymbol method = (MethodSymbol)s;
                 if (method.name.toString().contains("$Original") ||
                     (method.name.toString().equals("run") &&
-                     capsule.sym.hasRun)
+                     ((CapsuleSymbol)capsule.sym).definedRun)
                     ) {
                     currentMethod = method;
                     checkMethodConsistency(capsule, method);

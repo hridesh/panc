@@ -65,13 +65,10 @@ public abstract class Symbol implements Element {
 
 	// Panini code
 	public boolean isSystem;
-	public boolean isLibrary;
-	public boolean hasRun;
 
     public List<Symbol> capsules; // for System symbols
     public SystemGraphs graphs; // for System symbols
     public JCTree tree;
-
 	// end Panini code
 
     /** The kind of this symbol.

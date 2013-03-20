@@ -101,7 +101,7 @@ public class SystemGraphsBuilder extends TreeScanner {
                     MethodSymbol method = (MethodSymbol)s;
                     if (method.name.toString().contains("$Original") ||
                         (method.name.toString().equals("run") &&
-                         capsule.sym.hasRun)
+                         ((Symbol.CapsuleSymbol)capsule.sym).definedRun)
                         ) {
                         currentCapsule = capsule;
                         traverseCallGraph(method);
