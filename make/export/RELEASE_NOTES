@@ -1,3 +1,14 @@
+RELEASE NOTES FOR PANINI 0.9.1
+
+These release notes summarizes changes in Panini 0.9.0 release.
+Note that feature releases and bug fixes are cumulative, that is, 
+bug fixes in previous  update versions are included in subsequent 
+update versions.
+
+** Features included in this release
+
+* Support for implicitly-parallel foreach expression
+
 RELEASE NOTES FOR PANINI 0.9.0
 
 These release notes summarizes changes in Panini 0.9.0 release.
