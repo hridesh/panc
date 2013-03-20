@@ -53,11 +53,9 @@ capsule Worker (double num) {
 capsule Master (double totalCount, Worker[] workers) {
 	void run(){
 	 	double startTime = System.currentTimeMillis();
-		Number[] results = new Number[workers.length];
-		for (int i=0; i< workers.length; i++)
-			results[i] = workers[i].compute();
+		Number[] results = foreach(Worker w: workers) w.compute();
 
-                double total = 0;
+		double total = 0;
 		for (int i=0; i < workers.length; i++)
 		 	total += results[i].value(); 
 
