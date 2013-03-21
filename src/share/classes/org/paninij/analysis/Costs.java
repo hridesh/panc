@@ -277,4 +277,6 @@ public interface Costs {
         "void",
         "oops"
     };
+    
+    static final int THRESHOLD = 1000;
 }
