@@ -30,6 +30,7 @@ import com.sun.tools.javac.code.Flags;
 
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Names;
+import com.sun.tools.javac.util.Pair;
 
 public class CapsuleAnnotationProcessor {
 
@@ -98,12 +99,17 @@ public class CapsuleAnnotationProcessor {
 
 	public void translate(CapsuleSymbol c, Attribute.Compound annotation) {
 		fillInProcedures(c);
-		String paramsString = "(" + annotation.values.get(0).snd.getValue() + ")";
-		JavacParser parser = (JavacParser)parserFactory.newParser(paramsString, false, false, false);
-		List<JCVariableDecl> params = parser.capsuleParameters();
-		boolean definedRun = (Boolean)annotation.values.get(1).snd.getValue();
-		c.capsuleParameters = params;
-		c.definedRun = definedRun;
+		for(Pair<MethodSymbol, Attribute> s: annotation.values){
+			if(s.fst.name.toString().equals("params")){
+				String paramsString = "(" + s.snd.getValue() + ")";
+				JavacParser parser = (JavacParser)parserFactory.newParser(paramsString, false, false, false);
+				List<JCVariableDecl> params = parser.capsuleParameters();
+				c.capsuleParameters = params;
+			}else if (s.fst.name.toString().equals("definedRun")){
+				boolean definedRun = (Boolean)annotation.values.get(1).snd.getValue();
+				c.definedRun = definedRun;
+			}
+		}
 	}
 
 	private void fillInProcedures(CapsuleSymbol c){
