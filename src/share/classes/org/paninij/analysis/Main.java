@@ -104,6 +104,7 @@ public final class Main {
 
 			Stack<org.paninij.systemgraphs.SystemGraphs.Node> visited = new Stack<org.paninij.systemgraphs.SystemGraphs.Node>();
 			org.paninij.systemgraphs.SystemGraphs graphs = root.sym.graphs;
+			if (graphs == null)	return;
 			for (Collection<org.paninij.systemgraphs.SystemGraphs.ConnectionEdge> edges : graphs.forwardConnectionEdges
 					.values()) {
 				for (org.paninij.systemgraphs.SystemGraphs.ConnectionEdge edge : edges) {
