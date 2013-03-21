@@ -55,13 +55,13 @@ public class ASTCFGBuilder extends TreeScanner {
 	public void visitAnnotation(JCAnnotation tree) { Assert.error(); }
 	public void visitModifiers(JCModifiers tree) { Assert.error(); }
 	public void visitErroneous(JCErroneous tree) { Assert.error(); }
-	public void visitTypeIdent(JCPrimitiveTypeTree tree) { Assert.error(); }
 	public void visitTypeApply(JCTypeApply tree) { Assert.error(); }
 	public void visitTypeUnion(JCTypeUnion tree) { Assert.error(); }
 	public void visitTypeParameter(JCTypeParameter tree) { Assert.error(); }
 	public void visitWildcard(JCWildcard tree) { Assert.error(); }
 	public void visitTypeBoundKind(TypeBoundKind tree) { Assert.error(); }
 
+	public void visitTypeIdent(JCPrimitiveTypeTree tree) { singleton(tree); }
 	public void visitIdent(JCIdent tree) { singleton(tree); }
 	public void visitLiteral(JCLiteral tree) { singleton(tree); }
 	// URL[].class
