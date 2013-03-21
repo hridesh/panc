@@ -151,7 +151,7 @@ public class Enter extends JCTree.Visitor {
         pkginfoOpt = PkgInfo.get(options);
 
         // Panini code
-        annotationProcessor = new CapsuleAnnotationProcessor(names, make, ParserFactory.instance(context));
+        annotationProcessor = new CapsuleAnnotationProcessor(names, make, ParserFactory.instance(context), log);
         // end Panini code
     }
 

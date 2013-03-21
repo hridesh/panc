@@ -31,17 +31,20 @@ import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Pair;
+import com.sun.tools.javac.util.Log;
 
 public class CapsuleAnnotationProcessor {
 
 	Names names;
 	TreeMaker make;
 	ParserFactory parserFactory;
+	private Log log;
 
-	public CapsuleAnnotationProcessor(Names names, TreeMaker make, ParserFactory parserFactory) {
+	public CapsuleAnnotationProcessor(Names names, TreeMaker make, ParserFactory parserFactory, Log log) {
 		this.names = names;
 		this.make = make;
 		this.parserFactory = parserFactory;
+		this.log = log;
 	}
 	
 	//Can only be called if capsule annotation is defined.
@@ -99,6 +102,8 @@ public class CapsuleAnnotationProcessor {
 
 	public void translate(CapsuleSymbol c, Attribute.Compound annotation) {
 		fillInProcedures(c);
+		if(annotation.values.size()!=2)//This number responds to the current implementation of CapsuleDecl annotations.
+			log.error("capsule.incompatible.capsule.annotation", c.classfile.getName());
 		for(Pair<MethodSymbol, Attribute> s: annotation.values){
 			if(s.fst.name.toString().equals("params")){
 				String paramsString = "(" + s.snd.getValue() + ")";
@@ -108,10 +113,12 @@ public class CapsuleAnnotationProcessor {
 			}else if (s.fst.name.toString().equals("definedRun")){
 				boolean definedRun = (Boolean)annotation.values.get(1).snd.getValue();
 				c.definedRun = definedRun;
+			}else{
+				log.error("capsule.incompatible.capsule.annotation", c.classfile.getName());
 			}
 		}
 	}
-
+	
 	private void fillInProcedures(CapsuleSymbol c){
 		Iterator<Symbol> iter = c.members().getElements().iterator();
 		while(iter.hasNext()){
