@@ -785,13 +785,7 @@ public class Attr extends JCTree.Visitor {
         MethodSymbol m = tree.sym;
         
         // Panini code
-        if(m.isProcedure){
-        	try{
-        	((JCProcDecl)tree).switchToProc();
-        	tree.accept(this);}
-        	catch(ClassCastException e){
-        	}
-        }
+        pAttr.preVisitMethodDef(tree, this);
         // end Panini code
 
         Lint lint = env.info.lint.augment(m.attributes_field, m.flags());
@@ -925,10 +919,7 @@ public class Attr extends JCTree.Visitor {
             chk.setMethod(prevMethod);
         }
         // Panini code
-        if(tree.sym.owner instanceof CapsuleSymbol){
-        	CapsuleProcedure cp = new CapsuleProcedure((CapsuleSymbol)tree.sym.owner, tree.name, tree.sym.params);
-        	((CapsuleSymbol)tree.sym.owner).procedures.put(tree.sym, cp);
-        }
+        	pAttr.postVisitMethodDef(tree);
         // end Panini code
     }
 
