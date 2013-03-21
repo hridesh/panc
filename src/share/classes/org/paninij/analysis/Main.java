@@ -35,8 +35,6 @@ public final class Main {
 						 * System.out.println("m = " + m.name + "\tc = " +
 						 * root.name); System.out.println(m);
 						 */
-						tree.accept(
-								new org.paninij.analysis.ASTCFGBuilder());
 						if (Attr.doGraphs) {
 							System.out.println("digraph G {");
 							m.body.accept(new
