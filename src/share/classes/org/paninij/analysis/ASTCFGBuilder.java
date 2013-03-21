@@ -30,9 +30,6 @@ import com.sun.tools.javac.tree.TreeScanner;
 
 import org.paninij.effects.IntraMethodEffectsBuilder;
 
-/* This class combines the work of finding the header/tail/exit nodes of an AST
- * i.e. CFGHeadTailNodesBuilder.java, and connecting the nodes together, i.e.,
- * ASTNodeConector.java. */
 public class ASTCFGBuilder extends TreeScanner {
 	private int id = 0;
 	private ArrayList<JCTree> currentStartNodes, currentEndNodes, currentExitNodes;
@@ -1167,7 +1164,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		connectToEndNodesOf(selected, tree);
 	}
 
-	public JCTree visitList(List<? extends JCTree> trees) {
+	private JCTree visitList(List<? extends JCTree> trees) {
 		JCTree last = null;
 		if (trees.head != null) {
 			// trees.head.accept(this);
