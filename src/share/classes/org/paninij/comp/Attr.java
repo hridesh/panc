@@ -36,6 +36,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.paninij.analysis.ASTCFGBuilder;
+import org.paninij.effects.EffectSet.*;
+import org.paninij.effects.EffectSet;
 
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
@@ -69,6 +71,7 @@ import com.sun.tools.javac.util.PaniniConstants;
 public final class Attr extends CapsuleInternal {
 	Log log;
 	Annotate annotate;
+	AnnotationProcessor annotationProcessor;
 
 	public Attr(TreeMaker make, Names names, Enter enter,
 			MemberEnter memberEnter, Symtab syms, Log log,  
@@ -76,6 +79,7 @@ public final class Attr extends CapsuleInternal {
 		super(make, names, enter, memberEnter, syms);
 		this.log = log;
 		this.annotate = annotate;
+		this.annotationProcessor = new AnnotationProcessor(names, make, log);
 	}
 
 	public void visitTopLevel(JCCompilationUnit tree) { /* SKIPPED */ }
@@ -112,8 +116,8 @@ public final class Attr extends CapsuleInternal {
 	public final void postVisitMethodDef(JCMethodDecl tree) {
 		if (tree.body != null)
 			tree.accept(new ASTCFGBuilder());
-
 		if (tree.sym.owner instanceof CapsuleSymbol) {
+			annotationProcessor.setEffects(tree, new EffectSet().bottomEffectSet());
 			CapsuleProcedure cp = new CapsuleProcedure((CapsuleSymbol) tree.sym.owner,
 					tree.name, tree.sym.params);
 			((CapsuleSymbol) tree.sym.owner).procedures.put(tree.sym, cp);

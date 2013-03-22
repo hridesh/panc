@@ -29,9 +29,8 @@ import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.code.Flags;
 
 import com.sun.tools.javac.util.List;
-import com.sun.tools.javac.util.Names;
-import com.sun.tools.javac.util.Pair;
-import com.sun.tools.javac.util.Log;
+import com.sun.tools.javac.util.*;
+
 import org.paninij.effects.*;
 
 public class AnnotationProcessor extends Internal{
@@ -46,6 +45,14 @@ public class AnnotationProcessor extends Internal{
 		this.names = names;
 		this.make = make;
 		this.parserFactory = parserFactory;
+		this.log = log;
+	}
+
+	//creates an annotationProcessor without a parserFactory.
+	public AnnotationProcessor(Names names, TreeMaker make, Log log) {
+		super(make, names);
+		this.names = names;
+		this.make = make;
 		this.log = log;
 	}
 	
@@ -103,6 +110,8 @@ public class AnnotationProcessor extends Internal{
 	}
 
 	public void translate(CapsuleSymbol c, Attribute.Compound annotation) {
+		if(parserFactory == null)
+			throw new AssertionError("ParserFactory not available");
 		fillInProcedures(c);
 		if(annotation.values.size()!=2)//This number responds to the current implementation of CapsuleDecl annotations.
 			log.error("capsule.incompatible.capsule.annotation", c.classfile.getName());
@@ -118,6 +127,35 @@ public class AnnotationProcessor extends Internal{
 			}else{
 				log.error("capsule.incompatible.capsule.annotation", c.classfile.getName());
 			}
+		}
+	}
+	
+	public void setEffects(JCMethodDecl mdecl, EffectSet effectSet){
+		setEffects(mdecl, effectSet.getEffects());
+	}
+	
+	private List<JCExpression> effectsToExp(String[] effects){
+		ListBuffer<JCExpression> effectsExp = new ListBuffer<JCExpression>();
+		for(String s : effects){
+			effectsExp.add(stringc(s));
+		}
+		return effectsExp.toList();
+	}
+	
+	public void setEffects(JCMethodDecl mdecl, String[] effects){
+		boolean annotated = false;
+		for(JCAnnotation annotation : mdecl.mods.annotations){
+			if(annotation.annotationType.toString().equals("Effects"))
+				annotated = true;
+		}
+		if(!annotated){
+			JCAnnotation ann = ann(id("Effects"), 
+					List.<JCExpression>of(
+							assign(id("effects"), make.NewArray(null, List.<JCExpression>nil(), 
+									effectsToExp(effects)))
+							));
+			ann.setType(mdecl.sym.type.getReturnType());
+			mdecl.mods.annotations = mdecl.mods.annotations.append(ann);
 		}
 	}
 	
