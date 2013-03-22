@@ -98,25 +98,26 @@ public final class Attr extends CapsuleInternal {
 	public final void visitLabelled(JCLabeledStatement tree) {  /* SKIPPED */ }
 	public final void visitAssert(JCAssert tree) {  /* SKIPPED */ }
 	
-	public final void preVisitMethodDef(JCMethodDecl tree, final com.sun.tools.javac.comp.Attr attr) {
-	    if (tree.sym.isProcedure) {
-		try {
-		    ((JCProcDecl) tree).switchToProc();
-		    tree.accept(attr);
-		} catch (ClassCastException e) {
+	public final void preVisitMethodDef(JCMethodDecl tree,
+			final com.sun.tools.javac.comp.Attr attr) {
+		if (tree.sym.isProcedure) {
+			try {
+				((JCProcDecl) tree).switchToProc();
+				tree.accept(attr);
+			} catch (ClassCastException e) {
+			}
 		}
-	    }
 	}
 
 	public final void postVisitMethodDef(JCMethodDecl tree) {
-	    if (tree.body != null)
-		tree.accept(new ASTCFGBuilder());
+		if (tree.body != null)
+			tree.accept(new ASTCFGBuilder());
 
-	    if (tree.sym.owner instanceof CapsuleSymbol) {
-		CapsuleProcedure cp = new CapsuleProcedure(
-			(CapsuleSymbol) tree.sym.owner, tree.name, tree.sym.params);
-		((CapsuleSymbol) tree.sym.owner).procedures.put(tree.sym, cp);
-	    }
+		if (tree.sym.owner instanceof CapsuleSymbol) {
+			CapsuleProcedure cp = new CapsuleProcedure((CapsuleSymbol) tree.sym.owner,
+					tree.name, tree.sym.params);
+			((CapsuleSymbol) tree.sym.owner).procedures.put(tree.sym, cp);
+		}
 	}
 	
 	public final void visitVarDef(JCVariableDecl tree) {  /* SKIPPED */ }
@@ -131,7 +132,7 @@ public final class Attr extends CapsuleInternal {
 	public final void visitTry(JCTry tree) {  /* SKIPPED */ }
 	public final void visitCatch(JCCatch tree) {  /* SKIPPED */ }
 	public final void visitConditional(JCConditional tree) {  /* SKIPPED */ }
-	public void visitIf(JCIf tree) {  /* SKIPPED */ }
+	public final void visitIf(JCIf tree) {  /* SKIPPED */ }
 	public final void visitExec(JCExpressionStatement tree) {  /* SKIPPED */ }
 	public final void visitBreak(JCBreak tree) {  /* SKIPPED */ }
 	public final void visitContinue(JCContinue tree) {  /* SKIPPED */ }
