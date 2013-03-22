@@ -32,8 +32,9 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Pair;
 import com.sun.tools.javac.util.Log;
+import org.paninij.effects.*;
 
-public class AnnotationProcessor {
+public class AnnotationProcessor extends Internal{
 
 	Names names;
 	TreeMaker make;
@@ -41,6 +42,7 @@ public class AnnotationProcessor {
 	private Log log;
 
 	public AnnotationProcessor(Names names, TreeMaker make, ParserFactory parserFactory, Log log) {
+		super(make, names);
 		this.names = names;
 		this.make = make;
 		this.parserFactory = parserFactory;
@@ -62,38 +64,38 @@ public class AnnotationProcessor {
 	public List<JCAnnotation> createCapsuleAnnotation(long flag, JCCapsuleDecl capsule){
 		List<JCAnnotation> ann = List.<JCAnnotation>nil();
 		if(flag == Flags.SERIAL)
-			ann = List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
-					List.<JCExpression>of(make.Literal("SERIAL"))), make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclSequential")), 
+			ann = List.<JCAnnotation>of(ann(id("CapsuleKind"), 
+					List.<JCExpression>of(stringc("SERIAL"))), ann(id("PaniniCapsuleDeclSequential"), 
 							List.<JCExpression>of(
-									make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())),
-									make.Assign(make.Ident(names.fromString("definedRun")), make.Literal(new Boolean(false)))
+									assign(id("params"), stringc(capsule.params.toString())),
+									assign(id("definedRun"), falsev())
 									)));
 		else if(flag == Flags.MONITOR)
-			ann = List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
-					List.<JCExpression>of(make.Literal("MONITOR"))), make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclSynchronized")), 
+			ann = List.<JCAnnotation>of(ann(id("CapsuleKind"), 
+					List.<JCExpression>of(stringc("MONITOR"))), ann(id("PaniniCapsuleDeclSynchronized"), 
 							List.<JCExpression>of(
-									make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())),
-									make.Assign(make.Ident(names.fromString("definedRun")), make.Literal(new Boolean(false)))
+									assign(id("params"), stringc(capsule.params.toString())),
+									assign(id("definedRun"), falsev())
 									)));
 		else if(flag == Flags.ACTIVE)
-			ann = List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
-					List.<JCExpression>of(make.Literal("ACTIVE"))), make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclThread")), 
+			ann = List.<JCAnnotation>of(ann(id("CapsuleKind"), 
+					List.<JCExpression>of(stringc("ACTIVE"))), ann(id("PaniniCapsuleDeclThread"), 
 							List.<JCExpression>of(
-									make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())),
-									make.Assign(make.Ident(names.fromString("definedRun")), make.Literal(new Boolean(false)))
+									assign(id("params"), stringc(capsule.params.toString())),
+									assign(id("definedRun"), falsev())
 									)));
 		else if(flag == Flags.TASK)
-			ann = List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("CapsuleKind")), 
-					List.<JCExpression>of(make.Literal("TASK"))), make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclTask")), 
+			ann = List.<JCAnnotation>of(ann(id("CapsuleKind"), 
+					List.<JCExpression>of(stringc("TASK"))), ann(id("PaniniCapsuleDeclTask"), 
 							List.<JCExpression>of(
-									make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())),
-									make.Assign(make.Ident(names.fromString("definedRun")), make.Literal(new Boolean(false)))
+									assign(id("params"), stringc(capsule.params.toString())),
+									assign(id("definedRun"), falsev())
 									)));
 		else if(flag == Flags.INTERFACE)
-			ann = List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("PaniniCapsuleDeclInterface")), 
+			ann = List.<JCAnnotation>of(ann(id("PaniniCapsuleDeclInterface"), 
         			List.<JCExpression>of(
-        					make.Assign(make.Ident(names.fromString("params")), make.Literal(capsule.params.toString())),
-        					make.Assign(make.Ident(names.fromString("definedRun")), make.Literal(new Boolean(false)))
+        					assign(id("params"), stringc(capsule.params.toString())),
+        					assign(id("definedRun"), falsev())
         					)));
 		else 
 			throw new AssertionError("Not a capsuleKind flag");
