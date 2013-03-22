@@ -33,14 +33,14 @@ import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Pair;
 import com.sun.tools.javac.util.Log;
 
-public class CapsuleAnnotationProcessor {
+public class AnnotationProcessor {
 
 	Names names;
 	TreeMaker make;
 	ParserFactory parserFactory;
 	private Log log;
 
-	public CapsuleAnnotationProcessor(Names names, TreeMaker make, ParserFactory parserFactory, Log log) {
+	public AnnotationProcessor(Names names, TreeMaker make, ParserFactory parserFactory, Log log) {
 		this.names = names;
 		this.make = make;
 		this.parserFactory = parserFactory;

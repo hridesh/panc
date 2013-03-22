@@ -50,7 +50,7 @@ import static com.sun.tools.javac.parser.Tokens.TokenKind.STAR;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 // Panini code
 import com.sun.tools.javac.parser.ParserFactory;
-import org.paninij.comp.CapsuleAnnotationProcessor;
+import org.paninij.comp.AnnotationProcessor;
 // end Panini code
 
 /** This class enters symbols for all encountered definitions into
@@ -114,7 +114,7 @@ public class Enter extends JCTree.Visitor {
     JavaFileManager fileManager;
     PkgInfo pkginfoOpt;
     // Panini code
-    CapsuleAnnotationProcessor annotationProcessor;
+    AnnotationProcessor annotationProcessor;
     // end Panini code
 
     private final Todo todo;
@@ -151,7 +151,7 @@ public class Enter extends JCTree.Visitor {
         pkginfoOpt = PkgInfo.get(options);
 
         // Panini code
-        annotationProcessor = new CapsuleAnnotationProcessor(names, make, ParserFactory.instance(context), log);
+        annotationProcessor = new AnnotationProcessor(names, make, ParserFactory.instance(context), log);
         // end Panini code
     }
 
