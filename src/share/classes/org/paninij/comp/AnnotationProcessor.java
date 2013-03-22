@@ -22,6 +22,7 @@ import java.util.Iterator;
 
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.comp.*;
 
 import com.sun.tools.javac.parser.*;
 import com.sun.tools.javac.tree.*;
@@ -32,6 +33,7 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.*;
 
 import org.paninij.effects.*;
+import org.paninij.effects.EffectSet.*;
 
 public class AnnotationProcessor extends Internal{
 
@@ -109,7 +111,7 @@ public class AnnotationProcessor extends Internal{
 		return ann;
 	}
 
-	public void translate(CapsuleSymbol c, Attribute.Compound annotation) {
+	public void translateCapsuleAnnotations(CapsuleSymbol c, Attribute.Compound annotation) {
 		if(parserFactory == null)
 			throw new AssertionError("ParserFactory not available");
 		fillInProcedures(c);
@@ -128,6 +130,38 @@ public class AnnotationProcessor extends Internal{
 				log.error("capsule.incompatible.capsule.annotation", c.classfile.getName());
 			}
 		}
+	}
+	
+	//TODO: not done
+	private EffectSet translateEffects(String[] effects, Env<AttrContext> env, Resolve rs){
+		EffectSet es = new EffectSet();
+		for(String s : effects){
+			if(s.equals(""))
+				es.add(es.emptyEffect());
+			else{
+				char c = s.charAt(0);
+				switch(c){
+				case 'B':
+					es.add(es.bottomEffect());
+					break;
+				}
+			}
+		}
+		return es;
+	}
+	
+	public EffectSet translateEffectAnnotations(MethodSymbol m, Attribute.Compound annotation, Env<AttrContext> env, Resolve rs){
+		EffectSet es = new EffectSet();
+		//check if its an Effects annotation?
+		for(Pair<MethodSymbol, Attribute> pair : annotation.values){
+			if(pair.fst.name.toString().equals("effects")){
+				String[] effects = (String[])pair.snd.getValue();
+				es = translateEffects(effects, env, rs);
+			}else{
+				log.error("capsule.incompatible.capsule.annotation", m.outermostClass().classfile.getName());
+			}
+		}
+		return es;
 	}
 	
 	public void setEffects(JCMethodDecl mdecl, EffectSet effectSet){

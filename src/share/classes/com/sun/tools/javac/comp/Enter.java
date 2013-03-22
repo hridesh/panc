@@ -1270,7 +1270,7 @@ public class Enter extends JCTree.Visitor {
     						capsuleSymbol = (CapsuleSymbol)classSymbol;
     					else
     						capsuleSymbol = CapsuleSymbol.fromClassSymbol(classSymbol);
-    					annotationProcessor.translate(capsuleSymbol, compound);
+    					annotationProcessor.translateCapsuleAnnotations(capsuleSymbol, compound);
 	    				syms.capsules.put(capsuleSymbol.name, capsuleSymbol);
     				}
     			}

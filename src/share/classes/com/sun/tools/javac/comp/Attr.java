@@ -919,10 +919,7 @@ public class Attr extends JCTree.Visitor {
             chk.setMethod(prevMethod);
         }
         // Panini code
-        	pAttr.postVisitMethodDef(tree);
-        	if(tree.sym.owner instanceof CapsuleSymbol){
-        		annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
-        	}
+        	pAttr.postVisitMethodDef(tree, env, rs);
         // end Panini code
     }
 

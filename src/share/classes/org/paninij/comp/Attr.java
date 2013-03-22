@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.paninij.analysis.ASTCFGBuilder;
-import org.paninij.effects.EffectSet.*;
 import org.paninij.effects.EffectSet;
 
 import com.sun.tools.javac.code.CapsuleProcedure;
@@ -113,11 +112,15 @@ public final class Attr extends CapsuleInternal {
 		}
 	}
 
-	public final void postVisitMethodDef(JCMethodDecl tree) {
+	public final void postVisitMethodDef(JCMethodDecl tree, Env<AttrContext> env, Resolve rs) {
 		if (tree.body != null)
 			tree.accept(new ASTCFGBuilder());
 		if (tree.sym.owner instanceof CapsuleSymbol) {
-			annotationProcessor.setEffects(tree, new EffectSet().bottomEffectSet());
+			EffectSet es = new EffectSet();
+			es.add(es.bottomEffect());
+			es.add(es.methodEffect(tree.sym));
+			annotationProcessor.setEffects(tree, es);//TODO: set second argument to actual effectSet when its available
+			annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
 			CapsuleProcedure cp = new CapsuleProcedure((CapsuleSymbol) tree.sym.owner,
 					tree.name, tree.sym.params);
 			((CapsuleSymbol) tree.sym.owner).procedures.put(tree.sym, cp);
