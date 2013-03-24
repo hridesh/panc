@@ -45,6 +45,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import org.paninij.systemgraphs.SystemGraphs;
 import org.paninij.analysis.CFG;
+import org.paninij.effects.EffectSet;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -718,9 +719,7 @@ public abstract class Symbol implements Element {
      * A class for capsule symbols
      */
     public static class CapsuleSymbol extends ClassSymbol{
-    	
-    	public Set<MethodSymbol> capsuleProcedures = new HashSet<MethodSymbol>();
-    	public HashMap<MethodSymbol, CapsuleProcedure> procedures = new HashMap<MethodSymbol, CapsuleProcedure>(); 
+     	public HashMap<MethodSymbol, CapsuleProcedure> procedures = new HashMap<MethodSymbol, CapsuleProcedure>(); 
     	public CapsuleSymbol translated_serial;
     	public CapsuleSymbol translated_monitor;
     	public CapsuleSymbol translated_task;
@@ -1102,6 +1101,7 @@ public abstract class Symbol implements Element {
     public static class MethodSymbol extends Symbol implements ExecutableElement {
 
     	// Panini code
+        public EffectSet effects;
     	public boolean isProcedure;
     	public boolean isFresh;
     	public boolean isCommutative;

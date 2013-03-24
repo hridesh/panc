@@ -87,7 +87,7 @@ public class SystemGraphsBuilder extends TreeScanner {
     }
 
     public SystemGraphs buildGraphs(JCSystemDecl system) {
-        finishCallGraph();
+        //finishCallGraph();
         graphs = new SystemGraphs();
         capsuleNames = new CapsuleNameMap();
         finishedMethods = new HashSet<NodeMethod>();
@@ -96,17 +96,9 @@ public class SystemGraphsBuilder extends TreeScanner {
         scan(system.body);
 
         for (Node capsule : capsuleNames.allNodes()) {
-            for (Symbol s : capsule.sym.members_field.getElements()) {
-                if (s instanceof MethodSymbol) {
-                    MethodSymbol method = (MethodSymbol)s;
-                    if (method.name.toString().contains("$Original") ||
-                        (method.name.toString().equals("run") &&
-                         ((Symbol.CapsuleSymbol)capsule.sym).definedRun)
-                        ) {
-                        currentCapsule = capsule;
-                        traverseCallGraph(method);
-                    }
-                }
+            for (MethodSymbol method : capsule.sym.procedures.keySet()) {
+                currentCapsule = capsule;
+                traverseCallGraph(method);
             }
         }
 
@@ -124,7 +116,9 @@ public class SystemGraphsBuilder extends TreeScanner {
         return graphs;
     }
 
-    public void finishCallGraph() {
+    
+
+    /*public void finishCallGraph() {
         for (CFGNodeBuilder.TodoItem t : CFGNodeBuilder.callGraphTodos) {
             VarSymbol capsuleField = CFGNodeBuilder.capsuleField(t.tree); // doesn't handle capsule array calls
             MethodSymbol methSym = (MethodSymbol)TreeInfo.symbol(t.tree.meth);
@@ -137,7 +131,7 @@ public class SystemGraphsBuilder extends TreeScanner {
                 origMethSym.callerMethods.add(t.method.sym);
             } // otherwise could be an already compiled method like print() or something
         }
-    }
+        }*/
 
     private static class NodeMethod {
         Node n; MethodSymbol m;
@@ -210,7 +204,7 @@ public class SystemGraphsBuilder extends TreeScanner {
             String capsuleName = type.elemtype.toString();
             String varName = tree.name.toString();
             if(syms.capsules.containsKey(names.fromString(capsuleName))) {
-                ClassSymbol c = syms.capsules.get(names.fromString(capsuleName));
+                CapsuleSymbol c = syms.capsules.get(names.fromString(capsuleName));
                 ArrayList<Node> nodes = new ArrayList<Node>(type.amount);
                 for (int i = 0; i < type.amount; i++) {
                     nodes.add(graphs.addCapsule(c, varName, i));
@@ -221,7 +215,7 @@ public class SystemGraphsBuilder extends TreeScanner {
             String capsuleName = tree.vartype.toString();
             String varName = tree.name.toString();
             if(syms.capsules.containsKey(names.fromString(capsuleName))) {
-                ClassSymbol c = syms.capsules.get(names.fromString(capsuleName));
+                CapsuleSymbol c = syms.capsules.get(names.fromString(capsuleName));
                 capsuleNames.put(varName, graphs.addCapsule(c, varName));
             } else {
                 systemConstantNames.add(varName);
@@ -237,7 +231,7 @@ public class SystemGraphsBuilder extends TreeScanner {
 
         for (int i = 0; i < tree.args.size(); i++) {
             JCExpression arg = tree.args.get(i);
-            String name = ((JCCapsuleDecl)capsule.sym.tree).params.get(i).name.toString();
+            String name = capsule.sym.capsuleParameters.get(i).name.toString();
 
             if (arg.getTag()==Tag.IDENT) { // arg could just be some literal; don't need to look at those
                 if (!arg.toString().equals("args") // ignore commandline params. This shouldn't be hardcoded like this
@@ -269,7 +263,6 @@ public class SystemGraphsBuilder extends TreeScanner {
         }
         
         for (int i = 0; i < capsuleNames.howMany(capsuleArrayName); i++) {
-            final Node capsule = capsuleNames.get(capsuleArrayName, i);
             final int j = i;
             new TreeScanner() {
                 public void visitApply(JCMethodInvocation tree) {
@@ -281,7 +274,7 @@ public class SystemGraphsBuilder extends TreeScanner {
                         capsule = capsuleNames.get(recipient);
                     for (int i = 0; i < tree.args.size(); i++) {
                         JCExpression arg = tree.args.get(i);
-                        String name = ((JCCapsuleDecl)capsule.sym.tree).params.get(i).name.toString();
+                        String name = capsule.sym.capsuleParameters.get(i).name.toString();
                         if (arg.getTag()==Tag.IDENT) {
                             Node argCapsule;
                             if (arg.toString().equals(varName))
@@ -309,7 +302,7 @@ public class SystemGraphsBuilder extends TreeScanner {
 
         for (int i = 0; i < tree.arguments.size(); i++) {
             JCExpression arg = tree.arguments.get(i);
-            String name = ((JCCapsuleDecl)capsule.sym.tree).params.get(i).name.toString();
+            String name = capsule.sym.capsuleParameters.get(i).name.toString();
 
             if (arg.getTag()==Tag.IDENT) { // arg could just be some literal; don't need to look at those
                 if (!arg.toString().equals("args") // ignore commandline params. This shouldn't be hardcoded like this
