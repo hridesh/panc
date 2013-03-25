@@ -566,6 +566,8 @@ public class CapsuleInternal extends Internal {
 
 		ListBuffer<JCTree> wrappedMethods = new ListBuffer<JCTree>();
 		ListBuffer<JCExpression> inits = new ListBuffer<JCExpression>();
+		boolean providesHashCode = false;
+		boolean providesEquals = false;
 		while (iter.hasNext()) {
 			Symbol s = iter.next();
 			if (s.getKind() == ElementKind.METHOD) {
@@ -584,6 +586,11 @@ public class CapsuleInternal extends Internal {
 					value = createVoidFutureValueMethod(m, m.name);
 				}
 				wrappedMethods.add(value);
+				if(!providesHashCode && m.name.contentEquals("hashCode") && m.getParameters().length() == 0)
+					providesHashCode = true;
+				if(!providesEquals && m.name.contentEquals("equals") && m.getParameters().length() == 1) {
+					providesEquals = true;
+				}
 			}
 		}
 		iter = c.members().getElements().iterator();
@@ -591,8 +598,6 @@ public class CapsuleInternal extends Internal {
 
 		JCMethodDecl messageIdMethod = createPaniniMessageID();
 		JCMethodDecl finishMethod = createPaniniFinishMethod(c);
-		JCMethodDecl hashCode = createHashCode();
-		JCMethodDecl equals = createEquals();
 
 		JCExpression extending;
 		List<JCExpression> implement;
@@ -633,6 +638,10 @@ public class CapsuleInternal extends Internal {
 			iter = c.members().getElements().iterator();
 			constructors.add(createDuckConstructor(iter, false, method, finishMethod));
 		}
+		
+		ListBuffer<JCTree> wrapperMembers = defs(fieldWrapped, fieldMessageId, fieldRedeemed, finishMethod, messageIdMethod); 
+		if(!providesHashCode) wrapperMembers.append(createHashCode());
+		if(!providesEquals) wrapperMembers.append(createEquals());
 
 		JCClassDecl wrappedClass = make.ClassDef(
 				mods(FINAL),
@@ -641,10 +650,8 @@ public class CapsuleInternal extends Internal {
 				typeParams.toList(),
 				extending,
 				implement,
-				defs(fieldWrapped, fieldMessageId, fieldRedeemed, finishMethod,
-						messageIdMethod, hashCode, equals)
-						.appendList(variableFields).appendList(constructors)
-						.appendList(wrappedMethods).toList());
+				wrapperMembers.appendList(variableFields).appendList(constructors)
+				.appendList(wrappedMethods).toList());
 
 		return wrappedClass;
 	}

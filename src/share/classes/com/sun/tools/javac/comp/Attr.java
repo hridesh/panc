@@ -785,13 +785,7 @@ public class Attr extends JCTree.Visitor {
         MethodSymbol m = tree.sym;
         
         // Panini code
-        if(m.isProcedure){
-        	try{
-        	((JCProcDecl)tree).switchToProc();
-        	tree.accept(this);}
-        	catch(ClassCastException e){
-        	}
-        }
+        pAttr.preVisitMethodDef(tree, this);
         // end Panini code
 
         Lint lint = env.info.lint.augment(m.attributes_field, m.flags());
@@ -924,6 +918,9 @@ public class Attr extends JCTree.Visitor {
             chk.setLint(prevLint);
             chk.setMethod(prevMethod);
         }
+        // Panini code
+        	pAttr.postVisitMethodDef(tree, env, rs);
+        // end Panini code
     }
 
     public void visitVarDef(JCVariableDecl tree) {

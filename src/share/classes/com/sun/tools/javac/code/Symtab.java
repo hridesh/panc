@@ -192,7 +192,6 @@ public class Symtab {
     // Panini code
     public boolean duckAdded = false;
     public final Map<Name, CapsuleSymbol> capsules = new HashMap<Name, CapsuleSymbol>();
-    public final Map<CapsuleSymbol, List<JCVariableDecl>> capsuleparams = new HashMap<CapsuleSymbol, List<JCVariableDecl>>();
     // end Panini code
     
     /** A hashtable containing the encountered packages.

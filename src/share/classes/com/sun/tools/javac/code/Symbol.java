@@ -42,8 +42,10 @@ import com.sun.tools.javac.tree.JCTree;
 
 // Panini code
 import java.util.HashSet;
+import java.util.HashMap;
 import org.paninij.systemgraphs.SystemGraphs;
 import org.paninij.analysis.CFG;
+import org.paninij.effects.EffectSet;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -65,13 +67,10 @@ public abstract class Symbol implements Element {
 
 	// Panini code
 	public boolean isSystem;
-	public boolean isLibrary;
-	public boolean hasRun;
 
     public List<Symbol> capsules; // for System symbols
     public SystemGraphs graphs; // for System symbols
     public JCTree tree;
-
 	// end Panini code
 
     /** The kind of this symbol.
@@ -720,8 +719,7 @@ public abstract class Symbol implements Element {
      * A class for capsule symbols
      */
     public static class CapsuleSymbol extends ClassSymbol{
-    	
-    	public List<CapsuleProcedure> capsuleProcedures = List.<CapsuleProcedure>nil();
+     	public HashMap<MethodSymbol, CapsuleProcedure> procedures = new HashMap<MethodSymbol, CapsuleProcedure>(); 
     	public CapsuleSymbol translated_serial;
     	public CapsuleSymbol translated_monitor;
     	public CapsuleSymbol translated_task;
@@ -766,7 +764,7 @@ public abstract class Symbol implements Element {
         	return capsule;
         }
         
-        // fills in the fields of the capsule symbol, use this instead of translating it in enter?
+        // fills in the fields of the capsule symbol
         public void fillIn(){
         }
     }
@@ -1103,6 +1101,7 @@ public abstract class Symbol implements Element {
     public static class MethodSymbol extends Symbol implements ExecutableElement {
 
     	// Panini code
+        public EffectSet effects;
     	public boolean isProcedure;
     	public boolean isFresh;
     	public boolean isCommutative;

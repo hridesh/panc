@@ -67,7 +67,7 @@ public class CapsuleEffectsComp {
                 JCMethodDecl method = (JCMethodDecl)def;
                 if ((method.sym.flags() & PRIVATE) != 0 ||
                     (method.sym.name.toString().equals("run") &&
-                     capsule.sym.hasRun)) {
+                     ((CapsuleSymbol)capsule.sym).definedRun)) {
                     methodsToProcess.offer(method);
                 }
             }

@@ -28,16 +28,18 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeScanner;
 
-/* This class combines the work of finding the header/tail/exit nodes of an AST
- * i.e. CFGHeadTailNodesBuilder.java, and connecting the nodes together, i.e.,
- * ASTNodeConector.java. */
+import org.paninij.effects.IntraMethodEffectsBuilder;
+
 public class ASTCFGBuilder extends TreeScanner {
 	private int id = 0;
-	private ArrayList<JCTree> currentStartNodes, currentEndNodes,
-			currentExitNodes;
-
+	private ArrayList<JCTree> currentStartNodes, currentEndNodes, currentExitNodes;
 	private static ArrayList<JCTree> emptyList = new ArrayList<JCTree>(0);
 
+	private IntraMethodEffectsBuilder effectsBuilder;
+	public ASTCFGBuilder() {
+		effectsBuilder = new IntraMethodEffectsBuilder();
+	}
+	
 	// methodCost
 	private int methodCost = 0;
 	private int loop = 0;
@@ -53,13 +55,13 @@ public class ASTCFGBuilder extends TreeScanner {
 	public void visitAnnotation(JCAnnotation tree) { Assert.error(); }
 	public void visitModifiers(JCModifiers tree) { Assert.error(); }
 	public void visitErroneous(JCErroneous tree) { Assert.error(); }
-	public void visitTypeIdent(JCPrimitiveTypeTree tree) { Assert.error(); }
 	public void visitTypeApply(JCTypeApply tree) { Assert.error(); }
 	public void visitTypeUnion(JCTypeUnion tree) { Assert.error(); }
 	public void visitTypeParameter(JCTypeParameter tree) { Assert.error(); }
 	public void visitWildcard(JCWildcard tree) { Assert.error(); }
 	public void visitTypeBoundKind(TypeBoundKind tree) { Assert.error(); }
 
+	public void visitTypeIdent(JCPrimitiveTypeTree tree) { singleton(tree); }
 	public void visitIdent(JCIdent tree) { singleton(tree); }
 	public void visitLiteral(JCLiteral tree) { singleton(tree); }
 	// URL[].class
@@ -1162,7 +1164,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		connectToEndNodesOf(selected, tree);
 	}
 
-	public JCTree visitList(List<? extends JCTree> trees) {
+	private JCTree visitList(List<? extends JCTree> trees) {
 		JCTree last = null;
 		if (trees.head != null) {
 			// trees.head.accept(this);

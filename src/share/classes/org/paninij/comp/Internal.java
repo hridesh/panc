@@ -118,6 +118,10 @@ public class Internal {
 
         return make0().Annotation(s, args.toList());
     }
+    
+    protected JCAnnotation ann(JCExpression s, List<JCExpression> args) {
+        return make0().Annotation(s, args);
+    }
 
     protected JCExpression select(String name) {
         String[] objects = name.split("\\.");

@@ -50,7 +50,7 @@ public class ReachedProcsComp {
                 JCMethodDecl method = (JCMethodDecl)def;
                 if ((method.sym.flags() & PRIVATE) != 0 ||
                     (method.sym.name.toString().equals("run") &&
-                     capsule.sym.hasRun)) { // is a procedure call or the run method
+                     ((CapsuleSymbol)capsule.sym).definedRun)) { // is a procedure call or the run method
                     methodsToProcess.add(method);
                     traverseCallGraph(method.sym);
                 }

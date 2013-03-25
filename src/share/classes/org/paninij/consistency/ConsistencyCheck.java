@@ -47,29 +47,17 @@ public class ConsistencyCheck {
     HashSet<MethodSymbol> visitedMethods;
     Node currentCapsule;
     SystemGraphs graphs;
-    HashMap<JCMethodDecl, EffectSet> methodEffects = new HashMap<JCMethodDecl, EffectSet>();    
+//    HashMap<JCMethodDecl, EffectSet> methodEffects = new HashMap<JCMethodDecl, EffectSet>();    
     MethodSymbol currentMethod;
-
-    public ConsistencyCheck(HashMap<JCMethodDecl, EffectSet> methodEffects) {
-        this.methodEffects = methodEffects;
-    }
     
     public void checkConsistency(SystemGraphs graphs,
                                  Node capsule) {
         this.graphs = graphs;
         currentCapsule = capsule;
 
-        for (Symbol s : capsule.sym.members_field.getElements()) {
-            if (s instanceof MethodSymbol) {
-                MethodSymbol method = (MethodSymbol)s;
-                if (method.name.toString().contains("$Original") ||
-                    (method.name.toString().equals("run") &&
-                     capsule.sym.hasRun)
-                    ) {
-                    currentMethod = method;
-                    checkMethodConsistency(capsule, method);
-                }
-            }
+        for (MethodSymbol method : capsule.sym.procedures.keySet()) {
+            currentMethod = method;
+            checkMethodConsistency(capsule, method);
         }
     }
 
@@ -122,9 +110,12 @@ public class ConsistencyCheck {
 //                    System.exit(1);
                 }
 
+                // this may be a bug
                 EffectSet effects = new EffectSet();
+//                EffectSet effects = currentMethod.effects;
                 for (NodeMethod nm : intersect) {
-                    EffectSet e = methodEffects.get(nm.m.tree);
+                    EffectSet e = nm.m.effects;
+
 //                    System.out.println(effects);
 //                    System.out.println(e);
                     if (effects.intersects(e)) {

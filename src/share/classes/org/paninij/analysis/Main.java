@@ -9,6 +9,8 @@ import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
+import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Symbol;
 
 public final class Main {
 	/**
@@ -33,8 +35,6 @@ public final class Main {
 						 * System.out.println("m = " + m.name + "\tc = " +
 						 * root.name); System.out.println(m);
 						 */
-						tree.accept(
-								new org.paninij.analysis.ASTCFGBuilder());
 						if (Attr.doGraphs) {
 							System.out.println("digraph G {");
 							m.body.accept(new
@@ -72,7 +72,7 @@ public final class Main {
 			// eliminate processing of task, thread versions except for
 			// capsule with run method
 			if (!root.sym.name.toString().contains("$serial")
-					&& !root.sym.hasRun)
+					&& (root.sym instanceof Symbol.CapsuleSymbol && !((Symbol.CapsuleSymbol)root.sym).definedRun))
 				return;
 
 			// System.out.println("Processing class: " + root.sym);
@@ -104,6 +104,7 @@ public final class Main {
 
 			Stack<org.paninij.systemgraphs.SystemGraphs.Node> visited = new Stack<org.paninij.systemgraphs.SystemGraphs.Node>();
 			org.paninij.systemgraphs.SystemGraphs graphs = root.sym.graphs;
+			if (graphs == null)	return;
 			for (Collection<org.paninij.systemgraphs.SystemGraphs.ConnectionEdge> edges : graphs.forwardConnectionEdges
 					.values()) {
 				for (org.paninij.systemgraphs.SystemGraphs.ConnectionEdge edge : edges) {
@@ -123,7 +124,7 @@ public final class Main {
 	}
 
 	private static void decide(org.paninij.systemgraphs.SystemGraphs.Node node) {
-		if ((node.sym.hasRun && (node.indegree == 0))
+		if (((node.sym instanceof Symbol.CapsuleSymbol && ((Symbol.CapsuleSymbol)node.sym).definedRun) && (node.indegree == 0))
 				|| org.paninij.analysis.StaticProfilePass.blockingCapsules
 						.contains(node.sym.name)) {
 			// thread
