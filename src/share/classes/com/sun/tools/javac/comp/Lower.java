@@ -114,26 +114,26 @@ public class Lower extends TreeTranslator {
         pkginfoOpt = PkgInfo.get(options);
         
         // Panini code
-        ipfeNameGen = new IPForeachHelperMethNameGen("ipForeachHelper");
+        feNameGen = new ForeachHelperMethNameGen("foreachHelper");
         // end Panini code
     }
     // Panini code
-    private class IPForeachHelperMethNameGen {
+    private class ForeachHelperMethNameGen {
     	private String base;
     	private int count;
     	
-    	IPForeachHelperMethNameGen(String s) {
+    	ForeachHelperMethNameGen(String s) {
     		base = s;
     		count = 0;
     	}
     	
-    	Name generateIPForeachMethodName() {
+    	Name generateForeachMethodName() {
     		String ret = base+target.syntheticNameChar()+count;
     		count++;
     		return names.fromString(ret);
     	} 	
     }
-    private IPForeachHelperMethNameGen ipfeNameGen;
+    private ForeachHelperMethNameGen feNameGen;
     // end Panini code
     
     /** The currently enclosing class.
@@ -3312,7 +3312,7 @@ public class Lower extends TreeTranslator {
     	List<JCExpression> listArgs = listBufferArgs.toList();
 
     	Type newMethType = new Type.MethodType(listType, newMethRetType, List.<Type>nil(), syms.methodClass);
-    	Name newMethName = ipfeNameGen.generateIPForeachMethodName();
+    	Name newMethName = feNameGen.generateForeachMethodName();
     	MethodSymbol newMethSym = new Symbol.MethodSymbol(PRIVATE|STATIC, newMethName, newMethType, currentClass);
 
     	ListBuffer<JCVariableDecl> declsBuffer = new ListBuffer<JCVariableDecl>(); //parameters to the synthetic method
@@ -3460,7 +3460,7 @@ public class Lower extends TreeTranslator {
 
     	JCClassDecl currentClassDecl = classDef(currentClass);
 
-    	/*private static <ReturnType>[] ipForeachHelper$i(<CapsuleArrayType> capsules$, ... args){
+    	/*private static <ReturnType>[] foreachHelper$i(<CapsuleArrayType> capsules$, ... args){
     	 * 	int len$ = capsules$.length;
     	 * 	<CapsuleArrayType> carr$ = capsules$;
     	 *	 <ReturnType>[] result$ = new <ReturnType>[len$];
