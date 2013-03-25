@@ -18,7 +18,7 @@
  */
 package com.sun.source.tree;
 
-public interface IPForeachTree extends ExpressionTree{
+public interface ForeachTree extends ExpressionTree{
 	public VariableTree getVariable();
 	public ExpressionTree getCapsuleArray();
 	public MethodInvocationTree getMethod();

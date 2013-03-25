@@ -303,8 +303,8 @@ public class TreeMaker implements JCTree.Factory {
     }
     
     // Panini code
-    public JCIPForeach IPForeach(JCVariableDecl var, JCExpression carr, JCMethodInvocation body) {
-    	JCIPForeach tree= new JCIPForeach(var, carr, body);
+    public JCForeach Foreach(JCVariableDecl var, JCExpression carr, JCMethodInvocation body) {
+    	JCForeach tree= new JCForeach(var, carr, body);
     	tree.pos = pos;
     	return tree;
     }

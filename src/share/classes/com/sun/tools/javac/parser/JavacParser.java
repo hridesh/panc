@@ -1104,7 +1104,7 @@ public class JavacParser implements Parser {
         		{
         			log.error(body.pos, "illegal.start.of.expr", body);
         		}
-        		t = toP(F.at(pos).IPForeach(var, capI, (JCMethodInvocation)body));
+        		t = toP(F.at(pos).Foreach(var, capI, (JCMethodInvocation)body));
         	} else return illegal();
         	break;
         // end Panini code

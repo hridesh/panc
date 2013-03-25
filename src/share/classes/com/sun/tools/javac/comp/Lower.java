@@ -3283,7 +3283,7 @@ public class Lower extends TreeTranslator {
      * 		arr$res[index$] = capsules[index$].method();
      * }
      */
-    public void visitIPForeach(JCIPForeach tree){
+    public void visitForeach(JCForeach tree){
     	
     	JCMethodInvocation treeMeth  = tree.body;
     	TreeCopier<Void> copier = new TreeCopier<Void>(make);

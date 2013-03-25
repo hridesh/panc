@@ -309,7 +309,7 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 		return defaultAction(node, p);
 	}
 	
-	public R visitIPForeach(IPForeachTree node, P p) {
+	public R visitForeach(ForeachTree node, P p) {
 		return defaultAction(node, p);
 	}
 	// end Panini code

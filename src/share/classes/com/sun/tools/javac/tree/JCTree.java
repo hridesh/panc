@@ -1498,15 +1498,15 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
     // Panini code
     /**
      * 
-     * The implicitly parallel foreach loop
+     * The implicitly parallel foreach expression
      *
      */
-    public static class JCIPForeach extends JCExpression implements IPForeachTree{
+    public static class JCForeach extends JCExpression implements ForeachTree{
     	
     	public JCVariableDecl var;
     	public JCExpression carr;
     	public JCMethodInvocation body;
-    	protected JCIPForeach(JCVariableDecl p_var, JCExpression p_carr, JCMethodInvocation p_body)
+    	protected JCForeach(JCVariableDecl p_var, JCExpression p_carr, JCMethodInvocation p_body)
     	{
     		//super(List.<JCExpression>nil(), p_body.meth, p_body.args.prepend(p_carr));
     		var = p_var;
@@ -1516,7 +1516,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		@Override
 		public Kind getKind() {
 			
-			return Kind.IPFOREACH;
+			return Kind.FOREACH;
 		}
 		
 		@Override
@@ -1542,13 +1542,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 		@Override
 		public void accept(Visitor v) {
-			v.visitIPForeach(this);
+			v.visitForeach(this);
 			
 		}
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitIPForeach(this, d);
+			return v.visitForeach(this, d);
 		}
     	
     }
@@ -2988,7 +2988,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitCapsuleDef(JCCapsuleDecl that)	     { visitTree(that); }
         public void visitFree(JCFree that)	                 { visitTree(that); }
         public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }
-        public void visitIPForeach(JCIPForeach that)	 	 { visitTree(that); }
+        public void visitForeach(JCForeach that)	 	 { visitTree(that); }
         // end Panini code
         public void visitTree(JCTree that)                   { Assert.error(); }
     }

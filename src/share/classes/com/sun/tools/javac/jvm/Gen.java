@@ -1102,7 +1102,7 @@ public class Gen extends JCTree.Visitor {
         throw new AssertionError(); // should have been removed by Lower.
     }
     // Panini code
-    public void visitIPForeach(JCIPForeach tree) {
+    public void visitForeach(JCForeach tree) {
         throw new AssertionError(); // should have been removed by Lower.
     }
     // end Panini code

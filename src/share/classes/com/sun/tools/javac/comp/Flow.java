@@ -1650,7 +1650,7 @@ public class Flow {
         }
         
         // Panini code
-        public void visitIPForeach(JCIPForeach tree) {
+        public void visitForeach(JCForeach tree) {
         	visitVarDef(tree.var);
         	
             ListBuffer<AssignPendingExit> prevPendingExits = pendingExits;

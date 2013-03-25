@@ -162,7 +162,7 @@ public class TreeScanner extends Visitor {
     }
     
     // Panini code
-    public void visitIPForeach(JCIPForeach tree) {
+    public void visitForeach(JCForeach tree) {
     	scan(tree.var);
     	scan(tree.carr);
     	scan(tree.body);
