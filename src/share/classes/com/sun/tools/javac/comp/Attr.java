@@ -919,7 +919,7 @@ public class Attr extends JCTree.Visitor {
             chk.setMethod(prevMethod);
         }
         // Panini code
-        	pAttr.postVisitMethodDef(tree, env, rs);
+    	pAttr.postVisitMethodDef(tree, env, rs);
         // end Panini code
     }
 

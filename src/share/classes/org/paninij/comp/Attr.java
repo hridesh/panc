@@ -116,11 +116,13 @@ public final class Attr extends CapsuleInternal {
 		if (tree.body != null)
 			tree.accept(new ASTCFGBuilder());
 		if (tree.sym.owner instanceof CapsuleSymbol) {
-			EffectSet es = new EffectSet();
-			es.add(es.bottomEffect());
-			es.add(es.methodEffect(tree.sym));
-			annotationProcessor.setEffects(tree, es);//TODO: set second argument to actual effectSet when its available
-			annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
+			////
+//			EffectSet es = new EffectSet();
+//			es.add(es.bottomEffect());
+//			es.add(es.methodEffect(tree.sym));
+//			annotationProcessor.setEffects(tree, es);
+//			annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
+			//// to add effectset: move out of if clause and remove test set; change second argument of setEffects to actual effectSet
 			CapsuleProcedure cp = new CapsuleProcedure((CapsuleSymbol) tree.sym.owner,
 					tree.name, tree.sym.params);
 			((CapsuleSymbol) tree.sym.owner).procedures.put(tree.sym, cp);
