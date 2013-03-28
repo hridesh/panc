@@ -18,14 +18,16 @@
  */
 
 capsule Console () { //Capsule declaration
-	void printGreeting() { //Capsule procedure
-		System.out.println("Hello World!"); 
+	void write(String s) { //Capsule procedure
+		System.out.println(s); 
 	}
 }
 
 capsule Greeter (Console c) { //Requires an instance of capsule Console to work
 	void run(){                  //An autonomous capsule procedure
-		c.printGreeting();          //Inter-capsule procedure call 
+		c.write("Panini: Hello World!");          //Inter-capsule procedure call 
+		long time = System.currentTimeMillis();
+		c.write("Time is now: " + time);
 	}
 }
 
