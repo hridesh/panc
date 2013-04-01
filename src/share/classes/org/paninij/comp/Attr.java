@@ -31,13 +31,9 @@ import static com.sun.tools.javac.tree.JCTree.Tag.MAAPPLY;
 import static com.sun.tools.javac.tree.JCTree.Tag.PREINC;
 import static com.sun.tools.javac.tree.JCTree.Tag.TYPEIDENT;
 import static com.sun.tools.javac.tree.JCTree.Tag.VARDEF;
-
 import java.util.HashMap;
 import java.util.Map;
-
 import org.paninij.analysis.ASTCFGBuilder;
-import org.paninij.effects.EffectSet;
-
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symtab;
@@ -127,6 +123,10 @@ public final class Attr extends CapsuleInternal {
 					tree.name, tree.sym.params);
 			((CapsuleSymbol) tree.sym.owner).procedures.put(tree.sym, cp);
 		}
+		if(tree.sym.effects != null){
+			annotationProcessor.setEffects(tree, tree.sym.effects);
+			annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
+		}
 	}
 	
 	public final void visitVarDef(JCVariableDecl tree) {  /* SKIPPED */ }
@@ -187,7 +187,6 @@ public final class Attr extends CapsuleInternal {
 					((JCVariableDecl)def).mods.flags |= FINAL;
 			}
 		}
-
 		/*if (doGraphs)
             effects.computeEffects(tree);*/
 	}

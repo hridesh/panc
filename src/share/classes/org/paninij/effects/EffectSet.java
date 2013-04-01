@@ -56,12 +56,13 @@ class OpenEffect extends Effect {
 
 	public String toString() {
 		String params = "";
+		if(method.params!=null)
 		for (VarSymbol v : method.params) {
 			params = params + v.type.tsym.name + " ";
 		}
 		if(params.length()>0)
-			params = params.substring(0, params.length() - 1);
-		return "O"+method.name + " " + method.owner.name + " " + params;
+			params = " " + params.substring(0, params.length() - 1);
+		return "O"+method.name + " " + method.owner.name + params;
 	}
     public boolean equals(Object o) {
         if (!(o instanceof OpenEffect)) return false;
@@ -75,14 +76,14 @@ class MethodEffect extends Effect {
     public MethodEffect(MethodSymbol method) { if (method==null) Assert.error(); this.method = method; }
 
 	public String toString() {
-		/*String params = "";
+		String params = "";
+		if(method.params!=null)
 		for (VarSymbol v : method.params) {
 			params = params + v.type.tsym.name + " ";
 		}
 		if(params.length()>0)
-			params = params.substring(0, params.length() - 1);
-		return "M"+method.name + " " + method.owner.name + " " + params;*/
-		return method.toString();
+			params = " " + params.substring(0, params.length() - 1);
+		return "M"+method.name + " " + method.owner.name + params;
 	}
     public boolean equals(Object o) {
         if (!(o instanceof MethodEffect)) return false;
@@ -159,10 +160,4 @@ public class EffectSet extends HashSet<Effect> {
     
     public boolean doesInterfere(EffectSet before, EffectSet after) { return true; }
     static final long serialVersionUID = 42L;
-
-    public void printEffect() {
-    	for (Effect e : this) {
-System.out.println("\t" + e + "\t" + e.getClass());
-    	}
-    }
 }
