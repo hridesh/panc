@@ -160,7 +160,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		if (body != null) {
 			body.accept(this);
 
-			effectsBuilder.computeEffectsForMethod(body, null);
+			tree.sym.effects = effectsBuilder.computeEffectsForMethod(body, null);
 		}
 		tree.cost = methodCost;
 	}
