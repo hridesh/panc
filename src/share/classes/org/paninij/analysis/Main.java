@@ -124,7 +124,7 @@ public final class Main {
 	}
 
 	private static void decide(org.paninij.systemgraphs.SystemGraphs.Node node) {
-		if (((node.sym instanceof Symbol.CapsuleSymbol && ((Symbol.CapsuleSymbol)node.sym).definedRun) && (node.indegree == 0))
+		if (((node.sym instanceof Symbol.CapsuleSymbol && (node.sym).definedRun) && (node.indegree == 0))
 				|| org.paninij.analysis.StaticProfilePass.blockingCapsules
 						.contains(node.sym.name)) {
 			// thread

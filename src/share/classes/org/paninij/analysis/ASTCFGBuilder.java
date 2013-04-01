@@ -28,6 +28,7 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeScanner;
 
+import org.paninij.effects.EffectSet;
 import org.paninij.effects.IntraMethodEffectsBuilder;
 
 public class ASTCFGBuilder extends TreeScanner {
@@ -158,6 +159,8 @@ public class ASTCFGBuilder extends TreeScanner {
 		JCBlock body = tree.body;
 		if (body != null) {
 			body.accept(this);
+
+			effectsBuilder.computeEffectsForMethod(body, null);
 		}
 		tree.cost = methodCost;
 	}

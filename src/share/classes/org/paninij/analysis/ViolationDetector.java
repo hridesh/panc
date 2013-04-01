@@ -85,7 +85,7 @@ public class ViolationDetector extends TreeScanner {
 			innerCall = true;
 		} else if (meth instanceof JCFieldAccess) {
 			JCFieldAccess jcfa = (JCFieldAccess)meth;
-			JCExpression receiver = getEssentialExpr(jcfa.selected);
+			JCExpression receiver = CommonMethod.getEssentialExpr(jcfa.selected);
 
 			if (receiver instanceof JCIdent) {
 				JCIdent jci = (JCIdent)receiver;
@@ -143,7 +143,7 @@ public class ViolationDetector extends TreeScanner {
 		if (tree != null) {
 			if (tree instanceof JCExpression) {
 				JCExpression jce = (JCExpression)tree;
-				tree = getEssentialExpr(jce);
+				tree = CommonMethod.getEssentialExpr(jce);
 			}
 
 			if (tree instanceof JCIdent) {
@@ -160,18 +160,6 @@ public class ViolationDetector extends TreeScanner {
 				}
 			}
 		}
-	}
-
-	private static JCExpression getEssentialExpr(JCExpression original) {
-		JCExpression rightOp = original;
-		while (rightOp instanceof JCTypeCast || rightOp instanceof JCParens) {
-			if (rightOp instanceof JCTypeCast) {
-				rightOp = ((JCTypeCast)rightOp).expr;
-			} else if (rightOp instanceof JCParens) {
-				rightOp = ((JCParens)rightOp).expr;
-			}
-		}
-		return rightOp;
 	}
 
 	private void warning(JCIdent tree) {
