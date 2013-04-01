@@ -132,18 +132,62 @@ public class AnnotationProcessor extends Internal{
 		}
 	}
 	
-	//TODO: not done
+	
+	private  MethodSymbol findMethod(Symbol s, String [] signature){
+		Iterator<Symbol> iter = s.members().getElements().iterator();
+		MethodSymbol bestsofar = null;
+		while(iter.hasNext()){
+			Symbol member = iter.next();
+			if(member instanceof MethodSymbol){
+				if(member.name.toString().equals(signature[0])){
+					for(int i=0; i < signature.length-1 ; i++){
+						if(!((MethodSymbol) member).params().get(i).type.tsym.name.toString().equals(signature[i+1]))
+							break;
+						if(i == signature.length-2)
+							bestsofar = (MethodSymbol) member;
+					}
+				}
+			}
+		}
+		return bestsofar;
+	}
+	
+	private Symbol findField(Symbol s, String name){
+		return ((ClassSymbol)s).members_field.lookup(names.fromString(name)).sym;
+	}
+	
 	private EffectSet translateEffects(String[] effects, Env<AttrContext> env, Resolve rs){
 		EffectSet es = new EffectSet();
 		for(String s : effects){
+			String[] split;
+			Symbol ownerSymbol;
+			MethodSymbol m;
 			if(s.equals(""))
 				es.add(es.emptyEffect());
 			else{
+				split = s.substring(1).split(" ");
+				ownerSymbol = rs.findIdent(env, names.fromString(split[0]), Kinds.TYP);
 				char c = s.charAt(0);
 				switch(c){
 				case 'B':
 					es.add(es.bottomEffect());
 					break;
+				case 'R':
+					es.add(es.fieldReadEffect(findField(ownerSymbol, split[1])));
+					break;
+				case 'W':
+					es.add(es.fieldWriteEffect(findField(ownerSymbol, split[1])));
+					break;
+				case 'O':
+					m = findMethod(ownerSymbol, split);
+					es.add(es.openEffect(m));
+					break;
+				case 'M':
+					m = findMethod(ownerSymbol, split);
+					es.add(es.methodEffect(m));
+					break;
+				default:
+					Assert.error("Error when translating effects: unknown effect");
 				}
 			}
 		}

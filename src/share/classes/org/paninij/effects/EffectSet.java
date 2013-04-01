@@ -32,7 +32,7 @@ abstract class Effect {
 class EmptyEffect extends Effect {}
 class FieldReadEffect extends Effect {
     Symbol field; public FieldReadEffect(Symbol field) { this.field = field; }
-    public String toString() { return "R"+field.name.length()+field.name+field.kind; }
+    public String toString() { return "R"+field.owner+" "+field.name; }
     public boolean equals(Object o) {
         if (!(o instanceof FieldReadEffect)) return false;
         FieldReadEffect oe = (FieldReadEffect)o;
@@ -42,7 +42,7 @@ class FieldReadEffect extends Effect {
 }
 class FieldWriteEffect extends Effect {
     Symbol field; public FieldWriteEffect(Symbol field) { this.field = field; }
-    public String toString() { return "W"+field.name.length()+field.name+field.kind; }
+    public String toString() { return "W"+field.owner+" "+field.name; }
     public boolean equals(Object o) {
         if (!(o instanceof FieldWriteEffect)) return false;
         FieldWriteEffect oe = (FieldWriteEffect)o;
@@ -55,13 +55,13 @@ class OpenEffect extends Effect {
     public OpenEffect(MethodSymbol method) { this.method = method; this.otherEffects = new EffectSet(); }
 
 	public String toString() {
-		String paramTags = "";
+		String params = "";
 		for (VarSymbol v : method.params) {
-			paramTags = paramTags + v.type.tag + " ";
+			params = params + v.type.tsym.name + " ";
 		}
-		if(paramTags.length()>0)
-			paramTags = paramTags.substring(0, paramTags.length() - 1);
-		return "O" + method.name.length() + method.name + paramTags;
+		if(params.length()>0)
+			params = params.substring(0, params.length() - 1);
+		return "O"+method.name + " " + method.owner.name + " " + params;
 	}
     public boolean equals(Object o) {
         if (!(o instanceof OpenEffect)) return false;
@@ -75,13 +75,13 @@ class MethodEffect extends Effect {
     public MethodEffect(MethodSymbol method) { if (method==null) Assert.error(); this.method = method; }
 
 	public String toString() {
-		String paramTags = "";
+		String params = "";
 		for (VarSymbol v : method.params) {
-			paramTags = paramTags + v.type.tag + " ";
+			params = params + v.type.tsym.name + " ";
 		}
-		if(paramTags.length()>0)
-			paramTags = paramTags.substring(0, paramTags.length() - 1);
-		return "M" + method.name.length() + method.name + paramTags;
+		if(params.length()>0)
+			params = params.substring(0, params.length() - 1);
+		return "M"+method.name + " " + method.owner.name + " " + params;
 	}
     public boolean equals(Object o) {
         if (!(o instanceof MethodEffect)) return false;
