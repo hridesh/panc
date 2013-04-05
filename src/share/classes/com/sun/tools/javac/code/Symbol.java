@@ -63,12 +63,8 @@ import static com.sun.tools.javac.code.TypeTags.*;
  *  deletion without notice.</b>
  */
 public abstract class Symbol implements Element {
-    // public Throwable debug = new Throwable();
-
 	// Panini code
 	public boolean isSystem;
-
-    public List<Symbol> capsules; // for System symbols
     public SystemGraphs graphs; // for System symbols
     public JCTree tree;
 	// end Panini code
@@ -760,12 +756,9 @@ public abstract class Symbol implements Element {
         	capsule.classfile = c.classfile;
         	capsule.sourcefile = c.sourcefile;
         	capsule.type = c.type;
+        	capsule.completer = c.completer;
         	c = capsule;
         	return capsule;
-        }
-        
-        // fills in the fields of the capsule symbol
-        public void fillIn(){
         }
     }
     //end Panini code
