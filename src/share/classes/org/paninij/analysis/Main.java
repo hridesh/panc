@@ -88,7 +88,7 @@ public final class Main {
 		}
 		// TODO: assumes that all capsules and system are in the same file
 		// All capsules are processed before the system
-		if (root.sym.isSystem) {// inter-capsule cost update
+		if (root.sym instanceof Symbol.SystemSymbol) {// inter-capsule cost update
 			org.paninij.analysis.StaticProfilePass.finalizeCost();
 
 			// Rules to decide execution model for capsules in the system
@@ -103,7 +103,7 @@ public final class Main {
 			// indegree and high cost and high PIC: thread
 
 			Stack<org.paninij.systemgraphs.SystemGraphs.Node> visited = new Stack<org.paninij.systemgraphs.SystemGraphs.Node>();
-			org.paninij.systemgraphs.SystemGraphs graphs = root.sym.graphs;
+			org.paninij.systemgraphs.SystemGraphs graphs = ((Symbol.SystemSymbol)root.sym).graphs;
 			if (graphs == null)	return;
 			for (Collection<org.paninij.systemgraphs.SystemGraphs.ConnectionEdge> edges : graphs.forwardConnectionEdges
 					.values()) {

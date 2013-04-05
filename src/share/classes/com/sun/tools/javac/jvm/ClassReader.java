@@ -2045,6 +2045,73 @@ public class ClassReader implements Completer {
  ***********************************************************************/
 
     // Panini code
+    public SystemSymbol defineSystem(Name name, Symbol owner){
+    	SystemSymbol c = new SystemSymbol(0, name, owner);
+        c.completer = this;
+        return c;
+    }
+    
+    /** Create a new toplevel or member class symbol with given name
+     *  and owner and enter in `classes' unless already there.
+     */
+    public SystemSymbol enterSystem(Name name, TypeSymbol owner) {
+        Name flatname = TypeSymbol.formFlatName(name, owner);
+        ClassSymbol c = classes.get(flatname);
+        if (c == null||(c instanceof ClassSymbol)) {
+            c = defineSystem(name, owner);
+            classes.put(flatname, c);
+        } else if ((c.name != name || c.owner != owner) && owner.kind == TYP && c.owner.kind == PCK) {
+            // reassign fields of classes that might have been loaded with
+            // their flat names.
+            c.owner.members().remove(c);
+            c.name = name;
+            c.owner = owner;
+            c.fullname = ClassSymbol.formFullName(name, owner);
+        }
+        return (SystemSymbol)c;
+    }
+
+    /**
+     * Creates a new toplevel class symbol with given flat name and
+     * given class (or source) file.
+     *
+     * @param flatName a fully qualified binary class name
+     * @param classFile the class file or compilation unit defining
+     * the class (may be {@code null})
+     * @return a newly created class symbol
+     * @throws AssertionError if the class symbol already exists
+     */
+    public SystemSymbol enterSystem(Name flatName, JavaFileObject classFile) {
+        ClassSymbol cs = classes.get(flatName);
+        if (cs != null||(cs instanceof ClassSymbol)) {
+            String msg = Log.format("%s: completer = %s; class file = %s; source file = %s",
+                                    cs.fullname,
+                                    cs.completer,
+                                    cs.classfile,
+                                    cs.sourcefile);
+            throw new AssertionError(msg);
+        }
+        Name packageName = Convert.packagePart(flatName);
+        PackageSymbol owner = packageName.isEmpty()
+                                ? syms.unnamedPackage
+                                : enterPackage(packageName);
+        cs = defineCapsule(Convert.shortName(flatName), owner);
+        cs.classfile = classFile;
+        classes.put(flatName, cs);
+        return (SystemSymbol)cs;
+    }
+
+    /** Create a new member or toplevel class symbol with given flat name
+     *  and enter in `classes' unless already there.
+     */
+    public SystemSymbol enterSystem(Name flatname) {
+        ClassSymbol c = classes.get(flatname);
+        if (c == null)
+            return enterSystem(flatname, (JavaFileObject)null);
+        else
+            return (SystemSymbol)c;
+    }
+    
     public CapsuleSymbol defineCapsule(Name name, Symbol owner){
     	CapsuleSymbol c = new CapsuleSymbol(0, name, owner);
         c.completer = this;

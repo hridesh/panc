@@ -554,13 +554,13 @@ public class Enter extends JCTree.Visitor {
     public void visitSystemDef(JCSystemDecl tree){
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
-        ClassSymbol c;
+        SystemSymbol c;
         if (owner.kind == PCK) {
             // We are seeing a toplevel class.
             PackageSymbol packge = (PackageSymbol)owner;
             for (Symbol q = packge; q != null && q.kind == PCK; q = q.owner)
                 q.flags_field |= EXISTS;
-            c = reader.enterClass(tree.name, packge);
+            c = reader.enterSystem(tree.name, packge);
             packge.members().enterIfAbsent(c);
             if ((tree.mods.flags & PUBLIC) != 0 && !classNameMatchesFileName(c, env)) {
                 log.error(tree.pos(),
@@ -574,13 +574,13 @@ public class Enter extends JCTree.Visitor {
             }
             if (owner.kind == TYP) {
                 // We are seeing a member class.
-                c = reader.enterClass(tree.name, (TypeSymbol)owner);
+                c = reader.enterSystem(tree.name, (TypeSymbol)owner);
                 if ((owner.flags_field & INTERFACE) != 0) {
                     tree.mods.flags |= PUBLIC | STATIC;
                 }
             } else {
                 // We are seeing a local class.
-                c = reader.defineClass(tree.name, owner);
+                c = reader.defineSystem(tree.name, owner);
                 c.flatname = chk.localClassName(c);
                 if (!c.name.isEmpty())
                     chk.checkTransparentClass(tree.pos(), c, env.info.scope);
@@ -592,7 +592,7 @@ public class Enter extends JCTree.Visitor {
         if (chk.compiled.get(c.flatname) != null) {
             duplicateClass(tree.pos(), c);
             result = types.createErrorType(tree.name, (TypeSymbol)owner, Type.noType);
-            tree.sym = (ClassSymbol)result.tsym;
+            tree.sym = (SystemSymbol)result.tsym;
             return;
         }
         chk.compiled.put(c.flatname, c);
@@ -638,7 +638,6 @@ public class Enter extends JCTree.Visitor {
 //        classEnter(tree.defs, localEnv);
 
         tree.sym = c;
-        c.isSystem = true;
         result = c.type;
         tree.switchToClass();
     }

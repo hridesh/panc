@@ -64,8 +64,6 @@ import static com.sun.tools.javac.code.TypeTags.*;
  */
 public abstract class Symbol implements Element {
 	// Panini code
-	public boolean isSystem;
-    public SystemGraphs graphs; // for System symbols
     public JCTree tree;
 	// end Panini code
 
@@ -759,6 +757,20 @@ public abstract class Symbol implements Element {
         	capsule.completer = c.completer;
         	c = capsule;
         	return capsule;
+        }
+    }
+    
+    /**
+     * A class for capsule symbols
+     */
+    public static class SystemSymbol extends ClassSymbol{
+    	public SystemGraphs graphs;
+		public SystemSymbol(long flags, Name name, Type type, Symbol owner) {
+            super(flags, name, type, owner);
+        }
+
+        public SystemSymbol(long flags, Name name, Symbol owner) {
+            super(flags, name, owner);
         }
     }
     //end Panini code
