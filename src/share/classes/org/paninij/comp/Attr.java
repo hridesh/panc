@@ -53,6 +53,7 @@ import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
+import org.paninij.systemgraph.*;
 
 /***
  * Panini-specific context-dependent analysis. All public functions in 
@@ -67,6 +68,7 @@ public final class Attr extends CapsuleInternal {
 	Log log;
 	Annotate annotate;
 	AnnotationProcessor annotationProcessor;
+	SystemGraphBuilder systemGraphBuilder;
 
 	public Attr(TreeMaker make, Names names, Enter enter,
 			MemberEnter memberEnter, Symtab syms, Log log,  
@@ -75,6 +77,7 @@ public final class Attr extends CapsuleInternal {
 		this.log = log;
 		this.annotate = annotate;
 		this.annotationProcessor = new AnnotationProcessor(names, make, log);
+		this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
 	}
 
 	public void visitTopLevel(JCCompilationUnit tree) { /* SKIPPED */ }
@@ -193,13 +196,27 @@ public final class Attr extends CapsuleInternal {
 
 	public final void visitSystemDef(final JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs){
 		/*if (doGraphs) {
-            tree.sym.graphs = graphsBuilder.buildGraphs(tree);
+          ((Symbol.SystemSymbol)tree.sym).graphs = graphsBuilder.buildGraphs(tree);
             effects.substituteProcEffects(tree);
             ConsistencyCheck cc = 
-                new ConsistencyCheck(effects.capsuleEffectsComp.methodEffects);
+                new ConsistencyCheck();
             for (SystemGraphs.Node n :
-                     tree.sym.graphs.forwardConnectionEdges.keySet()) {
-                cc.checkConsistency(tree.sym.graphs, n);
+            	((Symbol.SystemSymbol)tree.sym).graphs.forwardConnectionEdges.keySet()) {
+                Iterator<Symbol> iter = n.sym.members().getElements().iterator();
+                while(iter.hasNext()){
+                	Symbol s = iter.next();
+                	if(s instanceof MethodSymbol){
+                		MethodSymbol ms = (MethodSymbol)s;
+                		if(ms.attributes_field.size()!=0){
+                			for(Attribute.Compound compound : ms.attributes_field){
+                				if(compound.type.tsym.getQualifiedName().toString().contains("Effects")){
+                					ms.effects = annotationProcessor.translateEffectAnnotations(ms, compound, env, rs);
+                				}
+                			}
+                		}
+                	}
+                }
+                cc.checkConsistency(((Symbol.SystemSymbol)tree.sym).graphs, n);
                 }
         }*/
 		//    	tree.sym.graphs = graphsBuilder.buildGraphs(tree);
@@ -211,36 +228,40 @@ public final class Attr extends CapsuleInternal {
 		ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
 		Map<Name, Name> variables = new HashMap<Name, Name>();
 		Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
+		SystemGraph sysGraph = systemGraphBuilder.createSystemGraph();
 
-		for(int i=0;i <tree.body.stats.length();i++){
-			JCStatement currentSystemStmt = tree.body.stats.get(i);
+		for(JCStatement currentSystemStmt : tree.body.stats){
 			Tag systemStmtKind = currentSystemStmt.getTag();
 			if(systemStmtKind == VARDEF){
 				JCVariableDecl vdecl = (JCVariableDecl) currentSystemStmt;
 				Name vdeclTypeName = names.fromString(vdecl.vartype.toString());
-				if(syms.capsules.containsKey(vdeclTypeName))
-					processCapsuleDef(tree, decls, inits, submits, starts, joins, variables, vdecl, rs, env);
-				else{
-					if(vdecl.vartype.getTag()==CAPSULEARRAY){
-						processCapsuleArray(tree, decls, assigns, submits, starts, joins, variables, modArrays, vdecl, rs, env);
-					}
-					else{
-						if(vdecl.vartype.getTag()==TYPEIDENT || vdecl.vartype.toString().equals("String")){
-							vdecl.mods.flags |=FINAL;
+				if (syms.capsules.containsKey(vdeclTypeName)) 
+					processCapsuleDef(tree, decls, inits, submits, starts,
+							joins, variables, vdecl, rs, env, sysGraph);
+				else {
+					if (vdecl.vartype.getTag() == CAPSULEARRAY) 
+						processCapsuleArray(tree, decls, assigns, submits,
+								starts, joins, variables, modArrays, vdecl, rs,
+								env, sysGraph);
+					else {
+						if (vdecl.vartype.getTag() == TYPEIDENT
+								|| vdecl.vartype.toString().equals("String")) {
+							vdecl.mods.flags |= FINAL;
 							decls.add(vdecl);
 						} else
-							log.error(vdecl.pos(), "only.primitive.types.or.strings.allowed");
+							log.error(vdecl.pos(),
+									"only.primitive.types.or.strings.allowed");
 					}
 				}
 			} else if(systemStmtKind == EXEC){
 				JCExpressionStatement currentExprStmt = (JCExpressionStatement) currentSystemStmt;
 				if(currentExprStmt.expr.getTag()==APPLY){
-					processCapsuleWiring(currentExprStmt.expr, assigns, variables);
+					processCapsuleWiring(currentExprStmt.expr, assigns, variables, sysGraph);
 				}
 			}else if(systemStmtKind == FOREACHLOOP)
-				processForEachLoop((JCEnhancedForLoop) currentSystemStmt, assigns, variables);
+				processForEachLoop((JCEnhancedForLoop) currentSystemStmt, assigns, variables, sysGraph);
 			else if(systemStmtKind == MAAPPLY)
-				processCapsuleArrayWiring((JCCapsuleArrayCall) currentSystemStmt, assigns, variables, modArrays, rs, env);
+				processCapsuleArrayWiring((JCCapsuleArrayCall) currentSystemStmt, assigns, variables, modArrays, rs, env, sysGraph);
 			else  			
 				throw new AssertionError("Invalid statement gone through the parser");
 		}
@@ -342,7 +363,7 @@ public final class Attr extends CapsuleInternal {
 
 	private void processCapsuleArrayWiring(JCCapsuleArrayCall mi,
 			ListBuffer<JCStatement> assigns, Map<Name, Name> variables,
-			Map<Name, Integer> modArrays, Resolve rs, Env<AttrContext> env) {
+			Map<Name, Integer> modArrays, Resolve rs, Env<AttrContext> env, SystemGraph sysGraph) {
 		if(!variables.containsKey(names
 				.fromString(mi.name.toString()))){
 			log.error(mi.pos(), "symbol.not.found");
@@ -375,11 +396,19 @@ public final class Attr extends CapsuleInternal {
 				JCExpressionStatement assignAssign = make
 						.Exec(newAssign);
 				assigns.append(assignAssign);
+				if (syms.capsules.containsKey(names
+						.fromString(c.capsuleParameters.get(j).vartype
+								.toString()))) {
+					systemGraphBuilder.addConnection(sysGraph,
+							names.fromString(mi.indexed.toString()+"["+mi.index+"]"),
+							c.capsuleParameters.get(j).getName(),
+							names.fromString(mi.arguments.get(j).toString()));
+				}
 			}
 		}
 	}
 
-	private void processForEachLoop(JCEnhancedForLoop loop, ListBuffer<JCStatement> assigns, Map<Name, Name> variables) {
+	private void processForEachLoop(JCEnhancedForLoop loop, ListBuffer<JCStatement> assigns, Map<Name, Name> variables, SystemGraph sysGraph) {
 		CapsuleSymbol c = syms.capsules.get(names.fromString(loop.var.vartype.toString()));
 		if(c==null){
 			log.error(loop.pos(), "capsule.array.type.error", loop.var.vartype);
@@ -418,7 +447,7 @@ public final class Attr extends CapsuleInternal {
 					log.error(s.pos(),"foreachloop.statement.error");
 				}
 				JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)s).expr;
-				loopBody.appendList(transWiring(mi,variables));
+				loopBody.appendList(transWiring(mi,variables, sysGraph));
 			}
 		}
 		else{
@@ -428,7 +457,7 @@ public final class Attr extends CapsuleInternal {
 				log.error(loop.body.pos(),"foreachloop.statement.error");
 			}
 			JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)loop.body).expr;
-			loopBody.appendList(transWiring(mi,variables));
+			loopBody.appendList(transWiring(mi,variables, sysGraph));
 		}
 
 		JCForLoop floop = 
@@ -439,16 +468,16 @@ public final class Attr extends CapsuleInternal {
 		assigns.append(floop);
 	}
 
-	private void processCapsuleWiring(final JCExpression wiring, final ListBuffer<JCStatement> assigns, final Map<Name, Name> variables) {
+	private void processCapsuleWiring(final JCExpression wiring, final ListBuffer<JCStatement> assigns, final Map<Name, Name> variables, SystemGraph sysGraph) {
 		JCMethodInvocation mi = (JCMethodInvocation) wiring;
 		try{
-			assigns.appendList(transWiring(mi, variables));
+			assigns.appendList(transWiring(mi, variables, sysGraph));
 		}catch (NullPointerException e){
 			log.error(mi.pos(), "only.capsule.types.allowed");
 		}
 	}
 
-	private List<JCStatement> transWiring(final JCMethodInvocation mi, final Map<Name, Name> variables){
+	private List<JCStatement> transWiring(final JCMethodInvocation mi, final Map<Name, Name> variables, SystemGraph sysGraph){
 		if(variables.get(names
 				.fromString(mi.meth.toString()))==null){
 			log.error(mi.pos(), "capsule.array.type.error", mi.meth);
@@ -469,6 +498,14 @@ public final class Attr extends CapsuleInternal {
 				JCExpressionStatement assignAssign = make
 						.Exec(newAssign);
 				assigns.append(assignAssign);
+				if (syms.capsules.containsKey(names
+						.fromString(c.capsuleParameters.get(j).vartype
+								.toString()))) {
+					systemGraphBuilder.addConnection(sysGraph,
+							names.fromString(mi.meth.toString()),
+							c.capsuleParameters.get(j).getName(),
+							names.fromString(mi.args.get(j).toString()));
+				}
 			}
 		}
 		return assigns.toList();
@@ -478,7 +515,7 @@ public final class Attr extends CapsuleInternal {
 			ListBuffer<JCStatement> decls, ListBuffer<JCStatement> assigns,
 			ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
 			ListBuffer<JCStatement> joins, Map<Name, Name> variables,
-			Map<Name, Integer> modArrays, JCVariableDecl vdecl, Resolve rs, Env<AttrContext> env) {
+			Map<Name, Integer> modArrays, JCVariableDecl vdecl, Resolve rs, Env<AttrContext> env, SystemGraph sysGraph) {
 		JCCapsuleArray mat = (JCCapsuleArray)vdecl.vartype;
 		String initName = mat.elemtype.toString()+"$thread";
 		if((vdecl.mods.flags & Flags.TASK) !=0){
@@ -493,6 +530,7 @@ public final class Attr extends CapsuleInternal {
 		if(c==null){
 			log.error(vdecl.pos(), "capsule.array.type.error", mat.elemtype);
 		}
+		systemGraphBuilder.addMultipleNodes(sysGraph, vdecl.name, mat.amount, c);
 		JCNewArray s= make.NewArray(make.Ident(c.type.tsym), 
 				List.<JCExpression>of(make.Literal(mat.amount)), null);
 		JCVariableDecl newArray = 
@@ -567,7 +605,7 @@ public final class Attr extends CapsuleInternal {
 			ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
 			ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
 			ListBuffer<JCStatement> joins, Map<Name, Name> variables,
-			JCVariableDecl vdecl, Resolve rs, Env<AttrContext> env) {
+			JCVariableDecl vdecl, Resolve rs, Env<AttrContext> env, SystemGraph sysGraph) {
 		String initName = vdecl.vartype.toString()+"$thread";
 		if((vdecl.mods.flags & Flags.TASK) !=0){
 			initName = vdecl.vartype.toString()+"$task";
@@ -578,6 +616,9 @@ public final class Attr extends CapsuleInternal {
 		else if((vdecl.mods.flags & Flags.MONITOR) !=0)
 			initName = vdecl.vartype.toString()+"$monitor";
 		CapsuleSymbol c = syms.capsules.get(names.fromString((initName)));
+		if(c==null)
+			log.error(vdecl.pos, "invalid.capsule.type");
+		systemGraphBuilder.addSingleNode(sysGraph, vdecl.name, c);
 		decls.add(vdecl);
 		JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null, 
 				make.Ident(c.type.tsym), List.<JCExpression>nil(), null);
