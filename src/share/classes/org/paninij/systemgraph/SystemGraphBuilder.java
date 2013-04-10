@@ -60,10 +60,34 @@ public class SystemGraphBuilder {
 		graph.setConnection(fromNode, arg, toNode);
 	}
 	
-	public void addConnections(SystemGraph graph, Name fromNode, Name arg, Name toNode){
+	/** Connects a single capsule to a capsule Array
+	 */
+	public void addConnectionsOneToMany(SystemGraph graph, Name fromNode, Name arg, Name toNode){
 		int amount = graph.capsuleArrays.get(toNode);
 		for(int i=0;i<amount;i++){
 			addConnection(graph, fromNode, names.fromString(arg+"["+i+"]"), names.fromString(toNode+"["+i+"]"));
+		}
+	}
+	
+	/** Connects from every capsule of a capsule array to a single capsule. 
+	 *  Used for foreach loops in systems
+	 */
+	public void addConnectionsManyToOne(SystemGraph graph, Name fromNode, Name arg, Name toNode){
+		int amount = graph.capsuleArrays.get(fromNode);
+		for(int i=0;i<amount;i++){
+			addConnection(graph, names.fromString(fromNode+"["+i+"]"), arg, toNode);
+		}
+	}
+	
+	/** Connects from every capsule of a capsule array to a capsule array. 
+	 *  Used for foreach loops in systems
+	 */
+	public void addConnectionsManyToMany(SystemGraph graph, Name fromNode, Name arg, Name toNode){
+		int fromAmount = graph.capsuleArrays.get(fromNode);
+		int toAmount = graph.capsuleArrays.get(fromNode);
+		for(int i=0;i<fromAmount;i++){
+			for(int j=0;j<toAmount;j++)
+				addConnection(graph, names.fromString(fromNode+"["+i+"]"), names.fromString(arg+"["+i+"]"), names.fromString(toNode+"["+j+"]"));
 		}
 	}
 	

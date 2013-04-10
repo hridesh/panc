@@ -404,7 +404,7 @@ public final class Attr extends CapsuleInternal {
 					if(syms.capsules.containsKey(names
 							.fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
 									.toString())))
-						systemGraphBuilder.addConnections(sysGraph,
+						systemGraphBuilder.addConnectionsOneToMany(sysGraph,
 								names.fromString(mi.indexed.toString()+"["+mi.index+"]"),
 								c.capsuleParameters.get(j).getName(),
 								names.fromString(mi.arguments.get(j).toString()));
@@ -460,7 +460,29 @@ public final class Attr extends CapsuleInternal {
 					log.error(s.pos(),"foreachloop.statement.error");
 				}
 				JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)s).expr;
-				loopBody.appendList(transWiring(mi,variables, sysGraph));
+				loopBody.appendList(transWiring(mi,variables, sysGraph, true));
+				if (mi.args.length() != c.capsuleParameters.length()) {
+					log.error(mi.pos(), "arguments.of.wiring.mismatch");
+				} else {
+					for(int j=0;j<mi.args.length();j++){
+						if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
+							if(syms.capsules.containsKey(names
+									.fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
+											.toString())))
+								systemGraphBuilder.addConnectionsManyToMany(sysGraph, 
+										names.fromString(loop.expr.toString()), c.capsuleParameters.get(j).getName(), 
+										names.fromString(mi.args.get(j).toString()));
+						}
+						if (syms.capsules.containsKey(names
+								.fromString(c.capsuleParameters.get(j).vartype
+										.toString()))) {
+							systemGraphBuilder.addConnectionsManyToOne(sysGraph,
+									names.fromString(loop.expr.toString()),
+									c.capsuleParameters.get(j).getName(),
+									names.fromString(mi.args.get(j).toString()));
+						}
+					}
+				}
 			}
 		}
 		else{
@@ -470,7 +492,29 @@ public final class Attr extends CapsuleInternal {
 				log.error(loop.body.pos(),"foreachloop.statement.error");
 			}
 			JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)loop.body).expr;
-			loopBody.appendList(transWiring(mi,variables, sysGraph));
+			loopBody.appendList(transWiring(mi,variables, sysGraph, true));
+			if (mi.args.length() != c.capsuleParameters.length()) {
+				log.error(mi.pos(), "arguments.of.wiring.mismatch");
+			} else {
+				for(int j=0;j<mi.args.length();j++){
+					if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
+						if(syms.capsules.containsKey(names
+								.fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
+										.toString())))
+							systemGraphBuilder.addConnectionsManyToMany(sysGraph, 
+									names.fromString(loop.expr.toString()), c.capsuleParameters.get(j).getName(), 
+									names.fromString(mi.args.get(j).toString()));
+					}
+					if (syms.capsules.containsKey(names
+							.fromString(c.capsuleParameters.get(j).vartype
+									.toString()))) {
+						systemGraphBuilder.addConnectionsManyToOne(sysGraph,
+								names.fromString(loop.expr.toString()),
+								c.capsuleParameters.get(j).getName(),
+								names.fromString(mi.args.get(j).toString()));
+					}
+				}
+			}
 		}
 
 		JCForLoop floop = 
@@ -484,13 +528,13 @@ public final class Attr extends CapsuleInternal {
 	private void processCapsuleWiring(final JCExpression wiring, final ListBuffer<JCStatement> assigns, final Map<Name, Name> variables, SystemGraph sysGraph) {
 		JCMethodInvocation mi = (JCMethodInvocation) wiring;
 		try{
-			assigns.appendList(transWiring(mi, variables, sysGraph));
+			assigns.appendList(transWiring(mi, variables, sysGraph, false));
 		}catch (NullPointerException e){
 			log.error(mi.pos(), "only.capsule.types.allowed");
 		}
 	}
 
-	private List<JCStatement> transWiring(final JCMethodInvocation mi, final Map<Name, Name> variables, SystemGraph sysGraph){
+	private List<JCStatement> transWiring(final JCMethodInvocation mi, final Map<Name, Name> variables, SystemGraph sysGraph, boolean forEachLoop){
 		if(variables.get(names
 				.fromString(mi.meth.toString()))==null){
 			log.error(mi.pos(), "capsule.array.type.error", mi.meth);
@@ -511,21 +555,23 @@ public final class Attr extends CapsuleInternal {
 				JCExpressionStatement assignAssign = make
 						.Exec(newAssign);
 				assigns.append(assignAssign);
-				if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
-					if(syms.capsules.containsKey(names
-							.fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
-									.toString())))
-						systemGraphBuilder.addConnections(sysGraph, 
-								names.fromString(mi.meth.toString()), c.capsuleParameters.get(j).getName(), 
+				if(!forEachLoop){
+					if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
+						if(syms.capsules.containsKey(names
+								.fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
+										.toString())))
+							systemGraphBuilder.addConnectionsOneToMany(sysGraph, 
+									names.fromString(mi.meth.toString()), c.capsuleParameters.get(j).getName(), 
+									names.fromString(mi.args.get(j).toString()));
+					}
+					if (syms.capsules.containsKey(names
+							.fromString(c.capsuleParameters.get(j).vartype
+									.toString()))) {
+						systemGraphBuilder.addConnection(sysGraph,
+								names.fromString(mi.meth.toString()),
+								c.capsuleParameters.get(j).getName(),
 								names.fromString(mi.args.get(j).toString()));
-				}
-				if (syms.capsules.containsKey(names
-						.fromString(c.capsuleParameters.get(j).vartype
-								.toString()))) {
-					systemGraphBuilder.addConnection(sysGraph,
-							names.fromString(mi.meth.toString()),
-							c.capsuleParameters.get(j).getName(),
-							names.fromString(mi.args.get(j).toString()));
+					}
 				}
 			}
 		}

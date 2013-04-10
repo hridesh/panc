@@ -19,19 +19,36 @@
 
 package org.paninij.systemgraph;
 
+import java.util.HashSet;
+import java.util.HashMap;
+
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
 
-import java.util.*;
 import com.sun.tools.javac.util.*;
 
 public class SystemGraph {
 	public static class Path{
-		public Node node;
-		public Node next;
-		Path(Node node) {
-			this.node = node;
+		public List<Node> nodes;
+		public Path() {
+			nodes = List.<Node>nil();
+		}
+		public Path(Node node) {
+			nodes = List.<Node>nil();
+			nodes = nodes.append(node);
+		}
+		public Path(Path path){
+			nodes = List.<Node>nil();
+			nodes = nodes.appendList(path.nodes);
+		}
+		@Override
+		public String toString(){
+			String s = nodes.get(0).name.toString();
+			for(int i=1;i<nodes.size();i++){
+				s += " --> "+ nodes.get(i).name; 
+			}
+			return s;
 		}
 	}
 	public static class Node{

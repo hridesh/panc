@@ -19,8 +19,11 @@
 package org.paninij.consistency;
 
 import org.paninij.systemgraph.*;
+import org.paninij.systemgraph.SystemGraph.Node;
+import org.paninij.systemgraph.SystemGraph.Path;
 import org.paninij.systemgraph.SystemGraph.*;
 import java.util.*;
+import java.util.Map.Entry;
 
 public class ConsistencyChecker {
 
@@ -31,6 +34,7 @@ public class ConsistencyChecker {
 	
 	HashSet<Node> visitedNode;
 	Node headNode;
+	HashMap<Node, HashSet<Path>> paths;
 	/**Do the first part of the analysis.
 	 * - this checks if there are more than one simple paths between any two vertices of the graph.
 	 */
@@ -38,21 +42,42 @@ public class ConsistencyChecker {
 		for(Node node : graph.nodes.values()){
 			visitedNode = new HashSet<Node>();
 			headNode = node;
-			traverse(node);
+			paths = new HashMap<Node, HashSet<Path>>();
+			Path currentPath;
+			currentPath = new Path();
+			if(traverse(node, currentPath)){
+				Iterator<Entry<Node, HashSet<Path>>> iter = paths.entrySet().iterator();
+				while(iter.hasNext()){
+					Entry<Node, HashSet<Path>> entry = iter.next();
+					if(entry.getValue().size()>1){
+						System.out.println("Multiple paths found from node "+headNode.name+ " to "+entry.getKey().name);
+						for(Path path : entry.getValue()){
+							System.out.println(path);
+						}
+					}
+				}
+			}
 		}
 	}
 	
-	private boolean traverse(Node node){
+	private boolean traverse(Node node, final Path currentPath){
+		Path newPath = new Path(currentPath);
+		newPath.nodes = newPath.nodes.append(node);
+		if(paths.containsKey(node))
+			paths.get(node).add(newPath);
+		else{
+			HashSet<Path> hs = new HashSet<Path>();
+			hs.add(newPath);
+			paths.put(node, hs);
+		}
 		if(!visitedNode.add(node)){
-			System.out.println("Multiple paths found from node "+headNode.name+ " to "+node.name);
 			return true;
 		}
-		
 		if(node.connections.isEmpty())
 			return false;
 		boolean found = false;
 		for(Connection co : node.connections){
-			found |= traverse(co.node);
+			found |= traverse(co.node, newPath);
 		}
 		return found;
 	}
