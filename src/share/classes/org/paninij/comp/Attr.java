@@ -54,6 +54,7 @@ import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
 import org.paninij.systemgraph.*;
+import org.paninij.consistency.*;
 
 /***
  * Panini-specific context-dependent analysis. All public functions in 
@@ -273,6 +274,9 @@ public final class Attr extends CapsuleInternal {
 		JCMethodDecl maindecl = createMainMethod(tree.sym, tree.body, tree.params, mainStmts);
 		tree.defs = tree.defs.append(maindecl);
 
+//		System.out.println(sysGraph);
+//		ConsistencyChecker  checker = new ConsistencyChecker(sysGraph);
+//		checker.potentialPathCheck();
 		tree.switchToClass();
 
 		memberEnter.memberEnter(maindecl, env);
@@ -396,6 +400,15 @@ public final class Attr extends CapsuleInternal {
 				JCExpressionStatement assignAssign = make
 						.Exec(newAssign);
 				assigns.append(assignAssign);
+				if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
+					if(syms.capsules.containsKey(names
+							.fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
+									.toString())))
+						systemGraphBuilder.addConnections(sysGraph,
+								names.fromString(mi.indexed.toString()+"["+mi.index+"]"),
+								c.capsuleParameters.get(j).getName(),
+								names.fromString(mi.arguments.get(j).toString()));
+				}
 				if (syms.capsules.containsKey(names
 						.fromString(c.capsuleParameters.get(j).vartype
 								.toString()))) {
@@ -498,6 +511,14 @@ public final class Attr extends CapsuleInternal {
 				JCExpressionStatement assignAssign = make
 						.Exec(newAssign);
 				assigns.append(assignAssign);
+				if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
+					if(syms.capsules.containsKey(names
+							.fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
+									.toString())))
+						systemGraphBuilder.addConnections(sysGraph, 
+								names.fromString(mi.meth.toString()), c.capsuleParameters.get(j).getName(), 
+								names.fromString(mi.args.get(j).toString()));
+				}
 				if (syms.capsules.containsKey(names
 						.fromString(c.capsuleParameters.get(j).vartype
 								.toString()))) {

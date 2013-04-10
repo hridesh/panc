@@ -21,15 +21,24 @@ package org.paninij.systemgraph;
 
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
+
 import java.util.*;
 import com.sun.tools.javac.util.*;
 
 public class SystemGraph {
+	public static class Path{
+		public Node node;
+		public Node next;
+		Path(Node node) {
+			this.node = node;
+		}
+	}
 	public static class Node{
-		HashMap<Name, MethodSymbol> procedures = new HashMap<Name, MethodSymbol>();
-		HashSet<Connection> connections = new HashSet<Connection>();
+		HashSet<MethodSymbol> procedures = new HashSet<MethodSymbol>();
+		public HashSet<Connection> connections = new HashSet<Connection>();
 		CapsuleSymbol capsule;//symbol of the capsule instance
-		Name name;//name of the capsule instance
+		public Name name;//name of the capsule instance
 
 		Node(Name name, CapsuleSymbol sym){
 			capsule = sym;
@@ -41,7 +50,7 @@ public class SystemGraph {
 		}
 		
 		private void addProc(MethodSymbol ms){
-			procedures.put(ms.name, ms);
+			procedures.add(ms);
 		}
 		
 		public void addConnection(Name name, Node node){
@@ -51,16 +60,16 @@ public class SystemGraph {
 		@Override
 		public String toString(){
 			String string = capsule.name+" "+ name + " {";
-			for(Name n : procedures.keySet()){
+			for(MethodSymbol n : procedures){
 				string += n.toString()+",";
 			}
 			string += "}";
 			return string;
 		}
 	}
-	static class Connection{
-		Name name; //alias name of the capsule connected
-		Node node; //destination of the connection
+	public static class Connection{
+		public Name name; //alias name of the capsule connected
+		public Node node; //destination of the connection 
 		public Connection(Name name, Node node){
 			this.name = name;
 			this.node = node;
@@ -78,8 +87,9 @@ public class SystemGraph {
 		}
 	}
 	
-	HashMap<Name, Node> nodes = new HashMap<Name, Node>();
+	public HashMap<Name, Node> nodes = new HashMap<Name, Node>();
 	HashSet<Edge> edges = new HashSet<Edge>(); 
+	public HashMap<Name, Integer> capsuleArrays = new HashMap<Name, Integer>();
 	
 	void addNode(Name name, CapsuleSymbol sym){
 		nodes.put(name, new Node(name, sym));
@@ -89,11 +99,15 @@ public class SystemGraph {
 		nodes.get(fromNode).connections.add(new Connection(alias, nodes.get(toNode)));
 	}
 	
+	void setEdge(Node fromNode, Name fromProc, Node toNode, Name toProc){
+		edges.add(new Edge(fromNode, fromProc, toNode, toProc));
+	}
+	
 	@Override
 	public String toString(){
 		String s = "Nodes: \n";
 		for(Node node : nodes.values()){
-			s += "\t"+node.toString()+"\n";
+			s += "\t"+node+"\n";
 		}
 		s += "Connections: \n";
 		for(Node node : nodes.values()){

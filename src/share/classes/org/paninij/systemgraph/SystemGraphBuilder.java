@@ -19,8 +19,9 @@
 package org.paninij.systemgraph;
 
 import com.sun.tools.javac.code.Symtab;
-import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
+import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.util.*;
+import org.paninij.effects.*;
 
 public class SystemGraphBuilder {
 	Symtab syms;
@@ -33,28 +34,57 @@ public class SystemGraphBuilder {
 		this.log = log;
 	}
 	
-	/**returns an empty systemGraph
+	/** Returns an empty systemGraph
 	 */
 	public SystemGraph createSystemGraph(){
 		return new SystemGraph();
 	}
 	
-	/** adds a single Node with the name and capsuleSymbol to graph
+	/** Adds a single Node with the name and capsuleSymbol to graph
 	 */
 	public void addSingleNode(SystemGraph graph, Name name, final CapsuleSymbol c){
 		graph.addNode(name, c);
 	}
 
-	/** Adds an array of capsule as multiple nodes.
+	/** Adds an array of capsules as multiple nodes.
 	 * Name of these nodes are represented as "capsuleName[index]" in the graph
 	 */
 	public void addMultipleNodes(SystemGraph graph, Name name, int amount, final CapsuleSymbol c) {
 		for(int i=0;i<amount;i++){
 			graph.addNode(names.fromString(name+"["+i+"]"), c);
 		}
+		graph.capsuleArrays.put(name, amount);
 	}
 	
 	public void addConnection(SystemGraph graph, Name fromNode, Name arg, Name toNode){
 		graph.setConnection(fromNode, arg, toNode);
+	}
+	
+	public void addConnections(SystemGraph graph, Name fromNode, Name arg, Name toNode){
+		int amount = graph.capsuleArrays.get(toNode);
+		for(int i=0;i<amount;i++){
+			addConnection(graph, fromNode, names.fromString(arg+"["+i+"]"), names.fromString(toNode+"["+i+"]"));
+		}
+	}
+	
+	public void addEdge(SystemGraph graph, String fromNode, String fromProc, String toNode, String toProc){
+		addEdge(graph, names.fromString(fromNode), names.fromString(fromProc), names.fromString(toNode), names.fromString(toProc));
+	}
+	
+
+	private void translateCallEffects(SystemGraph graph, EffectSet es){
+		//TODO
+	}
+	
+	public void completeEdges(SystemGraph graph){
+		for(SystemGraph.Node n : graph.nodes.values()){
+			for(MethodSymbol ms : n.procedures){
+				translateCallEffects(graph, ms.effects);
+			}
+		}
+	}
+
+	private void addEdge(SystemGraph graph, Name fromNode, Name fromProc, Name toNode, Name toProc){
+		graph.setEdge(graph.nodes.get(fromNode), fromProc, graph.nodes.get(toNode), toProc);
 	}
 }
