@@ -182,7 +182,7 @@ public final class Attr extends CapsuleInternal {
 			if(def.getTag() == Tag.METHODDEF){
 				for(JCVariableDecl param : ((JCMethodDecl)def).params){
 					if(param.type.tsym instanceof CapsuleSymbol&&!((JCMethodDecl)def).name.toString().contains("$Original")){
-						log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.name.subSequence(0, tree.name.toString().indexOf("$")));
+						log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.sym);
 					}
 				}
 
