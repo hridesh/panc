@@ -132,7 +132,7 @@ public class IntraMethodEffectsBuilder extends TreeScanner {
 		}
 	}
 	public void visitAssign(JCIdent tree) {
-		JCExpression lhs = CommonMethod.getEssentialExpr(tree);
+		JCExpression lhs = CommonMethod.essentialExpr(tree);
 
 		if (lhs instanceof JCFieldAccess) {
 			JCFieldAccess jcfa = (JCFieldAccess)lhs;

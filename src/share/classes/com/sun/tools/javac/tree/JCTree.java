@@ -1219,6 +1219,12 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         // Panini code
         public boolean isFresh;
         public boolean isCommutative;
+        // the analysis order of the body of this capsule method
+        public ArrayList<JCTree> order; 
+        // the caller of this method
+        // public HashSet<JCMethodDecl> callers;
+        // the effect of this
+        // public org.paninij.effects.analysis.EffectSet ars;
         // end Panini code
         protected JCMethodDecl(JCModifiers mods,
                             Name name,

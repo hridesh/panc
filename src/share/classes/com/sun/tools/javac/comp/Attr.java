@@ -725,6 +725,17 @@ public class Attr extends JCTree.Visitor {
     // Panini code
     public final void visitCapsuleDef(final JCCapsuleDecl tree){
     	pAttr.visitCapsuleDef(tree, this, env, rs);
+
+    	// print out the effect
+    	/* for (JCTree def : tree.defs) {
+    		if (def instanceof JCMethodDecl) {
+    			JCMethodDecl jcmd = (JCMethodDecl)def;
+    			org.paninij.effects.analysis.EffectSet ars = jcmd.sym.ars;
+    			if (ars != null) {
+    				ars.printEffect();
+    			}
+    		}
+    	} */
     }
 
     public final void visitSystemDef(final JCSystemDecl tree){

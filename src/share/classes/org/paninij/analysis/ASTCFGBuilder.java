@@ -21,24 +21,25 @@ package org.paninij.analysis;
 
 import java.util.ArrayList;
 
+import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
 
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeScanner;
 
-import org.paninij.effects.EffectSet;
-import org.paninij.effects.IntraMethodEffectsBuilder;
+import org.paninij.effects.analysis.EffectInter;
 
 public class ASTCFGBuilder extends TreeScanner {
 	private int id = 0;
 	private ArrayList<JCTree> currentStartNodes, currentEndNodes, currentExitNodes;
 	private static ArrayList<JCTree> emptyList = new ArrayList<JCTree>(0);
 
-	private IntraMethodEffectsBuilder effectsBuilder;
+	private EffectInter effectsBuilder;
 	public ASTCFGBuilder() {
-		effectsBuilder = new IntraMethodEffectsBuilder();
+		effectsBuilder = new EffectInter();
 	}
 	
 	// methodCost
@@ -104,9 +105,12 @@ public class ASTCFGBuilder extends TreeScanner {
 			currentStartNodes.add(tree);
 
 			addNode(tree);
-
 			connectToStartNodesOf(tree, body);
+
 			tree.predecessors.addAll(predecessors);
+			for (JCTree endNode : predecessors) {
+				endNode.successors.add(tree);
+			}
 		}
 	}
 
@@ -154,15 +158,30 @@ public class ASTCFGBuilder extends TreeScanner {
 		}
 	}
 
+	public ArrayList<JCTree> order;
 	public void visitMethodDef(JCMethodDecl tree) {
-		this.methodCost = 0; // reset methodCost
-		JCBlock body = tree.body;
-		if (body != null) {
-			body.accept(this);
+		CapsuleSymbol cs = (CapsuleSymbol)tree.sym.ownerCapsule();
+		if (cs != null) {
+			if ((cs.definedRun && tree.sym.toString().indexOf("$") == -1) ||
+					((cs.toString().substring(cs.toString().indexOf("$")
+							+ 1).compareTo("thread") == 0) &&
+					(tree.sym.toString().indexOf("$Original()") != -1 ||
+					(tree.mods.flags & Flags.PRIVATE) != 0))) {
+				ArrayList<JCTree> previous = order;
+				order = new ArrayList<JCTree>();
 
-			tree.sym.effects = effectsBuilder.computeEffectsForMethod(body, null);
+				this.methodCost = 0; // reset methodCost
+				JCBlock body = tree.body;
+				if (body != null) {
+					body.accept(this);
+					tree.order = order;
+					effectsBuilder.analysis(tree, cs);
+				}
+				tree.cost = methodCost;
+
+				order = previous;
+			}
 		}
-		tree.cost = methodCost;
 	}
 
 	public void visitVarDef(JCVariableDecl tree) {
@@ -170,7 +189,7 @@ public class ASTCFGBuilder extends TreeScanner {
 
 		// methodCost
 		if (this.loop > 0) {
-			methodCost += (Costs.iload * this.loop * 128);//TODO: loopBooster
+			methodCost += (Costs.iload * this.loop * 128); // TODO: loopBooster
 			methodCost += (Costs.istore * this.loop * 128);
 		} else {
 			methodCost += Costs.iload;
@@ -465,8 +484,6 @@ public class ASTCFGBuilder extends TreeScanner {
 		}
 
 		connectStartNodesToEndNodesOf(nextStartNodeTree, body);
-		// connectStartNodesToContinuesOf(cond, body);
-		// connectStartNodesToContinuesOf(tree, body);
 		if (cond != null) {
 			for (JCTree jct1 : tempContinueNodes) {
 				jct1.successors.addAll(cond.startNodes);
@@ -526,9 +543,7 @@ public class ASTCFGBuilder extends TreeScanner {
 
 		// connect the nodes
 		connectToEndNodesOf(expr, tree);
-		// connectToStartNodesOf(tree, expr);
 
-		// connectStartNodesToContinuesOf(tree, body);
 		connectStartNodesToEndNodesOf(body, body);
 		connectToEndNodesOf(body, tree);
 		for (JCTree jct1 : tempContinueNodes) {
@@ -543,19 +558,13 @@ public class ASTCFGBuilder extends TreeScanner {
 		// methodCost
 	}
 
-	/*
-	 * used by visitSwitch and visitCase only, which visit the single node then
-	 * the subsequent list.
-	 */
+	/* used by visitSwitch and visitCase only, which visit the single node then
+	 * the subsequent list. */
 	public void switchAndCase(JCTree single, List<? extends JCTree> list) {
-		// single.accept(this);
-
 		if (list.head != null) {
-			// list.head.accept(this);
 			connectStartNodesToEndNodesOf(list.head, single);
 			JCTree prev = list.head;
 			for (JCTree tree : list.tail) {
-				// tree.accept(this);
 				connectStartNodesToEndNodesOf(tree, prev);
 				prev = tree;
 			}
@@ -798,7 +807,6 @@ public class ASTCFGBuilder extends TreeScanner {
 		addNode(tree);
 
 		// connect the nodes
-
 		connectStartNodesToEndNodesOf(thenpart, cond);
 
 		if (elsepart != null) {
@@ -1240,7 +1248,7 @@ public class ASTCFGBuilder extends TreeScanner {
 			}
 			this.currentStartNodes = currentStartNodes;
 			this.currentExitNodes = finalExcEndNodes;
-		} // else throw new Error("block should not be empty");
+		}
 	}
 
 	private void singleton(JCTree tree) {
@@ -1261,6 +1269,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		tree.exitNodes = currentExitNodes;
 
 		init(tree);
+		order.add(tree);
 	}
 
 	private static ArrayList<JCTree> resolveBreaks(JCTree target,
@@ -1326,6 +1335,6 @@ public class ASTCFGBuilder extends TreeScanner {
 			finalExcEndNodes.addAll(this.currentExitNodes);
 			this.currentEndNodes = finalEndNodes;
 			this.currentExitNodes = finalExcEndNodes;
-		} // else throw new Error("block should not be empty");
+		}
 	}
 }

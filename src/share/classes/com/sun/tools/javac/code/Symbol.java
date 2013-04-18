@@ -1132,6 +1132,10 @@ public abstract class Symbol implements Element {
         public HashSet<MethodInfo> reachedProcs = new HashSet<MethodInfo>();
         // for storing memoized ASTChain
         public CFG cfg;
+        // the caller of this method
+        public HashSet<MethodSymbol> callers;
+        // the effect of this
+        public org.paninij.effects.analysis.EffectSet ars;
     	// end Panini code
     	
         /** The code of the method. */
