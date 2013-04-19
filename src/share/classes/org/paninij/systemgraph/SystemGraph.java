@@ -60,7 +60,7 @@ public class SystemGraph {
 		public Set<MethodSymbol> procedures = new HashSet<MethodSymbol>();
 //		public Set<Connection> connections = new HashSet<Connection>();
 		public HashMap<Name, Node> connections = new HashMap<Name, Node>();
-		CapsuleSymbol capsule;//symbol of the capsule instance
+		public CapsuleSymbol capsule;//symbol of the capsule instance
 		public Name name;//name of the capsule instance
 
 		Node(Name name, CapsuleSymbol sym){

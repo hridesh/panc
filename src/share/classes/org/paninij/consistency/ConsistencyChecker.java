@@ -30,6 +30,7 @@ import java.util.Map.Entry;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.code.Symbol;
 import org.paninij.effects.analysis.*;
 
 public class ConsistencyChecker {
@@ -74,15 +75,24 @@ public class ConsistencyChecker {
 		pathCheck();
 	}
 	
+	class Report{
+		Node startingNode;
+		List<Edge> startingCalls;
+	}
 	
+	
+	Report currentReport;
 	List<MethodSymbol> endingProcedure;
+	HashMap<MethodSymbol, HashSet<Edge>> firstCall;
 	/**
 	 * Find the actual paths for set of potential paths, and see if potential trouble exists. 
 	 */
 	private void pathCheck(){
 		for(HashSet<Path> paths : pathCandidates){//for each sets of path
+			currentReport = new Report();
 			endingProcedure = List.<MethodSymbol>nil();
-			write = new HashMap<String, List<MethodSymbol>>();
+			firstCall = new HashMap<MethodSymbol, HashSet<Edge>>();
+			write = new HashMap<String, HashSet<Edge>>();
 			pathCheck(paths);//will have a list of EffectSets in endEffects after this is called.
 //			for(EffectSet es : endEffects){
 //				es.printEffect();
@@ -91,7 +101,8 @@ public class ConsistencyChecker {
 		}
 	}
 	
-	HashMap<String, List<MethodSymbol>> write;//fields being written from
+//	HashMap<String, List<MethodSymbol>> write;//fields being written from
+	HashMap<String, HashSet<Edge>> write;
 	
 	private void checkEffects(){
 		if(endingProcedure.size()>1){
@@ -100,12 +111,13 @@ public class ConsistencyChecker {
 					if(entry instanceof FieldEffect){
 						String field = ((FieldEffect) entry).f.name.toString();
 						if(write.containsKey(field)){
-							write.put(field, write.get(field).append(es)); 
-							printWarning(field, write.get(((FieldEffect) entry).f.name.toString()), (CapsuleSymbol)es.owner);
+							write.get(field).addAll(firstCall.get(es)); 
+//							printWarning(field, write.get(((FieldEffect) entry).f.name.toString()), (CapsuleSymbol)es.owner);
+							printWarning(write.get(field), currentReport.startingNode);
 						}else{
-							List<MethodSymbol> ms = List.<MethodSymbol>nil();
-							ms = ms.append(es);
-							write.put(field, ms);
+							HashSet<Edge> edges = new HashSet<Edge>();
+							edges.addAll(firstCall.get(es));
+							write.put(field, edges);
 						}
 					}
 				}
@@ -114,7 +126,8 @@ public class ConsistencyChecker {
 						String field = ((FieldEffect) entry).f.name.toString();
 						if(write.containsKey(field)){
 							//add method to the list with out creating redundant entries.
-							printWarning(field, write.get(((FieldEffect) entry).f.name.toString()), (CapsuleSymbol)es.owner);
+//							printWarning(field, write.get(((FieldEffect) entry).f.name.toString()), (CapsuleSymbol)es.owner);
+							printWarning(write.get(field), currentReport.startingNode);
 						}
 					}
 				}
@@ -122,21 +135,25 @@ public class ConsistencyChecker {
 		}
 	}
 	
-	private void printWarning(String field, List<MethodSymbol> methods, CapsuleSymbol capsule) {
-		//TODO: refine
-		log.warning("sequential.inconsistency.warning", field, methods, capsule.parentCapsule.name);
-//		System.out.println("Potential sequential inconsistency found in methods: ");
-//		for(MethodSymbol ms : methods){
-//			ms.name
-//		}
+	private void printWarning(HashSet<Edge> hashSet, Node startingNode) {
+		String set = "";
+		for(Edge edge : hashSet){
+			set += edge.toNode.name;
+			set += "." + edge.toProcedure +", ";
+		}
+		if(set.length()>0)
+			set = set.substring(0, set.length()-2);
+		log.warning("sequential.inconsistency.warning", set, startingNode.capsule.parentCapsule.name);
 	}
-
+	
 	private void pathCheck(HashSet<Path> paths){
 		for(Path path : paths){//for each path
+			currentReport.startingNode = path.nodes.head;
 			getActualPaths(path.nodes);
 		}
 	}
 	
+	private Edge currentStartingCall;
 	private void getActualPaths(List<Node> path){
 //		if(path.tail.isEmpty())
 //			//path with only one node.
@@ -144,18 +161,24 @@ public class ConsistencyChecker {
 		for(MethodSymbol sym : path.head.procedures){//can add restrictions to filter out unnecessary methods.?
 			List<Edge> edges = graph.getEdges(path.head, sym, path.tail);
 			for(Edge e : edges){
+				currentStartingCall = e;
 				getActualPaths(e, path.tail);
 			}
 		}
 	}
-	
-	
 	
 	private void getActualPaths(Edge edge, List<Node> path) {
 		if(path.tail.isEmpty()){//end of path
  			for(MethodSymbol m : path.head.procedures){
 				if(m.toString().equals(edge.toProcedure.toString()))
 					if(m.ars!=null){
+						if(firstCall.containsKey(m))
+							firstCall.get(m).add(currentStartingCall);
+						else{
+							HashSet<Edge> e = new HashSet<Edge>();
+							e.add(currentStartingCall);
+							firstCall.put(m, e);
+						}
 						endingProcedure = endingProcedure.append(m);
 					}
 			}
