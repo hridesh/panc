@@ -20,11 +20,16 @@
 package org.paninij.systemgraph;
 
 import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.HashMap;
+
+import org.paninij.systemgraph.SystemGraph.Node;
 
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
+import com.sun.tools.javac.code.Symbol.MethodSymbol;
 
 import com.sun.tools.javac.util.*;
 
@@ -52,8 +57,9 @@ public class SystemGraph {
 		}
 	}
 	public static class Node{
-		HashSet<MethodSymbol> procedures = new HashSet<MethodSymbol>();
-		public HashSet<Connection> connections = new HashSet<Connection>();
+		public Set<MethodSymbol> procedures = new HashSet<MethodSymbol>();
+//		public Set<Connection> connections = new HashSet<Connection>();
+		public HashMap<Name, Node> connections = new HashMap<Name, Node>();
 		CapsuleSymbol capsule;//symbol of the capsule instance
 		public Name name;//name of the capsule instance
 
@@ -71,7 +77,7 @@ public class SystemGraph {
 		}
 		
 		public void addConnection(Name name, Node node){
-			connections.add(new Connection(name, node));
+			connections.put(name, node);
 		}
 		
 		@Override
@@ -84,39 +90,46 @@ public class SystemGraph {
 			return string;
 		}
 	}
-	public static class Connection{
-		public Name name; //alias name of the capsule connected
-		public Node node; //destination of the connection 
-		public Connection(Name name, Node node){
-			this.name = name;
-			this.node = node;
-		}
-	}
-	static class Edge{//edge from {fromNode, fromProcedure} to {toNode, toProcedure}
-		Node fromNode, toNode;
-		Name fromProcedure, toProcedure;
+//	public static class Connection{
+//		public Name name; //alias name of the capsule connected
+//		public Node node; //destination of the connection 
+//		public Connection(Name name, Node node){
+//			this.name = name;
+//			this.node = node;
+//		}
+//	}
+	public static class Edge{//edge from {fromNode, fromProcedure} to {toNode, toProcedure}
+		public Node fromNode, toNode;
+		public MethodSymbol fromProcedure, toProcedure;
 		
-		Edge(Node fromNode, Name fromProcedure, Node toNode, Name toProcedure){
+		Edge(Node fromNode, MethodSymbol fromProcedure, Node toNode, MethodSymbol toProcedure){
 			this.fromNode = fromNode;
 			this.fromProcedure = fromProcedure;
 			this.toNode = toNode;
 			this.toProcedure = toProcedure;
 		}
+		
+		@Override
+		public String toString(){
+			String s = fromNode.name + "." + fromProcedure + " --> " + toNode.name+"."+ toProcedure+"\n";
+			return s;
+		}
+		
 	}
 	
 	public HashMap<Name, Node> nodes = new HashMap<Name, Node>();
-	HashSet<Edge> edges = new HashSet<Edge>(); 
-	public HashMap<Name, Integer> capsuleArrays = new HashMap<Name, Integer>();
+	Set<Edge> edges = new HashSet<Edge>(); 
+	public HashMap<Name, Integer> capsuleArrays = new HashMap<Name, Integer>();//this is to save size of arrays. maybe view arrays as an whole instead.
 	
 	void addNode(Name name, CapsuleSymbol sym){
 		nodes.put(name, new Node(name, sym));
 	}
 	
 	void setConnection(Name fromNode, Name alias, Name toNode){
-		nodes.get(fromNode).connections.add(new Connection(alias, nodes.get(toNode)));
+		nodes.get(fromNode).connections.put(alias, nodes.get(toNode));
 	}
 	
-	void setEdge(Node fromNode, Name fromProc, Node toNode, Name toProc){
+	void setEdge(Node fromNode, MethodSymbol fromProc, Node toNode, MethodSymbol toProc){
 		edges.add(new Edge(fromNode, fromProc, toNode, toProc));
 	}
 	
@@ -129,10 +142,27 @@ public class SystemGraph {
 		s += "Connections: \n";
 		for(Node node : nodes.values()){
 			s += "\tNode "+node.name+ ":\n";
-			for(Connection c : node.connections){
-				s += "\t\t"+c.name + " --> " + c.node.name + "\n"; 
+			for(Entry<Name, Node> c : node.connections.entrySet()){
+				s += "\t\t"+c.getKey() + " --> " + c.getValue().name + "\n"; 
 			}
 		}
+		s += "Edges: \n";
+		for(Edge edge : edges){
+			s += edge.toString(); 
+		}
 		return s;
+	}
+
+	//find edge from head to tail.head from method sym from head
+	public Edge hasEdge(Node head, MethodSymbol fromSym, List<Node> tail) {
+		// flaw: won't try other procedures if the first one found is wrong. need a way to backtrack and try all the other procedures.
+		Edge edge = null;
+		for(Edge e : edges){
+			// not sure if                vvvvvv this suffice as condition
+			if(e.fromNode == head && e.fromProcedure.toString().equals(fromSym.toString()) && e.toNode == tail.head){
+				return e;
+			}
+		}
+		return edge;
 	}
 }

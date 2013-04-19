@@ -21,7 +21,7 @@ package org.paninij.systemgraph;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.util.*;
-import org.paninij.effects.*;
+import org.paninij.effects.analysis.*;
 
 public class SystemGraphBuilder {
 	Symtab syms;
@@ -90,25 +90,31 @@ public class SystemGraphBuilder {
 				addConnection(graph, names.fromString(fromNode+"["+i+"]"), names.fromString(arg+"["+i+"]"), names.fromString(toNode+"["+j+"]"));
 		}
 	}
-	
-	public void addEdge(SystemGraph graph, String fromNode, String fromProc, String toNode, String toProc){
-		addEdge(graph, names.fromString(fromNode), names.fromString(fromProc), names.fromString(toNode), names.fromString(toProc));
-	}
-	
 
-	private void translateCallEffects(SystemGraph graph, EffectSet es){
+	private void translateCallEffects(SystemGraph.Node node, MethodSymbol fromProc, SystemGraph graph, EffectSet ars){
 		//TODO
+		for(CallEffect call : ars.calls){
+			if(call instanceof CapsuleEffect){
+				graph.setEdge(node, fromProc, node.connections.get(((CapsuleEffect) call).callee.name), ((CapsuleEffect) call).meth);
+			}else if(call instanceof ForeachEffect){
+				//TODO
+			} 
+		}
 	}
 	
 	public void completeEdges(SystemGraph graph){
 		for(SystemGraph.Node n : graph.nodes.values()){
 			for(MethodSymbol ms : n.procedures){
-				translateCallEffects(graph, ms.effects);
+				if(ms.ars!=null){
+//					System.out.println(ms);
+//					ms.ars.printEffect();
+					translateCallEffects(n, ms, graph, ms.ars);
+				}
 			}
 		}
 	}
 
-	private void addEdge(SystemGraph graph, Name fromNode, Name fromProc, Name toNode, Name toProc){
+	public void addEdge(SystemGraph graph, Name fromNode, MethodSymbol fromProc, Name toNode, MethodSymbol toProc){
 		graph.setEdge(graph.nodes.get(fromNode), fromProc, graph.nodes.get(toNode), toProc);
 	}
 }

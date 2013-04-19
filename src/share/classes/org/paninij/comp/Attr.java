@@ -179,13 +179,21 @@ public final class Attr extends CapsuleInternal {
 			attr.attribClassBody(env, tree.sym);
 		}
 		for(JCTree def : tree.defs){
-			if(def.getTag() == Tag.METHODDEF){
+			if(def instanceof JCMethodDecl){
 				for(JCVariableDecl param : ((JCMethodDecl)def).params){
 					if(param.type.tsym instanceof CapsuleSymbol&&!((JCMethodDecl)def).name.toString().contains("$Original")){
 						log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.sym);
 					}
 				}
-
+				if(((JCMethodDecl) def).name.toString().contains("$Original"))
+					for(JCTree def2 : tree.defs){
+						if(def2 instanceof JCMethodDecl){
+							if(((JCMethodDecl) def2).name.toString().equals(((JCMethodDecl) def).name.toString().substring(0, ((JCMethodDecl) def).name.toString().indexOf("$Original")))){
+								((JCMethodDecl) def2).sym.ars = ((JCMethodDecl) def).sym.ars; 
+								((JCMethodDecl) def).sym.ars = null;
+							}
+						}
+					}
 			}else if(def.getTag() == Tag.VARDEF){
 				if(((JCVariableDecl)def).type.tsym instanceof CapsuleSymbol)
 					((JCVariableDecl)def).mods.flags |= FINAL;
@@ -274,9 +282,10 @@ public final class Attr extends CapsuleInternal {
 		JCMethodDecl maindecl = createMainMethod(tree.sym, tree.body, tree.params, mainStmts);
 		tree.defs = tree.defs.append(maindecl);
 
+		systemGraphBuilder.completeEdges(sysGraph);
 //		System.out.println(sysGraph);
-//		ConsistencyChecker  checker = new ConsistencyChecker(sysGraph);
-//		checker.potentialPathCheck();
+		ConsistencyChecker  checker = new ConsistencyChecker(sysGraph, log);
+		checker.potentialPathCheck();
 		tree.switchToClass();
 
 		memberEnter.memberEnter(maindecl, env);
