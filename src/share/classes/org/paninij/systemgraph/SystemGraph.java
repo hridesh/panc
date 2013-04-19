@@ -153,16 +153,13 @@ public class SystemGraph {
 		return s;
 	}
 
-	//find edge from head to tail.head from method sym from head
-	public Edge hasEdge(Node head, MethodSymbol fromSym, List<Node> tail) {
-		// flaw: won't try other procedures if the first one found is wrong. need a way to backtrack and try all the other procedures.
-		Edge edge = null;
-		for(Edge e : edges){
-			// not sure if                vvvvvv this suffice as condition
+	public List<Edge> getEdges(Node head, MethodSymbol fromSym, List<Node> tail) {
+		List<Edge> edges = List.<Edge>nil();
+		for(Edge e : this.edges){
 			if(e.fromNode == head && e.fromProcedure.toString().equals(fromSym.toString()) && e.toNode == tail.head){
-				return e;
+				edges = edges.append(e);
 			}
 		}
-		return edge;
+		return edges;
 	}
 }

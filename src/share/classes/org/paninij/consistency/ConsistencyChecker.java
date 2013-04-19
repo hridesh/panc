@@ -142,9 +142,9 @@ public class ConsistencyChecker {
 //			//path with only one node.
 //			;
 		for(MethodSymbol sym : path.head.procedures){//can add restrictions to filter out unnecessary methods.?
-			Edge edge = graph.hasEdge(path.head, sym, path.tail);//edge is the edge to next node
-			if(edge != null){
-					getActualPaths(edge, path.tail);
+			List<Edge> edges = graph.getEdges(path.head, sym, path.tail);
+			for(Edge e : edges){
+				getActualPaths(e, path.tail);
 			}
 		}
 	}
@@ -160,9 +160,10 @@ public class ConsistencyChecker {
 					}
 			}
 		}else{
-			Edge edge2 = graph.hasEdge(edge.toNode, edge.toProcedure, path.tail);//edge is the edge to next node
-			if(edge2 != null)
-					getActualPaths(edge2, path.tail);
+			List<Edge> edges = graph.getEdges(edge.toNode, edge.toProcedure, path.tail);
+			for(Edge e : edges){
+				getActualPaths(e, path.tail);
+			}
 		}
 	}
 
