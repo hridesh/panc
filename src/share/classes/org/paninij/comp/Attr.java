@@ -54,7 +54,7 @@ import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
 import org.paninij.systemgraph.*;
-import org.paninij.consistency.*;
+import org.paninij.effects.analysis.*;
 
 /***
  * Panini-specific context-dependent analysis. All public functions in 
@@ -284,8 +284,9 @@ public final class Attr extends CapsuleInternal {
 
 		systemGraphBuilder.completeEdges(sysGraph);
 //		System.out.println(sysGraph);
-		ConsistencyChecker  checker = new ConsistencyChecker(sysGraph, log);
-		checker.potentialPathCheck();
+
+		DeterministicCheck dc = new DeterministicCheck(sysGraph, log);
+		dc.potentialPathCheck();
 		tree.switchToClass();
 
 		memberEnter.memberEnter(maindecl, env);

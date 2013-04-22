@@ -49,10 +49,8 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
-import org.paninij.comp.*;
 import org.paninij.effects.*;
 import org.paninij.systemgraphs.*;
-import org.paninij.consistency.ConsistencyCheck;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -727,7 +725,7 @@ public class Attr extends JCTree.Visitor {
     	pAttr.visitCapsuleDef(tree, this, env, rs);
 
     	// print out the effect
-    	/* for (JCTree def : tree.defs) {
+/*    	for (JCTree def : tree.defs) {
     		if (def instanceof JCMethodDecl) {
     			JCMethodDecl jcmd = (JCMethodDecl)def;
     			org.paninij.effects.analysis.EffectSet ars = jcmd.sym.ars;
@@ -735,7 +733,7 @@ public class Attr extends JCTree.Visitor {
     				ars.printEffect();
     			}
     		}
-    	} */
+    	}*/
     }
 
     public final void visitSystemDef(final JCSystemDecl tree){

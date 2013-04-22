@@ -24,9 +24,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.HashMap;
 
-import org.paninij.systemgraph.SystemGraph.Node;
-
-import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
@@ -118,7 +115,7 @@ public class SystemGraph {
 	}
 	
 	public HashMap<Name, Node> nodes = new HashMap<Name, Node>();
-	Set<Edge> edges = new HashSet<Edge>(); 
+	public Set<Edge> edges = new HashSet<Edge>(); 
 	public HashMap<Name, Integer> capsuleArrays = new HashMap<Name, Integer>();//this is to save size of arrays. maybe view arrays as an whole instead.
 	
 	void addNode(Name name, CapsuleSymbol sym){

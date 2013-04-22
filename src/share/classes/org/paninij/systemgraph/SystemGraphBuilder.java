@@ -14,14 +14,18 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  * 
- * Contributor(s): Eric Lin
+ * Contributor(s): Eric Lin, Yuheng Long
  */
 package org.paninij.systemgraph;
+
+import java.util.HashMap;
 
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.util.*;
+
 import org.paninij.effects.analysis.*;
+import org.paninij.systemgraph.SystemGraph.Node;
 
 public class SystemGraphBuilder {
 	Symtab syms;
@@ -91,14 +95,28 @@ public class SystemGraphBuilder {
 		}
 	}
 
-	private void translateCallEffects(SystemGraph.Node node, MethodSymbol fromProc, SystemGraph graph, EffectSet ars){
-		//TODO
-		for(CallEffect call : ars.calls){
-			if(call instanceof CapsuleEffect){
-				graph.setEdge(node, fromProc, node.connections.get(((CapsuleEffect) call).callee.name), ((CapsuleEffect) call).meth);
-			}else if(call instanceof ForeachEffect){
-				//TODO
-			} 
+	private void translateCallEffects(SystemGraph.Node node,
+			MethodSymbol fromProc, SystemGraph graph, EffectSet ars){
+		for (CallEffect call : ars.calls) {
+			if (call instanceof CapsuleEffect) {
+				CapsuleEffect ce = (CapsuleEffect) call;
+				Node n = node.connections.get(ce.callee.name);
+
+				graph.setEdge(node, fromProc, n, ((CapsuleEffect) call).meth);
+			} else if (call instanceof ForeachEffect) {
+				ForeachEffect fe = (ForeachEffect)call;
+				String calleeName = fe.callee.toString();
+				int size = calleeName.length();
+				HashMap<Name, Node> connections = node.connections;
+				for (Name key : connections.keySet()) {
+					String keyS = key.toString();
+					if (keyS.startsWith(calleeName.toString()) &&
+							keyS.charAt(size) == '[') {
+						graph.setEdge(node, fromProc, connections.get(key),
+								fe.meth);
+					}
+				}
+			}
 		}
 	}
 	
