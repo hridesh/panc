@@ -42,9 +42,15 @@ public class LeakDetection {
 			if (jct instanceof JCMethodDecl) {
 				if (((JCMethodDecl) jct).body != null) {
 					JCMethodDecl meth = (JCMethodDecl)jct;
-					MethodWrapper temp = new MethodWrapper(meth);
-					map.put(meth, temp);
-					queue.add(temp);
+					// if (meth.sym.name.toString().contains("$Original")) {
+						if ((meth.mods.flags & Flags.PRIVATE) != 0) {
+							if (meth.body != null) {
+								MethodWrapper temp = new MethodWrapper(meth);
+								map.put(meth, temp);
+								queue.add(temp);
+							}
+						}
+					// }
 				}
 			}
 		}

@@ -19,24 +19,15 @@
 
 package org.paninij.consistency;
 
-import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.jvm.*;
-import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
-import com.sun.tools.javac.util.List;
 
 import com.sun.tools.javac.code.Symbol.*;
-import com.sun.tools.javac.tree.JCTree.*;
-import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.code.Type.*;
-import static com.sun.tools.javac.code.Flags.*;
 
 import org.paninij.effects.*;
 import org.paninij.systemgraphs.SystemGraphs.*;
 import org.paninij.systemgraphs.SystemGraphs;
 
-import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;

@@ -85,7 +85,7 @@ public class ViolationDetector extends TreeScanner {
 			innerCall = true;
 		} else if (meth instanceof JCFieldAccess) {
 			JCFieldAccess jcfa = (JCFieldAccess)meth;
-			JCExpression receiver = CommonMethod.getEssentialExpr(jcfa.selected);
+			JCExpression receiver = CommonMethod.essentialExpr(jcfa.selected);
 
 			if (receiver instanceof JCIdent) {
 				JCIdent jci = (JCIdent)receiver;
@@ -143,7 +143,7 @@ public class ViolationDetector extends TreeScanner {
 		if (tree != null) {
 			if (tree instanceof JCExpression) {
 				JCExpression jce = (JCExpression)tree;
-				tree = CommonMethod.getEssentialExpr(jce);
+				tree = CommonMethod.essentialExpr(jce);
 			}
 
 			if (tree instanceof JCIdent) {
