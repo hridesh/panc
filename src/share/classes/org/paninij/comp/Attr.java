@@ -34,6 +34,8 @@ import static com.sun.tools.javac.tree.JCTree.Tag.VARDEF;
 import java.util.HashMap;
 import java.util.Map;
 import org.paninij.analysis.ASTCFGBuilder;
+import org.paninij.consistency.ConsistencyChecker;
+
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symtab;
@@ -285,8 +287,8 @@ public final class Attr extends CapsuleInternal {
 		systemGraphBuilder.completeEdges(sysGraph);
 //		System.out.println(sysGraph);
 
-		DeterministicCheck dc = new DeterministicCheck(sysGraph, log);
-		dc.potentialPathCheck();
+		ConsistencyChecker cc = new ConsistencyChecker(sysGraph, log);
+		cc.potentialPathCheck();
 		tree.switchToClass();
 
 		memberEnter.memberEnter(maindecl, env);
