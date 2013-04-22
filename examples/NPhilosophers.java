@@ -17,97 +17,54 @@
  * Contributor(s): 
  */
 
-	interface BooleanI {
-		public boolean value();
-	}
-
-	class BooleanC implements BooleanI {
-		private boolean v;
-
-		public BooleanC(boolean v) { this.v = v; }
-
-		public boolean value() { return v; }
-	}
-
-
-class Index
-{
-	private int i;
-	public Index()
-	{
-		i = 0;
-	}
-	public Index(int num)
-	{
-		i = num;
-	}
-	public void increment()
-	{
-		i++;
-	}
-	public int get()
-	{
-		return i;
-	}
+interface BooleanI {
+	public boolean value();
 }
 
+class BooleanC implements BooleanI {
+	private boolean v;
+	public BooleanC(boolean v) { this.v = v; }
+	public boolean value() { return v; }
+}
 
+class Index {
+	private int i;
+	public Index(){		i = 0; 	}
+	public Index(int num)	{ 	i = num; }
+	public void increment()	{		i++; 	}
+	public int get()	{		return i; }
+}
 
-capsule Indexer(Index i)
-{
-	
-	Index get()
-	{
-		
+capsule Indexer(Index i) {
+	Index get() {
 		return i;
 	}
-	Index getAndInc()
-	{
+	Index getAndInc()	 {
 		Index ret = new Index(i.get());
 		i.increment();
 		return ret;
 	}
-	void run()
-	{
-		
-		
-	}
-	
+	void run() {	}
 }
 
-class PhilUtil
-{
-	public static int getLeftForkIndex(int p, int count)
-	{
+class PhilUtil {
+	public static int getLeftForkIndex(int p, int count) {
 		return p;
 	}
-
-	public static int getRightForkIndex(int p, int count)
-	{
-		if(p == count - 1)
-		{
+	public static int getRightForkIndex(int p, int count) {
+		if(p == count - 1) {
 			return 0;
-		}
-		else
-		{
+		} 	else 	{
 			return p+1;
 		}
 	}
-
-	public static String getPhillyName(int p)
-	{
+	public static String getPhillyName(int p) {
 		return "Philly"+p;
 	}
-	
-	
-	
 }
 
 capsule Fork () {
-	
-
 	boolean isTaken = false;
-
 	BooleanC take() {
 		if (isTaken) return new BooleanC(false);
 		else {
@@ -120,10 +77,7 @@ capsule Fork () {
 	}
 }
 
-
 capsule Philosopher (Fork left, Fork right, String name) {
-	
-
 	void run() {
 		for (int count=3; count>0; count--) {
 			think();
@@ -157,26 +111,14 @@ capsule Philosopher (Fork left, Fork right, String name) {
 }
 
 system NPhilosophers {
-	
 	Fork forks[100]; 
 	Philosopher phils[100];
-	//Fork forks[10];
-	//Philosopher phils[10];
-	
 	Indexer i;
-	
 	i(new Index());
-	
-//	for(Fork fork : forks)
-//	{
-//		fork();
-//	}
 
-	for(Philosopher phil : phils)
-	{
-		
-		phil(forks[PhilUtil.getLeftForkIndex(i.get().get(), phils.length)], forks[PhilUtil.getRightForkIndex(i.get().get(), phils.length)], PhilUtil.getPhillyName(i.getAndInc().get())); 
-		
+	for(Philosopher phil : phils) {
+		phil(forks[PhilUtil.getLeftForkIndex(i.get().get(), phils.length)], 
+				forks[PhilUtil.getRightForkIndex(i.get().get(), phils.length)], 
+				PhilUtil.getPhillyName(i.getAndInc().get())); 
 	}
-	
 }
