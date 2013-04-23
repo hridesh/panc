@@ -91,12 +91,14 @@ public class ConsistencyChecker {
 			endingProcedure = List.<MethodSymbol>nil();
 			firstCall = new HashMap<MethodSymbol, HashSet<Edge>>();
 			write = new HashMap<String, HashSet<Edge>>();
+			read = new HashMap<String, HashSet<Edge>>();
 			pathCheck(paths);//will have a list of EffectSets in endEffects after this is called.
 			checkEffects(paths);
 		}
 	}
 	
 	private HashMap<String, HashSet<Edge>> write;
+	private HashMap<String, HashSet<Edge>> read;
 	
 	private void checkEffects(HashSet<Path> paths) {
 		if (endingProcedure.size() > 1) {
@@ -106,24 +108,54 @@ public class ConsistencyChecker {
 					edges.addAll(firstCall.get(es));
 					printWarning(edges, currentReport.startingNode);
 				}
+				for (EffectEntry entry :es.effect.read) {
+					if (entry instanceof FieldEffect) {
+						String field = ((FieldEffect) entry).f.name.toString();
+						if (write.containsKey(field)) {
+							printWarning(write.get(field), currentReport.startingNode);
+							continue;
+						}
+						if (read.containsKey(field)) {
+							read.get(field).addAll(firstCall.get(es)); 
+						} else {
+							HashSet<Edge> edges = new HashSet<Edge>();
+							edges.addAll(firstCall.get(es));
+							read.put(field, edges);
+						}
+					}
+				}
 				for (EffectEntry entry : es.effect.write) {
 					if (entry instanceof FieldEffect) {
 						String field = ((FieldEffect) entry).f.name.toString();
 						if (write.containsKey(field)) {
 							write.get(field).addAll(firstCall.get(es)); 
 							printWarning(write.get(field), currentReport.startingNode);
+							continue;
 						} else {
 							HashSet<Edge> edges = new HashSet<Edge>();
 							edges.addAll(firstCall.get(es));
 							write.put(field, edges);
+						}
+						if (read.containsKey(field)) {
+							read.get(field).addAll(firstCall.get(es)); 
+							printWarning(read.get(field), currentReport.startingNode);
+							continue;
+						} else {
+							HashSet<Edge> edges = new HashSet<Edge>();
+							edges.addAll(firstCall.get(es));
+							read.put(field, edges);
 						}
 					}
 				}
 				for (EffectEntry entry :es.effect.read) {
 					if (entry instanceof FieldEffect) {
 						String field = ((FieldEffect) entry).f.name.toString();
-						if (write.containsKey(field)) {
-							printWarning(write.get(field), currentReport.startingNode);
+						if (read.containsKey(field)) {
+							read.get(field).addAll(firstCall.get(es)); 
+						} else {
+							HashSet<Edge> edges = new HashSet<Edge>();
+							edges.addAll(firstCall.get(es));
+							read.put(field, edges);
 						}
 					}
 				}
