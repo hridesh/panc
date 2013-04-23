@@ -92,25 +92,25 @@ public class ConsistencyChecker {
 			firstCall = new HashMap<MethodSymbol, HashSet<Edge>>();
 			write = new HashMap<String, HashSet<Edge>>();
 			pathCheck(paths);//will have a list of EffectSets in endEffects after this is called.
-//			for (EffectSet es : endEffects) {
-//				es.printEffect();
-//			}
 			checkEffects(paths);
 		}
 	}
 	
-//	HashMap<String, List<MethodSymbol>> write;//fields being written from
-	HashMap<String, HashSet<Edge>> write;
+	private HashMap<String, HashSet<Edge>> write;
 	
 	private void checkEffects(HashSet<Path> paths) {
 		if (endingProcedure.size() > 1) {
 			for (MethodSymbol es : endingProcedure) {
+				if(es.effect.isBottom){
+					HashSet<Edge> edges = new HashSet<Edge>();
+					edges.addAll(firstCall.get(es));
+					printWarning(edges, currentReport.startingNode);
+				}
 				for (EffectEntry entry : es.effect.write) {
 					if (entry instanceof FieldEffect) {
 						String field = ((FieldEffect) entry).f.name.toString();
 						if (write.containsKey(field)) {
 							write.get(field).addAll(firstCall.get(es)); 
-//							printWarning(field, write.get(((FieldEffect) entry).f.name.toString()), (CapsuleSymbol)es.owner);
 							printWarning(write.get(field), currentReport.startingNode);
 						} else {
 							HashSet<Edge> edges = new HashSet<Edge>();
@@ -123,8 +123,6 @@ public class ConsistencyChecker {
 					if (entry instanceof FieldEffect) {
 						String field = ((FieldEffect) entry).f.name.toString();
 						if (write.containsKey(field)) {
-							//add method to the list with out creating redundant entries.
-//							printWarning(field, write.get(((FieldEffect) entry).f.name.toString()), (CapsuleSymbol)es.owner);
 							printWarning(write.get(field), currentReport.startingNode);
 						}
 					}
@@ -134,14 +132,23 @@ public class ConsistencyChecker {
 	}
 	
 	private void printWarning(HashSet<Edge> hashSet, Node startingNode) {
-		String set = "";
+		List<String> sets = List.<String>nil();
 		for (Edge edge : hashSet) {
-			set += edge.toNode.name;
-			set += "." + edge.toProcedure +", ";
+			String set = "";
+			for(Entry<Name, Node> e : edge.fromNode.connections.entrySet()){
+				if(e.getValue()==edge.toNode)
+					set += e.getKey();
+			}
+			set += "." + edge.toProcedure;
+			boolean duplicate = false;
+			for(String s : sets){
+				if(s.equals(set))
+					duplicate = true;
+			}
+			if(!duplicate)
+				sets = sets.append(set);
 		}
-		if (set.length()>0)
-			set = set.substring(0, set.length()-2);
-		log.warning("sequential.inconsistency.warning", set, startingNode.capsule.parentCapsule.name);
+		log.warning("sequential.inconsistency.warning", sets, startingNode.capsule.parentCapsule.name);
 	}
 	
 	private void pathCheck(HashSet<Path> paths) {
@@ -165,6 +172,18 @@ public class ConsistencyChecker {
 		}
 	}
 	
+	private void addSymbolToEndingProcedure(MethodSymbol m){
+		boolean duplicate = false;
+		for(MethodSymbol ms : endingProcedure){
+			if(ms.toString().equals(m.toString())){
+				duplicate = true;
+			}
+		}
+		if(!duplicate){
+			endingProcedure = endingProcedure.append(m);
+		}
+	}
+	
 	private void getActualPaths(Edge edge, List<Node> path) {
 		if (path.tail.isEmpty()) {//end of path
  			for (MethodSymbol m : path.head.procedures) {
@@ -177,7 +196,7 @@ public class ConsistencyChecker {
 							e.add(currentStartingCall);
 							firstCall.put(m, e);
 						}
-						endingProcedure = endingProcedure.append(m);
+						addSymbolToEndingProcedure(m);
 					}
 			}
 		}else {

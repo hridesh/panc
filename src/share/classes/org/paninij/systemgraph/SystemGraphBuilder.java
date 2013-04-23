@@ -112,7 +112,7 @@ public class SystemGraphBuilder {
 						graph.setEdge(node, fromProc, n, ms);
 						break;
 					}
-					if (ms.toString().compareTo(types(meth)) == 0) {
+					if (types(ms).compareTo(types(meth)) == 0) {
 						graph.setEdge(node, fromProc, n, ms);
 						break;
 					}
@@ -133,7 +133,7 @@ public class SystemGraphBuilder {
 								graph.setEdge(node, fromProc, n, ms);
 								break;
 							}
-							if (ms.toString().compareTo(types(meth)) == 0) {
+							if (types(ms).compareTo(types(meth)) == 0) {
 								graph.setEdge(node, fromProc, n, ms);
 								break;
 							}
