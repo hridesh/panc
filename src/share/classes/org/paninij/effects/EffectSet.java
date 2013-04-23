@@ -1,163 +1,365 @@
-/*
- * This file is part of the Panini project at Iowa State University.
- *
- * The contents of this file are subject to the Mozilla Public License
- * Version 1.1 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- * 
- * For more details and the latest version of this code please see
- * http://paninij.org
- * 
- * Contributor(s): Rex Fernando
- */
-
 package org.paninij.effects;
 
-import java.util.HashSet;
-import com.sun.tools.javac.code.Symbol.*;
+import java.util.*;
+
+import org.paninij.path.*;
+
+import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.util.*;
-import org.paninij.analysis.CFG;
-import org.paninij.systemgraphs.SystemGraphs.*;
 
-abstract class Effect {
-    public Node capsule;
-}
-class EmptyEffect extends Effect {}
-class FieldReadEffect extends Effect {
-    Symbol field; public FieldReadEffect(Symbol field) { this.field = field; }
-    public String toString() { return "R"+field.owner+" "+field.name; }
-    public boolean equals(Object o) {
-        if (!(o instanceof FieldReadEffect)) return false;
-        FieldReadEffect oe = (FieldReadEffect)o;
-        return this.field == oe.field;
-    }
-    public int hashCode() { return field.hashCode(); }
-}
-class FieldWriteEffect extends Effect {
-    Symbol field; public FieldWriteEffect(Symbol field) { this.field = field; }
-    public String toString() { return "W"+field.owner+" "+field.name; }
-    public boolean equals(Object o) {
-        if (!(o instanceof FieldWriteEffect)) return false;
-        FieldWriteEffect oe = (FieldWriteEffect)o;
-        return this.field == oe.field;
-    }
-    public int hashCode() { return field.hashCode(); }
-}
-class OpenEffect extends Effect {
-    MethodSymbol method; EffectSet otherEffects; 
-    public OpenEffect(MethodSymbol method) { this.method = method; this.otherEffects = new EffectSet(); }
+public class EffectSet {
+	// detect whether the method always return newly created object.
+	public boolean returnNewObject;
 
-	public String toString() {
-		String params = "";
-		if(method.params!=null)
-		for (VarSymbol v : method.params) {
-			params = params + v.type.tsym.name + " ";
-		}
-		if(params.length()>0)
-			params = " " + params.substring(0, params.length() - 1);
-		return "O"+method.name + " " + method.owner.name + params;
+	public boolean commute;
+	public HashSet<EffectEntry> read;
+	public HashSet<EffectEntry> write;
+	public HashSet<CallEffect> calls;
+	public boolean isBottom;
+
+	public HashSet<Symbol> writtenLocals;
+	public HashSet<Symbol> writtenFields;
+	public boolean isWriteBottom;
+
+	boolean isInit = false;
+
+	public EffectSet() {
+		read = new HashSet<EffectEntry>();
+		write = new HashSet<EffectEntry>();
+		calls = new HashSet<CallEffect>();
+		writtenLocals = new HashSet<Symbol>();
+		writtenFields = new HashSet<Symbol>();
+		isWriteBottom = false;
+		isBottom = false;
 	}
-    public boolean equals(Object o) {
-        if (!(o instanceof OpenEffect)) return false;
-        OpenEffect oe = (OpenEffect)o;
-        return this.method == oe.method;
-    }
-    public int hashCode() { return method.hashCode(); }
-}
-class MethodEffect extends Effect {
-    MethodSymbol method; 
-    public MethodEffect(MethodSymbol method) { if (method==null) Assert.error(); this.method = method; }
 
-	public String toString() {
-		String params = "";
-		if(method.params!=null)
-		for (VarSymbol v : method.params) {
-			params = params + v.type.tsym.name + " ";
-		}
-		if(params.length()>0)
-			params = " " + params.substring(0, params.length() - 1);
-		return "M"+method.name + " " + method.owner.name + params;
+	public EffectSet(boolean b) {
+		this();
+		isInit = b;
 	}
-    public boolean equals(Object o) {
-        if (!(o instanceof MethodEffect)) return false;
-        MethodEffect oe = (MethodEffect)o;
-        return this.method == oe.method;
-    }
-    public int hashCode() { return method.hashCode(); }
-}
-class LibMethodEffect extends Effect {
-    MethodSymbol method; 
-    public LibMethodEffect(MethodSymbol method) { if (method==null) Assert.error(); this.method = method; }
-    public String toString() { return "method: " + method; }
-    public boolean equals(Object o) {
-        if (!(o instanceof LibMethodEffect)) return false;
-        LibMethodEffect oe = (LibMethodEffect)o;
-        return this.method == oe.method;
-    }
-    public int hashCode() { return method.hashCode(); }
-}
-class BottomEffect extends Effect {
-    public String toString() { return "B"; }
-        public boolean equals(Object o) {
-        if (!(o instanceof BottomEffect)) return false;
-        return true;
-    }
-    public int hashCode() { return 1; }
-}
 
+	public EffectSet(EffectSet x) {
+		read = new HashSet<EffectEntry>(x.read);
+		write = new HashSet<EffectEntry>(x.write);
+		calls = new HashSet<CallEffect>(x.calls);
+		writtenLocals = new HashSet<Symbol>(x.writtenLocals);
+		writtenFields = new HashSet<Symbol>(x.writtenFields);
+		isWriteBottom = x.isWriteBottom;
+		isBottom = x.isBottom;
+		if (x.isInit) { isInit = true; } 
+	}
 
-public class EffectSet extends HashSet<Effect> {
-    public CFG cfg;
+	public void init(EffectSet x) {
+		read = new HashSet<EffectEntry>(x.read);
+		write = new HashSet<EffectEntry>(x.write);
+		calls = new HashSet<CallEffect>(x.calls);
+		writtenLocals = new HashSet<Symbol>(x.writtenLocals);
+		writtenFields = new HashSet<Symbol>(x.writtenFields);
+		isWriteBottom = x.isWriteBottom;
+		isBottom = x.isBottom;
+		if (x.isInit) { isInit = true; } 
+	}
 
-    public EffectSet() { super(); }
-    public EffectSet(EffectSet e) { super(e); }
+	public int hashCode() {
+		return read.hashCode() + write.hashCode() + calls.hashCode() +
+		    writtenFields.hashCode() + writtenLocals.hashCode();
+	}
 
-    public boolean intersects(EffectSet es) {
-        for (Effect e : es) {
-            if ((contains(e) && !(e instanceof EmptyEffect)) || e instanceof BottomEffect) return true;
-        }
-        return false;
-    }
-    
-    public String[] getEffects(){
-    	String[] s = new String[this.size()];
-    	for(int i=0; i<this.size();i++){
-    		s[i] = this.toArray()[i].toString();
-    	}
-    	return s;
-    }
+	public boolean equals(Object o) {
+		if (o instanceof EffectSet){ 
+			EffectSet g = (EffectSet)o;
+			if (!g.isInit && (!isInit)) { return true; }
+			if (g.isInit){
+				if (isBottom && g.isBottom) { return true; }
+				return isBottom == g.isBottom && write.equals(g.write) &&
+				read.equals(g.read) && calls.equals(g.calls) &&
+				writtenLocals.equals(g.writtenLocals) &&
+				writtenFields.equals(g.writtenFields) && isBottom == g.isBottom
+				&& returnNewObject == g.returnNewObject;
+			}
+		}
+		return false;
+	}
 
-    public EmptyEffect emptyEffect(){
-    	return new EmptyEffect();
-    }
-    
-    public FieldWriteEffect fieldWriteEffect(Symbol s){
-    	return new FieldWriteEffect(s);
-    }
-    
-    public FieldReadEffect fieldReadEffect(Symbol s){
-    	return new FieldReadEffect(s);
-    }
-    
-    public OpenEffect openEffect(MethodSymbol m){
-    	return new OpenEffect(m);
-    }
-    
-    public MethodEffect methodEffect(MethodSymbol m){
-    	return new MethodEffect(m);
-    }
-    
-    public BottomEffect bottomEffect(){
-    	return new BottomEffect();
-    }
-    
-    public boolean doesInterfere(EffectSet before, EffectSet after) { return true; }
-    static final long serialVersionUID = 42L;
+	public void union(EffectSet x) {
+		if (x.isInit) {
+			if (isInit) {
+				if (!isBottom) {
+					if (x.isBottom) {
+						makeButtom();
+					} else {
+						calls.addAll(x.calls);
+						read.addAll(x.read);
+						write.addAll(x.write);
+						writtenLocals.addAll(x.writtenLocals);
+						writtenFields.addAll(x.writtenFields);
+						isWriteBottom |= x.isWriteBottom;
+						
+						for (Symbol s : writtenLocals) {
+							assignVar(s); }
+						for (Symbol s : writtenFields) {
+							assignField(s); }
+						if (isWriteBottom) {
+							removedAffectedByUnanalyzable(read);
+							removedAffectedByUnanalyzable(write);
+						}
+					}
+				}
+			} else {
+				isInit = true;
+				if (x.isBottom) {
+					makeButtom();
+				} else {
+					read = new HashSet<EffectEntry>(x.read);
+					write = new HashSet<EffectEntry>(x.write);
+					calls = new HashSet<CallEffect>(x.calls);
+					writtenLocals = new HashSet<Symbol>(x.writtenLocals);
+					writtenFields = new HashSet<Symbol>(x.writtenFields);
+				}
+			}
+		}
+	}
+
+	public void makeButtom() {
+		isBottom = true;
+		read.clear();
+		write.clear();
+		calls.clear();
+		writtenLocals.clear();
+		writtenFields.clear();
+		isWriteBottom = true;
+	}
+
+	public void makePathButtom() {
+		isWriteBottom = true;
+		removedAffectedByUnanalyzableBottom();
+	}
+
+	public EffectSet finalCompress() {
+		compress();
+		// compressOpenFieldEffects(calls);
+		EffectSet epg = new EffectSet(true);
+		epg.read = new HashSet<EffectEntry>(read);
+		epg.write = new HashSet<EffectEntry>(write);
+		epg.calls = new HashSet<CallEffect>(calls);
+		epg.isBottom = isBottom;
+		return epg;
+	}
+
+	
+
+	/* this method is called to removed redundant effects.
+	 * e.g. C.f contains o.f if the type of o is C or subtype of C.
+	 * and write contains read. */
+	public void compress() {
+		if (isBottom) {
+			read.clear();
+			write.clear();
+			calls.clear();
+			writtenLocals.clear();
+			writtenFields.clear();
+			isWriteBottom = true;
+			return;
+		}
+		removeFinalFieldRead(read);
+		removeFinalFieldRead(write);
+
+		putStaticFinalFromConcreteToType(read);
+		putStaticFinalFromConcreteToType(write);
+
+		HashSet<EffectEntry> toberemoved = new HashSet<EffectEntry>();
+		for (EffectEntry rwe1: read) {
+			for (EffectEntry rwe2: write) {
+				if (rwe1 != rwe2) {
+					if (rwe2.equals(rwe1)) {
+						toberemoved.add(rwe1);
+					}
+				} else { toberemoved.add(rwe1); }
+			}
+		}
+		read.removeAll(toberemoved);
+	}
+
+	private static void putStaticFinalFromConcreteToType(
+			HashSet<EffectEntry> set) {
+		HashSet<EffectEntry> toberemoved = new HashSet<EffectEntry>();
+		HashSet<EffectEntry> tobeadded = new HashSet<EffectEntry>();
+		for (EffectEntry rwe : set) {
+			if (rwe instanceof FieldEffect) {
+				Symbol f = ((FieldEffect) rwe).f;
+				if ((f.flags_field & Flags.STATIC) != 0) {
+					toberemoved.add(rwe);
+					tobeadded.add(
+							new FieldEffect(
+									new Path_Class(f.enclClass()), f));
+				}
+			}
+		}
+		set.removeAll(toberemoved);
+		set.addAll(tobeadded);
+	}
+
+	private static void removeFinalFieldRead(HashSet<EffectEntry> set) {
+		HashSet<EffectEntry> toberemoved = new HashSet<EffectEntry>();
+		for (EffectEntry rwe : set) {
+			if (rwe instanceof FieldEffect) {
+				Symbol f = ((FieldEffect) rwe).f;
+				if ((f.flags_field & Flags.FINAL) != 0) {
+					toberemoved.add(rwe);
+				}
+			}
+		}
+		set.removeAll(toberemoved);
+	}
+
+	public void printEffect() {
+		System.out.println("\tisInit = " + isInit);
+		if (isBottom) {
+			System.out.println("\tbuttom effect");
+			return;
+		}
+
+		if (read.isEmpty() && write.isEmpty() && calls.isEmpty()) {
+			System.out.println("\tpure");
+			return;
+		}
+
+		if (read.isEmpty()) {
+			System.out.println("\treadset empty");
+		} else {
+			System.out.println("\tread:");
+			for (EffectEntry rwe : read) {
+				System.out.print("\t\t");
+				rwe.printEffect();
+			}
+		}
+
+		if (write.isEmpty()) {
+			System.out.println("\twriteset empty");
+		} else {
+			System.out.println("\twrite:");
+			for (EffectEntry rwe : write) {
+				System.out.print("\t\t");
+				rwe.printEffect();
+			}
+		}
+
+		if (calls.isEmpty()) {
+			System.out.println("\topen empty");
+		} else {
+			System.out.println("\topen:");
+			for (CallEffect rwe : calls) {
+				System.out.print("\t\t");
+				rwe.printEffect();
+			}
+		}
+	}
+
+	// f = ...
+	public void assignField(Symbol f) {
+		if (!isBottom) {
+			writtenFields.add(f);
+			removedAffectedField(f, read);
+			removedAffectedField(f, write);
+		}
+	}
+
+	// var = ...
+	public void assignVar(Symbol var) {
+		if (!isBottom) {
+			writtenLocals.add(var);
+			removedAffectedLocal(var, read);
+			removedAffectedLocal(var, write);
+		}
+	}
+	
+	private static void removedAffectedLocal(Symbol var,
+			HashSet<EffectEntry> processingSet) {
+		HashSet<EffectEntry> tobeAdded = new HashSet<EffectEntry>();
+		HashSet<EffectEntry> tobeRemoved = new HashSet<EffectEntry>();
+		for (EffectEntry rwpe : processingSet) {
+			if (rwpe instanceof FieldEffect) {
+				FieldEffect rwepf = (FieldEffect)rwpe;
+				if (rwepf.path.isAffected_Local(var)) {
+					Symbol f = rwepf.f;
+					tobeRemoved.add(rwpe);
+					tobeAdded.add(
+							new FieldEffect(Path_Unknown.pfcUnknow, f));
+				}
+			} else if (rwpe instanceof ArrayEffect) {
+				ArrayEffect rwepf = (ArrayEffect)rwpe;
+				if (rwepf.path.isAffected_Local(var)) {
+					tobeRemoved.add(rwpe);
+					tobeAdded.add(new ArrayEffect(Path_Unknown.pfcUnknow,
+									rwepf.type));
+				}
+
+			} else throw new Error("should not be something else");
+		}
+		processingSet.removeAll(tobeRemoved);
+		processingSet.addAll(tobeAdded);
+	}
+
+	private static void removedAffectedField(Symbol field,
+			HashSet<EffectEntry> processingSet) {
+		HashSet<EffectEntry> tobeAdded = new HashSet<EffectEntry>();
+		HashSet<EffectEntry> tobeRemoved = new HashSet<EffectEntry>();
+		for (EffectEntry rwpe : processingSet) {
+			if (rwpe instanceof FieldEffect) {
+				FieldEffect rwepf = (FieldEffect)rwpe;
+				if (rwepf.path.isAffected_Path(field)) {
+					Symbol f = rwepf.f;
+					tobeRemoved.add(rwpe);
+					tobeAdded.add(
+							new FieldEffect(Path_Unknown.pfcUnknow, f));
+				}
+			} else if (rwpe instanceof ArrayEffect) {
+				ArrayEffect rwepf = (ArrayEffect)rwpe;
+				if (rwepf.path.isAffected_Path(field)) {
+					tobeRemoved.add(rwpe);
+					tobeAdded.add(new ArrayEffect(Path_Unknown.pfcUnknow,
+									rwepf.type));
+				}
+			} else throw new Error("should not be something else");
+		}
+		processingSet.removeAll(tobeRemoved);
+		processingSet.addAll(tobeAdded);
+	}
+
+	private static void removedAffectedByUnanalyzable(
+			HashSet<EffectEntry> processingSet) {
+		HashSet<EffectEntry> tobeAdded = new HashSet<EffectEntry>();
+		HashSet<EffectEntry> tobeRemoved = new HashSet<EffectEntry>();
+		for (EffectEntry rwpe : processingSet) {
+			if (rwpe instanceof FieldEffect) {
+				FieldEffect rwepf = (FieldEffect)rwpe;
+				if (rwepf.path.isAffected_byUnanalyzablePath()) {
+					Symbol f = rwepf.f;
+					tobeRemoved.add(rwpe);
+					tobeAdded.add(new FieldEffect(Path_Unknown.pfcUnknow, f));
+				}
+			} else if (rwpe instanceof ArrayEffect) {
+				ArrayEffect rwepf = (ArrayEffect)rwpe;
+				if (rwepf.path.isAffected_byUnanalyzablePath()) {
+					tobeRemoved.add(rwpe);
+					tobeAdded.add(new ArrayEffect(Path_Unknown.pfcUnknow,
+									rwepf.type));
+				}
+			} else throw new Error("should not be something else");
+		}
+		processingSet.removeAll(tobeRemoved);
+		processingSet.addAll(tobeAdded);
+	}
+
+	public void removedAffectedByUnanalyzableBottom() {
+		removedAffectedByUnanalyzable(read);
+		removedAffectedByUnanalyzable(write);
+	}
+
+	public void removedAffectedFields(HashSet<Symbol> fields) {
+		for (Symbol field:fields) {
+			removedAffectedField(field, read);
+			removedAffectedField(field, write);
+		}
+	}
 }

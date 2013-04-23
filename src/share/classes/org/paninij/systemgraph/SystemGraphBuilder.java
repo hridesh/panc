@@ -28,7 +28,7 @@ import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.util.*;
 
-import org.paninij.effects.analysis.*;
+import org.paninij.effects.*;
 import org.paninij.systemgraph.SystemGraph.Node;
 
 public class SystemGraphBuilder {
@@ -180,10 +180,10 @@ public class SystemGraphBuilder {
 	public void completeEdges(SystemGraph graph){
 		for(SystemGraph.Node n : graph.nodes.values()){
 			for(MethodSymbol ms : n.procedures){
-				if(ms.ars!=null){
+				if(ms.effect!=null){
 //					System.out.println(ms);
 //					ms.ars.printEffect();
-					translateCallEffects(n, ms, graph, ms.ars);
+					translateCallEffects(n, ms, graph, ms.effect);
 				}
 			}
 		}

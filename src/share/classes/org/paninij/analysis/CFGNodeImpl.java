@@ -3,9 +3,6 @@ package org.paninij.analysis;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.paninij.effects.EffectSet;
-import org.paninij.effects.HeapRepresentation;
-
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.tree.JCTree.*;
 
@@ -22,9 +19,6 @@ public class CFGNodeImpl implements CFGNode {
 	public boolean lhs = false;
 
 	// Effects of control flow paths up to and including this node.
-	public EffectSet effects = new EffectSet();
-
-	public HeapRepresentation heapRepresentation;
 
 	public CFGNodeImpl(JCTree tree) {
 		this.tree = tree;

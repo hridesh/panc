@@ -1,14 +1,14 @@
-package org.paninij.effects.analysis;
+package org.paninij.effects;
 
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.*;
 
-public class ForeachEffect implements CallEffect {
+public class CapsuleEffect implements CallEffect {
 	public final CapsuleSymbol caller;
 	public final Symbol callee;
 	public final MethodSymbol meth;
 
-	public ForeachEffect(CapsuleSymbol caller, Symbol callee,
+	public CapsuleEffect(CapsuleSymbol caller, Symbol callee,
 			MethodSymbol meth) {
 		this.caller = caller;
 		this.callee = callee;
@@ -16,7 +16,7 @@ public class ForeachEffect implements CallEffect {
 	}
 
 	public void printEffect() {
-		System.out.println("ForeachEffect caller = " + caller + "\tcallee = " +
+		System.out.println("CapsuleEffect caller = " + caller + "\tcallee = " +
 				callee + "\tmethod = " + meth);
 	}
 
@@ -25,10 +25,10 @@ public class ForeachEffect implements CallEffect {
 	}
 
 	public boolean equals(Object obj) {
-		if (obj instanceof ForeachEffect) {
-			ForeachEffect fe = (ForeachEffect) obj;
-			return caller.equals(fe.caller) && callee.equals(fe.callee) &&
-			meth.equals(fe.meth);
+		if (obj instanceof CapsuleEffect) {
+			CapsuleEffect ce = (CapsuleEffect) obj;
+			return caller.equals(ce.caller) && callee.equals(ce.callee) &&
+			meth.equals(ce.meth);
 		}
 		return false;
 	}

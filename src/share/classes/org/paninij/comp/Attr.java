@@ -128,10 +128,10 @@ public final class Attr extends CapsuleInternal {
 					tree.name, tree.sym.params);
 			((CapsuleSymbol) tree.sym.owner).procedures.put(tree.sym, cp);
 		}
-		if(tree.sym.effects != null){
-			annotationProcessor.setEffects(tree, tree.sym.ars);
+		/*if(tree.sym.effect != null){
+			annotationProcessor.setEffects(tree, tree.sym.effect);
 			annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
-		}
+		}*/
 	}
 	
 	public final void visitVarDef(JCVariableDecl tree) {  /* SKIPPED */ }
@@ -190,8 +190,8 @@ public final class Attr extends CapsuleInternal {
 					for(JCTree def2 : tree.defs){
 						if(def2 instanceof JCMethodDecl){
 							if(((JCMethodDecl) def2).name.toString().equals(((JCMethodDecl) def).name.toString().substring(0, ((JCMethodDecl) def).name.toString().indexOf("$Original")))){
-								((JCMethodDecl) def2).sym.ars = ((JCMethodDecl) def).sym.ars; 
-								((JCMethodDecl) def).sym.ars = null;
+								((JCMethodDecl) def2).sym.effect = ((JCMethodDecl) def).sym.effect; 
+								((JCMethodDecl) def).sym.effect = null;
 							}
 						}
 					}

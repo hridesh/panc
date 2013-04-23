@@ -1,3 +1,3 @@
-package org.paninij.effects.analysis;
+package org.paninij.effects;
 
 public interface CallEffect extends EffectEntry {}

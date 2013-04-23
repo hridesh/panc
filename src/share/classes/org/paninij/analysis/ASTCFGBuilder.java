@@ -30,7 +30,7 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeScanner;
 
-import org.paninij.effects.analysis.EffectInter;
+import org.paninij.effects.EffectInter;
 
 public class ASTCFGBuilder extends TreeScanner {
 	private int id = 0;

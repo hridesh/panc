@@ -1,4 +1,4 @@
-package org.paninij.effects.analysis;
+package org.paninij.effects;
 
 import org.paninij.path.Path;
 

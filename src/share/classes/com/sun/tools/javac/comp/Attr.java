@@ -96,7 +96,6 @@ public class Attr extends JCTree.Visitor {
     final DeferredLintHandler deferredLintHandler;
     // Panini code
     org.paninij.comp.Attr pAttr;
-    SystemEffectsComp effects;
     SystemGraphsBuilder graphsBuilder;
     public static boolean doGraphs = false;
     // end Panini code
@@ -151,7 +150,6 @@ public class Attr extends JCTree.Visitor {
 
         // Panini code
         pAttr = new org.paninij.comp.Attr(make, names, enter, memberEnter, syms, log, annotate);
-        effects = SystemEffectsComp.instance(context);
         graphsBuilder = SystemGraphsBuilder.instance(context);
         // end Panini code
     }

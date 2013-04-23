@@ -45,7 +45,6 @@ import java.util.HashSet;
 import java.util.HashMap;
 import org.paninij.systemgraphs.SystemGraphs;
 import org.paninij.analysis.CFG;
-import org.paninij.effects.EffectSet;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -1106,7 +1105,6 @@ public abstract class Symbol implements Element {
     public static class MethodSymbol extends Symbol implements ExecutableElement {
 
     	// Panini code
-        public EffectSet effects;
     	public boolean isProcedure;
     	public boolean isFresh;
     	public boolean isCommutative;
@@ -1135,7 +1133,7 @@ public abstract class Symbol implements Element {
         // the caller of this method
         public HashSet<MethodSymbol> callers;
         // the effect of this
-        public org.paninij.effects.analysis.EffectSet ars;
+        public org.paninij.effects.EffectSet effect;
     	// end Panini code
     	
         /** The code of the method. */

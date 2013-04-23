@@ -1,4 +1,4 @@
-package org.paninij.effects.analysis;
+package org.paninij.effects;
 
 public class IOEffect implements CallEffect {
 	public IOEffect() {}

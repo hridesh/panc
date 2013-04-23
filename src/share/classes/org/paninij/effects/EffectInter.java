@@ -1,4 +1,4 @@
-package org.paninij.effects.analysis;
+package org.paninij.effects;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -212,7 +212,7 @@ public class EffectInter {
 		if (meth instanceof JCIdent) { // selected.m(...)
 			JCIdent jci = (JCIdent)meth;
 			MethodSymbol ms = (MethodSymbol)jci.sym;
-			EffectSet es = ms.ars;
+			EffectSet es = ms.effect;
 			if (es == null) {
 				return true;
 			}
@@ -235,7 +235,7 @@ public class EffectInter {
 			} else { // m(...)
 				MethodSymbol ms = (MethodSymbol)s;
 				JCMethodDecl jcmd = ms.tree;
-				EffectSet es = jcmd.sym.ars;
+				EffectSet es = jcmd.sym.effect;
 				if (es != null) {
 					if (es.commute) {
 						return true;
@@ -340,7 +340,7 @@ public class EffectInter {
 			{ // m(...)
 				MethodSymbol ms = (MethodSymbol)s;
 				JCMethodDecl jcmd = ms.tree;
-				knowCallee(s, tree, ag, curr_meth, jcmd.sym.ars, rs);
+				knowCallee(s, tree, ag, curr_meth, jcmd.sym.effect, rs);
 			}
 		} else if (meth instanceof JCFieldAccess) { // selected.m(...)
 			JCFieldAccess jcf = (JCFieldAccess)meth;
@@ -440,7 +440,7 @@ public class EffectInter {
 		JCBlock body = jcmd.body;
 		curr_cap = cap;
 		if (body != null) {
-			EffectSet oldResult = jcmd.sym.ars;
+			EffectSet oldResult = jcmd.sym.effect;
 
 			HashSet<JCTree> exists = new HashSet<JCTree>();
 			for (JCTree tree : body.endNodes) {
@@ -464,11 +464,11 @@ public class EffectInter {
 			// that depend on the current method back to the queue for
 			// further analysis. Reaching a fix point.
 			if ((oldResult == null) || (!newResult.equals(oldResult))) {
-				jcmd.sym.ars = newResult;
+				jcmd.sym.effect = newResult;
 				HashSet<MethodSymbol> callers = jcmd.sym.callers;
 				if (callers != null) {
 					for (MethodSymbol s : callers) {
-						if (!s.ars.isBottom) {
+						if (!s.effect.isBottom) {
 							EffectInter ei = new EffectInter();
 							ei.analysis(s.tree, cap);
 						}
