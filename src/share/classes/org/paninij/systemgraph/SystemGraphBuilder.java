@@ -18,10 +18,14 @@
  */
 package org.paninij.systemgraph;
 
+import static com.sun.tools.javac.code.TypeTags.ARRAY;
+
 import java.util.HashMap;
 
 import com.sun.tools.javac.code.Symtab;
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.util.*;
 
 import org.paninij.effects.analysis.*;
@@ -101,25 +105,78 @@ public class SystemGraphBuilder {
 			if (call instanceof CapsuleEffect) {
 				CapsuleEffect ce = (CapsuleEffect) call;
 				Node n = node.connections.get(ce.callee.name);
+				MethodSymbol meth = ce.meth;
 
-				graph.setEdge(node, fromProc, n, ((CapsuleEffect) call).meth);
+				for (MethodSymbol ms : n.capsule.procedures.keySet()) {
+					if (ms.toString().compareTo(meth.toString()) == 0) {
+						graph.setEdge(node, fromProc, n, ms);
+						break;
+					}
+					if (ms.toString().compareTo(types(meth)) == 0) {
+						graph.setEdge(node, fromProc, n, ms);
+						break;
+					}
+				}
 			} else if (call instanceof ForeachEffect) {
 				ForeachEffect fe = (ForeachEffect)call;
 				String calleeName = fe.callee.toString();
+				MethodSymbol meth = fe.meth;
 				int size = calleeName.length();
 				HashMap<Name, Node> connections = node.connections;
 				for (Name key : connections.keySet()) {
 					String keyS = key.toString();
 					if (keyS.startsWith(calleeName.toString()) &&
 							keyS.charAt(size) == '[') {
-						graph.setEdge(node, fromProc, connections.get(key),
-								fe.meth);
+						Node n = connections.get(key);
+						for (MethodSymbol ms : n.capsule.procedures.keySet()) {
+							if (ms.toString().compareTo(meth.toString()) == 0) {
+								graph.setEdge(node, fromProc, n, ms);
+								break;
+							}
+							if (ms.toString().compareTo(types(meth)) == 0) {
+								graph.setEdge(node, fromProc, n, ms);
+								break;
+							}
+						}
 					}
 				}
 			}
 		}
 	}
+
+	private static final String types(MethodSymbol ms) {
+		List<Type> args = ms.type.getParameterTypes();
+		StringBuilder buf = new StringBuilder();
+		buf.append(ms.name.toString() + "(");
+
+		if (!args.isEmpty()) {
+			while (args.tail.nonEmpty()) {
+				String temp = args.head.toString();
+				int index = temp.indexOf("<");
+
+				// remove the polymorphic type info
+				if (index == -1) { buf.append(temp);
+				} else { buf.append(temp.substring(0, index)); }
+				args = args.tail;
+				buf.append(',');
+			}
+			if (args.head.tag == ARRAY) {
+				buf.append(((ArrayType)args.head).elemtype);
+				buf.append("...");
+			} else {
+				String temp = args.head.toString();
+				int index = temp.indexOf("<");
 	
+				// remove the polymorphic type info
+				if (index == -1) { buf.append(temp);
+				} else { buf.append(temp.substring(0, index)); }
+			}
+		}
+		
+		buf.append(")");
+		return buf.toString();
+    }
+
 	public void completeEdges(SystemGraph graph){
 		for(SystemGraph.Node n : graph.nodes.values()){
 			for(MethodSymbol ms : n.procedures){
@@ -130,9 +187,5 @@ public class SystemGraphBuilder {
 				}
 			}
 		}
-	}
-
-	public void addEdge(SystemGraph graph, Name fromNode, MethodSymbol fromProc, Name toNode, MethodSymbol toProc){
-		graph.setEdge(graph.nodes.get(fromNode), fromProc, graph.nodes.get(toNode), toProc);
 	}
 }

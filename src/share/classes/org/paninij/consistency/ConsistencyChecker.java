@@ -104,7 +104,7 @@ public class ConsistencyChecker {
 	private void checkEffects(HashSet<Path> paths) {
 		if (endingProcedure.size() > 1) {
 			for (MethodSymbol es : endingProcedure) {
-				for (EffectEntry entry :es.ars.write) {
+				for (EffectEntry entry : es.ars.write) {
 					if (entry instanceof FieldEffect) {
 						String field = ((FieldEffect) entry).f.name.toString();
 						if (write.containsKey(field)) {
@@ -168,7 +168,7 @@ public class ConsistencyChecker {
 		if (path.tail.isEmpty()) {//end of path
  			for (MethodSymbol m : path.head.procedures) {
 				if (m.toString().equals(edge.toProcedure.toString()))
-					if (m.ars!=null) {
+					if (m.ars != null) {
 						if (firstCall.containsKey(m))
 							firstCall.get(m).add(currentStartingCall);
 						else {

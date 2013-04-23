@@ -725,7 +725,7 @@ public class Attr extends JCTree.Visitor {
     	pAttr.visitCapsuleDef(tree, this, env, rs);
 
     	// print out the effect
-/*    	for (JCTree def : tree.defs) {
+    	/*for (JCTree def : tree.defs) {
     		if (def instanceof JCMethodDecl) {
     			JCMethodDecl jcmd = (JCMethodDecl)def;
     			org.paninij.effects.analysis.EffectSet ars = jcmd.sym.ars;

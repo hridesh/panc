@@ -56,7 +56,6 @@ import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
 import org.paninij.systemgraph.*;
-import org.paninij.effects.analysis.*;
 
 /***
  * Panini-specific context-dependent analysis. All public functions in 
