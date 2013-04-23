@@ -130,7 +130,7 @@ public final class Attr extends CapsuleInternal {
 			((CapsuleSymbol) tree.sym.owner).procedures.put(tree.sym, cp);
 		}
 		if(tree.sym.effects != null){
-			annotationProcessor.setEffects(tree, tree.sym.effects);
+			annotationProcessor.setEffects(tree, tree.sym.ars);
 			annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
 		}
 	}
@@ -741,16 +741,5 @@ public final class Attr extends CapsuleInternal {
 		//    	tree.defs = tree.defs.append(ownerIface);
 
 		variables.put(vdecl.name, c.name);
-	}
-
-	private JCClassDecl createOwnerInterface(final String interfaceName) {
-		JCClassDecl typeInterface = 
-				make.ClassDef(
-						make.Modifiers(PUBLIC|INTERFACE|SYNTHETIC), 
-						names.fromString(interfaceName), 
-						List.<JCTypeParameter>nil(), null, 
-						List.<JCExpression>nil(), 
-						List.<JCTree>nil());
-		return typeInterface;
 	}
 }

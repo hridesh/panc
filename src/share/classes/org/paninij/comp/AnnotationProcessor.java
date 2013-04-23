@@ -32,8 +32,7 @@ import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.*;
 
-import org.paninij.effects.*;
-import org.paninij.effects.EffectSet.*;
+import org.paninij.effects.analysis.*;
 
 public class AnnotationProcessor extends Internal{
 
@@ -152,49 +151,57 @@ public class AnnotationProcessor extends Internal{
 		return bestsofar;
 	}
 	
+	/**
+	 * Used to find a symbol from the memebrs of a classSymbol
+	 */
 	private Symbol findField(Symbol s, String name){
 		return ((ClassSymbol)s).members_field.lookup(names.fromString(name)).sym;
 	}
 	
+	/**
+	 * This translates the value field of an effect annotation to an EffectSet
+	 */
 	private EffectSet translateEffects(String[] effects, Env<AttrContext> env, Resolve rs){
-		EffectSet es = new EffectSet();
-		for(String s : effects){
-			String[] split;
-			Symbol ownerSymbol;
-			MethodSymbol m;
-			if(s.equals(""))
-				es.add(es.emptyEffect());
-			else{
-				split = s.substring(1).split(" ");
-				ownerSymbol = rs.findIdent(env, names.fromString(split[0]), Kinds.TYP);
-				char c = s.charAt(0);
-				switch(c){
-				case 'B':
-					es.add(es.bottomEffect());
-					break;
-				case 'R':
-					es.add(es.fieldReadEffect(findField(ownerSymbol, split[1])));
-					break;
-				case 'W':
-					es.add(es.fieldWriteEffect(findField(ownerSymbol, split[1])));
-					break;
-				case 'O':
-					m = findMethod(ownerSymbol, split);
-					es.add(es.openEffect(m));
-					break;
-				case 'M':
-					m = findMethod(ownerSymbol, split);
-					es.add(es.methodEffect(m));
-					break;
-				default:
-					Assert.error("Error when translating effects: unknown effect");
-				}
-			}
-		}
-		return es;
+		//TODO
+		return null;
+//		EffectSet es = new EffectSet();
+//		for(String s : effects){
+//			String[] split;
+//			Symbol ownerSymbol;
+//			MethodSymbol m;
+//			if(s.equals(""))
+//				es.add(es.emptyEffect());
+//			else{
+//				split = s.substring(1).split(" ");
+//				ownerSymbol = rs.findIdent(env, names.fromString(split[0]), Kinds.TYP);
+//				char c = s.charAt(0);
+//				switch(c){
+//				case 'B':
+//					es.add(es.bottomEffect());
+//					break;
+//				case 'R':
+//					es.add(es.fieldReadEffect(findField(ownerSymbol, split[1])));
+//					break;
+//				case 'W':
+//					es.add(es.fieldWriteEffect(findField(ownerSymbol, split[1])));
+//					break;
+//				case 'O':
+//					m = findMethod(ownerSymbol, split);
+//					es.add(es.openEffect(m));
+//					break;
+//				case 'M':
+//					m = findMethod(ownerSymbol, split);
+//					es.add(es.methodEffect(m));
+//					break;
+//				default:
+//					Assert.error("Error when translating effects: unknown effect");
+//				}
+//			}
+//		}
+//		return es;
 	}
 	
-	public EffectSet translateEffectAnnotations(MethodSymbol m, Attribute.Compound annotation, Env<AttrContext> env, Resolve rs){
+	private EffectSet translateEffectAnnotations(MethodSymbol m, Attribute.Compound annotation, Env<AttrContext> env, Resolve rs){
 		EffectSet es = new EffectSet();
 		//check if its an Effects annotation?
 		for(Pair<MethodSymbol, Attribute> pair : annotation.values){
@@ -208,8 +215,10 @@ public class AnnotationProcessor extends Internal{
 		return es;
 	}
 	
+	/**
+	 * Translates an effectSet to an annotation and add it to the Method.
+	 */
 	public void setEffects(JCMethodDecl mdecl, EffectSet effectSet){
-		setEffects(mdecl, effectSet.getEffects());
 	}
 	
 	private List<JCExpression> effectsToExp(String[] effects){
@@ -220,7 +229,8 @@ public class AnnotationProcessor extends Internal{
 		return effectsExp.toList();
 	}
 	
-	public void setEffects(JCMethodDecl mdecl, String[] effects){
+	
+	private void setEffects(JCMethodDecl mdecl, String[] effects){
 		boolean annotated = false;
 		for(JCAnnotation annotation : mdecl.mods.annotations){
 			if(annotation.annotationType.toString().equals("Effects"))
