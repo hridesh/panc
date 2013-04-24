@@ -3,6 +3,8 @@ package org.paninij.effects;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import javax.tools.JavaFileObject;
+
 import org.paninij.analysis.CommonMethod;
 import org.paninij.path.*;
 
@@ -170,8 +172,16 @@ public class EffectInter {
 								if (selected instanceof JCIdent) {
 									JCIdent jci = (JCIdent)selected;
 									if (jci.sym == tsym) {
+										JavaFileObject sf = curr_cap.sourcefile;
+										DiagnosticSource ds =
+											new DiagnosticSource(sf, null);
+										int pos = jcf.getPreferredPosition();
+
 										rs.calls.add(new ForeachEffect(curr_cap,
-												tsym, (MethodSymbol)(jcfa.sym)));
+												tsym, (MethodSymbol)(jcfa.sym),
+												pos, ds.getLineNumber(pos),
+												ds.getColumnNumber(pos, false),
+												sf.toString()));
 									}
 								}
 							}
@@ -367,9 +377,12 @@ public class EffectInter {
 				if (typeSym instanceof CapsuleSymbol) {
 					DiagnosticSource ds =
 						new DiagnosticSource(curr_cap.sourcefile, null);
+					int pos = tree.getPreferredPosition();
+
 					rs.calls.add(new CapsuleEffect(curr_cap, fld,
-							(MethodSymbol)jcf.sym, tree.getPreferredPosition(),
-							ds.getLineNumber(tree.getPreferredPosition()),
+							(MethodSymbol)jcf.sym, pos,
+							ds.getLineNumber(pos), // do not expend tab
+							ds.getColumnNumber(pos, false),
 							curr_cap.sourcefile.toString()));
 				} else {
 					rs.write.add(new FieldEffect(
@@ -389,8 +402,15 @@ public class EffectInter {
 					Symbol typeSym = at.elemtype.tsym;
 					// many capsule call.
 					if (typeSym instanceof CapsuleSymbol) {
+						DiagnosticSource ds =
+							new DiagnosticSource(curr_cap.sourcefile, null);
+						int pos = tree.getPreferredPosition();
+
 						rs.calls.add(new ForeachEffect(curr_cap, fld,
-								(MethodSymbol)jcf.sym));
+								(MethodSymbol)jcf.sym, pos,
+								ds.getLineNumber(pos),
+								ds.getColumnNumber(pos, false), // no expend tab
+								curr_cap.sourcefile.toString()));
 					} else {
 						rs.write.add(new FieldEffect(
 								new Path_Parameter(null, 0), fld));
