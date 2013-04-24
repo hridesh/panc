@@ -11,6 +11,7 @@ import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
+import com.sun.tools.javac.util.DiagnosticSource;
 import com.sun.tools.javac.util.List;
 
 public class EffectInter {
@@ -364,8 +365,12 @@ public class EffectInter {
 				Symbol typeSym = fld.type.tsym;
 				// single capsule call.
 				if (typeSym instanceof CapsuleSymbol) {
+					DiagnosticSource ds =
+						new DiagnosticSource(curr_cap.sourcefile, null);
 					rs.calls.add(new CapsuleEffect(curr_cap, fld,
-							(MethodSymbol)jcf.sym));
+							(MethodSymbol)jcf.sym, tree.getPreferredPosition(),
+							ds.getLineNumber(tree.getPreferredPosition()),
+							curr_cap.sourcefile.toString()));
 				} else {
 					rs.write.add(new FieldEffect(
 							new Path_Parameter(null, 0), fld));
