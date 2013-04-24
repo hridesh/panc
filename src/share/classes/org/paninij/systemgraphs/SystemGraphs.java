@@ -1,18 +1,7 @@
 package org.paninij.systemgraphs;
 
-import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.jvm.*;
-import com.sun.tools.javac.tree.*;
-import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
-import com.sun.tools.javac.util.List;
-
 import com.sun.tools.javac.code.Symbol.*;
-import com.sun.tools.javac.tree.JCTree.*;
-import com.sun.tools.javac.tree.TreeScanner;
-import com.sun.tools.javac.code.Type.*;
 
-import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.Collection;
 import java.util.HashSet;

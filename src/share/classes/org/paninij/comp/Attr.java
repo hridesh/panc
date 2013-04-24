@@ -288,6 +288,8 @@ public final class Attr extends CapsuleInternal {
 
 		ConsistencyChecker cc = new ConsistencyChecker(sysGraph, log);
 		cc.potentialPathCheck();
+		cc.potentialPathCheck();
+
 		tree.switchToClass();
 
 		memberEnter.memberEnter(maindecl, env);
