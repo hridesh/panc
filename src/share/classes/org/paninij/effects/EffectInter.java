@@ -3,6 +3,8 @@ package org.paninij.effects;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import javax.tools.JavaFileObject;
+
 import org.paninij.analysis.CommonMethod;
 import org.paninij.path.*;
 
@@ -11,6 +13,7 @@ import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
+import com.sun.tools.javac.util.DiagnosticSource;
 import com.sun.tools.javac.util.List;
 
 public class EffectInter {
@@ -169,8 +172,16 @@ public class EffectInter {
 								if (selected instanceof JCIdent) {
 									JCIdent jci = (JCIdent)selected;
 									if (jci.sym == tsym) {
+										JavaFileObject sf = curr_cap.sourcefile;
+										DiagnosticSource ds =
+											new DiagnosticSource(sf, null);
+										int pos = jcf.getPreferredPosition();
+
 										rs.calls.add(new ForeachEffect(curr_cap,
-												tsym, (MethodSymbol)(jcfa.sym)));
+												tsym, (MethodSymbol)(jcfa.sym),
+												pos, ds.getLineNumber(pos),
+												ds.getColumnNumber(pos, false),
+												sf.toString()));
 									}
 								}
 							}
@@ -364,8 +375,15 @@ public class EffectInter {
 				Symbol typeSym = fld.type.tsym;
 				// single capsule call.
 				if (typeSym instanceof CapsuleSymbol) {
+					DiagnosticSource ds =
+						new DiagnosticSource(curr_cap.sourcefile, null);
+					int pos = tree.getPreferredPosition();
+
 					rs.calls.add(new CapsuleEffect(curr_cap, fld,
-							(MethodSymbol)jcf.sym));
+							(MethodSymbol)jcf.sym, pos,
+							ds.getLineNumber(pos), // do not expend tab
+							ds.getColumnNumber(pos, false),
+							curr_cap.sourcefile.toString()));
 				} else {
 					rs.write.add(new FieldEffect(
 							new Path_Parameter(null, 0), fld));
@@ -384,8 +402,15 @@ public class EffectInter {
 					Symbol typeSym = at.elemtype.tsym;
 					// many capsule call.
 					if (typeSym instanceof CapsuleSymbol) {
+						DiagnosticSource ds =
+							new DiagnosticSource(curr_cap.sourcefile, null);
+						int pos = tree.getPreferredPosition();
+
 						rs.calls.add(new ForeachEffect(curr_cap, fld,
-								(MethodSymbol)jcf.sym));
+								(MethodSymbol)jcf.sym, pos,
+								ds.getLineNumber(pos),
+								ds.getColumnNumber(pos, false), // no expend tab
+								curr_cap.sourcefile.toString()));
 					} else {
 						rs.write.add(new FieldEffect(
 								new Path_Parameter(null, 0), fld));
@@ -464,8 +489,21 @@ public class EffectInter {
 			// that depend on the current method back to the queue for
 			// further analysis. Reaching a fix point.
 			if ((oldResult == null) || (!newResult.equals(oldResult))) {
-				jcmd.sym.effect = newResult;
-				HashSet<MethodSymbol> callers = jcmd.sym.callers;
+				MethodSymbol meth = jcmd.sym;
+				meth.effect = newResult;
+				HashSet<MethodSymbol> callers = meth.callers;
+				String n1 = meth.toString();
+
+				// copy the effect from method XYZ$Original to XYZ
+				if (n1.contains("$Original")) {
+					for (MethodSymbol ms : cap.procedures.keySet()) {
+						String n2 = ms.name.toString();
+						if (n2.equals(n1.substring(0,
+								n1.indexOf("$Original")))) {
+							ms.effect = meth.effect;
+						}
+					}
+				}
 				if (callers != null) {
 					for (MethodSymbol s : callers) {
 						if (!s.effect.isBottom) {

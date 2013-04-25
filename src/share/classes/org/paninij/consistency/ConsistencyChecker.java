@@ -50,7 +50,6 @@ public class ConsistencyChecker {
 	 */
 	public void potentialPathCheck() {
 		for (Node node : graph.nodes.values()) {
-// System.out.println("potentialPathCheck node = " + node.capsule);
 			visitedNode = new HashSet<Node>();
 			headNode = node;
 			paths = new HashMap<Node, HashSet<Path>>();
