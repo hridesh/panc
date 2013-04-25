@@ -489,8 +489,21 @@ public class EffectInter {
 			// that depend on the current method back to the queue for
 			// further analysis. Reaching a fix point.
 			if ((oldResult == null) || (!newResult.equals(oldResult))) {
-				jcmd.sym.effect = newResult;
-				HashSet<MethodSymbol> callers = jcmd.sym.callers;
+				MethodSymbol meth = jcmd.sym;
+				meth.effect = newResult;
+				HashSet<MethodSymbol> callers = meth.callers;
+				String n1 = meth.toString();
+
+				// copy the effect from method XYZ$Original to XYZ
+				if (n1.contains("$Original")) {
+					for (MethodSymbol ms : cap.procedures.keySet()) {
+						String n2 = ms.name.toString();
+						if (n2.equals(n1.substring(0,
+								n1.indexOf("$Original")))) {
+							ms.effect = meth.effect;
+						}
+					}
+				}
 				if (callers != null) {
 					for (MethodSymbol s : callers) {
 						if (!s.effect.isBottom) {
