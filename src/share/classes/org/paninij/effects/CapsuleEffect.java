@@ -60,6 +60,7 @@ public class CapsuleEffect implements CallEffect {
 		if(params.length()>0)
 			params = " " + params.substring(0, params.length() - 1);
 		String meth=this.meth.owner+" " + this.meth.name+params;
-		return "C"+caller+" "+callee+" "+meth;
+		return "C" + caller + " " + callee + " " + meth + " " + pos + " "
+				+ line + " " + col + " " + fileName;
 	}
 }

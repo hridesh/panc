@@ -141,11 +141,11 @@ public class AnnotationProcessor extends Internal{
 			Symbol member = iter.next();
 			if(member instanceof MethodSymbol){
 				if(member.name.toString().equals(signature[3])){
-					if(signature.length>4 && ((MethodSymbol) member).params().size()==signature.length-4){
-						for(int i=4; i < signature.length ; i++){
+					if(signature.length>8 && ((MethodSymbol) member).params().size()==signature.length-8){
+						for(int i=4; i < signature.length-4 ; i++){
 							if(!((MethodSymbol) member).params().get(i-4).type.tsym.flatName().toString().equals(signature[i]))
 								break;
-							if(i == signature.length-1)
+							if(i == signature.length-5)
 								bestsofar = (MethodSymbol) member;
 						}
 					}else
@@ -166,52 +166,70 @@ public class AnnotationProcessor extends Internal{
 	/**
 	 * This translates the value field of an effect annotation to an EffectSet
 	 */
-	private EffectSet translateEffects(String[] effects, Env<AttrContext> env, Resolve rs){
+	private EffectSet translateEffects(String[] effects, Env<AttrContext> env,
+			Resolve rs) {
 		EffectSet es = new EffectSet();
-		for(String s1 : effects){
-			String s = s1.substring(1, s1.length()-1);
-			if(s.equals("B")){
+		for (String s1 : effects) {
+			String s = s1.substring(1, s1.length() - 1);
+			if (s.equals("B")) {
 				es.isBottom = true;
 				return es;
-			}else if(s.equals("T")){
+			} else if (s.equals("T")) {
 				es = new EffectSet(true);
-			}else if(s.equals("F")){
+			} else if (s.equals("F")) {
 				es = new EffectSet(false);
-			}else{
+			} else {
 				String[] split;
 				Symbol ownerSymbol;
 				MethodSymbol m;
-				EffectEntry effect=null;
+				EffectEntry effect = null;
 				split = s.substring(2).split(" ");
 				char c = s.charAt(1);
-				switch(c){
+				switch (c) {
 				case 'I':
 					effect = new IOEffect();
 					break;
-				case 'F'://field effect owner name of symbol
-					ownerSymbol = rs.findIdent(env, names.fromString(split[0]), Kinds.TYP);
-					effect = new FieldEffect(new Path_Parameter(ownerSymbol, Integer.parseInt(split[2])), findField(ownerSymbol, split[1]));
+				case 'F':// field effect owner name of symbol
+					ownerSymbol = rs.findIdent(env, names.fromString(split[0]),
+							Kinds.TYP);
+					effect = new FieldEffect(new Path_Parameter(ownerSymbol,
+							Integer.parseInt(split[2])), findField(ownerSymbol,
+							split[1]));
 					break;
-				case 'C': //capsule effect
-					ownerSymbol = rs.findIdent(env, names.fromString(split[0]), Kinds.TYP); //caller
-					m = findMethod(rs.findIdent(env, names.fromString(split[2]), Kinds.TYP), split);
-					effect = new CapsuleEffect((CapsuleSymbol) ownerSymbol, findField(ownerSymbol, split[1]), m);
+				case 'C': // capsule effect
+					ownerSymbol = rs.findIdent(env, names.fromString(split[0]),
+							Kinds.TYP); // caller
+					m = findMethod(rs.findIdent(env,
+							names.fromString(split[2]), Kinds.TYP), split);
+					effect = new CapsuleEffect((CapsuleSymbol) ownerSymbol,
+							findField(ownerSymbol, split[1]), m,
+							Integer.parseInt(split[split.length - 4]),
+							Integer.parseInt(split[split.length - 3]),
+							Integer.parseInt(split[split.length - 2]),
+							split[split.length - 1]);
 					break;
-				case 'E': //foreacheffect
-					ownerSymbol = rs.findIdent(env, names.fromString(split[0]), Kinds.TYP); //caller
-					m = findMethod(rs.findIdent(env, names.fromString(split[2]), Kinds.TYP), split);
-					effect = new ForeachEffect((CapsuleSymbol) ownerSymbol, findField(ownerSymbol, split[1]), m);
+				case 'E': // foreacheffect
+					ownerSymbol = rs.findIdent(env, names.fromString(split[0]),
+							Kinds.TYP); // caller
+					m = findMethod(rs.findIdent(env,
+							names.fromString(split[2]), Kinds.TYP), split);
+					effect = new ForeachEffect((CapsuleSymbol) ownerSymbol,
+							findField(ownerSymbol, split[1]), m,
+							Integer.parseInt(split[split.length - 4]),
+							Integer.parseInt(split[split.length - 3]),
+							Integer.parseInt(split[split.length - 2]),
+							split[split.length - 1]);
 					break;
-				case 'A': //Array effect
-//					m = findMethod(ownerSymbol, split);
-	//				es.add(es.methodEffect(m));
+				case 'A': // Array effect
+					// m = findMethod(ownerSymbol, split);
+					// es.add(es.methodEffect(m));
 					break;
 				default:
 					Assert.error("Error when translating effects: unknown effect");
 				}
-				if(effect!=null){
+				if (effect != null) {
 					char c2 = s.charAt(0);
-					switch(c2){
+					switch (c2) {
 					case 'R':
 						es.read.add(effect);
 						break;
@@ -219,7 +237,7 @@ public class AnnotationProcessor extends Internal{
 						es.write.add(effect);
 						break;
 					case 'C':
-						es.calls.add((CallEffect)effect);
+						es.calls.add((CallEffect) effect);
 						break;
 					default:
 						Assert.error("Error when translating effects: unknown effect");
@@ -231,22 +249,24 @@ public class AnnotationProcessor extends Internal{
 	}
 	
 	@SuppressWarnings("rawtypes")
-	public EffectSet translateEffectAnnotations(MethodSymbol m, Attribute.Compound annotation, Env<AttrContext> env, Resolve rs){
+	public EffectSet translateEffectAnnotations(MethodSymbol m,
+			Attribute.Compound annotation, Env<AttrContext> env, Resolve rs) {
 		EffectSet es = new EffectSet();
-		//check if its an Effects annotation?
-		for(Pair<MethodSymbol, Attribute> pair : annotation.values){
-			if(pair.fst.name.toString().equals("effects")){
+		// check if its an Effects annotation?
+		for (Pair<MethodSymbol, Attribute> pair : annotation.values) {
+			if (pair.fst.name.toString().equals("effects")) {
 				Object value = pair.snd.getValue();
-				if(value instanceof List){
+				if (value instanceof List) {
 					@SuppressWarnings("rawtypes")
 					String[] effects = new String[((List) value).size()];
-					for(int i=0;i<((List) value).size();i++){
+					for (int i = 0; i < ((List) value).size(); i++) {
 						effects[i] = String.valueOf(((List) value).get(i));
 					}
 					es = translateEffects(effects, env, rs);
 				}
-			}else{
-				log.error("capsule.incompatible.capsule.annotation", m.outermostClass().classfile.getName());
+			} else {
+				log.error("capsule.incompatible.capsule.annotation",
+						m.outermostClass().classfile.getName());
 			}
 		}
 		return es;
@@ -268,18 +288,17 @@ public class AnnotationProcessor extends Internal{
 	}
 	
 	
-	private void setEffects(JCMethodDecl mdecl, String[] effects){
+	private void setEffects(JCMethodDecl mdecl, String[] effects) {
 		boolean annotated = false;
-		for(JCAnnotation annotation : mdecl.mods.annotations){
-			if(annotation.annotationType.toString().equals("Effects"))
+		for (JCAnnotation annotation : mdecl.mods.annotations) {
+			if (annotation.annotationType.toString().equals("Effects"))
 				annotated = true;
 		}
-		if(!annotated){
-			JCAnnotation ann = ann(id("Effects"), 
-					List.<JCExpression>of(
-							assign(id("effects"), make.NewArray(null, List.<JCExpression>nil(), 
-									effectsToExp(effects)))
-							));
+		if (!annotated) {
+			JCAnnotation ann = ann(id("Effects"),
+					List.<JCExpression> of(assign(id("effects"), make.NewArray(
+							null, List.<JCExpression> nil(),
+							effectsToExp(effects)))));
 			ann.setType(mdecl.sym.type.getReturnType());
 			mdecl.mods.annotations = mdecl.mods.annotations.append(ann);
 		}

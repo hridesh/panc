@@ -61,6 +61,7 @@ public class ForeachEffect implements CallEffect {
 		if(params.length()>0)
 			params = " " + params.substring(0, params.length() - 1);
 		meth = meth + this.meth.owner+" " + this.meth.name+params;
-		return "E"+caller+" " +callee+" " +meth;
+		return "E" + caller + " " + callee + " " + meth + " " + pos + " "
+				+ line + " " + col + " " + fileName;
 	}
 }

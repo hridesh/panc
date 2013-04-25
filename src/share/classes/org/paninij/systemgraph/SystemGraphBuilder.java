@@ -184,11 +184,12 @@ public class SystemGraphBuilder {
 		for(SystemGraph.Node n : graph.nodes.values()){
 			for(MethodSymbol ms : n.procedures){
 				ms.complete();
-				if(ms.effect==null&&ms.attributes_field.size()!=0){
-					for(Compound compound : ms.attributes_field){
-						if(compound.type.tsym.getQualifiedName().toString().contains("Effects")){
-							ms.effect = ap.translateEffectAnnotations(ms, compound, env, rs);
-							ms.effect.printEffect();
+				if (ms.effect == null && ms.attributes_field.size() != 0) {
+					for (Compound compound : ms.attributes_field) {
+						if (compound.type.tsym.getQualifiedName().toString()
+								.contains("Effects")) {
+							ms.effect = ap.translateEffectAnnotations(ms,
+									compound, env, rs);
 						}
 					}
 				}
