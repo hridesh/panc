@@ -192,9 +192,6 @@ public class ConsistencyChecker {
 	
 	private Edge currentStartingCall;
 	private void getActualPaths(List<Node> path) {
-//		if (path.tail.isEmpty())
-//			//path with only one node.
-//			;
 		for (MethodSymbol sym : path.head.procedures) {//can add restrictions to filter out unnecessary methods.?
 			List<Edge> edges = graph.getEdges(path.head, sym, path.tail);
 			for (Edge e : edges) {
@@ -219,7 +216,7 @@ public class ConsistencyChecker {
 	private void getActualPaths(Edge edge, List<Node> path) {
 		if (path.tail.isEmpty()) {//end of path
  			for (MethodSymbol m : path.head.procedures) {
-				if (m.toString().equals(edge.toProcedure.toString()))
+				if (m.toString().equals(edge.toProcedure.toString())){
 					if (m.effect != null) {
 						if (firstCall.containsKey(m))
 							firstCall.get(m).add(currentStartingCall);
@@ -230,6 +227,7 @@ public class ConsistencyChecker {
 						}
 						addSymbolToEndingProcedure(m);
 					}
+				}
 			}
 		}else {
 			List<Edge> edges = graph.getEdges(edge.toNode, edge.toProcedure, path.tail);

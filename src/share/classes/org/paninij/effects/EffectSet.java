@@ -362,4 +362,25 @@ public class EffectSet {
 			removedAffectedField(field, write);
 		}
 	}
+	
+	public String[] effectsToStrings(){
+		ArrayList<String> strings = new ArrayList<String>();
+		if(isInit)
+			strings.add("T");
+		else
+			strings.add("F");
+		if(isBottom)
+			strings.add("B");
+		for(EffectEntry e : read){
+			strings.add("R"+e.effectToString());
+		}
+		for(EffectEntry e : write){
+			strings.add("W"+e.effectToString());
+		}
+		for(EffectEntry e : calls){
+			strings.add("C"+e.effectToString());
+		}
+		String[] s = new String[strings.size()];
+		return  strings.toArray(s);
+	}
 }

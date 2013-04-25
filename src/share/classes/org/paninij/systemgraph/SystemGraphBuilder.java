@@ -22,14 +22,17 @@ import static com.sun.tools.javac.code.TypeTags.ARRAY;
 
 import java.util.HashMap;
 
+import com.sun.tools.javac.code.Attribute.Compound;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.comp.*;
 
 import org.paninij.effects.*;
 import org.paninij.systemgraph.SystemGraph.Node;
+import org.paninij.comp.*;
 
 public class SystemGraphBuilder {
 	Symtab syms;
@@ -177,12 +180,19 @@ public class SystemGraphBuilder {
 		return buf.toString();
     }
 
-	public void completeEdges(SystemGraph graph){
+	public void completeEdges(SystemGraph graph, AnnotationProcessor ap, Env<AttrContext> env, Resolve rs){
 		for(SystemGraph.Node n : graph.nodes.values()){
 			for(MethodSymbol ms : n.procedures){
+				ms.complete();
+				if(ms.effect==null&&ms.attributes_field.size()!=0){
+					for(Compound compound : ms.attributes_field){
+						if(compound.type.tsym.getQualifiedName().toString().contains("Effects")){
+							ms.effect = ap.translateEffectAnnotations(ms, compound, env, rs);
+							ms.effect.printEffect();
+						}
+					}
+				}
 				if(ms.effect!=null){
-//					System.out.println(ms);
-//					ms.ars.printEffect();
 					translateCallEffects(n, ms, graph, ms.effect);
 				}
 			}

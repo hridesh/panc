@@ -14,4 +14,9 @@ public class IOEffect implements CallEffect {
 	public boolean equals(Object obj) {
 		return obj instanceof IOEffect;
 	}
+
+	@Override
+	public String effectToString() {
+		return "I";
+	}
 }

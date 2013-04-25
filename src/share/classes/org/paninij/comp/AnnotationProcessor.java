@@ -20,8 +20,10 @@ package org.paninij.comp;
 
 import java.util.Iterator;
 
+
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
 import com.sun.tools.javac.comp.*;
 
 import com.sun.tools.javac.parser.*;
@@ -32,6 +34,7 @@ import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.util.*;
 
 import org.paninij.effects.*;
+import org.paninij.path.*;
 
 public class AnnotationProcessor extends Internal{
 
@@ -137,13 +140,16 @@ public class AnnotationProcessor extends Internal{
 		while(iter.hasNext()){
 			Symbol member = iter.next();
 			if(member instanceof MethodSymbol){
-				if(member.name.toString().equals(signature[0])){
-					for(int i=0; i < signature.length-1 ; i++){
-						if(!((MethodSymbol) member).params().get(i).type.tsym.name.toString().equals(signature[i+1]))
-							break;
-						if(i == signature.length-2)
-							bestsofar = (MethodSymbol) member;
-					}
+				if(member.name.toString().equals(signature[3])){
+					if(signature.length>4 && ((MethodSymbol) member).params().size()==signature.length-4){
+						for(int i=4; i < signature.length ; i++){
+							if(!((MethodSymbol) member).params().get(i-4).type.tsym.flatName().toString().equals(signature[i]))
+								break;
+							if(i == signature.length-1)
+								bestsofar = (MethodSymbol) member;
+						}
+					}else
+						bestsofar = (MethodSymbol) member;
 				}
 			}
 		}
@@ -161,52 +167,84 @@ public class AnnotationProcessor extends Internal{
 	 * This translates the value field of an effect annotation to an EffectSet
 	 */
 	private EffectSet translateEffects(String[] effects, Env<AttrContext> env, Resolve rs){
-		//TODO
-		return null;
-//		EffectSet es = new EffectSet();
-//		for(String s : effects){
-//			String[] split;
-//			Symbol ownerSymbol;
-//			MethodSymbol m;
-//			if(s.equals(""))
-//				es.add(es.emptyEffect());
-//			else{
-//				split = s.substring(1).split(" ");
-//				ownerSymbol = rs.findIdent(env, names.fromString(split[0]), Kinds.TYP);
-//				char c = s.charAt(0);
-//				switch(c){
-//				case 'B':
-//					es.add(es.bottomEffect());
-//					break;
-//				case 'R':
-//					es.add(es.fieldReadEffect(findField(ownerSymbol, split[1])));
-//					break;
-//				case 'W':
-//					es.add(es.fieldWriteEffect(findField(ownerSymbol, split[1])));
-//					break;
-//				case 'O':
+		EffectSet es = new EffectSet();
+		for(String s1 : effects){
+			String s = s1.substring(1, s1.length()-1);
+			if(s.equals("B")){
+				es.isBottom = true;
+				return es;
+			}else if(s.equals("T")){
+				es = new EffectSet(true);
+			}else if(s.equals("F")){
+				es = new EffectSet(false);
+			}else{
+				String[] split;
+				Symbol ownerSymbol;
+				MethodSymbol m;
+				EffectEntry effect=null;
+				split = s.substring(2).split(" ");
+				char c = s.charAt(1);
+				switch(c){
+				case 'I':
+					effect = new IOEffect();
+					break;
+				case 'F'://field effect owner name of symbol
+					ownerSymbol = rs.findIdent(env, names.fromString(split[0]), Kinds.TYP);
+					effect = new FieldEffect(new Path_Parameter(ownerSymbol, Integer.parseInt(split[2])), findField(ownerSymbol, split[1]));
+					break;
+				case 'C': //capsule effect
+					ownerSymbol = rs.findIdent(env, names.fromString(split[0]), Kinds.TYP); //caller
+					m = findMethod(rs.findIdent(env, names.fromString(split[2]), Kinds.TYP), split);
+					effect = new CapsuleEffect((CapsuleSymbol) ownerSymbol, findField(ownerSymbol, split[1]), m);
+					break;
+				case 'E': //foreacheffect
+					ownerSymbol = rs.findIdent(env, names.fromString(split[0]), Kinds.TYP); //caller
+					m = findMethod(rs.findIdent(env, names.fromString(split[2]), Kinds.TYP), split);
+					effect = new ForeachEffect((CapsuleSymbol) ownerSymbol, findField(ownerSymbol, split[1]), m);
+					break;
+				case 'A': //Array effect
 //					m = findMethod(ownerSymbol, split);
-//					es.add(es.openEffect(m));
-//					break;
-//				case 'M':
-//					m = findMethod(ownerSymbol, split);
-//					es.add(es.methodEffect(m));
-//					break;
-//				default:
-//					Assert.error("Error when translating effects: unknown effect");
-//				}
-//			}
-//		}
-//		return es;
+	//				es.add(es.methodEffect(m));
+					break;
+				default:
+					Assert.error("Error when translating effects: unknown effect");
+				}
+				if(effect!=null){
+					char c2 = s.charAt(0);
+					switch(c2){
+					case 'R':
+						es.read.add(effect);
+						break;
+					case 'W':
+						es.write.add(effect);
+						break;
+					case 'C':
+						es.calls.add((CallEffect)effect);
+						break;
+					default:
+						Assert.error("Error when translating effects: unknown effect");
+					}
+				}
+			}
+		}
+		return es;
 	}
 	
-	private EffectSet translateEffectAnnotations(MethodSymbol m, Attribute.Compound annotation, Env<AttrContext> env, Resolve rs){
+	@SuppressWarnings("rawtypes")
+	public EffectSet translateEffectAnnotations(MethodSymbol m, Attribute.Compound annotation, Env<AttrContext> env, Resolve rs){
 		EffectSet es = new EffectSet();
 		//check if its an Effects annotation?
 		for(Pair<MethodSymbol, Attribute> pair : annotation.values){
 			if(pair.fst.name.toString().equals("effects")){
-				String[] effects = (String[])pair.snd.getValue();
-				es = translateEffects(effects, env, rs);
+				Object value = pair.snd.getValue();
+				if(value instanceof List){
+					@SuppressWarnings("rawtypes")
+					String[] effects = new String[((List) value).size()];
+					for(int i=0;i<((List) value).size();i++){
+						effects[i] = String.valueOf(((List) value).get(i));
+					}
+					es = translateEffects(effects, env, rs);
+				}
 			}else{
 				log.error("capsule.incompatible.capsule.annotation", m.outermostClass().classfile.getName());
 			}
@@ -218,6 +256,7 @@ public class AnnotationProcessor extends Internal{
 	 * Translates an effectSet to an annotation and add it to the Method.
 	 */
 	public void setEffects(JCMethodDecl mdecl, EffectSet effectSet){
+		setEffects(mdecl, effectSet.effectsToStrings());
 	}
 	
 	private List<JCExpression> effectsToExp(String[] effects){

@@ -33,4 +33,9 @@ public class ArrayEffect implements EffectEntry {
 		System.out.println("ArrayEffect base = " + path.printPath() +
 				"\ttype = " + type);
 	}
+
+	@Override
+	public String effectToString() {
+		return "A"+this.type.toString();
+	}
 }

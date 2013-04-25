@@ -32,4 +32,20 @@ public class CapsuleEffect implements CallEffect {
 		}
 		return false;
 	}
+
+	@Override
+	public String effectToString() {
+		String caller=this.caller.toString();
+		String callee=this.callee.name.toString();
+		String params = "";
+		if(this.meth.params!=null){
+			for(VarSymbol v : this.meth.params){
+				params = params + v.type.tsym.flatName() + " ";
+			}
+		}
+		if(params.length()>0)
+			params = " " + params.substring(0, params.length() - 1);
+		String meth=this.meth.owner+" " + this.meth.name+params;
+		return "C"+caller+" "+callee+" "+meth;
+	}
 }

@@ -726,9 +726,13 @@ public class Attr extends JCTree.Visitor {
     	/*for (JCTree def : tree.defs) {
     		if (def instanceof JCMethodDecl) {
     			JCMethodDecl jcmd = (JCMethodDecl)def;
-    			org.paninij.effects.analysis.EffectSet ars = jcmd.sym.ars;
+    			EffectSet ars = jcmd.sym.effect;
     			if (ars != null) {
+    				System.out.println(jcmd.sym);
     				ars.printEffect();
+    				for(String s: ars.effectsToStrings()){
+    					System.out.println(s);
+    				}
     			}
     		}
     	}*/

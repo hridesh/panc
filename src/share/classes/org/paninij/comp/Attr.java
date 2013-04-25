@@ -37,6 +37,7 @@ import org.paninij.analysis.ASTCFGBuilder;
 import org.paninij.consistency.ConsistencyChecker;
 
 import com.sun.tools.javac.code.CapsuleProcedure;
+import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
@@ -47,6 +48,7 @@ import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.comp.*;
 import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.util.List;
@@ -127,11 +129,12 @@ public final class Attr extends CapsuleInternal {
 			CapsuleProcedure cp = new CapsuleProcedure((CapsuleSymbol) tree.sym.owner,
 					tree.name, tree.sym.params);
 			((CapsuleSymbol) tree.sym.owner).procedures.put(tree.sym, cp);
+			if(tree.sym.effect!=null){
+				annotationProcessor.setEffects(tree, tree.sym.effect);
+				Attribute.Compound buf = annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
+				tree.sym.attributes_field = tree.sym.attributes_field.append(buf); 
+			}
 		}
-		/*if(tree.sym.effect != null){
-			annotationProcessor.setEffects(tree, tree.sym.effect);
-			annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
-		}*/
 	}
 	
 	public final void visitVarDef(JCVariableDecl tree) {  /* SKIPPED */ }
@@ -181,6 +184,10 @@ public final class Attr extends CapsuleInternal {
 		}
 		for(JCTree def : tree.defs){
 			if(def instanceof JCMethodDecl){
+//				if(((JCMethodDecl) def).sym.effect != null){
+//					annotationProcessor.setEffects((JCMethodDecl) def, ((JCMethodDecl) def).sym.effect);
+//					annotate.enterAnnotation(((JCMethodDecl) def).mods.annotations.last(), Type.noType, env);
+//				}
 				for(JCVariableDecl param : ((JCMethodDecl)def).params){
 					if(param.type.tsym instanceof CapsuleSymbol&&!((JCMethodDecl)def).name.toString().contains("$Original")){
 						log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.sym);
@@ -283,9 +290,8 @@ public final class Attr extends CapsuleInternal {
 		JCMethodDecl maindecl = createMainMethod(tree.sym, tree.body, tree.params, mainStmts);
 		tree.defs = tree.defs.append(maindecl);
 
-		systemGraphBuilder.completeEdges(sysGraph);
+		systemGraphBuilder.completeEdges(sysGraph, annotationProcessor, env, rs);
 //		System.out.println(sysGraph);
-
 		ConsistencyChecker cc = new ConsistencyChecker(sysGraph, log);
 		cc.potentialPathCheck();
 		tree.switchToClass();
