@@ -28,10 +28,11 @@ capsule UI (Book[] books) {
 				new AddressRequest("Gerald", "Ford")
 		};
 		for(int j=0; j<requests.length; j++) {
-			Address[] results = new Address[books.length];
-			for(int i=0; i<books.length; i++) {
-				results[i] = books[i].search(requests[j]);
-			}
+//			Address[] results = new Address[books.length];
+//			for(int i=0; i<books.length; i++) {
+//				results[i] = books[i].search(requests[j]);
+//			}
+			Address[] results = foreach(Book b : books) b.search(requests[j]);
 			for(int i=0; i<books.length; i++){
 				if(!results[i].equals(null))
 					System.out.println(results[i].toString());
