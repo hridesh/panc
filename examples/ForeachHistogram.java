@@ -24,9 +24,9 @@
  */
 import java.io.*;
 
-class YuLong{
+class Long{
 	private long val;
-	public YuLong(long l)
+	public Long(long l)
 	{
 		val = l;		
 	}
@@ -56,7 +56,7 @@ capsule Reader(String[] args, Bucket[] buckets, Printer p) {
 			}  
 			System.out.println("READER: Reading complete. Asking buckets to print count.");
 		} catch (IOException e) { System.out.println(e); }
-		YuLong[] results = foreach(Bucket b : buckets) b.getCount();
+		Long[] results = foreach(Bucket b : buckets) b.getCount();
 		for(int i = 0; i < results.length; i++) 
 			p.print("" + i + ":" + results[i].value()); 
 		System.out.println("READER: work complete.");
@@ -66,8 +66,8 @@ capsule Reader(String[] args, Bucket[] buckets, Printer p) {
 capsule Bucket() {
 	long count = 0;
 	void bump() { count++; }
-	YuLong getCount(){
-		return new YuLong(count);
+	Long getCount(){
+		return new Long(count);
 	}
 }
 
