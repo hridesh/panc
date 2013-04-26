@@ -450,6 +450,12 @@ public class Internal {
                   args.toList());
     }
     
+    protected JCMethodInvocation apply(JCExpression selection, String function, List<JCExpression> args ) {
+        return make0().Apply(List.<JCExpression>nil(),
+               make0().Select(selection, names.fromString(function)),
+                  args);
+    }
+    
     protected JCMethodInvocation apply(JCExpression selection, Name n) {
         return make0().Apply(List.<JCExpression>nil(),
                              make0().Select(selection, n),

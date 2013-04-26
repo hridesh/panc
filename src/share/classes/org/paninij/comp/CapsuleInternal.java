@@ -70,11 +70,12 @@ public class CapsuleInternal extends Internal {
 		ListBuffer<JCCase> cases = new ListBuffer<JCCase>();
 		int varIndex = 0;
 
+		TreeCopier<Void> tc = new TreeCopier<Void>(make);
 		for (JCMethodDecl method : tree.publicMethods) {
 			ListBuffer<JCStatement> caseStatements = new ListBuffer<JCStatement>();
 			ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 			for (int i = 0; i < method.params.size(); i++) {
-				JCExpression varType = method.params.get(i).vartype;
+				JCExpression varType = tc.copy(method.params.get(i).vartype);
 				caseStatements.append(var(
 						noMods,
 						"var" + varIndex,
@@ -224,7 +225,8 @@ public class CapsuleInternal extends Internal {
 
 	private JCMethodInvocation createOriginalCall(final JCMethodDecl method,
 			final ListBuffer<JCExpression> args) {
-		return apply(thist(), method.name.toString() + "$Original", args);
+		TreeCopier<Void> tc = new TreeCopier<Void>(make);
+		return apply(thist(), method.name.toString() + "$Original", tc.copy(args.toList()));
 	}
 
 	private ListBuffer<JCStatement> createShutdownLogic() {
@@ -866,7 +868,6 @@ public class CapsuleInternal extends Internal {
 				if (((JCMethodDecl) def).params.length() == v.length() + 1) {
 					result = true;
 					for (int i = 1; i < ((JCMethodDecl) def).params.length(); i++) {
-
 						if (!((JCMethodDecl) def).params.get(i).vartype
 								.toString().equals(
 										v.get(i - 1).vartype.toString())) {
@@ -875,13 +876,14 @@ public class CapsuleInternal extends Internal {
 						}
 					}
 					if (result) {
-						for (JCVariableDecl var : v)
+						for (int i=0; i<v.length(); i++){
 							((JCMethodDecl) def).body.stats = ((JCMethodDecl) def).body.stats
 									.append(es(assign(
 											select(thist(),
 													createFieldString(name,
-															var, v)),
-											id(var.name.toString()))));
+															v.get(i), v)),
+											id(((JCMethodDecl) def).params.get(i+1).name.toString()))));
+						}
 					}
 				}
 			}
