@@ -283,6 +283,8 @@ public final class Attr extends CapsuleInternal {
 
 		systemGraphBuilder.completeEdges(sysGraph, annotationProcessor, env, rs);
 //		System.out.println(sysGraph);
+
+		// Sequential consistency detection
 		ConsistencyChecker cc = new ConsistencyChecker(sysGraph, log);
 		cc.potentialPathCheck();
 
