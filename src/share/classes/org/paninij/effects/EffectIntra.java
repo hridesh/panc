@@ -201,7 +201,8 @@ public class EffectIntra {
 			} else if (kind == ElementKind.CLASS ||
 					kind == ElementKind.INTERFACE || kind == ElementKind.METHOD
 					|| kind == ElementKind.CONSTRUCTOR ||
-					kind == ElementKind.PACKAGE) { // ignore PACKAGE
+					kind == ElementKind.PACKAGE ||
+					kind == ElementKind.ENUM) {
 			} else throw new Error("Match failure = " + kind + "\t" + left);
 		}
 	}

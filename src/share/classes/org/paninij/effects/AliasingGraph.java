@@ -549,7 +549,8 @@ public class AliasingGraph {
 					rightkind == ElementKind.CLASS ||
 					rightkind == ElementKind.INTERFACE ||
 					rightkind == ElementKind.PACKAGE ||
-					rightkind == ElementKind.METHOD) {
+					rightkind == ElementKind.METHOD ||
+					rightkind == ElementKind.ENUM) {
 				return null;
 			} else throw new Error("assignment match failure = " + exp +
 					"\t" + rightkind);
@@ -591,7 +592,8 @@ public class AliasingGraph {
 					rightkind == ElementKind.CLASS ||
 					rightkind == ElementKind.INTERFACE ||
 					rightkind == ElementKind.PACKAGE ||
-					rightkind == ElementKind.METHOD) {
+					rightkind == ElementKind.METHOD ||
+					rightkind == ElementKind.ENUM) {
 				return null;
 			} else throw new Error("assignment match failure = " + field +
 					"\t" + rightkind);

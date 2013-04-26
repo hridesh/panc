@@ -24,7 +24,7 @@ public class LeakDetection {
 	private boolean analyzingphase = true;
 	private Log log;
 	private JCCapsuleDecl capsule;
-	private JCMethodDecl currMeth;
+	private JCMethodDecl curr;
 
 	// the intermediate result from the intra procedural analysis.
 	private HashMap<JCTree, TreeWrapper> intraMap =
@@ -92,7 +92,7 @@ public class LeakDetection {
 	}
 
 	public HashSet<Symbol> intra(JCCapsuleDecl capsule, JCMethodDecl meth) {
-		currMeth = meth;
+		curr = meth;
 		defs = capsule.defs;
 
 		JCBlock body = meth.body;
@@ -301,13 +301,14 @@ public class LeakDetection {
 						if (isVarThis(selected) && isInnerField(jcfa.sym)) {
 							if (jcfa.sym.getKind() == ElementKind.FIELD) {
 								Symbol capSym = capsule.sym;
+								Symbol meth = curr.sym;
 								log.useSource (
 									jcfa.sym.outermostClass().sourcefile);
 								log.warning(tree.pos(), "confinement.violation",
 									jcfa.sym, capSym.toString().substring(0,
 										capSym.toString().indexOf("$")),
-											currMeth.sym.toString().substring(0,
-												currMeth.sym.toString().indexOf("$")));
+											meth.toString().substring(0,
+												meth.toString().indexOf("$")));
 							}
 						}
 					}
@@ -332,6 +333,8 @@ public class LeakDetection {
 		Symbol sym = tree.sym;
 		if (sym != null) {
 			if (!sym.type.isPrimitive()) {
+				if (sym.toString().compareTo("color") == 0) {
+				}
 				output.add(sym);
 				if (!analyzingphase) {
 					if (isInnerField(sym) &&
@@ -340,8 +343,8 @@ public class LeakDetection {
 						log.warning(tree.pos(), "confinement.violation",
 							sym, capsule.sym.toString().substring(
 								0, capsule.sym.toString().indexOf("$")),
-									currMeth.sym.toString().substring(
-										0, currMeth.sym.toString().indexOf("$")));
+									curr.sym.toString().substring(
+										0, curr.sym.toString().indexOf("$")));
 					}
 				}
 			}
