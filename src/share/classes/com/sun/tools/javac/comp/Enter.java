@@ -967,7 +967,7 @@ public class Enter extends JCTree.Visitor {
     			if(mdecl.init ==null)
     				log.warning(mdecl.pos(), "state.not.initialized");
     			mdecl.mods.flags |=PRIVATE;
-    			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, mdecl.vartype, mdecl.init);
+    			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, tc.copy(mdecl.vartype), tc.copy(mdecl.init));
     			state.switchToVar();
     			definitions.add(state);
     		}else definitions.add(tc.copy(tree.defs.get(i)));
@@ -986,7 +986,7 @@ public class Enter extends JCTree.Visitor {
 	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 	        	args.add(make.Ident(names.fromString(constantName)));
 	            for(JCVariableDecl v : mdecl.params){
-	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
+	            	vars.add(make.VarDef(tc.copy(v.mods), v.name, tc.copy(v.vartype), null));
 	            	args.append(make.Ident(v.name));
 	            }
 	            copyBody.prepend(make.Try(make.Block(0, List.<JCStatement>of(make.Exec(make.Assign( 

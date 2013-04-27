@@ -184,10 +184,6 @@ public final class Attr extends CapsuleInternal {
 		}
 		for(JCTree def : tree.defs){
 			if(def instanceof JCMethodDecl){
-//				if(((JCMethodDecl) def).sym.effect != null){
-//					annotationProcessor.setEffects((JCMethodDecl) def, ((JCMethodDecl) def).sym.effect);
-//					annotate.enterAnnotation(((JCMethodDecl) def).mods.annotations.last(), Type.noType, env);
-//				}
 				for(JCVariableDecl param : ((JCMethodDecl)def).params){
 					if(param.type.tsym instanceof CapsuleSymbol&&!((JCMethodDecl)def).name.toString().contains("$Original")){
 						log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.sym);
