@@ -341,7 +341,8 @@ public class EffectInter {
 				// this(...) and super(...)
 				return;
 			}
-			if (s.toString().compareTo("yield(long)") == 0) { // pure
+			if (s.toString().compareTo("yield(long)") == 0 ||
+					s.toString().compareTo("yield()") == 0) { // pure
 				return;
 			}
 
