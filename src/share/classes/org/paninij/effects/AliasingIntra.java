@@ -8,19 +8,22 @@ import org.paninij.analysis.CommonMethod;
 import org.paninij.path.Path_Var;
 
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
 
 public class AliasingIntra {
+	public final CapsuleSymbol cap;
 	public final JCMethodDecl current_analyzing_meth;
 	public HashMap<JCTree, AliasingGraph> graphBeforeFlow =
 		new HashMap<JCTree, AliasingGraph>();
 	public HashMap<JCTree, AliasingGraph> graphAfterFlow =
 		new HashMap<JCTree, AliasingGraph>();
 
-	public AliasingIntra(JCMethodDecl current_analyzing_meth) {
-		this.current_analyzing_meth = current_analyzing_meth;
+	public AliasingIntra(CapsuleSymbol cap, JCMethodDecl current_meth) {
+		this.current_analyzing_meth = current_meth;
+		this.cap = cap;
 	}
 
 	private void flowThrough(AliasingGraph in, JCTree unit, AliasingGraph out) {
@@ -164,12 +167,13 @@ public class AliasingIntra {
 					JCNewClass jcn = (JCNewClass)rightOp;
 					outValue.assignNewObjectToLocal(left, jcn);
 				} else if (rightOp instanceof JCMethodInvocation) {
+					JCMethodInvocation jcmi = (JCMethodInvocation)rightOp;
 					if (EffectInter.isCapsuleCall((JCMethodInvocation)rightOp,
 							outValue)) {
-						outValue.assignCapsuleCallToLocal(left);
-					} else if (EffectInter.isCallReturnNew(
-							(JCMethodInvocation)rightOp, outValue)) {
-						outValue.assignCapsuleCallToLocal(left);
+						outValue.assignCapsuleCallToLocal(left,
+								EffectInter.capsuleCall(jcmi, outValue, cap));
+					} else if (EffectInter.isCallReturnNew(jcmi, outValue)) {
+						outValue.assignCapsuleCallToLocal(left, null);
 					} else {
 						outValue.removeLocal(left);
 					}

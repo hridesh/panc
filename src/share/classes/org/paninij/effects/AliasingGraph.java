@@ -13,8 +13,11 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
 
 public class AliasingGraph {
-	// field that points to a new node.
+	// path that points to a new node.
 	public HashMap<Path, Type> pathsToNewNode;
+
+	// path that points to a return value from a capsule.
+	public HashMap<Path, CallEffect> pathsToCap;
 
 	// local variables that has been written on
 	public HashSet<Symbol> writtenLocals;
@@ -43,6 +46,11 @@ public class AliasingGraph {
 			+ "\t";
 		}
 
+		result += "\tpathsToCap = : " + pathsToCap.size() + "\t";
+		for (Path p : pathsToCap.keySet()) {
+			result += p.printPath() + "\ttype = " + pathsToCap.get(p) + "\t";
+		}
+
 		result += "\twrittenFields:";
 		for (Symbol p : writtenFields) {
 			result += p + "\t";
@@ -68,6 +76,7 @@ public class AliasingGraph {
 
 	public AliasingGraph() {
 		pathsToNewNode = new HashMap<Path, Type>();
+		pathsToCap = new HashMap<Path, CallEffect>();
 		writtenFields = new HashSet<Symbol>();
 		writtenLocals = new HashSet<Symbol>();
 		unanalyzable = false;
@@ -81,6 +90,7 @@ public class AliasingGraph {
 
 	public AliasingGraph(AliasingGraph x) {
 		pathsToNewNode = new HashMap<Path, Type>(x.pathsToNewNode);
+		pathsToCap = new HashMap<Path, CallEffect>(x.pathsToCap);
 		writtenFields = new HashSet<Symbol>(x.writtenFields);
 		writtenLocals = new HashSet<Symbol>(x.writtenLocals);
 		unanalyzable = x.unanalyzable;
@@ -90,6 +100,7 @@ public class AliasingGraph {
 
 	public void init(AliasingGraph x) {
 		pathsToNewNode = new HashMap<Path, Type>(x.pathsToNewNode);
+		pathsToCap = new HashMap<Path, CallEffect>(x.pathsToCap);
 		writtenFields = new HashSet<Symbol>(x.writtenFields);
 		writtenLocals = new HashSet<Symbol>(x.writtenLocals);
 		unanalyzable = x.unanalyzable;
@@ -99,7 +110,8 @@ public class AliasingGraph {
 
 	public int hashCode() {
 		return pathsToNewNode.hashCode() + writtenFields.hashCode() +
-		writtenLocals.hashCode() + aliasingPaths.hashCode();
+		writtenLocals.hashCode() + aliasingPaths.hashCode() +
+		pathsToCap.hashCode();
 	}
 
 	public boolean equals(Object o) {
@@ -112,7 +124,8 @@ public class AliasingGraph {
 				writtenFields.equals(g.writtenFields) &&
 				unanalyzable == g.unanalyzable &&
 				writtenLocals.equals(g.writtenLocals) &&
-				aliasingPaths.equals(g.aliasingPaths);
+				aliasingPaths.equals(g.aliasingPaths) &&
+				pathsToCap.equals(g.pathsToCap);
 			}
 			return false;
 		}
@@ -141,6 +154,25 @@ public class AliasingGraph {
 			return true;
 		}
 		return false;
+	}
+
+	public final CallEffect capEffect (JCTree tree) {
+		if (tree instanceof JCExpression) {
+			JCExpression jce = (JCExpression)tree;
+			tree = CommonMethod.essentialExpr(jce);
+		}
+
+		if (tree instanceof JCIdent) {
+			JCIdent jr = (JCIdent)tree;
+			Symbol sr = jr.sym;
+			ElementKind kind = sr.getKind();
+			if (kind == ElementKind.LOCAL_VARIABLE ||
+					kind == ElementKind.PARAMETER) {
+				return pathsToCap.get(new Path_Var(sr, false));
+			}
+		}
+
+		return null;
 	}
 
 	public final boolean isReceiverNew (JCTree tree) {
@@ -173,6 +205,21 @@ public class AliasingGraph {
 		}
 
 		return null;
+	}
+
+	// The intersection of the two HashMap
+	public static final HashMap<Path, CallEffect> capRetainAll(
+			HashMap<Path, CallEffect> hm1,
+			HashMap<Path, CallEffect> hm2) {
+		HashMap<Path, CallEffect> result = new HashMap<Path, CallEffect>();
+		Set<Path> key2 = hm2.keySet();
+		for (Path p1 : hm1.keySet()) {
+			if (key2.contains(p1)) {
+				CallEffect ce = hm1.get(p1);
+				if (ce.equals(hm2.get(p1))) { result.put(p1, ce); }
+			}
+		}
+		return result;
 	}
 
 	// The intersection of the two HashMap
@@ -267,6 +314,7 @@ public class AliasingGraph {
 			if (isInit) {
 				pathsToNewNode =
 					newNodePathsRetainAll(pathsToNewNode, arg.pathsToNewNode);
+				pathsToCap = capRetainAll(pathsToCap, arg.pathsToCap);
 
 				HashSet<Path> toRemove =
 					getAffectedPahts(pathsToNewNode, arg.writtenFields);
@@ -294,6 +342,7 @@ public class AliasingGraph {
 				unanalyzable = arg.unanalyzable;
 				pathsToNewNode =
 					new HashMap<Path, Type>(arg.pathsToNewNode);
+				pathsToCap = new HashMap<Path, CallEffect>(arg.pathsToCap);
 				writtenFields = new HashSet<Symbol>(arg.writtenFields);
 				writtenLocals = new HashSet<Symbol>(arg.writtenLocals);
 
@@ -310,6 +359,13 @@ public class AliasingGraph {
 			Path p = (Path)o;
 			if (p.isAffected_Local(l)) {
 				pathsToNewNode.remove(p);
+			}
+		}
+
+		for (Object o : pathsToCap.keySet().toArray()) {
+			Path p = (Path)o;
+			if (p.isAffected_Local(l)) {
+				pathsToCap.remove(p);
 			}
 		}
 
@@ -392,10 +448,14 @@ public class AliasingGraph {
 	}
 
 	// left = capsule.call(...);
-	public void assignCapsuleCallToLocal(Symbol left) {
+	public void assignCapsuleCallToLocal(Symbol left, CallEffect ce) {
 		removeLocal(left);
 
 		pathsToNewNode.put(new Path_Var(left, true), unknownType);
+
+		if (ce != null) {
+			pathsToCap.put(new Path_Var(left, true), ce);
+		}
 	}
 
 	// left = new C();

@@ -31,7 +31,8 @@ public class CapsuleEffect implements CallEffect {
 
 	public void printEffect() {
 		System.out.println("CapsuleEffect caller = " + caller + "\tcallee = " +
-				callee + "\tmethod = " + meth + "\tline = " + line);
+				callee + "\tmethod = " + meth + "\tline = " + line + "\tpos = "
+				+ pos);
 	}
 
 	public int hashCode() {
@@ -47,7 +48,6 @@ public class CapsuleEffect implements CallEffect {
 		return false;
 	}
 
-	@Override
 	public String effectToString() {
 		String caller=this.caller.toString();
 		String callee=this.callee.name.toString();

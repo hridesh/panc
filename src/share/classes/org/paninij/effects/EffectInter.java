@@ -45,12 +45,12 @@ public class EffectInter {
 					return path.switchBaseWithPath(
 							ag.createPathForExp(tree));
 				}
-				return Path_Unknown.pfcUnknow;
+				return Path_Unknown.unknow;
 			}
 		} else if (pathBase instanceof Path_Unknown) {
-			return Path_Unknown.pfcUnknow;
+			return Path_Unknown.unknow;
 		} else if (pathBase instanceof Path_Var) {
-			return Path_Unknown.pfcUnknow;
+			return Path_Unknown.unknow;
 		} else if (pathBase instanceof Path_Literal) {
 			return pathBase;
 		} else throw new Error("field effect match failure = " +
@@ -118,6 +118,13 @@ public class EffectInter {
 				HashSet<EffectEntry> read_result = result.read;
 				HashSet<EffectEntry> write_result = result.write;
 				HashSet<CallEffect> calls_result = result.calls;
+				// for call
+				HashSet<CallEffect> alive_result = result.alive;
+				HashSet<CallEffect> collected_result = result.collected;
+
+				// for call
+				HashSet<CallEffect> alive = ars.alive;
+				HashSet<CallEffect> collected = ars.collected;
 				HashSet<EffectEntry> read = ars.read;
 				HashSet<EffectEntry> write = ars.write;
 				HashSet<CallEffect> calls = ars.calls;
@@ -144,6 +151,9 @@ public class EffectInter {
 				} else {
 					result.removedAffectedFields(result.writtenFields);
 				}
+
+				alive_result.addAll(alive);
+				collected_result.addAll(collected);
 			}
 		}
 	}
@@ -177,11 +187,16 @@ public class EffectInter {
 											new DiagnosticSource(sf, null);
 										int pos = jcf.getPreferredPosition();
 
-										rs.calls.add(new ForeachEffect(curr_cap,
-												tsym, (MethodSymbol)(jcfa.sym),
-												pos, ds.getLineNumber(pos),
+										ForeachEffect fe = new ForeachEffect(
+												curr_cap, tsym,
+												(MethodSymbol)(jcfa.sym), pos,
+												ds.getLineNumber(pos),
 												ds.getColumnNumber(pos, false),
-												sf.toString()));
+												sf.toString());
+
+										rs.calls.add(fe);
+
+										rs.alive.add(fe);
 									}
 								}
 							}
@@ -213,6 +228,56 @@ public class EffectInter {
 			return foreallCall(selected, ag);
 		}
 		return false;
+	}
+
+	public static final CallEffect capsuleCall(JCMethodInvocation tree,
+			AliasingGraph ag, CapsuleSymbol cap) {
+		JCExpression meth = tree.meth;
+		meth = CommonMethod.essentialExpr(meth);
+
+		if (meth instanceof JCFieldAccess) { // selected.m(...)
+			JCFieldAccess jcf = (JCFieldAccess)meth;
+			JCExpression selected = CommonMethod.essentialExpr(jcf.selected);
+
+			Symbol caps = ag.aliasingState(selected);
+			if (caps != null) {
+				Symbol typeSym = caps.type.tsym;
+				// single capsule call.
+				if (typeSym instanceof CapsuleSymbol) {
+					DiagnosticSource ds =
+						new DiagnosticSource(cap.sourcefile, null);
+					int pos = tree.getPreferredPosition();
+
+					return new CapsuleEffect(cap, caps, (MethodSymbol)jcf.sym,
+							pos, ds.getLineNumber(pos), // do not expend tab
+							ds.getColumnNumber(pos, false),
+							cap.sourcefile.toString());
+				}
+			}
+
+			if (selected instanceof JCArrayAccess) {
+				JCArrayAccess jcaa = (JCArrayAccess)selected;
+				JCExpression indexed = CommonMethod.essentialExpr(jcaa.indexed);
+
+				Symbol cs = ag.aliasingState(indexed);
+				if (cs != null) {
+					ArrayType at = (ArrayType)cs.type;
+					Symbol typeSym = at.elemtype.tsym;
+					// many capsule call.
+					if (typeSym instanceof CapsuleSymbol) {
+						DiagnosticSource ds =
+							new DiagnosticSource(cap.sourcefile, null);
+						int pos = tree.getPreferredPosition();
+
+						return new ForeachEffect(cap, cs, (MethodSymbol)jcf.sym,
+								pos, ds.getLineNumber(pos), // do not expend tab
+								ds.getColumnNumber(pos, false),
+								cap.sourcefile.toString());
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	public static final boolean isCallReturnNew(JCMethodInvocation tree,
@@ -366,10 +431,14 @@ public class EffectInter {
 			}
 
 			JCExpression selected = CommonMethod.essentialExpr(jcf.selected);
-
-			if (ag.isReceiverNew(selected)) {
+			CallEffect calleffect = ag.capEffect(selected);
+			if (calleffect != null) {
+				rs.alive.remove(calleffect);
+				rs.collected.add(calleffect);
 				return;
 			}
+
+			if (ag.isReceiverNew(selected)) { return; }
 
 			Symbol fld = ag.aliasingState(selected);
 			if (fld != null) {
@@ -380,11 +449,14 @@ public class EffectInter {
 						new DiagnosticSource(curr_cap.sourcefile, null);
 					int pos = tree.getPreferredPosition();
 
-					rs.calls.add(new CapsuleEffect(curr_cap, fld,
+					CapsuleEffect ce = new CapsuleEffect(curr_cap, fld,
 							(MethodSymbol)jcf.sym, pos,
 							ds.getLineNumber(pos), // do not expend tab
 							ds.getColumnNumber(pos, false),
-							curr_cap.sourcefile.toString()));
+							curr_cap.sourcefile.toString());
+
+					rs.calls.add(ce);
+					rs.alive.add(ce);
 				} else {
 					rs.write.add(new FieldEffect(
 							new Path_Parameter(null, 0), fld));
@@ -407,11 +479,15 @@ public class EffectInter {
 							new DiagnosticSource(curr_cap.sourcefile, null);
 						int pos = tree.getPreferredPosition();
 
-						rs.calls.add(new ForeachEffect(curr_cap, fld,
+						ForeachEffect fe = new ForeachEffect(curr_cap, fld,
 								(MethodSymbol)jcf.sym, pos,
 								ds.getLineNumber(pos),
 								ds.getColumnNumber(pos, false), // no expend tab
-								curr_cap.sourcefile.toString()));
+								curr_cap.sourcefile.toString());
+
+						rs.calls.add(fe);
+
+						rs.alive.add(fe);
 					} else {
 						rs.write.add(new FieldEffect(
 								new Path_Parameter(null, 0), fld));
@@ -431,8 +507,26 @@ public class EffectInter {
 					JCExpression exp =
 						CommonMethod.essentialExpr(jcfa.selected);
 					Symbol receiver = ag.aliasingState(exp);
+
+					// capsule call
 					if (receiver != null) {
-						return;
+						Symbol typeSym = receiver.type.tsym;
+						// single capsule call.
+						if (typeSym instanceof CapsuleSymbol) {
+							DiagnosticSource ds =
+								new DiagnosticSource(curr_cap.sourcefile, null);
+							int pos = selected.getPreferredPosition();
+
+							CapsuleEffect ce = new CapsuleEffect(curr_cap,
+									receiver, (MethodSymbol)jcfa.sym, pos,
+									ds.getLineNumber(pos), // do not expend tab
+									ds.getColumnNumber(pos, false),
+									curr_cap.sourcefile.toString());
+
+							rs.alive.remove(ce);
+							rs.collected.add(ce);
+							return;
+						}
 					}
 
 					if (foreallCall(exp, ag)) {
@@ -476,7 +570,7 @@ public class EffectInter {
 				exists.add(tree);
 			}
 			// Aliasing analysis
-			AliasingIntra dai = new AliasingIntra(jcmd);
+			AliasingIntra dai = new AliasingIntra(curr_cap, jcmd);
 			dai.analyze(jcmd.order, exists);
 			HashMap<JCTree, AliasingGraph> beforeFlow = dai.graphBeforeFlow;
 

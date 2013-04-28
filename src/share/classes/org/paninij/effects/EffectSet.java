@@ -8,6 +8,11 @@ import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
 
 public class EffectSet {
+	// call effects that are still alive
+	public HashSet<CallEffect> alive;
+	// call effects that are collected
+	public HashSet<CallEffect> collected;
+
 	// detect whether the method always return newly created object.
 	public boolean returnNewObject;
 
@@ -31,6 +36,10 @@ public class EffectSet {
 		writtenFields = new HashSet<Symbol>();
 		isWriteBottom = false;
 		isBottom = false;
+
+		// for call effects
+		alive = new HashSet<CallEffect>();
+		collected = new HashSet<CallEffect>();
 	}
 
 	public EffectSet(boolean b) {
@@ -46,6 +55,11 @@ public class EffectSet {
 		writtenFields = new HashSet<Symbol>(x.writtenFields);
 		isWriteBottom = x.isWriteBottom;
 		isBottom = x.isBottom;
+
+		// for call effects
+		alive = new HashSet<CallEffect>(x.alive);
+		collected = new HashSet<CallEffect>(x.collected);
+
 		if (x.isInit) { isInit = true; } 
 	}
 
@@ -57,12 +71,18 @@ public class EffectSet {
 		writtenFields = new HashSet<Symbol>(x.writtenFields);
 		isWriteBottom = x.isWriteBottom;
 		isBottom = x.isBottom;
+
+		// for call effects
+		alive = new HashSet<CallEffect>(x.alive);
+		collected = new HashSet<CallEffect>(x.collected);
+
 		if (x.isInit) { isInit = true; } 
 	}
 
 	public int hashCode() {
 		return read.hashCode() + write.hashCode() + calls.hashCode() +
-		    writtenFields.hashCode() + writtenLocals.hashCode();
+		    writtenFields.hashCode() + writtenLocals.hashCode() +
+		    alive.hashCode() + collected.hashCode();
 	}
 
 	public boolean equals(Object o) {
@@ -75,7 +95,8 @@ public class EffectSet {
 				read.equals(g.read) && calls.equals(g.calls) &&
 				writtenLocals.equals(g.writtenLocals) &&
 				writtenFields.equals(g.writtenFields) && isBottom == g.isBottom
-				&& returnNewObject == g.returnNewObject;
+				&& returnNewObject == g.returnNewObject && alive.equals(g.alive)
+				&& collected.equals(g.collected);
 			}
 		}
 		return false;
@@ -103,6 +124,19 @@ public class EffectSet {
 							removedAffectedByUnanalyzable(read);
 							removedAffectedByUnanalyzable(write);
 						}
+
+						// for calls
+						alive.addAll(x.alive);
+						HashSet<CallEffect> cTemp =
+							new HashSet<CallEffect>(x.collected);
+						for (CallEffect ce : x.collected) {
+							if (alive.contains(cTemp)) {
+								cTemp.remove(ce);
+							}
+						}
+
+						collected.removeAll(alive);
+						collected.addAll(cTemp);
 					}
 				}
 			} else {
@@ -115,6 +149,10 @@ public class EffectSet {
 					calls = new HashSet<CallEffect>(x.calls);
 					writtenLocals = new HashSet<Symbol>(x.writtenLocals);
 					writtenFields = new HashSet<Symbol>(x.writtenFields);
+
+					// for calls
+					alive = new HashSet<CallEffect>(x.alive);
+					collected = new HashSet<CallEffect>(x.collected);
 				}
 			}
 		}
@@ -122,11 +160,13 @@ public class EffectSet {
 
 	public void makeButtom() {
 		isBottom = true;
-		read.clear();
+		/*read.clear();
 		write.clear();
 		calls.clear();
 		writtenLocals.clear();
 		writtenFields.clear();
+		alive.clear();
+		collected.clear();*/
 		isWriteBottom = true;
 	}
 
@@ -142,6 +182,9 @@ public class EffectSet {
 		epg.read = new HashSet<EffectEntry>(read);
 		epg.write = new HashSet<EffectEntry>(write);
 		epg.calls = new HashSet<CallEffect>(calls);
+
+		epg.alive = new HashSet<CallEffect>(alive);
+		epg.collected = new HashSet<CallEffect>(collected);
 		epg.isBottom = isBottom;
 		return epg;
 	}
@@ -153,11 +196,13 @@ public class EffectSet {
 	 * and write contains read. */
 	public void compress() {
 		if (isBottom) {
-			read.clear();
+			/* read.clear();
 			write.clear();
 			calls.clear();
 			writtenLocals.clear();
 			writtenFields.clear();
+			alive.clear();
+			collected.clear(); */
 			isWriteBottom = true;
 			return;
 		}
@@ -253,6 +298,26 @@ public class EffectSet {
 				rwe.printEffect();
 			}
 		}
+
+		if (alive.isEmpty()) {
+			System.out.println("\talive empty");
+		} else {
+			System.out.println("\talive:");
+			for (CallEffect rwe : alive) {
+				System.out.print("\t\t");
+				rwe.printEffect();
+			}
+		}
+
+		if (collected.isEmpty()) {
+			System.out.println("\tcollected empty");
+		} else {
+			System.out.println("\tcollected:");
+			for (CallEffect rwe : collected) {
+				System.out.print("\t\t");
+				rwe.printEffect();
+			}
+		}
 	}
 
 	// f = ...
@@ -283,14 +348,13 @@ public class EffectSet {
 				if (rwepf.path.isAffected_Local(var)) {
 					Symbol f = rwepf.f;
 					tobeRemoved.add(rwpe);
-					tobeAdded.add(
-							new FieldEffect(Path_Unknown.pfcUnknow, f));
+					tobeAdded.add(new FieldEffect(Path_Unknown.unknow, f));
 				}
 			} else if (rwpe instanceof ArrayEffect) {
 				ArrayEffect rwepf = (ArrayEffect)rwpe;
 				if (rwepf.path.isAffected_Local(var)) {
 					tobeRemoved.add(rwpe);
-					tobeAdded.add(new ArrayEffect(Path_Unknown.pfcUnknow,
+					tobeAdded.add(new ArrayEffect(Path_Unknown.unknow,
 									rwepf.type));
 				}
 
@@ -310,14 +374,13 @@ public class EffectSet {
 				if (rwepf.path.isAffected_Path(field)) {
 					Symbol f = rwepf.f;
 					tobeRemoved.add(rwpe);
-					tobeAdded.add(
-							new FieldEffect(Path_Unknown.pfcUnknow, f));
+					tobeAdded.add(new FieldEffect(Path_Unknown.unknow, f));
 				}
 			} else if (rwpe instanceof ArrayEffect) {
 				ArrayEffect rwepf = (ArrayEffect)rwpe;
 				if (rwepf.path.isAffected_Path(field)) {
 					tobeRemoved.add(rwpe);
-					tobeAdded.add(new ArrayEffect(Path_Unknown.pfcUnknow,
+					tobeAdded.add(new ArrayEffect(Path_Unknown.unknow,
 									rwepf.type));
 				}
 			} else throw new Error("should not be something else");
@@ -336,13 +399,13 @@ public class EffectSet {
 				if (rwepf.path.isAffected_byUnanalyzablePath()) {
 					Symbol f = rwepf.f;
 					tobeRemoved.add(rwpe);
-					tobeAdded.add(new FieldEffect(Path_Unknown.pfcUnknow, f));
+					tobeAdded.add(new FieldEffect(Path_Unknown.unknow, f));
 				}
 			} else if (rwpe instanceof ArrayEffect) {
 				ArrayEffect rwepf = (ArrayEffect)rwpe;
 				if (rwepf.path.isAffected_byUnanalyzablePath()) {
 					tobeRemoved.add(rwpe);
-					tobeAdded.add(new ArrayEffect(Path_Unknown.pfcUnknow,
+					tobeAdded.add(new ArrayEffect(Path_Unknown.unknow,
 									rwepf.type));
 				}
 			} else throw new Error("should not be something else");
@@ -372,13 +435,13 @@ public class EffectSet {
 		if(isBottom)
 			strings.add("B");
 		for(EffectEntry e : read){
-			strings.add("R"+e.effectToString());
+			strings.add("R" + e.effectToString());
 		}
 		for(EffectEntry e : write){
-			strings.add("W"+e.effectToString());
+			strings.add("W" + e.effectToString());
 		}
 		for(EffectEntry e : calls){
-			strings.add("C"+e.effectToString());
+			strings.add("C" + e.effectToString());
 		}
 		String[] s = new String[strings.size()];
 		return  strings.toArray(s);
