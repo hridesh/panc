@@ -103,7 +103,7 @@ public class EffectInter {
 
 	private final void knowCallee (Symbol meth, JCMethodInvocation stmt,
 			AliasingGraph aliasing, JCMethodDecl curr_meth, EffectSet ars,
-			EffectSet result) {
+			EffectIntra intra, EffectSet result) {
 		MethodSymbol ms = (MethodSymbol)meth;
 		HashSet<MethodSymbol> callers = ms.callers;
 		if (callers == null) {
@@ -128,6 +128,24 @@ public class EffectInter {
 				HashSet<EffectEntry> read = ars.read;
 				HashSet<EffectEntry> write = ars.write;
 				HashSet<CallEffect> calls = ars.calls;
+
+				// pair of calls that need to be tested
+				for (CallEffect ce1 : alive_result) {
+					for (CallEffect ce2 : alive) {
+						intra.direct.add(new BiCall(ce1, ce2));
+					}
+					for (CallEffect ce2 : collected) {
+						intra.direct.add(new BiCall(ce1, ce2));
+					}
+				}
+				for (CallEffect ce1 : collected_result) {
+					for (CallEffect ce2 : alive) {
+						intra.indirect.add(new BiCall(ce1, ce2));
+					}
+					for (CallEffect ce2 : collected) {
+						intra.indirect.add(new BiCall(ce1, ce2));
+					}
+				}
 
 				for (CallEffect oe : calls) {
 					if (oe instanceof CapsuleEffect) {
@@ -160,7 +178,7 @@ public class EffectInter {
 
 	// match to check whether the foreach is called on a capsule.
 	public final void intraForeach(JCForeach jcf, AliasingGraph ag,
-			EffectSet rs) {
+			EffectIntra intra, EffectSet rs) {
 		JCExpression carr = jcf.carr;
 		Symbol s = ag.aliasingState(carr);
 		if (s != null) {
@@ -194,8 +212,16 @@ public class EffectInter {
 												ds.getColumnNumber(pos, false),
 												sf.toString());
 
-										rs.calls.add(fe);
+										// pair of calls that need to be tested
+										for (CallEffect ce : rs.alive) {
+											intra.direct.add(new BiCall(ce, fe));
+										}
+										for (CallEffect ce : rs.collected) {
+											intra.indirect.add(
+													new BiCall(ce, fe));
+										}
 
+										rs.calls.add(fe);
 										rs.alive.add(fe);
 									}
 								}
@@ -395,7 +421,7 @@ public class EffectInter {
 	}
 
 	public final void intraProcessMethodCall(JCMethodInvocation tree,
-			AliasingGraph ag, EffectSet rs) {
+			AliasingGraph ag, EffectSet rs, EffectIntra intra) {
 		JCExpression meth = tree.meth;
 		meth = CommonMethod.essentialExpr(meth);
 		if (meth instanceof JCIdent) {
@@ -417,7 +443,7 @@ public class EffectInter {
 			{ // m(...)
 				MethodSymbol ms = (MethodSymbol)s;
 				JCMethodDecl jcmd = ms.tree;
-				knowCallee(s, tree, ag, curr_meth, jcmd.sym.effect, rs);
+				knowCallee(s, tree, ag, curr_meth, jcmd.sym.effect, intra, rs);
 			}
 		} else if (meth instanceof JCFieldAccess) { // selected.m(...)
 			JCFieldAccess jcf = (JCFieldAccess)meth;
@@ -455,6 +481,14 @@ public class EffectInter {
 							ds.getColumnNumber(pos, false),
 							curr_cap.sourcefile.toString());
 
+					// pair of calls that need to be tested
+					for (CallEffect ce1 : rs.alive) {
+						intra.direct.add(new BiCall(ce1, ce));
+					}
+					for (CallEffect ce1 : rs.collected) {
+						intra.indirect.add(new BiCall(ce1, ce));
+					}
+
 					rs.calls.add(ce);
 					rs.alive.add(ce);
 				} else {
@@ -485,8 +519,15 @@ public class EffectInter {
 								ds.getColumnNumber(pos, false), // no expend tab
 								curr_cap.sourcefile.toString());
 
-						rs.calls.add(fe);
+						// pair of calls that need to be tested
+						for (CallEffect ce : rs.alive) {
+							intra.direct.add(new BiCall(ce, fe));
+						}
+						for (CallEffect ce : rs.collected) {
+							intra.indirect.add(new BiCall(ce, fe));
+						}
 
+						rs.calls.add(fe);
 						rs.alive.add(fe);
 					} else {
 						rs.write.add(new FieldEffect(

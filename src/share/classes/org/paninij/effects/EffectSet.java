@@ -13,6 +13,11 @@ public class EffectSet {
 	// call effects that are collected
 	public HashSet<CallEffect> collected;
 
+	// pair of the capsule calls that have no synchronization in between
+	public HashSet<BiCall> direct;
+	// pair of the capsule calls that have synchronization in between
+	public HashSet<BiCall> indirect;
+
 	// detect whether the method always return newly created object.
 	public boolean returnNewObject;
 
@@ -188,8 +193,6 @@ public class EffectSet {
 		epg.isBottom = isBottom;
 		return epg;
 	}
-
-	
 
 	/* this method is called to removed redundant effects.
 	 * e.g. C.f contains o.f if the type of o is C or subtype of C.
