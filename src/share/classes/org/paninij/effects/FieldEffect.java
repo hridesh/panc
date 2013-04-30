@@ -3,7 +3,6 @@ package org.paninij.effects;
 import org.paninij.path.Path;
 
 import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Symbol.VarSymbol;
 
 public class FieldEffect implements EffectEntry {
 	public final Path path; 
@@ -30,7 +29,6 @@ public class FieldEffect implements EffectEntry {
 	    System.out.println("FieldEffect = " + path.printPath() + "\tf = " + f);
 	}
 
-	@Override
 	public String effectToString() {
 		return "F"+this.f.owner+" "+this.f.name+ " "+ path.hashCode();
 	}

@@ -13,7 +13,7 @@ public class ArrayEffect implements EffectEntry {
 	}
 
 	public ArrayEffect(Type type) {
-		this.path = Path_Unknown.pfcUnknow;
+		this.path = Path_Unknown.unknow;
 		this.type = type;
 	}
 
@@ -34,7 +34,6 @@ public class ArrayEffect implements EffectEntry {
 				"\ttype = " + type);
 	}
 
-	@Override
 	public String effectToString() {
 		return "A"+this.type.toString();
 	}

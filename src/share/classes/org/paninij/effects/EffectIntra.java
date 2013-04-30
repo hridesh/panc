@@ -25,6 +25,11 @@ public class EffectIntra {
 	public HashMap<JCTree, EffectSet> effectAfterFlow =
 	    new HashMap<JCTree, EffectSet>();
 
+	// pair of the capsule calls that have no synchronization in between
+	public HashSet<BiCall> direct = new HashSet<BiCall>();
+	// pair of the capsule calls that have synchronization in between
+	public HashSet<BiCall> indirect = new HashSet<BiCall>();
+
 	public EffectIntra(EffectInter inter,
 			JCMethodDecl curr_meth, ArrayList<JCTree> order,
 			HashMap<JCTree, AliasingGraph> aliasing) {
@@ -40,8 +45,8 @@ public class EffectIntra {
 		if (out.isBottom) { return; }
 
 		if (tree instanceof JCMethodInvocation) { /////////// Calls
-			inter.intraProcessMethodCall(
-					(JCMethodInvocation)tree, aliasing, out);
+			inter.intraProcessMethodCall((JCMethodInvocation)tree, aliasing,
+					out, this);
 		} else if (tree instanceof JCAssign) { // lhs =
 			abstractCommandAssign(tree, ((JCAssign)tree).lhs, aliasing, out);
 		} else if (tree instanceof JCAssignOp) { // lhs X=
@@ -64,7 +69,7 @@ public class EffectIntra {
 			JCArrayAccess arr = (JCArrayAccess) tree;
 			addArrayAccessEffect(arr.indexed, arr.index, aliasing, 0, out);
 		} else if (tree instanceof JCForeach) {
-			inter.intraForeach((JCForeach)tree, aliasing, out);
+			inter.intraForeach((JCForeach)tree, aliasing, this, out);
 		} else if (tree instanceof JCReturn) {
 			JCExpression expr = ((JCReturn) tree).expr;
 			if (expr != null &&
@@ -279,6 +284,9 @@ public class EffectIntra {
 		}
 		resultEffect.compress();
 		resultEffect.returnNewObject = returnNewObject;
+		resultEffect.direct = direct;
+		resultEffect.indirect = indirect;
+
 		return resultEffect;
 	}
 }

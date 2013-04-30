@@ -31,7 +31,8 @@ public class ForeachEffect implements CallEffect {
 
 	public void printEffect() {
 		System.out.println("ForeachEffect caller = " + caller + "\tcallee = " +
-				callee + "\tmethod = " + meth + "\tline = " + line);
+				callee + "\tmethod = " + meth + "\tline = " + line + "\t" + pos
+				+ pos);
 	}
 
 	public int hashCode() {
@@ -47,7 +48,6 @@ public class ForeachEffect implements CallEffect {
 		return false;
 	}
 
-	@Override
 	public String effectToString() {
 		String caller=this.caller.toString();
 		String callee=this.callee.owner+" "+this.callee.name;
