@@ -172,7 +172,8 @@ public class ASTCFGBuilder extends TreeScanner {
 
 				this.methodCost = 0; // reset methodCost
 				JCBlock body = tree.body;
-				if (body != null) {
+				// ensure that body is analyzed once and only once
+				if (body != null && body.predecessors == null) {
 					body.accept(this);
 					tree.order = order;
 					effectsBuilder.analysis(tree, cs);

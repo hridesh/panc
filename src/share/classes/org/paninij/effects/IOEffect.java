@@ -15,8 +15,9 @@ public class IOEffect implements CallEffect {
 		return obj instanceof IOEffect;
 	}
 
-	@Override
 	public String effectToString() {
 		return "I";
 	}
+	
+	public int pos() { return -1; }
 }

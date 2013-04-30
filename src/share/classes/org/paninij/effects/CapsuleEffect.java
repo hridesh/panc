@@ -63,4 +63,6 @@ public class CapsuleEffect implements CallEffect {
 		return "C" + caller + " " + callee + " " + meth + " " + pos + " "
 				+ line + " " + col + " " + fileName;
 	}
+
+	public int pos() { return pos; }
 }

@@ -109,14 +109,16 @@ public class SystemGraphBuilder {
 				CapsuleEffect ce = (CapsuleEffect) call;
 				Node n = node.connections.get(ce.callee.name);
 				MethodSymbol meth = ce.meth;
+				int pos = ce.pos;
+				int line = ce.line;
 
 				for (MethodSymbol ms : n.capsule.procedures.keySet()) {
 					if (ms.toString().compareTo(meth.toString()) == 0) {
-						graph.setEdge(node, fromProc, n, ms);
+						graph.setEdge(node, fromProc, n, ms, pos, line);
 						break;
 					}
 					if (types(ms).compareTo(types(meth)) == 0) {
-						graph.setEdge(node, fromProc, n, ms);
+						graph.setEdge(node, fromProc, n, ms, pos, line);
 						break;
 					}
 				}
@@ -124,6 +126,9 @@ public class SystemGraphBuilder {
 				ForeachEffect fe = (ForeachEffect)call;
 				String calleeName = fe.callee.toString();
 				MethodSymbol meth = fe.meth;
+				int pos = fe.pos;
+				int line = fe.line;
+
 				int size = calleeName.length();
 				HashMap<Name, Node> connections = node.connections;
 				for (Name key : connections.keySet()) {
@@ -133,11 +138,11 @@ public class SystemGraphBuilder {
 						Node n = connections.get(key);
 						for (MethodSymbol ms : n.capsule.procedures.keySet()) {
 							if (ms.toString().compareTo(meth.toString()) == 0) {
-								graph.setEdge(node, fromProc, n, ms);
+								graph.setEdge(node, fromProc, n, ms, pos, line);
 								break;
 							}
 							if (types(ms).compareTo(types(meth)) == 0) {
-								graph.setEdge(node, fromProc, n, ms);
+								graph.setEdge(node, fromProc, n, ms, pos, line);
 								break;
 							}
 						}
@@ -184,6 +189,7 @@ public class SystemGraphBuilder {
 		for(SystemGraph.Node n : graph.nodes.values()){
 			for(MethodSymbol ms : n.procedures){
 				ms.complete();
+				
 				if (ms.effect == null && ms.attributes_field.size() != 0) {
 					for (Compound compound : ms.attributes_field) {
 						if (compound.type.tsym.getQualifiedName().toString()

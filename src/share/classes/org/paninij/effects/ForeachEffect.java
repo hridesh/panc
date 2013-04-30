@@ -17,6 +17,7 @@ public class ForeachEffect implements CallEffect {
 	public final int col;
 	// the file of this call
 	public final String fileName;
+	
 
 	public ForeachEffect(CapsuleSymbol caller, Symbol callee,
 			MethodSymbol meth, int pos, int line, int col, String fileName) {
@@ -64,4 +65,6 @@ public class ForeachEffect implements CallEffect {
 		return "E" + caller + " " + callee + " " + meth + " " + pos + " "
 				+ line + " " + col + " " + fileName;
 	}
+
+	public int pos() { return pos; }
 }

@@ -76,8 +76,7 @@ public class SystemGraph {
 		public void addConnection(Name name, Node node){
 			connections.put(name, node);
 		}
-		
-		@Override
+
 		public String toString(){
 			String string = capsule.name+" "+ name + " {";
 			for(MethodSymbol n : procedures){
@@ -95,23 +94,44 @@ public class SystemGraph {
 //			this.node = node;
 //		}
 //	}
-	public static class Edge{//edge from {fromNode, fromProcedure} to {toNode, toProcedure}
-		public Node fromNode, toNode;
-		public MethodSymbol fromProcedure, toProcedure;
+	// edge from {fromNode, fromProcedure} to {toNode, toProcedure}
+	public static class Edge {
+		public final Node fromNode, toNode;
+		public final MethodSymbol fromProcedure, toProcedure;
+		// the source code postion of this call edge
+		public final int pos, line;
 		
-		Edge(Node fromNode, MethodSymbol fromProcedure, Node toNode, MethodSymbol toProcedure){
+		Edge(Node fromNode, MethodSymbol fromProcedure, Node toNode,
+				MethodSymbol toProcedure, int pos, int line) {
 			this.fromNode = fromNode;
 			this.fromProcedure = fromProcedure;
 			this.toNode = toNode;
 			this.toProcedure = toProcedure;
+			this.pos = pos;
+			this.line = line;
 		}
-		
-		@Override
+
 		public String toString(){
-			String s = fromNode.name + "." + fromProcedure + " --> " + toNode.name+"."+ toProcedure+"\n";
+			String s = fromNode.name + "." + fromProcedure + " --> " +
+			toNode.name + "."+ toProcedure + "\n";
 			return s;
 		}
-		
+
+		public final int hashCode() {
+			return fromNode.hashCode() + toNode.hashCode() +
+			fromProcedure.hashCode() + toProcedure.hashCode() + pos;
+		}
+
+		public final boolean equals(Object obj) {
+	        if (obj instanceof Edge) {
+	        	Edge other = (Edge)obj;
+	        	return fromNode.equals(other.fromNode) &&
+	        	toNode.equals(other.toNode) &&
+	        	fromProcedure.equals(other.fromProcedure) &&
+	        	toProcedure.equals(other.toProcedure) && pos == other.pos;
+	        }
+	        return false;
+	    }
 	}
 	
 	public HashMap<Name, Node> nodes = new HashMap<Name, Node>();
@@ -126,8 +146,9 @@ public class SystemGraph {
 		nodes.get(fromNode).connections.put(alias, nodes.get(toNode));
 	}
 	
-	void setEdge(Node fromNode, MethodSymbol fromProc, Node toNode, MethodSymbol toProc){
-		edges.add(new Edge(fromNode, fromProc, toNode, toProc));
+	void setEdge(Node fromNode, MethodSymbol fromProc, Node toNode,
+			MethodSymbol toProc, int pos, int line) {
+		edges.add(new Edge(fromNode, fromProc, toNode, toProc, pos, line));
 	}
 	
 	@Override
