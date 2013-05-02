@@ -112,6 +112,7 @@ public class SystemGraphBuilder {
 				int pos = ce.pos;
 				int line = ce.line;
 
+				if(n!=null)
 				for (MethodSymbol ms : n.capsule.procedures.keySet()) {
 					if (ms.toString().compareTo(meth.toString()) == 0) {
 						graph.setEdge(node, fromProc, n, ms, pos, line);

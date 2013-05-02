@@ -554,19 +554,21 @@ public final class Attr extends CapsuleInternal {
 			log.error(mi.pos(), "arguments.of.wiring.mismatch");
 		} else {
 			for (int j = 0; j < mi.args.length(); j++) {
-				String param = "";
-				if(c.capsuleParameters.get(j).vartype.toString().contains("[")){
-					param = c.capsuleParameters.get(j).vartype.toString().substring(0, c.capsuleParameters.get(j).vartype.toString().indexOf("["));
-				}else
-					param = c.capsuleParameters.get(j).vartype.toString();
-				if(syms.capsules.containsKey(names.fromString(param))){
-					String argument = "";
-					if(mi.args.get(j).toString().contains("[")){
-						argument = mi.args.get(j).toString().substring(0, mi.args.get(j).toString().indexOf("["));
+				if(!mi.args.get(j).toString().equals("null")){
+					String param = "";
+					if(c.capsuleParameters.get(j).vartype.toString().contains("[")){
+						param = c.capsuleParameters.get(j).vartype.toString().substring(0, c.capsuleParameters.get(j).vartype.toString().indexOf("["));
 					}else
-						argument = mi.args.get(j).toString();
-					if(variables.get(names.fromString(argument))==null){
-						log.error(mi.args.get(j).pos, "symbol.not.found");
+						param = c.capsuleParameters.get(j).vartype.toString();
+					if(syms.capsules.containsKey(names.fromString(param))){
+						String argument = "";
+						if(mi.args.get(j).toString().contains("[")){
+							argument = mi.args.get(j).toString().substring(0, mi.args.get(j).toString().indexOf("["));
+						}else
+							argument = mi.args.get(j).toString();
+						if(variables.get(names.fromString(argument))==null){
+							log.error(mi.args.get(j).pos, "symbol.not.found");
+						}
 					}
 				}
 				JCAssign newAssign = make

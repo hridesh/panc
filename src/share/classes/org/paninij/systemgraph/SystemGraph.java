@@ -73,7 +73,7 @@ public class SystemGraph {
 			procedures.add(ms);
 		}
 		
-		public void addConnection(Name name, Node node){
+		void addConnection(Name name, Node node){
 			connections.put(name, node);
 		}
 
@@ -143,7 +143,10 @@ public class SystemGraph {
 	}
 	
 	void setConnection(Name fromNode, Name alias, Name toNode){
-		nodes.get(fromNode).connections.put(alias, nodes.get(toNode));
+		if(!toNode.toString().equals("null")){
+			nodes.get(fromNode).addConnection(alias, nodes.get(toNode));
+		}else
+			nodes.get(fromNode).addConnection(alias, null);
 	}
 	
 	void setEdge(Node fromNode, MethodSymbol fromProc, Node toNode,
