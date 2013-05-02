@@ -223,7 +223,7 @@ public class EffectIntra {
 		inout.init(tmp);
 	}
 
-	public EffectSet doAnalysis() {
+	public EffectSet doAnalysis(List<JCTree> endNodes) {
 		JCTree head = order.get(0);
 		Collection<JCTree> changedUnits = CommonMethod.constructWorklist(order);
 
@@ -278,7 +278,8 @@ public class EffectIntra {
 			}
 		}
 		EffectSet resultEffect = new EffectSet();
-		for (JCTree astc : resultNodes) {
+		// for (JCTree astc : resultNodes) {
+		for (JCTree astc : endNodes) {
 			EffectSet otherBranchFlow = effectAfterFlow.get(astc);
 			mergeInto(resultEffect, otherBranchFlow);
 		}

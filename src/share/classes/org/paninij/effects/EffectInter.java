@@ -1,5 +1,6 @@
 package org.paninij.effects;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -223,6 +224,7 @@ public class EffectInter {
 
 										rs.calls.add(fe);
 										rs.alive.add(fe);
+										rs.collected.remove(fe);
 									}
 								}
 							}
@@ -420,6 +422,34 @@ public class EffectInter {
 		return false;
 	}
 
+	// return a capsule effect instead of boolean
+	private static final ForeachEffect foreachCall(JCExpression tree,
+			AliasingGraph ag, CapsuleSymbol curr_cap, MethodSymbol ms,
+			JCMethodInvocation jcmd) {
+		if (tree instanceof JCArrayAccess) {
+			JCArrayAccess jcaa = (JCArrayAccess)tree;
+			JCExpression indexed = CommonMethod.essentialExpr(jcaa.indexed);
+
+			Symbol caps = ag.aliasingState(indexed);
+			if (caps != null) {
+				ArrayType at = (ArrayType)caps.type;
+				Symbol typeSym = at.elemtype.tsym;
+				// many capsule call.
+				if (typeSym instanceof CapsuleSymbol) {
+					DiagnosticSource ds =
+						new DiagnosticSource(curr_cap.sourcefile, null);
+					int pos = jcmd.getPreferredPosition();
+
+					return new ForeachEffect(curr_cap, caps,
+							ms, pos, ds.getLineNumber(pos), // do not expend tab
+							ds.getColumnNumber(pos, false),
+							curr_cap.sourcefile.toString());
+				}
+			}
+		}
+		return null;
+	}
+
 	public final void intraProcessMethodCall(JCMethodInvocation tree,
 			AliasingGraph ag, EffectSet rs, EffectIntra intra) {
 		JCExpression meth = tree.meth;
@@ -491,6 +521,7 @@ public class EffectInter {
 
 					rs.calls.add(ce);
 					rs.alive.add(ce);
+					rs.collected.remove(ce);
 				} else {
 					rs.write.add(new FieldEffect(
 							new Path_Parameter(null, 0), fld));
@@ -529,6 +560,7 @@ public class EffectInter {
 
 						rs.calls.add(fe);
 						rs.alive.add(fe);
+						rs.collected.remove(fe);
 					} else {
 						rs.write.add(new FieldEffect(
 								new Path_Parameter(null, 0), fld));
@@ -548,6 +580,7 @@ public class EffectInter {
 					JCExpression exp =
 						CommonMethod.essentialExpr(jcfa.selected);
 					Symbol receiver = ag.aliasingState(exp);
+					MethodSymbol ms = (MethodSymbol)jcfa.sym;
 
 					// capsule call
 					if (receiver != null) {
@@ -559,7 +592,7 @@ public class EffectInter {
 							int pos = selected.getPreferredPosition();
 
 							CapsuleEffect ce = new CapsuleEffect(curr_cap,
-									receiver, (MethodSymbol)jcfa.sym, pos,
+									receiver, ms, pos,
 									ds.getLineNumber(pos), // do not expend tab
 									ds.getColumnNumber(pos, false),
 									curr_cap.sourcefile.toString());
@@ -570,7 +603,10 @@ public class EffectInter {
 						}
 					}
 
-					if (foreallCall(exp, ag)) {
+					ForeachEffect fe = foreachCall(exp, ag, curr_cap, ms, jcmi);
+					if (fe != null) {
+						rs.alive.remove(fe);
+						rs.collected.add(fe);
 						return;
 					}
 				}
@@ -618,7 +654,9 @@ public class EffectInter {
 			// Doing the actual intra effect analsyis.
 			EffectIntra fcIntra = new EffectIntra(this, curr_meth,
 					jcmd.order, beforeFlow);
-			EffectSet newResult = fcIntra.doAnalysis();			
+			java.util.List<JCTree> ends = new ArrayList<JCTree>(body.endNodes);
+			ends.addAll(body.exitNodes);
+			EffectSet newResult = fcIntra.doAnalysis(ends);			
 			newResult.compress();
 
 			// If the effect does not change, no need to put the methods

@@ -725,11 +725,11 @@ public class Attr extends JCTree.Visitor {
     	/*for (JCTree def : tree.defs) {
     		if (def instanceof JCMethodDecl) {
     			JCMethodDecl jcmd = (JCMethodDecl)def;
-    			EffectSet ars = jcmd.sym.effect;
+    			org.paninij.effects.EffectSet ars = jcmd.sym.effect;
     			if (ars != null) {
-    				System.out.println(jcmd.sym);
+    				System.out.println(jcmd.sym + "\t" + tree.sym);
     				ars.printEffect();
-    				for(String s: ars.effectsToStrings()){
+    				for (String s: ars.effectsToStrings()) {
     					System.out.println(s);
     				}
     			}

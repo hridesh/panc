@@ -622,7 +622,7 @@ public class AliasingGraph {
 			}
 		}
 
-		return null;
+		return Path_Unknown.unknow;
 	}
 
 	public Path createPathForField (JCFieldAccess field) {
