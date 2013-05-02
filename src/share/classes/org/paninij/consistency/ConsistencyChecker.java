@@ -253,7 +253,8 @@ public class ConsistencyChecker {
 			return false;
 		boolean found = false;
 		for (Entry<Name, Node> co : node.connections.entrySet()) {
-			found |= traverse(co.getValue(), newPath);
+			if(co.getValue()!=null)
+				found |= traverse(co.getValue(), newPath);
 		}
 		return found;
 	}

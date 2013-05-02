@@ -65,14 +65,14 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
   	 */
    @SuppressWarnings("rawtypes")
   	protected final synchronized Panini$Duck get$Next$Duck() {
-   		if(this.panini$capsule$size <= 0) blockCapsule();
+   		if(this.panini$capsule$size <= 0) panini$blockCapsule();
   			panini$capsule$size--;
   			Panini$Duck d = (Panini$Duck) panini$capsule$objects[panini$capsule$head++];
   			if (panini$capsule$head >= panini$capsule$objects.length) panini$capsule$head = 0;
   			return d;
   	}
 
-   private final void blockCapsule() {
+   private final void panini$blockCapsule() {
  			nomessages: while (this.panini$capsule$size <= 0) 
  				try {	
  					wait(); 
@@ -81,7 +81,7 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
  				}
    }
    
-   protected final boolean empty() { return panini$capsule$size==0; }
+   protected final boolean panini$empty() { return panini$capsule$size==0; }
    
   	/**
   	 * Causes the current capsule to sleep (temporarily cease execution) 
@@ -115,7 +115,7 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
   	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
   	 * 
   	 */
-  	public final void shutdown () {
+  	public final void panini$shutdown () {
   		 this.checkAccess();
 	   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-1);
 	   	panini$push(d);
@@ -132,7 +132,7 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
   	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
   	 * 
   	 */
-  	public final void exit () {
+  	public final void panini$exit () {
   		 this.checkAccess();
 	   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-2);
 	   	panini$push(d);

@@ -46,9 +46,12 @@ public class PaniniConstants {
 	public final static String PANINI_DUCK_TYPE = "panini$duck$future";
 	public final static String PANINI_PUSH = "panini$push";
 	public final static String PANINI_WRAPPED = "panini$wrapped";
-	public final static String PANINI_SHUTDOWN = "shutdown";
+	public final static String PANINI_SHUTDOWN = "panini$shutdown";
 	public final static String PANINI_YIELD = "yield";
-	public final static String PANINI_EXIT = "exit";
+	public final static String PANINI_EXIT = "panini$exit";
+	public final static String PANINI_START = "start";
+	public final static String PANINI_JOIN = "join";
+	public final static String PANINI_INIT = "panini$init";
 	public final static String PANINI_ORIGINAL_METHOD_SUFFIX = "$Original";
 
 	public final static String PANINI_DUCK_HASHCODE = "hashCode";

@@ -339,7 +339,7 @@ public final class Attr extends CapsuleInternal {
 				.Exec(make.Apply(List.<JCExpression> nil(), make
 						.Select(make.Ident(names
 								.fromString(PaniniConstants.PANINI_CAPSULE_TASK)),
-								names.fromString("init")), List
+								names.fromString(PaniniConstants.PANINI_INIT)), List
 								.<JCExpression> of(make.Literal(numberOfPools)))))),
 								List.<JCCatch> of(make.Catch(make.VarDef(
 										make.Modifiers(0), names.fromString("e"),
@@ -659,11 +659,11 @@ public final class Attr extends CapsuleInternal {
 							List.<JCExpression>nil())));
 				else{
 					starts.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
-							make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("start")), 
+							make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString(PaniniConstants.PANINI_START)), 
 							List.<JCExpression>nil())));
 					joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
 							make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
-									names.fromString("join")), List.<JCExpression>nil())))), 
+									names.fromString(PaniniConstants.PANINI_JOIN)), List.<JCExpression>nil())))), 
 									List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
 											names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
 											null), make.Block(0, List.<JCStatement>nil()))), null));
@@ -674,7 +674,7 @@ public final class Attr extends CapsuleInternal {
 		else{
 			for(int j = mat.amount-1; j>=0;j--){
 				starts.prepend(make.Exec(make.Apply(List.<JCExpression>nil(), 
-						make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("start")), 
+						make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString(PaniniConstants.PANINI_START)), 
 						List.<JCExpression>nil())));
 			}
 			for(int j=0; j<mat.amount;j++){
@@ -721,7 +721,7 @@ public final class Attr extends CapsuleInternal {
 		nameAssign.type = vdecl.type;
 		inits.append(nameAssign);
 		JCExpressionStatement startAssign = make.Exec(make.Apply(List.<JCExpression>nil(), 
-				make.Select(make.Ident(vdecl.name), names.fromString("start")), 
+				make.Select(make.Ident(vdecl.name), names.fromString(PaniniConstants.PANINI_START)), 
 				List.<JCExpression>nil()));
 		if(c.definedRun){
 			if(tree.activeCapsuleCount==0)
@@ -732,7 +732,7 @@ public final class Attr extends CapsuleInternal {
 				starts.prepend(startAssign);
 				joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(), 
 						make.Select(make.Ident(vdecl.name), 
-								names.fromString("join")), List.<JCExpression>nil())))), 
+								names.fromString(PaniniConstants.PANINI_JOIN)), List.<JCExpression>nil())))), 
 								List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), 
 										names.fromString("e"), make.Ident(names.fromString("InterruptedException")), 
 										null), make.Block(0, List.<JCStatement>nil()))), null));

@@ -43,7 +43,7 @@ public interface PaniniCapsule{
   	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
   	 * 
   	 */
-  	public void shutdown();
+  	public void panini$shutdown();
   	
   	/**
   	 * Causes the current capsule to immediately cease execution. 
@@ -56,7 +56,7 @@ public interface PaniniCapsule{
   	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
   	 * 
   	 */
-  	public void exit ();
+  	public void panini$exit ();
   	
   	public void start();
   	public void join() throws java.lang.InterruptedException; 

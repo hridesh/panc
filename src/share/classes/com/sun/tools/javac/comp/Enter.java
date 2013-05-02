@@ -386,11 +386,11 @@ public class Enter extends JCTree.Visitor {
     			JCExpression excp = make.Ident(names.fromString("java"));
     			excp = make.Select(excp, names.fromString("lang"));
     			excp = make.Select(excp, names.fromString("InterruptedException"));
-    			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString("start"), make.TypeIdent(TypeTags.VOID), 
+    			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString(PaniniConstants.PANINI_START), make.TypeIdent(TypeTags.VOID), 
     					List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>nil(), null, null));
     			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString(PaniniConstants.PANINI_SHUTDOWN), make.TypeIdent(TypeTags.VOID), 
     					List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>nil(), null, null));
-    			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString("join"), make.TypeIdent(TypeTags.VOID), 
+    			interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC), names.fromString(PaniniConstants.PANINI_JOIN), make.TypeIdent(TypeTags.VOID), 
     					List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>of(excp), null, null));
     			JCCapsuleDecl copyActive =
     					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.ACTIVE, capsule)), names.fromString(capsule.name + "$thread"), 
