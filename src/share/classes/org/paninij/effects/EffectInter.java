@@ -115,7 +115,7 @@ public class EffectInter {
 		if (ars != null) {
 			if (ars.isBottom) {
 				result.makeButtom();
-			} else {
+			} // else {
 				HashSet<EffectEntry> read_result = result.read;
 				HashSet<EffectEntry> write_result = result.write;
 				HashSet<CallEffect> calls_result = result.calls;
@@ -173,7 +173,7 @@ public class EffectInter {
 
 				alive_result.addAll(alive);
 				collected_result.addAll(collected);
-			}
+			// }
 		}
 	}
 
@@ -680,10 +680,10 @@ public class EffectInter {
 				}
 				if (callers != null) {
 					for (MethodSymbol s : callers) {
-						if (!s.effect.isBottom) {
+						// if (!s.effect.isBottom) {
 							EffectInter ei = new EffectInter();
 							ei.analysis(s.tree, cap);
-						}
+						// }
 					}
 				}
 			}

@@ -42,7 +42,7 @@ public class EffectIntra {
 	private final void flowThrough(JCTree tree, AliasingGraph aliasing,
 							   EffectSet inValue, EffectSet out) {
 		out.init(inValue);
-		if (out.isBottom) { return; }
+		// if (out.isBottom) { return; }
 
 		if (tree instanceof JCMethodInvocation) { /////////// Calls
 			inter.intraProcessMethodCall((JCMethodInvocation)tree, aliasing,

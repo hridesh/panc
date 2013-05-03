@@ -91,11 +91,11 @@ public class EffectSet {
 	}
 
 	public boolean equals(Object o) {
-		if (o instanceof EffectSet){ 
+		if (o instanceof EffectSet) { 
 			EffectSet g = (EffectSet)o;
 			if (!g.isInit && (!isInit)) { return true; }
-			if (g.isInit){
-				if (isBottom && g.isBottom) { return true; }
+			if (g.isInit) {
+				// if (isBottom && g.isBottom) { return true; }
 				return isBottom == g.isBottom && write.equals(g.write) &&
 				read.equals(g.read) && calls.equals(g.calls) &&
 				writtenLocals.equals(g.writtenLocals) &&
@@ -110,10 +110,10 @@ public class EffectSet {
 	public void union(EffectSet x) {
 		if (x.isInit) {
 			if (isInit) {
-				if (!isBottom) {
+				// if (!isBottom) {
 					if (x.isBottom) {
 						makeButtom();
-					} else {
+					} // else {
 						calls.addAll(x.calls);
 						read.addAll(x.read);
 						write.addAll(x.write);
@@ -142,13 +142,13 @@ public class EffectSet {
 
 						collected.removeAll(alive);
 						collected.addAll(cTemp);
-					}
-				}
+					// }
+				// }
 			} else {
 				isInit = true;
 				if (x.isBottom) {
 					makeButtom();
-				} else {
+				} // else {
 					read = new HashSet<EffectEntry>(x.read);
 					write = new HashSet<EffectEntry>(x.write);
 					calls = new HashSet<CallEffect>(x.calls);
@@ -158,7 +158,7 @@ public class EffectSet {
 					// for calls
 					alive = new HashSet<CallEffect>(x.alive);
 					collected = new HashSet<CallEffect>(x.collected);
-				}
+				// }
 			}
 		}
 	}
@@ -207,7 +207,7 @@ public class EffectSet {
 			alive.clear();
 			collected.clear(); */
 			isWriteBottom = true;
-			return;
+			// return;
 		}
 		removeFinalFieldRead(read);
 		removeFinalFieldRead(write);
@@ -264,7 +264,7 @@ public class EffectSet {
 		System.out.println("\tisInit = " + isInit);
 		if (isBottom) {
 			System.out.println("\tbuttom effect");
-			return;
+			// return;
 		}
 
 		if (read.isEmpty() && write.isEmpty() && calls.isEmpty()) {
@@ -325,20 +325,20 @@ public class EffectSet {
 
 	// f = ...
 	public void assignField(Symbol f) {
-		if (!isBottom) {
+		// if (!isBottom) {
 			writtenFields.add(f);
 			removedAffectedField(f, read);
 			removedAffectedField(f, write);
-		}
+		// }
 	}
 
 	// var = ...
 	public void assignVar(Symbol var) {
-		if (!isBottom) {
+		// if (!isBottom) {
 			writtenLocals.add(var);
 			removedAffectedLocal(var, read);
 			removedAffectedLocal(var, write);
-		}
+		// }
 	}
 	
 	private static void removedAffectedLocal(Symbol var,
@@ -429,21 +429,21 @@ public class EffectSet {
 		}
 	}
 	
-	public String[] effectsToStrings(){
+	public String[] effectsToStrings() {
 		ArrayList<String> strings = new ArrayList<String>();
-		if(isInit)
+		if (isInit)
 			strings.add("T");
 		else
 			strings.add("F");
-		if(isBottom)
+		if (isBottom)
 			strings.add("B");
-		for(EffectEntry e : read){
+		for (EffectEntry e : read) {
 			strings.add("R" + e.effectToString());
 		}
-		for(EffectEntry e : write){
+		for (EffectEntry e : write) {
 			strings.add("W" + e.effectToString());
 		}
-		for(EffectEntry e : calls){
+		for (EffectEntry e : calls) {
 			strings.add("C" + e.effectToString());
 		}
 		String[] s = new String[strings.size()];
