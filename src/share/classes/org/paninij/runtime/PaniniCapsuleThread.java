@@ -204,4 +204,6 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
    	if(panini$capsule$size==numItems) notifyAll(); 
    }
 
+  	 protected void panini$capsule$init(){}
+
 }

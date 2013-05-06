@@ -198,6 +198,8 @@ public abstract class PaniniCapsuleTask implements PaniniCapsule{
 		PaniniTaskPool.init(size);
 	}
 
+	protected void panini$capsule$init(){}
+
 	public final void start(){
 		panini$containingPool = PaniniTaskPool.add(this);
 	}

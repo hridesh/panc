@@ -69,6 +69,12 @@ public abstract class PaniniCapsuleSequential implements PaniniCapsule{
   	public final void panini$exit () {
   	}
 
-  	public final void start(){} // TODO:
+  	protected void panini$capsule$init(){}
+
+  	public final void start(){
+  		panini$capsule$init();
+  	}
+  	
   	public final void join() throws java.lang.InterruptedException {} // TODO:
+
 }
