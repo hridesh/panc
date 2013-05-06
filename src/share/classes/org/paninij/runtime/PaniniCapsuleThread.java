@@ -32,8 +32,6 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
   		panini$capsule$head = 0; 
   		panini$capsule$tail= 0; 
   		panini$capsule$size = 0;
-  		org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(0);
-  		panini$push(d);
   	}
 
    protected final void panini$extendQueue() {
