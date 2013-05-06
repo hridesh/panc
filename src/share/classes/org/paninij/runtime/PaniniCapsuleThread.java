@@ -23,10 +23,19 @@ import com.sun.tools.javac.util.*;
 import org.paninij.runtime.types.Panini$Duck;
 
 public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsule{
-   protected volatile Object[] panini$capsule$objects = new Object[10];
-   protected volatile int panini$capsule$head = 0, panini$capsule$tail=0, panini$capsule$size =0;
+   protected volatile Object[] panini$capsule$objects;
+   protected volatile int panini$capsule$head, panini$capsule$tail, panini$capsule$size;
    protected final ReentrantLock queueLock = new ReentrantLock();
-   
+
+  	protected PaniniCapsuleThread() {
+  		panini$capsule$objects = new Object[10];
+  		panini$capsule$head = 0; 
+  		panini$capsule$tail= 0; 
+  		panini$capsule$size = 0;
+  		org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(0);
+  		panini$push(d);
+  	}
+
    protected final void panini$extendQueue() {
        assert(panini$capsule$tail>=panini$capsule$objects.length);
        Object[] newObjects = new Object[panini$capsule$objects.length+10];
