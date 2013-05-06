@@ -25,7 +25,7 @@ import org.paninij.runtime.types.Panini$Duck;
 
 public abstract class PaniniCapsuleTask implements PaniniCapsule{
 	protected volatile Object[] panini$capsule$objects;
-	protected volatile int panini$capsule$head = 0, panini$capsule$tail=0, panini$capsule$size =0;
+	protected volatile int panini$capsule$head, panini$capsule$tail, panini$capsule$size;
 	protected final ReentrantLock queueLock = new ReentrantLock();
 
 	protected PaniniCapsuleTask() {
