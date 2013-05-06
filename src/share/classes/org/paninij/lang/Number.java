@@ -46,7 +46,7 @@ package org.paninij.lang;
  * @see     java.lang.Short
  * @since   JDK1.0
  */
-public abstract class Number<OWNER> extends org.paninij.lang.Object<OWNER> implements java.io.Serializable {
+public abstract class Number extends org.paninij.lang.Object implements java.io.Serializable {
     /**
      * Returns the value of the specified number as an <code>int</code>.
      * This may involve rounding or truncation.

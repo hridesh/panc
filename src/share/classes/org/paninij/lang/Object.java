@@ -24,5 +24,5 @@ package org.paninij.lang;
  * @param <OWNER> - The owner capsule of an instance of this class.
  * @since 1.0
  */
-public class Object <OWNER> extends java.lang.Object {
+public class Object extends java.lang.Object {
 }

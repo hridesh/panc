@@ -493,7 +493,7 @@ public class Long extends Number implements Comparable<Long> {
      * {@code long} value.
      */
     public long longValue() {
-        return (long)value;
+        return value;
     }
 
     /**
