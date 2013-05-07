@@ -321,6 +321,26 @@ public class EffectSet {
 				rwe.printEffect();
 			}
 		}
+
+		if (direct.isEmpty()) {
+			System.out.println("\tdirect empty");
+		} else {
+			System.out.println("\tdirect:");
+			for (BiCall rwe : direct) {
+				System.out.print("\t\t");
+				rwe.printCalls();
+			}
+		}
+
+		if (indirect.isEmpty()) {
+			System.out.println("\tindirect empty");
+		} else {
+			System.out.println("\tindirect:");
+			for (BiCall rwe : indirect) {
+				System.out.print("\t\t");
+				rwe.printCalls();
+			}
+		}
 	}
 
 	// f = ...

@@ -139,6 +139,7 @@ public class EffectInter {
 						intra.direct.add(new BiCall(ce1, ce2));
 					}
 				}
+				intra.direct.addAll(ars.direct);
 				for (CallEffect ce1 : collected_result) {
 					for (CallEffect ce2 : alive) {
 						intra.indirect.add(new BiCall(ce1, ce2));
@@ -147,6 +148,7 @@ public class EffectInter {
 						intra.indirect.add(new BiCall(ce1, ce2));
 					}
 				}
+				intra.indirect.addAll(ars.indirect);
 
 				for (CallEffect oe : calls) {
 					if (oe instanceof CapsuleEffect) {

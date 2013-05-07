@@ -19,4 +19,9 @@ public class BiCall {
 		}
 		return false;
 	}
+
+	public void printCalls() {
+		ce1.printEffect();
+		ce2.printEffect();
+	}
 }
