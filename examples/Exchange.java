@@ -40,15 +40,13 @@ signature Exchanger {
 }
 capsule Reader (int LIST_SIZE, InputStream in, Exchanger exchanger) {
 	BufferedReader reader = null;
-	ArrayDeque<String> list = null;
-    void init() {
-    	list = new ArrayDeque<String>(LIST_SIZE);
+    void run() {
+    	ArrayDeque<String> list = new ArrayDeque<String>(LIST_SIZE);
     	try {
     		reader = new BufferedReader(new InputStreamReader(
     				new GZIPInputStream(in)));
     	} catch (IOException e) { throw new RuntimeException(e); }
-    }
-    void read() {
+
     	String line;
     	try {
           while ((line = reader.readLine()) != null) {
@@ -64,7 +62,7 @@ capsule Reader (int LIST_SIZE, InputStream in, Exchanger exchanger) {
 capsule Writer (int LIST_SIZE, OutputStream out) implements Exchanger {
 	BufferedWriter writer = null;
     ArrayDeque<String> list = null;
-    void init() { 
+    => { 
     	list = new ArrayDeque<String>(LIST_SIZE);
     	try	{
     		writer = new BufferedWriter(new OutputStreamWriter(
@@ -93,14 +91,9 @@ capsule Writer (int LIST_SIZE, OutputStream out) implements Exchanger {
 		}
 	}
 }
-capsule Master (Reader r, Writer w) {
-	void run() {
-		r.init(); w.init(); r.read();
-	}
-}
 system Exchange {
-	Reader r; Writer w; Master m;
-	m(r,w); r(10000, System.in, w); w(10000, System.out);
+	Reader r; Writer w; 
+	r(10000, System.in, w); w(10000, System.out);
 }
 
 //From: https://bitbucket.org/chinmaya/java-concurrent_response/
