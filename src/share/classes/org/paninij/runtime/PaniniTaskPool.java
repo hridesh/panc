@@ -58,6 +58,12 @@ final class PaniniTaskPool extends Thread {
 		public void run() {
 			// Implementation relies upon at least one capsule being present 
 			PaniniCapsuleTask current = _headNode;
+			PaniniCapsuleTask head = _headNode;
+			head.panini$capsule$init();
+			while(head.panini$capsule$next!=current){
+				head = head.panini$capsule$next;
+				head.panini$capsule$init();
+			}
 			while(true){
 				if(current.panini$capsule$size!=0){
 					if(current.run() == true)
