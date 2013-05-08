@@ -17,26 +17,20 @@
  * Contributor(s): Bryan Shrader
  */
 
-class InvalidTransactionException extends IllegalArgumentException
-{
-	public InvalidTransactionException()
-	{
+class InvalidTransactionException extends IllegalArgumentException {
+	public InvalidTransactionException() {
 		super("unable to process request");
 	}
 }
 
-capsule BankAccount()
-{
+capsule BankAccount() {
 	double balance = 100.0; //state is private and guaranteed to be accessed by only one thread
-	void deposit(double money)
-	{
+	void deposit(double money) {
 		balance += money;
 		System.out.println("depositing $"+money+": total now $"+balance);
 	}
-	void withdraw(double money)
-	{
-		if(balance - money < 0)
-		{
+	void withdraw(double money) {
+		if(balance - money < 0) {
 			throw new InvalidTransactionException();
 		}
 		balance -= money;
@@ -44,10 +38,8 @@ capsule BankAccount()
 	}
 }
 
-capsule Client1(BankAccount account)
-{
-	void run()
-	{
+capsule Client1(BankAccount account) {
+	void run() {
 		account.withdraw(10);
 		account.withdraw(10);
 		account.withdraw(10);
@@ -56,16 +48,13 @@ capsule Client1(BankAccount account)
 	}
 }
 
-capsule Client2(BankAccount account)
-{
-	void run()
-	{
+capsule Client2(BankAccount account) {
+	void run() {
 		account.withdraw(25);
 		account.deposit(25);
 		account.deposit(25);
 		account.deposit(25);
 	}
-	
 }
 
 system Bank (){
