@@ -276,7 +276,7 @@ public final class Attr extends CapsuleInternal {
 			}else if(systemStmtKind == FOREACHLOOP)
 				processForEachLoop((JCEnhancedForLoop) currentSystemStmt, assigns, variables, capsules, sysGraph);
 			else if(systemStmtKind == MAAPPLY)
-				processCapsuleArrayWiring((JCCapsuleArrayCall) currentSystemStmt, assigns, variables, modArrays, rs, env, sysGraph);
+				processCapsuleArrayWiring((JCCapsuleArrayCall) currentSystemStmt, assigns, variables, capsules, modArrays, rs, env, sysGraph);
 			else  			
 				throw new AssertionError("Invalid statement gone through the parser");
 		}
@@ -390,7 +390,7 @@ public final class Attr extends CapsuleInternal {
 
 	private void processCapsuleArrayWiring(JCCapsuleArrayCall mi,
 			ListBuffer<JCStatement> assigns, Map<Name, Name> variables,
-			Map<Name, Integer> modArrays, Resolve rs, Env<AttrContext> env, SystemGraph sysGraph) {
+			Set<Name> capsules, Map<Name, Integer> modArrays, Resolve rs, Env<AttrContext> env, SystemGraph sysGraph) {
 		if(!variables.containsKey(names
 				.fromString(mi.name.toString()))){
 			log.error(mi.pos(), "symbol.not.found");
@@ -441,6 +441,7 @@ public final class Attr extends CapsuleInternal {
 							names.fromString(mi.arguments.get(j).toString()));
 				}
 			}
+			capsules.remove(mi.name);
 		}
 	}
 
