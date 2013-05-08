@@ -27,20 +27,18 @@ import java.net.*;
 import java.io.*;
 
 capsule Host() {
-	ServerSocket ss = createSocket();
+	ServerSocket ss = null; 
+	=> {
+		try {
+			ss = new ServerSocket(8080);
+		} catch (IOException e){ e.printStackTrace(System.err); }
+	}
 	Socket getConnection() {
 		Socket s = null;
 		try {
 			s = ss.accept();
 		} catch (IOException e){ e.printStackTrace(System.err); }
 		return s;
-	}
-	private ServerSocket createSocket() {
-		ServerSocket s = null;
-		try {
-			s = new ServerSocket(8080);
-		} catch (IOException e){ e.printStackTrace(System.err); }
-		return s; 
 	}
 }
 capsule Worker(Host l) {
