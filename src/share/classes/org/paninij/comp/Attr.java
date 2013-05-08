@@ -280,11 +280,11 @@ public final class Attr extends CapsuleInternal {
 			else  			
 				throw new AssertionError("Invalid statement gone through the parser");
 		}
-		if(!capsules.isEmpty()){
-			for(Name n : capsules){
-				log.error("capsule.instance.not.initialized", n);
-			}
-		}
+//		if(!capsules.isEmpty()){
+//			for(Name n : capsules){
+//				log.error("capsule.instance.not.initialized", n);
+//			}
+//		}
 		if(tree.hasTaskCapsule)
 			processSystemAnnotation(tree, inits, env);
 
