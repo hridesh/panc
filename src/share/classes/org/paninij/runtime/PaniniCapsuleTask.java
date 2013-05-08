@@ -209,6 +209,7 @@ public abstract class PaniniCapsuleTask implements PaniniCapsule{
 
 	public final void start(){
 		panini$containingPool = PaniniTaskPool.add(this);
+		this.panini$capsule$init();
 	}
 
 	public final void join() throws java.lang.InterruptedException {

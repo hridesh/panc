@@ -145,6 +145,9 @@ public class Tokens {
         IF("if"),
         IMPLEMENTS("implements"),
         IMPORT("import"),
+        // Panini code
+        INIT("=>"),
+        // end Panini code
         INSTANCEOF("instanceof"),
         INT("int", Tag.NAMED),
         INTERFACE("interface"),

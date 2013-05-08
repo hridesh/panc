@@ -442,6 +442,10 @@ public class TreeTranslator extends JCTree.Visitor {
     	result = tree;
     }
     
+    public void visitInitDef(JCInitDecl tree){
+    	visitMethodDef(tree);
+    }
+    
     public void visitProcDef(JCProcDecl tree){
     	tree.mods = translate(tree.mods);
         tree.restype = translate(tree.restype);

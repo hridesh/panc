@@ -179,8 +179,15 @@ public final class Attr extends CapsuleInternal {
 			attr.attribClassBody(env, tree.sym);
 			if((tree.sym.flags_field & TASK) !=0)
 				tree.computeMethod.body = generateTaskCapsuleComputeMethodBody(tree);
-			else
+			else{
 				tree.computeMethod.body = generateThreadCapsuleComputeMethodBody(tree);
+				tree.computeMethod.body.stats = tree.computeMethod.body.stats
+						.prepend(make.Exec(make.Apply(
+								List.<JCExpression> nil(),
+								make.Ident(names
+										.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
+								List.<JCExpression> nil()))); 
+			}
 		}
 		else {
 			attr.attribClassBody(env, tree.sym);

@@ -3023,11 +3023,111 @@ public class JavacParser implements Parser {
             nextToken();
             implementing = typeList();
         }
-     	List<JCTree> defs = classOrInterfaceBody(name, false);
+//     	List<JCTree> defs = classOrInterfaceBody(name, false);
+        List<JCTree> defs = capsuleBody(name);
      	JCCapsuleDecl result = 
      			toP(F.at(pos).CapsuleDef(mod, name, params, implementing, defs));
      	attach(result, dc);
      	return result;
+     }
+     
+     List<JCTree> capsuleBody(Name className) {
+         accept(LBRACE);
+         if (token.pos <= endPosTable.errorEndPos) {
+             // error recovery
+             skip(false, true, false, false);
+             if (token.kind == LBRACE)
+                 nextToken();
+         }
+         ListBuffer<JCTree> defs = new ListBuffer<JCTree>();
+         while (token.kind != RBRACE && token.kind != EOF) {
+             defs.appendList(capsuleBodyDeclaration(className, false));
+             if (token.pos <= endPosTable.errorEndPos) {
+                // error recovery
+                skip(false, true, true, false);
+            }
+         }
+         accept(RBRACE);
+         return defs.toList();
+     }
+     
+     protected List<JCTree> capsuleBodyDeclaration(Name className, boolean isInterface) {
+         if (token.kind == SEMI) {
+             nextToken();
+             return List.<JCTree>nil();
+         } else {
+             String dc = token.comment(CommentStyle.JAVADOC);
+             int pos = token.pos;
+             JCModifiers mods = modifiersOpt();
+             if (token.kind == CLASS ||
+                 token.kind == INTERFACE ||
+                 allowEnums && token.kind == ENUM) {
+                 return List.<JCTree>of(classOrInterfaceOrEnumDeclaration(mods, dc));
+             } else if (token.kind == LBRACE && !isInterface &&
+                        (mods.flags & Flags.StandardFlags & ~Flags.STATIC) == 0 &&
+                        mods.annotations.isEmpty()) {
+                 return List.<JCTree>of(block(pos, mods.flags));
+             } else if(token.kind == TokenKind.INIT){
+            	 if(mods.flags!=0)
+            		 return List.<JCTree>of(syntaxError(mods.pos, null, "mods.for.init"));
+            	 nextToken();
+            	 JCBlock body = null;
+            	 if (token.kind == LBRACE) {
+                     body = block();
+                     pos = token.pos;
+                 }else
+                	 return List.<JCTree>of(syntaxError(token.pos, null, "expected", LBRACE));
+            	 return List.<JCTree>of(to(F.at(pos).InitDef(to(F.at(pos).Modifiers(Flags.PROTECTED)), body)));
+             } else {
+                 pos = token.pos;
+                 List<JCTypeParameter> typarams = typeParametersOpt();
+                 // if there are type parameters but no modifiers, save the start
+                 // position of the method in the modifiers.
+                 if (typarams.nonEmpty() && mods.pos == Position.NOPOS) {
+                     mods.pos = pos;
+                     storeEnd(mods, pos);
+                 }
+                 Token tk = token;
+                 pos = token.pos;
+                 JCExpression type;
+                 boolean isVoid = token.kind == VOID;
+                 if (isVoid) {
+                     type = to(F.at(pos).TypeIdent(TypeTags.VOID));
+                     nextToken();
+                 } else {
+                     type = parseType();
+                 }
+                 if (token.kind == LPAREN && !isInterface && type.hasTag(IDENT)) {
+                     if (isInterface || tk.name() != className)
+                         error(pos, "invalid.meth.decl.ret.type.req");
+                     return List.of(methodDeclaratorRest(
+                         pos, mods, null, names.init, typarams,
+                         isInterface, true, dc));
+                 } else {
+                     pos = token.pos;
+                     Name name = ident();
+                     if (token.kind == LPAREN) {
+                         return List.of(methodDeclaratorRest(
+                             pos, mods, type, name, typarams,
+                             isInterface, isVoid, dc));
+                     } else if (!isVoid && typarams.isEmpty()) {
+                         List<JCTree> defs =
+                             variableDeclaratorsRest(pos, mods, type, name, isInterface, dc,
+                                                     new ListBuffer<JCTree>()).toList();
+                         storeEnd(defs.last(), token.endPos);
+                         accept(SEMI);
+                         return defs;
+                     } else {
+                         pos = token.pos;
+                         List<JCTree> err = isVoid
+                             ? List.<JCTree>of(toP(F.at(pos).MethodDef(mods, name, type, typarams,
+                                 List.<JCVariableDecl>nil(), List.<JCExpression>nil(), null, null)))
+                             : null;
+                         return List.<JCTree>of(syntaxError(token.pos, err, "expected", LPAREN));
+                     }
+                 }
+             }
+         }
      }
      
      JCStatement signatureDecl(JCModifiers mod, String dc){

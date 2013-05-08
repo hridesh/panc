@@ -359,6 +359,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         STATE,
         PROCCALL,
         FREE,
+        INIT,
         FORALLLOOP;
         // end Panini code
 
@@ -514,6 +515,57 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
     }
     
 	// Panini code
+    public static class JCInitDecl extends JCMethodDecl implements InitMethodTree {
+		public Kind kind;
+		public Tag tag;
+
+		protected JCInitDecl(JCModifiers mods, Name name, JCExpression restype,
+				List<JCTypeParameter> typarams, List<JCVariableDecl> params,
+				List<JCExpression> thrown, JCBlock body, JCExpression defaultValue,
+				MethodSymbol sym) {
+			super(mods, name, restype, typarams, params, thrown, body, defaultValue, sym);
+			kind = Kind.INIT;
+			tag = Tag.INIT;
+		}
+
+		public void switchToMethod() {
+			kind = Kind.METHOD;
+			tag = Tag.METHODDEF;
+		}
+
+		public void switchToInit() {
+			kind = Kind.INIT;
+			tag = Tag.INIT;
+		}
+
+		@Override
+		public Kind getKind() {
+			return kind;
+		}
+
+		@Override
+		public Tag getTag() {
+			return tag;
+		}
+
+		@Override
+		public void accept(Visitor v) {
+			if (kind != Kind.INIT)
+				v.visitMethodDef(this);
+			else
+				v.visitInitDef(this);
+		}
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			if (kind != Kind.PROCEDURE)
+				return v.visitMethod(this, d);
+			else
+				return v.visitInit(this, d);
+		}
+
+	}
+    
 	public static class JCProcDecl extends JCMethodDecl implements ProcedureTree {
 		public Kind kind;
 		public Tag tag;
@@ -2989,12 +3041,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitProcApply(JCProcInvocation that)    { visitTree(that); }
         public void visitStateDef(JCStateDecl that)	         { visitTree(that); }
         public void visitCapsuleArrayCall(JCCapsuleArrayCall that) { visitTree(that); }
-        public void visitCapsuleArray(JCCapsuleArray that)     { visitTree(that); }
+        public void visitCapsuleArray(JCCapsuleArray that)   { visitTree(that); }
         public void visitSystemDef(JCSystemDecl that)	     { visitTree(that); }
         public void visitCapsuleDef(JCCapsuleDecl that)	     { visitTree(that); }
         public void visitFree(JCFree that)	                 { visitTree(that); }
         public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }
-        public void visitForeach(JCForeach that)	 	 { visitTree(that); }
+        public void visitInitDef(JCInitDecl that) 			 { visitTree(that); }
+        public void visitForeach(JCForeach that)	 	     { visitTree(that); }
         // end Panini code
         public void visitTree(JCTree that)                   { Assert.error(); }
     }

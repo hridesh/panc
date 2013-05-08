@@ -378,6 +378,44 @@ public class Pretty extends JCTree.Visitor {
      * Visitor methods
      *************************************************************************/
     // Panini code
+    public void visitInitDef(JCInitDecl tree){
+    	try {
+            // when producing source output, omit anonymous constructors
+            if (tree.name == tree.name.table.names.init &&
+                    enclClassName == null &&
+                    sourceOutput) return;
+            println(); align();
+            printDocComment(tree);
+            printExpr(tree.mods);
+            printTypeParameters(tree.typarams);
+            if (tree.name == tree.name.table.names.init) {
+                print(enclClassName != null ? enclClassName : tree.name);
+            } else {
+                printExpr(tree.restype);
+                print(" " + tree.name);
+            }
+            print("(");
+            printExprs(tree.params);
+            print(")");
+            if (tree.thrown.nonEmpty()) {
+                print(" throws ");
+                printExprs(tree.thrown);
+            }
+            if (tree.defaultValue != null) {
+                print(" default ");
+                printExpr(tree.defaultValue);
+            }
+            if (tree.body != null) {
+                print(" ");
+                printStat(tree.body);
+            } else {
+                print(";");
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    
     public void visitProcDef(JCProcDecl tree){
     	try {
             // when producing source output, omit anonymous constructors

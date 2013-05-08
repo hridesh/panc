@@ -58,6 +58,7 @@ public interface Tree {
     	FREE(FreeTree.class),
     	FORALLLOOP(ForAllTree.class),
     	FOREACH(ForeachTree.class),
+    	INIT(InitMethodTree.class),
     	// end Panini code
         /**
          * Used for instances of {@link AnnotationTree}.

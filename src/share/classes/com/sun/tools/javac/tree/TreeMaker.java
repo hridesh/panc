@@ -115,80 +115,83 @@ public class TreeMaker implements JCTree.Factory {
         return this;
     }
     // Panini code
-    public JCProcDecl ProcDef(JCModifiers mods,
-	            Name name,
-	            JCExpression restype,
-	            List<JCTypeParameter> typarams,
-	            List<JCVariableDecl> params,
-	            List<JCExpression> thrown,
-	            JCBlock body,
-	            JCExpression defaultValue) {
-	JCProcDecl tree = new JCProcDecl(mods,
-	                    name,
-	                    restype,
-	                    typarams,
-	                    params,
-	                    thrown,
-	                    body,
-	                    defaultValue,
-	                    null);
-	tree.pos = pos;
-	return tree;
+	public JCInitDecl InitDef(JCModifiers mods, JCBlock body) {
+		JCInitDecl tree = new JCInitDecl(mods,
+				names.fromString(PaniniConstants.PANINI_CAPSULE_INIT),
+				TypeIdent(TypeTags.VOID), List.<JCTypeParameter> nil(),
+				List.<JCVariableDecl> nil(), List.<JCExpression> nil(), body,
+				null, null);
+		tree.pos = pos;
+		tree.switchToMethod();
+		return tree;
 	}
-    public JCProcInvocation ProcApply(List<JCExpression> typeargs,
-            JCExpression fn,
-            List<JCExpression> args)
-	{
+
+	public JCProcDecl ProcDef(JCModifiers mods, Name name,
+			JCExpression restype, List<JCTypeParameter> typarams,
+			List<JCVariableDecl> params, List<JCExpression> thrown,
+			JCBlock body, JCExpression defaultValue) {
+		JCProcDecl tree = new JCProcDecl(mods, name, restype, typarams, params,
+				thrown, body, defaultValue, null);
+		tree.pos = pos;
+		return tree;
+	}
+
+	public JCProcInvocation ProcApply(List<JCExpression> typeargs,
+			JCExpression fn, List<JCExpression> args) {
 		JCProcInvocation tree = new JCProcInvocation(typeargs, fn, args);
 		tree.pos = pos;
 		return tree;
 	}
-    
-    public JCStateDecl StateDef(JCModifiers mods, Name name, JCExpression vartype, JCExpression init) {
-        JCStateDecl tree = new JCStateDecl(mods, name, vartype, init, null);
-        tree.pos = pos;
-        return tree;
-    }
-    
-    public JCCapsuleArrayCall CapsuleArrayCall(Name name, JCExpression index, JCExpression indexed, List<JCExpression> args){
-    	JCCapsuleArrayCall tree = new JCCapsuleArrayCall(name, index, indexed, args);
-    	tree.pos = pos;
-    	return tree;
-    }
-    
-    public JCCapsuleArray CapsuleArray(JCExpression elemtype, int amount) {
-        JCCapsuleArray tree = new JCCapsuleArray(elemtype, amount);
-        tree.pos = pos;
-        return tree;
-    }
-    
-    public JCSystemDecl SystemDef(JCModifiers mods, Name name, JCBlock body, List<JCVariableDecl> params){
-    	JCSystemDecl tree = new JCSystemDecl(mods, name, body, params);
-    	tree.pos = pos;
-    	return tree;
-    }
-        
-    public JCCapsuleDecl CapsuleDef(JCModifiers mods,
-    		Name name, 
-			List<JCVariableDecl> params, 
-			List<JCExpression> implementing, 
-			List<JCTree> defs){
-    	JCCapsuleDecl tree = new JCCapsuleDecl(mods, name, params, implementing, defs);
-    	tree.pos = pos;
-    	return tree;
-    }
-        
-    public JCFree Free(JCExpression exp){
-    	JCFree tree = new JCFree(exp);
-    	tree.pos = pos;
-    	return tree;
-    }
-    
-    public JCForAllLoop ForAll(JCVariableDecl var, JCExpression exp, JCStatement body){
-    	JCForAllLoop tree = new JCForAllLoop(var, exp, body);
-    	tree.pos = pos;
-    	return tree;
-    }
+
+	public JCStateDecl StateDef(JCModifiers mods, Name name,
+			JCExpression vartype, JCExpression init) {
+		JCStateDecl tree = new JCStateDecl(mods, name, vartype, init, null);
+		tree.pos = pos;
+		return tree;
+	}
+
+	public JCCapsuleArrayCall CapsuleArrayCall(Name name, JCExpression index,
+			JCExpression indexed, List<JCExpression> args) {
+		JCCapsuleArrayCall tree = new JCCapsuleArrayCall(name, index, indexed,
+				args);
+		tree.pos = pos;
+		return tree;
+	}
+
+	public JCCapsuleArray CapsuleArray(JCExpression elemtype, int amount) {
+		JCCapsuleArray tree = new JCCapsuleArray(elemtype, amount);
+		tree.pos = pos;
+		return tree;
+	}
+
+	public JCSystemDecl SystemDef(JCModifiers mods, Name name, JCBlock body,
+			List<JCVariableDecl> params) {
+		JCSystemDecl tree = new JCSystemDecl(mods, name, body, params);
+		tree.pos = pos;
+		return tree;
+	}
+
+	public JCCapsuleDecl CapsuleDef(JCModifiers mods, Name name,
+			List<JCVariableDecl> params, List<JCExpression> implementing,
+			List<JCTree> defs) {
+		JCCapsuleDecl tree = new JCCapsuleDecl(mods, name, params,
+				implementing, defs);
+		tree.pos = pos;
+		return tree;
+	}
+
+	public JCFree Free(JCExpression exp) {
+		JCFree tree = new JCFree(exp);
+		tree.pos = pos;
+		return tree;
+	}
+
+	public JCForAllLoop ForAll(JCVariableDecl var, JCExpression exp,
+			JCStatement body) {
+		JCForAllLoop tree = new JCForAllLoop(var, exp, body);
+		tree.pos = pos;
+		return tree;
+	}
     // end Panini code
 
     /**

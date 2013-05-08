@@ -508,5 +508,18 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 		JCForAllLoop t = (JCForAllLoop)node;
 		return M.at(t.pos).ForAll(t.getVariable(), t.getExpression(), t.getStatement());
 	}
+	
+	@Override
+	public JCTree visitInit(InitMethodTree node, P p){
+		JCMethodDecl t  = (JCMethodDecl) node;
+        JCModifiers mods = copy(t.mods, p);
+        JCExpression restype = copy(t.restype, p);
+        List<JCTypeParameter> typarams = copy(t.typarams, p);
+        List<JCVariableDecl> params = copy(t.params, p);
+        List<JCExpression> thrown = copy(t.thrown, p);
+        JCBlock body = copy(t.body, p);
+        JCExpression defaultValue = copy(t.defaultValue, p);
+        return M.at(t.pos).MethodDef(mods, t.name, restype, typarams, params, thrown, body, defaultValue);
+	}
 	// end Panini code
 }

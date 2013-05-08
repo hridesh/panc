@@ -370,7 +370,7 @@ public class Enter extends JCTree.Visitor {
     				if(capsuleDefs.getTag() == METHODDEF){
     					if(((JCMethodDecl)capsuleDefs).name.toString().equals("run")&&((JCMethodDecl)capsuleDefs).params.isEmpty())
     						hasRun = true;
-    					if((((JCMethodDecl)capsuleDefs).mods.flags & PRIVATE)==0)
+    					if((((JCMethodDecl)capsuleDefs).mods.flags & PRIVATE)==0 && !((JCMethodDecl)capsuleDefs).name.toString().equals(PaniniConstants.PANINI_CAPSULE_INIT))
     					interfaceBody.add(make.MethodDef(tc.copy(((JCMethodDecl)capsuleDefs).mods), 
     							((JCMethodDecl)capsuleDefs).name, 
     							tc.copy(((JCMethodDecl)capsuleDefs).restype), 
@@ -843,7 +843,7 @@ public class Enter extends JCTree.Visitor {
                     		);
                     p.switchToMethod();
                     tree.publicMethods = tree.publicMethods.append(p);
-        		}else 
+        		}else
         			definitions.add(mdecl);
         	} else if(tree.defs.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
@@ -884,7 +884,7 @@ public class Enter extends JCTree.Visitor {
                     		);
                     p.switchToMethod();
                     tree.publicMethods = tree.publicMethods.append(p);
-        		}else 
+        		}else
         			definitions.add(mdecl);
         	} else if(tree.defs.get(i).getTag() == VARDEF){
     			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
