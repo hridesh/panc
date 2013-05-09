@@ -280,11 +280,11 @@ public final class Attr extends CapsuleInternal {
 			else  			
 				throw new AssertionError("Invalid statement gone through the parser");
 		}
-//		if(!capsules.isEmpty()){
-//			for(Name n : capsules){
-//				log.error("capsule.instance.not.initialized", n);
-//			}
-//		}
+		if(!capsules.isEmpty()){
+			for(Name n : capsules){
+				log.error("capsule.instance.not.initialized", n);
+			}
+		}
 		if(tree.hasTaskCapsule)
 			processSystemAnnotation(tree, inits, env);
 
@@ -485,6 +485,8 @@ public final class Attr extends CapsuleInternal {
 				}
 				JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)s).expr;
 				loopBody.appendList(transWiring(mi,variables, capsules, sysGraph, true));
+				if(loop.var.name.toString().equals(mi.meth.toString()))
+					capsules.remove(names.fromString(loop.expr.toString()));
 				if (mi.args.length() != c.capsuleParameters.length()) {
 					log.error(mi.pos(), "arguments.of.wiring.mismatch");
 				} else {
@@ -517,6 +519,8 @@ public final class Attr extends CapsuleInternal {
 			}
 			JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)loop.body).expr;
 			loopBody.appendList(transWiring(mi,variables, capsules, sysGraph, true));
+			if(loop.var.name.toString().equals(mi.meth.toString()))
+				capsules.remove(names.fromString(loop.expr.toString()));
 			if (mi.args.length() != c.capsuleParameters.length()) {
 				log.error(mi.pos(), "arguments.of.wiring.mismatch");
 			} else {
