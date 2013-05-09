@@ -265,6 +265,10 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 	}
 
 	// Panini code
+	public R visitInit(InitMethodTree node, P p) {
+		return defaultAction(node, p);
+	}
+	
 	public R visitProc(ProcedureTree node, P p) {
 		return defaultAction(node, p);
 	}

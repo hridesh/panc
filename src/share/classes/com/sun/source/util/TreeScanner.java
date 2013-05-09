@@ -399,6 +399,10 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     }
 
 	// Panini code
+    public R visitInit(InitMethodTree node, P p) {
+		return visitMethod(node, p);
+	}
+    
     public R visitProc(ProcedureTree node, P p) {
 		return visitMethod(node, p);
 	}

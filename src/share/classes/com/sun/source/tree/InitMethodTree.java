@@ -4,7 +4,7 @@ import java.util.List;
 
 import javax.lang.model.element.Name;
 
-public interface InitMethodTree extends Tree {
+public interface InitMethodTree extends MethodTree {
     ModifiersTree getModifiers();
     Name getName();
     Tree getReturnType();
