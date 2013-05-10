@@ -1635,7 +1635,7 @@ public class JavacParser implements Parser {
                 t = bracketsOpt(t);
                 return toP(F.at(pos).TypeArray(t));
             } else {
-                JCExpression sizeTree = literal(names.empty);
+                JCExpression sizeTree =  parseExpression();
                 if (sizeTree.getKind()!=Kind.INT_LITERAL) {
                     log.error(pos, "capsule.array.call.illegal.index");
                     System.exit(5555);
