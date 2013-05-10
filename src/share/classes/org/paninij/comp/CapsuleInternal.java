@@ -884,6 +884,7 @@ public class CapsuleInternal extends Internal {
 															v.get(i), v)),
 											id(((JCMethodDecl) def).params.get(i+1).name.toString()))));
 						}
+						break;
 					}
 				}
 			}
