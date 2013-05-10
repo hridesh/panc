@@ -52,7 +52,7 @@ public abstract class PaniniCapsuleSequential implements PaniniCapsule{
   	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
   	 * 
   	 */
-  	public final void panini$shutdown () {
+  	public final void shutdown () {
   	}
   	
   	/**
@@ -66,7 +66,7 @@ public abstract class PaniniCapsuleSequential implements PaniniCapsule{
   	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
   	 * 
   	 */
-  	public final void panini$exit () {
+  	public final void exit () {
   	}
 
   	protected void panini$capsule$init(){}

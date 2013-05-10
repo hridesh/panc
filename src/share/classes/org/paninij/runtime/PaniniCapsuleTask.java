@@ -114,7 +114,7 @@ public abstract class PaniniCapsuleTask implements PaniniCapsule{
 	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
 	 * 
 	 */
-	public final void panini$shutdown () {
+	public final void shutdown () {
 		org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-1);
 		panini$push(d);
 	}
@@ -130,7 +130,7 @@ public abstract class PaniniCapsuleTask implements PaniniCapsule{
 	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
 	 * 
 	 */
-	public final void panini$exit () {
+	public final void exit () {
 		org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-2);
 		panini$push(d);
 	}
