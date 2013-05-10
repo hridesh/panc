@@ -1,0 +1,107 @@
+<project name="pipesort" basedir=".">
+    <property name="src.dir" value="${basedir}/." />
+    <property name="panini.src.dir" value="${basedir}/." />
+    <property name="build.dir" value="${basedir}/bin" />
+    <property name="build.panini.dir" value="${build.dir}/panini"/>
+
+    <!-- Relative to distributable folder after export.sh runs. -->
+    <property name="panc.bin" 
+              value=".."/>
+    <property name="panc.jar"
+              value="${panc.bin}/lib/dist/bootstrap/lib/javac.jar" />
+    <!--Ensure commutativity.settings is set up properly-->
+    <available file="${panc.bin}" property="panc-bin-exists" />
+    <available file="${panc.jar}" property="panc-jar-exists" />
+    <fail message="panc home folder does not exist."
+          unless="panc-bin-exists" />
+    <fail message="${panc.jar} does not exist."
+          unless="panc-jar-exists" />
+
+    <!-- Create a version of javac, which uses the javac.jar produced by the 
+         panini compiler -->
+    <presetdef name="panc">
+        <javac fork="yes">
+            <compilerarg value="-J-Xbootclasspath/p:${panc.jar}" />
+        </javac>
+    </presetdef>
+
+    <!--========================================================================
+        name: build.helloworld
+        Compile the helloworld example.
+        =====================================================================-->
+    <target name="build.helloworld" description="">
+        <build includes="HelloWorld.java" />
+    </target>
+
+    <target name="build.pi" description="">
+        <build includes="Pi.java" />
+    </target>
+
+    <target name="build.Barbershop" description="">
+        <build includes="Barbershop.java" />
+    </target>
+
+    <target name="build.Barbershop2" description="">
+        <build includes="Barbershop2.java" />
+    </target>
+
+    <target name="build.Histogram" description="">
+        <build includes="Histogram.java" />
+    </target>
+
+    <target name="build.Philosophers" description="">
+        <build includes="Philosophers.java" />
+    </target>
+
+    <target name="build.Pipeline" description="">
+        <build includes="Pipeline.java" />
+    </target>
+
+    <target name="build.SequentialConsistency" description="">
+        <build includes="SequentialConsistency.java" />
+    </target>
+
+    <target name="build.AddressBook" description="">
+        <build includes="AddressBook/**/*.java"
+               classpath="AddressBook/htmlparser.jar"/>
+    </target>
+
+    <target name="build.HellWorld-separate" description="">
+        <build includes="Console.java" />
+        <build includes="Greeter.java" />
+        <build includes="HelloWorld.java" />
+    </target>
+
+    <!--========================================================================
+        name: build
+        Simplifies building a single example.
+        =====================================================================-->
+    <macrodef name="build">
+        <attribute name="includes" />
+        <attribute name="classpath" default="" />
+        <sequential>
+        <mkdir dir="${build.panini.dir}"/>
+        <panc srcdir="${panini.src.dir}"
+              destdir="${build.panini.dir}"
+              includes="@{includes}"
+              includeantruntime="no"
+              classpath="@{classpath}"
+              debug="yes">
+              <classpath />
+        </panc>
+        </sequential>
+
+    </macrodef>
+
+
+    <!--========================================================================
+        name: clean
+        =====================================================================-->
+    <target name="clean" description="Delete generated files.">
+        <delete failonerror="no">
+            <fileset dir="${build.dir}" includes="**/*"/>
+            <fileset dir="${dist.dir}" includes="**/*"/>
+        </delete>
+    </target>
+
+</project>
