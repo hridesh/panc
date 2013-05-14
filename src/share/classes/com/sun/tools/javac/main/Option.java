@@ -206,6 +206,26 @@ public enum Option {
                 return super.process(helper, option);
             }
         },
+
+    SCLEVEL("-sc-level:", "opt.panini.sclevel",
+            STANDARD, BASIC, ONEOF, "V1", "V2", "V3", "FULL") {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            boolean r = super.process(helper, option);
+            final String sclevel = helper.get(this);
+
+            //The valid options for the flags are the same as the
+            //enum names. Quick way to set the value is use the enum valueOf command.
+            try{
+                Attr.seqConstAlg = org.paninij.consistency.ConsistencyChecker.SEQ_CONST_ALG.valueOf(sclevel);
+            } catch (IllegalArgumentException iae) {
+                System.err.println("Unknown Sequential Consistency option " + sclevel);
+            }
+
+            return r;
+        }
+    },
+
         // end Panini code
 
     VERSION("-version", "opt.version", STANDARD, INFO) {

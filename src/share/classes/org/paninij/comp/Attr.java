@@ -31,6 +31,9 @@ import static com.sun.tools.javac.tree.JCTree.Tag.MAAPPLY;
 import static com.sun.tools.javac.tree.JCTree.Tag.PREINC;
 import static com.sun.tools.javac.tree.JCTree.Tag.TYPEIDENT;
 import static com.sun.tools.javac.tree.JCTree.Tag.VARDEF;
+
+import static org.paninij.consistency.ConsistencyChecker.SEQ_CONST_ALG;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,6 +41,7 @@ import java.util.Set;
 
 import org.paninij.analysis.ASTCFGBuilder;
 import org.paninij.consistency.ConsistencyChecker;
+import org.paninij.consistency.SeqConstCheckAlgorithm;
 
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Attribute;
@@ -76,6 +80,7 @@ public final class Attr extends CapsuleInternal {
 	Annotate annotate;
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
+	private final SEQ_CONST_ALG seqConstAlg;
 
 	public Attr(TreeMaker make, Names names, Enter enter,
 			MemberEnter memberEnter, Symtab syms, Log log,  
@@ -85,6 +90,7 @@ public final class Attr extends CapsuleInternal {
 		this.annotate = annotate;
 		this.annotationProcessor = new AnnotationProcessor(names, make, log);
 		this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
+		this.seqConstAlg = SEQ_CONST_ALG.FULL;
 	}
 
 	public void visitTopLevel(JCCompilationUnit tree) { /* SKIPPED */ }
