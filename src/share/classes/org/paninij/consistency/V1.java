@@ -129,9 +129,7 @@ System.out.println("loops = " + loops.size());
 			Route rt2 = new Route();
 			Route r1 = br.r1;
 			Route r2 = br.r2;
-System.out.println("trim0");
-r1.printRoute();
-r2.printRoute();
+
 			int s1 = r1.size();
 			int s2 = r2.size();
 			for (int i = 0; i < s1 && i < s2; i++) {
