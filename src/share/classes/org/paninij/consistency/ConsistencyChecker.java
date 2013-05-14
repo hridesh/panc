@@ -19,6 +19,8 @@
 
 package org.paninij.consistency;
 
+import static org.paninij.consistency.ConsistencyChecker.SEQ_CONST_ALG;
+
 import org.paninij.systemgraph.*;
 import org.paninij.systemgraph.SystemGraph.Edge;
 import org.paninij.systemgraph.SystemGraph.Node;
@@ -33,8 +35,10 @@ import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import org.paninij.effects.*;
 
 public class ConsistencyChecker {
-	SystemGraph graph;
-	Log log;
+	private SystemGraph graph;
+	private Log log;
+
+
 	public ConsistencyChecker(SystemGraph graph, Log log) {
 		this.graph = graph;
 		this.log = log;
@@ -258,4 +262,41 @@ public class ConsistencyChecker {
 		}
 		return found;
 	}
+
+	/**
+	 * Factory method to map {@link SEQ_CONST_ALG} enums to concrete types of Checkers.
+	 * @param type Checker algorithm to use
+	 * @param sysGraph
+	 * @param log
+	 * @return The checker corresponding to the type.
+	 */
+	public static SeqConstCheckAlgorithm createChecker(SEQ_CONST_ALG type, SystemGraph sysGraph, Log log) {
+		switch (type) {
+		case V1:
+			return new V1(sysGraph, log);
+		case V2:
+			return new V2(sysGraph, log);
+		case V3:
+			return new V3(sysGraph, log);
+		case FULL:
+			return new SequentialFIFO(sysGraph, log);
+		//Keep the compiler happy. Will complain about not all paths returning a values otherwise.
+		default:
+			return new SequentialFIFO(sysGraph, log);
+		}
+	}
+
+	/**
+	 * Enumerate the types of detection
+	 * algorithms that exist. L1 - L3 each add one more piece to the detection.
+	 * FULL indicates everything is to be used.
+	 */
+	public static enum SEQ_CONST_ALG {
+		V1,
+		V2,
+		V3,
+		FULL
+	}
+
 }
+
