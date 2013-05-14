@@ -107,20 +107,27 @@ public final class Attr extends CapsuleInternal {
 	public final void visitLabelled(JCLabeledStatement tree) {  /* SKIPPED */ }
 	public final void visitAssert(JCAssert tree) {  /* SKIPPED */ }
 	
+	public static long   start;
 	public final void preVisitMethodDef(JCMethodDecl tree,
 			final com.sun.tools.javac.comp.Attr attr) {
 		if (tree.sym.isProcedure) {
 			try {
 				((JCProcDecl) tree).switchToProc();
+				start=System.currentTimeMillis();
 				tree.accept(attr);
 			} catch (ClassCastException e) {
 			}
 		}
 	}
 
+	public static double cumulated = 0.0;
 	public final void postVisitMethodDef(JCMethodDecl tree, Env<AttrContext> env, Resolve rs) {
-		if (tree.body != null)
+		if (tree.body != null) {
 			tree.accept(new ASTCFGBuilder());
+			cumulated += (System.currentTimeMillis() - start) / 1000.0;
+		}
+
+
 		if (tree.sym.owner instanceof CapsuleSymbol) {
 			////
 //			EffectSet es = new EffectSet();
@@ -242,6 +249,8 @@ public final class Attr extends CapsuleInternal {
 		ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
 		Map<Name, Name> variables = new HashMap<Name, Name>();
 		Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
+
+		double start = System.currentTimeMillis();
 		SystemGraph sysGraph = systemGraphBuilder.createSystemGraph();
 		Set<Name> capsules = new HashSet<Name>();
 
@@ -294,11 +303,60 @@ public final class Attr extends CapsuleInternal {
 		tree.defs = tree.defs.append(maindecl);
 
 		systemGraphBuilder.completeEdges(sysGraph, annotationProcessor, env, rs);
-//		System.out.println(sysGraph);
+
+		double end = (System.currentTimeMillis() - start) / 1000.;
+		double graphtime = end; //Not sure what the 'graphtime' measures.
+		//	System.out.println(sysGraph);
 
 		// Sequential consistency detection
+		System.out.println("cc");
 		ConsistencyChecker cc = new ConsistencyChecker(sysGraph, log);
 		cc.potentialPathCheck();
+		System.out.println();
+
+		System.out.println("v1");
+		start = System.currentTimeMillis();
+		org.paninij.consistency.V1 v1 =
+			new org.paninij.consistency.V1(sysGraph, log);
+		v1.potentialPathCheck();
+		end = (System.currentTimeMillis() - start) / 1000.;
+		cumulated += start;
+		System.out.println("v1 uses " + end);
+		System.out.println();
+
+		System.out.println("v2");
+		start = System.currentTimeMillis();
+		org.paninij.consistency.V2 v2 =
+			new org.paninij.consistency.V2(sysGraph, log);
+		v2.potentialPathCheck();
+		end = (System.currentTimeMillis() - start) / 1000.;
+		System.out.println("v2 uses " + end);
+		System.out.println();
+
+		System.out.println("v3");
+		start = System.currentTimeMillis();
+		org.paninij.consistency.V3 v3 =
+			new org.paninij.consistency.V3(sysGraph, log);
+		v3.potentialPathCheck();
+		end = (System.currentTimeMillis() - start) / 1000.;
+		cumulated += start;
+		System.out.println("v3 uses " + end);
+		System.out.println();
+
+		System.out.println("sf");
+		start = System.currentTimeMillis();
+		org.paninij.consistency.SequentialFIFO sf =
+			new org.paninij.consistency.SequentialFIFO(sysGraph, log);
+		sf.potentialPathCheck();
+		cumulated += start;
+		end = (System.currentTimeMillis() - start) / 1000.;
+		System.out.println("sf uses " + end);
+
+		System.out.println("Effect time = " + cumulated);
+		System.out.println("Graph time = " + graphtime);
+		System.out.println("Total Graph time = " + (graphtime + cumulated));
+		System.exit(0);
+//		System.out.println(sysGraph);
 
 		tree.switchToClass();
 

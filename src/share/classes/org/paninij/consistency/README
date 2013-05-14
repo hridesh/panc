@@ -1,0 +1,6 @@
+This package contains different version of the sequential consistency violation
+detection algorithm.
+
+The basic version is in ConsistencyChecker.java
+The second version consider the FIFO of the message queue for Capsules, in
+SequentialFIFO.java.
