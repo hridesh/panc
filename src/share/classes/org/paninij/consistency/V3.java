@@ -37,7 +37,7 @@ import org.paninij.effects.*;
 //before m2;
 //a sends b message m1, a sends c message m2, c forwards m2 to b
 //there is no order guarantee for the arrival of the messages m1 and m2.
-public class V3 {
+public class V3 implements SeqConstCheckAlgorithm {
 	private SystemGraph graph;
 	private Log log;
 	private final boolean debug = false;
@@ -77,6 +77,7 @@ public class V3 {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
+	@Override
 	public void potentialPathCheck() {
 if (debug) {
 System.out.println("edge");

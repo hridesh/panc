@@ -31,7 +31,7 @@ import org.paninij.effects.*;
 
 // This version of the sequential consistency violation detector considers only
 // synchronization.
-public class V2 {
+public class V2 implements SeqConstCheckAlgorithm {
 	private SystemGraph graph;
 	private Log log;
 	private final boolean debug = false;
@@ -71,6 +71,7 @@ public class V2 {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
+	@Override
 	public void potentialPathCheck() {
 if (debug) {
 System.out.println("edge");

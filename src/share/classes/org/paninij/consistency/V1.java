@@ -31,7 +31,7 @@ import org.paninij.effects.*;
 
 // This version of the sequential consistency violation detector signals warning
 // when two paths conflict.
-public class V1 {
+public class V1 implements SeqConstCheckAlgorithm {
 	private SystemGraph graph;
 	private Log log;
 	/*Make debug final to help the compiler*/
@@ -71,6 +71,7 @@ public class V1 {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
+	@Override
 	public void potentialPathCheck() {
 		if (debug) {
 			System.out.println("edge");

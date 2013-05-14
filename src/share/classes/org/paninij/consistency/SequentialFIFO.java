@@ -31,7 +31,7 @@ import org.paninij.effects.*;
 
 // This version of the sequential consistency violation detector considers the
 // FIFO of the Capsule message queue.
-public class SequentialFIFO {
+public class SequentialFIFO implements SeqConstCheckAlgorithm {
 	private SystemGraph graph;
 	private Log log;
 	private final boolean debug = false;
@@ -71,6 +71,7 @@ public class SequentialFIFO {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
+	@Override
 	public void potentialPathCheck() {
 if (debug) {
 System.out.println("edge");
