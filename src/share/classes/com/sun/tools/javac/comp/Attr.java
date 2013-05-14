@@ -742,7 +742,7 @@ public class Attr extends JCTree.Visitor {
     }
 
     public final void visitSystemDef(final JCSystemDecl tree){
-    	pAttr.visitSystemDef(tree, rs, env, doGraphs);
+		pAttr.visitSystemDef(tree, rs, env, doGraphs, seqConstAlg);
     }
     
     public void visitProcDef(JCProcDecl tree){

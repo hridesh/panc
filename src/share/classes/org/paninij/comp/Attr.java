@@ -14,10 +14,11 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  * 
- * Contributor(s): Hridesh Rajan, Eric Lin
+ * Contributor(s): Hridesh Rajan, Eric Lin, Sean L. Mooney
  */
 
 package org.paninij.comp;
+
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.TypeTags.INT;
@@ -80,7 +81,6 @@ public final class Attr extends CapsuleInternal {
 	Annotate annotate;
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
-	private final SEQ_CONST_ALG seqConstAlg;
 
 	public Attr(TreeMaker make, Names names, Enter enter,
 			MemberEnter memberEnter, Symtab syms, Log log,  
@@ -90,7 +90,6 @@ public final class Attr extends CapsuleInternal {
 		this.annotate = annotate;
 		this.annotationProcessor = new AnnotationProcessor(names, make, log);
 		this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
-		this.seqConstAlg = SEQ_CONST_ALG.FULL;
 	}
 
 	public void visitTopLevel(JCCompilationUnit tree) { /* SKIPPED */ }
@@ -221,7 +220,7 @@ public final class Attr extends CapsuleInternal {
             effects.computeEffects(tree);*/
 	}
 
-	public final void visitSystemDef(final JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs){
+	public final void visitSystemDef(final JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
 		/*if (doGraphs) {
           ((Symbol.SystemSymbol)tree.sym).graphs = graphsBuilder.buildGraphs(tree);
             effects.substituteProcEffects(tree);
@@ -311,8 +310,7 @@ public final class Attr extends CapsuleInternal {
 		systemGraphBuilder.completeEdges(sysGraph, annotationProcessor, env, rs);
 
 		double end = (System.currentTimeMillis() - start) / 1000.;
-		double graphtime = end; //Not sure what the 'graphtime' measures.
-		//	System.out.println(sysGraph);
+		double graphtime = end;
 
 		// Sequential consistency detection
 		System.out.println("cc");
@@ -320,48 +318,23 @@ public final class Attr extends CapsuleInternal {
 		cc.potentialPathCheck();
 		System.out.println();
 
-		System.out.println("v1");
+		SeqConstCheckAlgorithm sca =
+			ConsistencyChecker.createChecker(seqConstAlg, sysGraph, log);
+
+		System.out.println(seqConstAlg);
 		start = System.currentTimeMillis();
-		org.paninij.consistency.V1 v1 =
-			new org.paninij.consistency.V1(sysGraph, log);
-		v1.potentialPathCheck();
+		sca.potentialPathCheck();
 		end = (System.currentTimeMillis() - start) / 1000.;
 		cumulated += start;
-		System.out.println("v1 uses " + end);
+		System.out.println(seqConstAlg + " uses " + end);
 		System.out.println();
-
-		System.out.println("v2");
-		start = System.currentTimeMillis();
-		org.paninij.consistency.V2 v2 =
-			new org.paninij.consistency.V2(sysGraph, log);
-		v2.potentialPathCheck();
-		end = (System.currentTimeMillis() - start) / 1000.;
-		System.out.println("v2 uses " + end);
-		System.out.println();
-
-		System.out.println("v3");
-		start = System.currentTimeMillis();
-		org.paninij.consistency.V3 v3 =
-			new org.paninij.consistency.V3(sysGraph, log);
-		v3.potentialPathCheck();
-		end = (System.currentTimeMillis() - start) / 1000.;
-		cumulated += start;
-		System.out.println("v3 uses " + end);
-		System.out.println();
-
-		System.out.println("sf");
-		start = System.currentTimeMillis();
-		org.paninij.consistency.SequentialFIFO sf =
-			new org.paninij.consistency.SequentialFIFO(sysGraph, log);
-		sf.potentialPathCheck();
-		cumulated += start;
-		end = (System.currentTimeMillis() - start) / 1000.;
-		System.out.println("sf uses " + end);
 
 		System.out.println("Effect time = " + cumulated);
 		System.out.println("Graph time = " + graphtime);
 		System.out.println("Total Graph time = " + (graphtime + cumulated));
 		System.exit(0);
+
+
 //		System.out.println(sysGraph);
 
 		tree.switchToClass();
