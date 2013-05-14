@@ -14,7 +14,7 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  * 
- * Contributor(s): Yuheng Long
+ * Contributor(s): Yuheng Long, Sean L. Mooney
  */
 
 package org.paninij.consistency;
@@ -32,13 +32,14 @@ import org.paninij.effects.*;
 // This version of the sequential consistency violation detector considers the
 // FIFO of the Capsule message queue.
 public class SequentialFIFO {
-	SystemGraph graph;
-	Log log;
+	private SystemGraph graph;
+	private Log log;
+	private final boolean debug = false;
+
 	public SequentialFIFO(SystemGraph graph, Log log) {
 		this.graph = graph;
 		this.log = log;
 	}
-	boolean debug = false;
 
 	// all the loops for the capsule methods.
 	private final HashMap<ClassMethod, HashSet<Route>> loops =

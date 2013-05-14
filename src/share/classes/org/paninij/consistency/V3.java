@@ -14,7 +14,7 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  * 
- * Contributor(s): Yuheng Long
+ * Contributor(s): Yuheng Long, Sean L. Mooney
  */
 
 package org.paninij.consistency;
@@ -38,13 +38,14 @@ import org.paninij.effects.*;
 //a sends b message m1, a sends c message m2, c forwards m2 to b
 //there is no order guarantee for the arrival of the messages m1 and m2.
 public class V3 {
-	SystemGraph graph;
-	Log log;
+	private SystemGraph graph;
+	private Log log;
+	private final boolean debug = false;
+
 	public V3(SystemGraph graph, Log log) {
 		this.graph = graph;
 		this.log = log;
 	}
-	boolean debug = false;
 
 	// all the loops for the capsule methods.
 	private final HashMap<ClassMethod, HashSet<Route>> loops =

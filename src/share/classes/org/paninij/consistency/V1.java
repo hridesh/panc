@@ -14,7 +14,7 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  * 
- * Contributor(s): Yuheng Long
+ * Contributor(s): Yuheng Long, Sean L. Mooney
  */
 
 package org.paninij.consistency;
@@ -32,15 +32,16 @@ import org.paninij.effects.*;
 // This version of the sequential consistency violation detector signals warning
 // when two paths conflict.
 public class V1 {
-	SystemGraph graph;
-	Log log;
+	private SystemGraph graph;
+	private Log log;
+	/*Make debug final to help the compiler*/
+	private final boolean debug = false;
+	private final HashSet<Route> paths = new HashSet<Route>();
+
 	public V1(SystemGraph graph, Log log) {
 		this.graph = graph;
 		this.log = log;
 	}
-	boolean debug = false;
-
-	private final HashSet<Route> paths = new HashSet<Route>();
 
 	// all the loops for the capsule methods.
 	private final HashMap<ClassMethod, HashSet<Route>> loops =
@@ -71,13 +72,13 @@ public class V1 {
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
 	public void potentialPathCheck() {
-if (debug) {
-System.out.println("edge");
-for (Edge ee : graph.edges) {
-	System.out.println(ee.fromNode.name + "." + ee.fromProcedure + " -"
-			+ ee.line + "-> " + ee.toNode.name + "."+ ee.toProcedure);
-}
-}
+		if (debug) {
+			System.out.println("edge");
+			for (Edge ee : graph.edges) {
+				System.out.println(ee.fromNode.name + "." + ee.fromProcedure + " -"
+						+ ee.line + "-> " + ee.toNode.name + "."+ ee.toProcedure);
+			}
+		}
 
 		HashSet<ClassMethod> traversed = new HashSet<ClassMethod>();
 		for (Node node : graph.nodes.values()) {
@@ -121,7 +122,7 @@ System.out.println("loops = " + loops.size());
 	}
 
 	// trim the warnings
-	private static final HashSet<BiRoute>trim(HashSet<BiRoute> warnings) {
+	private static final HashSet<BiRoute> trim(HashSet<BiRoute> warnings) {
 		HashSet<BiRoute> result = new HashSet<BiRoute>();
 		for (BiRoute br : warnings) {
 			Route rt1 = new Route();
