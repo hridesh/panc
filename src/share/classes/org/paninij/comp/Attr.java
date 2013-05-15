@@ -125,13 +125,10 @@ public final class Attr extends CapsuleInternal {
 		}
 	}
 
-	public static double cumulated = 0.0;
 	public final void postVisitMethodDef(JCMethodDecl tree, Env<AttrContext> env, Resolve rs) {
 		if (tree.body != null) {
 			tree.accept(new ASTCFGBuilder());
-			cumulated += (System.currentTimeMillis() - start) / 1000.0;
 		}
-
 
 		if (tree.sym.owner instanceof CapsuleSymbol) {
 			////
@@ -255,7 +252,6 @@ public final class Attr extends CapsuleInternal {
 		Map<Name, Name> variables = new HashMap<Name, Name>();
 		Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
 
-		double start = System.currentTimeMillis();
 		SystemGraph sysGraph = systemGraphBuilder.createSystemGraph();
 		Set<Name> capsules = new HashSet<Name>();
 
@@ -309,33 +305,10 @@ public final class Attr extends CapsuleInternal {
 
 		systemGraphBuilder.completeEdges(sysGraph, annotationProcessor, env, rs);
 
-		double end = (System.currentTimeMillis() - start) / 1000.;
-		double graphtime = end;
-
 		// Sequential consistency detection
-		System.out.println("cc");
-		ConsistencyChecker cc = new ConsistencyChecker(sysGraph, log);
-		cc.potentialPathCheck();
-		System.out.println();
-
-		SeqConstCheckAlgorithm sca =
+		SeqConstCheckAlgorithm sca = 
 			ConsistencyChecker.createChecker(seqConstAlg, sysGraph, log);
-
-		System.out.println(seqConstAlg);
-		start = System.currentTimeMillis();
 		sca.potentialPathCheck();
-		end = (System.currentTimeMillis() - start) / 1000.;
-		cumulated += start;
-		System.out.println(seqConstAlg + " uses " + end);
-		System.out.println();
-
-		System.out.println("Effect time = " + cumulated);
-		System.out.println("Graph time = " + graphtime);
-		System.out.println("Total Graph time = " + (graphtime + cumulated));
-		System.exit(0);
-
-
-//		System.out.println(sysGraph);
 
 		tree.switchToClass();
 
