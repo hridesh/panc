@@ -34,8 +34,7 @@ import org.paninij.effects.*;
 public class V1 implements SeqConstCheckAlgorithm {
 	private SystemGraph graph;
 	private Log log;
-	/*Make debug final to help the compiler*/
-	private final boolean debug = false;
+
 	private final HashSet<Route> paths = new HashSet<Route>();
 
 	public V1(SystemGraph graph, Log log) {
@@ -71,16 +70,7 @@ public class V1 implements SeqConstCheckAlgorithm {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
-	@Override
 	public void potentialPathCheck() {
-		if (debug) {
-			System.out.println("edge");
-			for (Edge ee : graph.edges) {
-				System.out.println(ee.fromNode.name + "." + ee.fromProcedure + " -"
-						+ ee.line + "-> " + ee.toNode.name + "."+ ee.toProcedure);
-			}
-		}
-
 		HashSet<ClassMethod> traversed = new HashSet<ClassMethod>();
 		for (Node node : graph.nodes.values()) {
 			CapsuleSymbol cs = node.capsule;
@@ -93,33 +83,15 @@ public class V1 implements SeqConstCheckAlgorithm {
 
 					paths.clear();
 					Route al = new Route();
-					// al.add(new ClassMethodNode(node.capsule, ms));
 					traverse(node, null, ms, al);
-// if (debug) {
-System.out.println("potentialPathCheck " + node.capsule);
-for (Route path : paths) {
-	System.out.println("\t" + path.routeStr());
-}
-// }
+
 					checkPaths(paths);
 				}
 			}
 		}
 
-// if (debug) {
-int i = 0;
-for (BiRoute br : warnings) {
-	System.out.println("warning " + (i++));
-	System.out.println("\t" + br.r1.routeStr());
-	System.out.println("\t" + br.r2.routeStr());
-}
-// }
-System.out.println("V1 warnings = " + warnings.size());
-System.out.println("V1 trim warnings = " + trim(warnings).size());
-System.out.println("loops = " + loops.size());
-// if (debug) {
-	System.exit(0);
-// }
+        System.out.println("V1 warnings = " + warnings.size());
+        System.out.println("V1 trim warnings = " + trim(warnings).size());
 	}
 
 	// trim the warnings
@@ -136,27 +108,20 @@ System.out.println("loops = " + loops.size());
 			for (int i = 0; i < s1 && i < s2; i++) {
 				ClassMethod cm1 = r1.nodes.get(i);
 				ClassMethod cm2 = r2.nodes.get(i);
-System.out.println("trim1 = " + i + "\t" + cm1.printStr() + "\t" + cm2.printStr());
 				if (cm1.equals(cm2)) {
-System.out.println("trim1.5 equal");
 					rt1.nodes.add(cm1);
 					rt2.nodes.add(cm2);
 				} else {
-System.out.println("trim1.5 notequal");
 					break;
 				}
 
 				if (i != s1 - 1 && i != s2 - 1) {
-System.out.println("trim1.7");
 					Edge e1 = r1.edges.get(i);
 					Edge e2 = r2.edges.get(i);
-System.out.println("trim1.7.8");
 					if (e1.equals(e2)) {
-System.out.println("trim1.7.9 equal");
 						rt1.edges.add(e1);
 						rt2.edges.add(e2);
 					} else {
-System.out.println("trim1.7.9 not equal");
 						break;
 					}
 				}
@@ -171,22 +136,13 @@ System.out.println("trim1.7.9 not equal");
 		for (Route path1 : paths) {
 			int j = 0;
 			for (Route path2 : paths) {
-				// if (i != j) {
-if (debug) {
-	System.out.println("checkPaths0 i = " + i + "\tj = " + j);
-path1.printRoute();
-path2.printRoute();
-}
-
 					ArrayList<ClassMethod[]> pairs = getPairs(path1, path2);
 					for (ClassMethod[] pair : pairs) {
 						ClassMethod cmn1 = pair[0];
 						ClassMethod cmn2 = pair[1];
 						EffectSet es1 = cmn1.meth.effect;
 						EffectSet es2 = cmn2.meth.effect;
-if (debug) {
-	System.out.println("checkPaths1 n1 " + cmn1.printStr() + "\tn2 " + cmn2.printStr());
-}
+
 						if (es1 != null && es2 != null) {
 							Route t1 = path1.clonePrefixPath(cmn1);
 							Route t2 = path2.clonePrefixPath(cmn2);
@@ -198,7 +154,6 @@ if (debug) {
 							detect(es1.read, es2.write, t1, t2, path1, path2);
 						}
 					}
-				// }
 				j++;
 			}
 			i++;
@@ -207,11 +162,6 @@ if (debug) {
 
 	private final void pathsAlgorithm(Route r1, Route r2, Route er1,
 			Route er2) {
-if (debug) {
-System.out.println("pathsAlgorithm0");
-r1.printRoute();
-r2.printRoute();
-}
 		int size1 = r1.size();
 		int size2 = r2.size();
 		ArrayList<ClassMethod> n1 = r1.nodes;
@@ -241,13 +191,8 @@ r2.printRoute();
 			}
 			i++;
 		}
-if (debug) {
-System.out.println("pathsAlgorithm1 i = " + i);
-}
+
 		if (i < size1 - 1 && i < size2 - 1) {
-if (debug) {
-System.out.println("pathsAlgorithm2 i = " + i);
-}
 			ClassMethod cm = n1.get(i);
 			distinctPath(r1.cloneSubPath(cm), r2.cloneSubPath(cm), er1, er2);
 		}
@@ -256,11 +201,6 @@ System.out.println("pathsAlgorithm2 i = " + i);
 	// This method should be called when the first nodes of the two routes are
 	// the same
 	private final void distinctPath(Route r1, Route r2, Route er1, Route er2) {
-if (debug) {
-System.out.println("distinctPath0");
-r1.printRoute();
-r2.printRoute();
-}
 		ArrayList<ClassMethod> ns1 = r1.nodes;
 		ArrayList<Edge> l1 = r1.edges;
 		ArrayList<ClassMethod> ns2 = r2.nodes;
@@ -285,8 +225,8 @@ r2.printRoute();
 
 		HashSet<Route> paths = loops.get(h1);
 		if (paths != null) {
-			/*log.warning("deterministic.inconsistency.warning",
-					er1.routeStr(), er2.routeStr());*/
+			log.warning("deterministic.inconsistency.warning",
+					er1.routeStr(), er2.routeStr());
 			warnings.add(new BiRoute(er1, er2));
 			return;
 		}
@@ -297,15 +237,12 @@ r2.printRoute();
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				/*log.warning("deterministic.inconsistency.warning",
-						er1.routeStr(), er2.routeStr());*/
+				log.warning("deterministic.inconsistency.warning",
+						er1.routeStr(), er2.routeStr());
 				warnings.add(new BiRoute(er1, er2));
 				return;
 			}
 		}
-if (debug) {
-System.out.println("distinctPath2");
-}
 	}
 
 	private final ArrayList<ClassMethod[]> getPairs(Route r1, Route r2) {
@@ -320,9 +257,7 @@ System.out.println("distinctPath2");
 					if (j > 0) {
 						if (cmn1.node == cmn2.node) {
 							// FIFO of same reveiver and sender
-							// if (i != 1 || j != 1) {
-								result.add(new ClassMethod[]{cmn1, cmn2});
-							// }
+							result.add(new ClassMethod[]{cmn1, cmn2});
 						}
 					}
 					j++;

@@ -31,7 +31,7 @@
 
 # boot.java.home = /Library/Java/JavaVirtualMachines/1.7.0.jdk/Contents/Home
 # boot.java.home = /opt/jdk/1.6.0
-boot.java.home = /usr/lib/jvm/java-7-openjdk-i386
+boot.java.home = /usr/local/buildtools/java/jdk/
 boot.java = ${boot.java.home}/bin/java
 boot.javac = ${boot.java.home}/bin/javac
 boot.javac.source = 6

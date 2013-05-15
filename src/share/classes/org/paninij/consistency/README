@@ -2,5 +2,10 @@ This package contains different version of the sequential consistency violation
 detection algorithm.
 
 The basic version is in ConsistencyChecker.java
-The second version consider the FIFO of the message queue for Capsules, in
-SequentialFIFO.java.
+Version V1 is pure actor model, which has no synchronization, FIFO or in order
+delivery.
+Version V2 considers the synchronization method calls.
+Version V3 considers FIFO of the Capsule processing order and in order
+delivery.
+Version V4 considers FIFO of the Capsule processing order and transitive in
+order delivery.
