@@ -44,7 +44,7 @@ public class ConsistencyUtil {
     }
 
     // trim the warnings.
-    public static final HashSet<BiRoute>trim(HashSet<BiRoute> warnings) {
+    public static final HashSet<BiRoute> trim(HashSet<BiRoute> warnings) {
         HashSet<BiRoute> result = new HashSet<BiRoute>();
         for (BiRoute br : warnings) {
             Route rt1 = new Route();
@@ -136,7 +136,10 @@ public class ConsistencyUtil {
         }
         if (cm1.cs.equals(cm2.cs) && cm1.meth.toString().compareTo(
             cm2.meth.toString()) == 0) {
-            Node n1 = cm1.node;
+        	// relax the isomorphic condition, consider two nodes are
+        	// isomorphic, if they have the same Capsule type and same method
+        	// call
+            /*Node n1 = cm1.node;
             Node n2 = cm2.node;
             String s1 = n1.name.toString();
             String s2 = n2.name.toString();
@@ -149,10 +152,10 @@ public class ConsistencyUtil {
             if (f1 != -1 && f2 != -1) {
                 if (s1.substring(0, f1).compareTo(s2.substring(0, f2)) == 0 &&
                     s1.substring(e1, s1.length() - 1).compareTo(s2.substring(e2,
-                            s2.length() - 1)) == 0) {
+                            s2.length() - 1)) == 0) {*/
                     return true;
-                }
-            }
+                /*}
+            }*/
         }
         return false;
     }
