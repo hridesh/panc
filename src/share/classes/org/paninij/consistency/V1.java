@@ -72,7 +72,7 @@ public class V1 implements SeqConstCheckAlgorithm {
         System.out.println("V1 trim warnings = " +
             ConsistencyUtil.trim(warnings).size());
 	}
-	
+
 	private final void checkPaths(HashSet<Route> paths) {
 		int i = 0;
 		for (Route path1 : paths) {

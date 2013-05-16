@@ -98,6 +98,11 @@ public class Route {
 		}
 		ClassMethod cm = nodes.get(size - 1);
 		s += cm.cs + "." + cm.node.name.toString() + "." + cm.meth;
+
+		int edgeSize = edges.size();
+		if (edgeSize == size) {
+		    s += "-" + edges.get(edgeSize - 1).line + "->";
+		}
 		return s;
 	}
 
