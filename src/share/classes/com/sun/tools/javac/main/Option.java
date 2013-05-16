@@ -214,10 +214,12 @@ public enum Option {
             boolean r = super.process(helper, option);
             final String sclevel = helper.get(this);
 
-            //The valid options for the flags are the same as the
-            //enum names. Quick way to set the value is use the enum valueOf command.
+            // The valid options for the flags are the same as the
+            // enum names. Quick way to set the value is use the enum valueOf
+            // command.
             try{
-                Attr.seqConstAlg = org.paninij.consistency.ConsistencyChecker.SEQ_CONST_ALG.valueOf(sclevel);
+                Attr.seqConstAlg =
+                    org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG.valueOf(sclevel);
             } catch (IllegalArgumentException iae) {
                 System.err.println("Unknown Sequential Consistency option " + sclevel);
             }

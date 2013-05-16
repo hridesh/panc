@@ -46,28 +46,6 @@ public class V1 implements SeqConstCheckAlgorithm {
 	private final HashMap<ClassMethod, HashSet<Route>> loops =
 		new HashMap<ClassMethod, HashSet<Route>>();
 
-	private static final class BiRoute {
-		final Route r1;
-		final Route r2;
-
-		public BiRoute(Route r1, Route r2) {
-			this.r1 = r1;
-			this.r2 = r2;
-		}
-
-		public final int hashCode() {
-			return r1.hashCode() + r2.hashCode();
-		}
-
-		public final boolean equals(Object obj) {
-	        if (obj instanceof BiRoute) {
-	        	BiRoute other = (BiRoute)obj;
-	        	return r1.equals(other.r1) && r2.equals(other.r2);
-	        }
-	        return false;
-	    }
-	}
-
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
 	public void potentialPathCheck() {
@@ -91,122 +69,9 @@ public class V1 implements SeqConstCheckAlgorithm {
 		}
 
         System.out.println("V1 warnings = " + warnings.size());
-        System.out.println("V1 trim warnings = " + trim(warnings).size());
+        System.out.println("V1 trim warnings = " +
+            ConsistencyUtil.trim(warnings).size());
 	}
-
-	// trim the warnings.
-    private static final HashSet<BiRoute>trim(HashSet<BiRoute> warnings) {
-        HashSet<BiRoute> result = new HashSet<BiRoute>();
-        for (BiRoute br : warnings) {
-            Route rt1 = new Route();
-            Route rt2 = new Route();
-            Route r1 = br.r1;
-            Route r2 = br.r2;
-
-            int s1 = r1.size();
-            int s2 = r2.size();
-            for (int i = 0; i < s1 && i < s2; i++) {
-                ClassMethod cm1 = r1.nodes.get(i);
-                ClassMethod cm2 = r2.nodes.get(i);
-
-                if (cm1.equals(cm2)) {
-                    rt1.nodes.add(cm1);
-                    rt2.nodes.add(cm2);
-                } else {
-                    break;
-                }
-
-                if (i != s1 - 1 && i != s2 - 1) {
-                    Edge e1 = r1.edges.get(i);
-                    Edge e2 = r2.edges.get(i);
-                    rt1.edges.add(e1);
-                    rt2.edges.add(e2);
-                    if (!e1.equals(e2)) {
-                        break;
-                    }
-                }
-            }
-
-            BiRoute temp = new BiRoute(rt1, rt2);
-            int tes1 = rt1.edges.size();
-            int tes2 = rt2.edges.size();
-            int ns1 = rt1.nodes.size();
-            int ns2 = rt2.nodes.size();
-
-            boolean found = false;
-            for (BiRoute curr : result) {
-                Route c1 = curr.r1;
-                Route c2 = curr.r2;
-                int sc1 = c1.size();
-                int sc2 = c2.size();
-
-                int es1 = c1.edges.size();
-                int es2 = c2.edges.size();
-                if (es1 == tes1 && es2 == tes2 && ns1 == sc1 && ns2 == sc2) {
-                    int i = 0;
-                    for (i = 0; i < ns1 && i < ns2; i++) {
-                        ClassMethod cm1 = rt1.nodes.get(i);
-                        ClassMethod cm2 = rt2.nodes.get(i);
-
-                        ClassMethod cm3 = c1.nodes.get(i);
-                        ClassMethod cm4 = c2.nodes.get(i);
-
-                        if (!isomorphicNodes(cm1, cm3) ||
-                              !isomorphicNodes(cm2, cm4)) {
-                            break;
-                        }
-
-                        if (i < es1 && i < es2) {
-                            Edge e1 = r1.edges.get(i);
-                            Edge e2 = r2.edges.get(i);
-
-                            Edge e3 = c1.edges.get(i);
-                            Edge e4 = c2.edges.get(i);
-                            if (e1.pos != e3.pos || e2.pos != e4.pos) {
-                                break;
-                            }
-                        }
-                    }
-                    if (i == ns1 || i == ns2) {
-                        found = true;
-                        break;
-                    }
-                }
-            }
-            if (!found) {
-                result.add(temp);
-            }
-        }
-        return result;
-    }
-
-    private static final boolean isomorphicNodes(ClassMethod cm1,
-        ClassMethod cm2) {
-        if (cm1.equals(cm2)) {
-            return true;
-        }
-        if (cm1.cs.equals(cm2.cs) && cm1.meth.toString().compareTo(
-            cm2.meth.toString()) == 0) {
-            Node n1 = cm1.node;
-            Node n2 = cm2.node;
-            String s1 = n1.name.toString();
-            String s2 = n2.name.toString();
-            int f1 = s1.indexOf("[");
-            int f2 = s2.indexOf("[");
-
-            int e1 = s1.indexOf("]");
-            int e2 = s2.indexOf("]");
-
-            if (f1 != -1 && f2 != -1) {
-                if (s1.substring(0, f1).compareTo(s2.substring(0, f2)) == 0 &&
-                    s1.substring(e1, s1.length() - 1).compareTo(s2.substring(e2,
-                            s2.length() - 1)) == 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 	
 	private final void checkPaths(HashSet<Route> paths) {
 		int i = 0;

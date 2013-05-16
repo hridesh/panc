@@ -33,16 +33,14 @@ import static com.sun.tools.javac.tree.JCTree.Tag.PREINC;
 import static com.sun.tools.javac.tree.JCTree.Tag.TYPEIDENT;
 import static com.sun.tools.javac.tree.JCTree.Tag.VARDEF;
 
-import static org.paninij.consistency.ConsistencyChecker.SEQ_CONST_ALG;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.paninij.analysis.ASTCFGBuilder;
-import org.paninij.consistency.ConsistencyChecker;
-import org.paninij.consistency.SeqConstCheckAlgorithm;
+import org.paninij.consistency.*;
+import static org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
 
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Attribute;
@@ -307,7 +305,7 @@ public final class Attr extends CapsuleInternal {
 
 		// Sequential consistency detection
 		SeqConstCheckAlgorithm sca = 
-			ConsistencyChecker.createChecker(seqConstAlg, sysGraph, log);
+		    ConsistencyUtil.createChecker(seqConstAlg, sysGraph, log);
 		sca.potentialPathCheck();
 
 		tree.switchToClass();

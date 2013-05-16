@@ -30,7 +30,7 @@ import com.sun.tools.javac.code.Symbol.*;
 import org.paninij.effects.*;
 
 // This version of the sequential consistency violation detector considers the
-// FIFO of the Capsule message queue.
+// FIFO of the Capsule message queue and the transitive in order delivery.
 public class SequentialFIFO implements SeqConstCheckAlgorithm {
 	private SystemGraph graph;
 	private Log log;
@@ -45,28 +45,6 @@ public class SequentialFIFO implements SeqConstCheckAlgorithm {
 		new HashMap<ClassMethod, HashSet<Route>>();
 
 	private final HashSet<Route> paths = new HashSet<Route>();
-
-	private static final class BiRoute {
-		final Route r1;
-		final Route r2;
-
-		public BiRoute(Route r1, Route r2) {
-			this.r1 = r1;
-			this.r2 = r2;
-		}
-
-		public final int hashCode() {
-			return r1.hashCode() + r2.hashCode();
-		}
-
-		public final boolean equals(Object obj) {
-	        if (obj instanceof BiRoute) {
-	        	BiRoute other = (BiRoute)obj;
-	        	return r1.equals(other.r1) && r2.equals(other.r2);
-	        }
-	        return false;
-	    }
-	}
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
@@ -91,6 +69,8 @@ public class SequentialFIFO implements SeqConstCheckAlgorithm {
 		}
 
 		System.out.println("SF warnings = " + warnings.size());
+		System.out.println("SF trim warnings = " +
+            ConsistencyUtil.trim(warnings).size());
 	}
 
 	private final void checkPaths(HashSet<Route> paths) {

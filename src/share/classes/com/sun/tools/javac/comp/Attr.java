@@ -49,7 +49,7 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
-import org.paninij.consistency.ConsistencyChecker;
+import org.paninij.consistency.*;
 import org.paninij.systemgraphs.*;
 // end Panini code
 
@@ -97,8 +97,8 @@ public class Attr extends JCTree.Visitor {
     // Panini code
     org.paninij.comp.Attr pAttr;
     /*Defult to FULL, unless otherwise specified.*/
-    public static ConsistencyChecker.SEQ_CONST_ALG seqConstAlg =
-        ConsistencyChecker.SEQ_CONST_ALG.FULL ;
+    public static ConsistencyUtil.SEQ_CONST_ALG seqConstAlg =
+        ConsistencyUtil.SEQ_CONST_ALG.FULL ;
     SystemGraphsBuilder graphsBuilder;
     public static boolean doGraphs = false;
     // end Panini code
