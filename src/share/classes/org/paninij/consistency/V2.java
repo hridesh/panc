@@ -89,7 +89,8 @@ public class V2 implements SeqConstCheckAlgorithm {
 					if (es1 != null && es2 != null) {
 						Route t1 = path1.clonePrefixPath(cmn1);
 						Route t2 = path2.clonePrefixPath(cmn2);
-						if (es1.isBottom || es2.isBottom) {
+						if ((es1.isBottom && !es2.isPure()) ||
+								(!es1.isPure() && es2.isBottom)) {
 							pathsAlgorithm(t1, t2, path1, path2);
 						}
 						detect(es1.write, es2.write, t1, t2, path1, path2);
@@ -178,8 +179,8 @@ public class V2 implements SeqConstCheckAlgorithm {
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				log.warning("deterministic.inconsistency.warning",
-						er1.routeStr(), er2.routeStr());
+				/*log.warning("deterministic.inconsistency.warning",
+						er1.routeStr(), er2.routeStr());*/
 				warnings.add(new BiRoute(er1, er2));
 				return;
 			} else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
@@ -221,8 +222,8 @@ public class V2 implements SeqConstCheckAlgorithm {
 			Edge ee = l1.get(i);
 
 			if (!synchronousCall(cm, ee.pos)) {
-				log.warning("deterministic.inconsistency.warning",
-						er1.routeStr(), er2.routeStr());
+				/*log.warning("deterministic.inconsistency.warning",
+						er1.routeStr(), er2.routeStr());*/
 				warnings.add(new BiRoute(er1, er2));
 				return;
 			}

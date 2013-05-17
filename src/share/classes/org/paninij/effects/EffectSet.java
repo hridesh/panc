@@ -260,6 +260,18 @@ public class EffectSet {
 		set.removeAll(toberemoved);
 	}
 
+	public boolean isPure() {
+		if (isBottom) {
+			return false;
+		}
+
+		if (read.isEmpty() && write.isEmpty() && calls.isEmpty()) {
+			return true;
+		}
+
+		return false;
+	}
+
 	public void printEffect() {
 		System.out.println("\tisInit = " + isInit);
 		if (isBottom) {

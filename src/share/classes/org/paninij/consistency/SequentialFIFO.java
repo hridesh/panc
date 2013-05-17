@@ -90,7 +90,8 @@ public class SequentialFIFO implements SeqConstCheckAlgorithm {
 					if (es1 != null && es2 != null) {
 						Route t1 = path1.clonePrefixPath(cmn1);
 						Route t2 = path2.clonePrefixPath(cmn2);
-						if (es1.isBottom || es2.isBottom) {
+						if ((es1.isBottom && !es2.isPure()) ||
+								(!es1.isPure() && es2.isBottom)) {
 							pathsAlgorithm(t1, t2, path1, path2);
 						}
 						detect(es1.write, es2.write, t1, t2, path1, path2);
@@ -184,8 +185,8 @@ public class SequentialFIFO implements SeqConstCheckAlgorithm {
 		}
 
 		if (j >= size2 - 1) {
-			log.warning("deterministic.inconsistency.warning",
-					er1.routeStr(), er2.routeStr());
+			/*log.warning("deterministic.inconsistency.warning",
+					er1.routeStr(), er2.routeStr());*/
 			warnings.add(new BiRoute(er1, er2));
 			return;
 		}
@@ -283,8 +284,8 @@ public class SequentialFIFO implements SeqConstCheckAlgorithm {
 				}
 			}
 			if (j >= size2 - 1 && i < size1 - 1) {
-				log.warning("deterministic.inconsistency.warning",
-						er1.routeStr(), er2.routeStr());
+				/*log.warning("deterministic.inconsistency.warning",
+						er1.routeStr(), er2.routeStr());*/
 				warnings.add(new BiRoute(er1, er2));
 				return size2 - 1;
 			}
