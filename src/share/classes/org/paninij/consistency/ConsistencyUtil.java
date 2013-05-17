@@ -1,11 +1,13 @@
 package org.paninij.consistency;
 
+import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.util.Log;
 
 import org.paninij.systemgraph.SystemGraph;
 import org.paninij.systemgraph.SystemGraph.Edge;
 import org.paninij.systemgraph.SystemGraph.Node;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class ConsistencyUtil {
@@ -159,4 +161,45 @@ public class ConsistencyUtil {
         }
         return false;
     }
+
+    public static final void traverse(Node node, Edge e, MethodSymbol ms,
+			Route curr, HashMap<ClassMethod, HashSet<Route>> loops,
+			HashSet<Route> paths, SystemGraph graph) {
+		ClassMethod temp = new ClassMethod(node.capsule, ms, node);
+		Route newList = curr.cloneR();
+		if (curr.nodes.contains(temp)) {
+			// add the currently detected loop
+			Route loop = curr.cloneSubPath(temp);
+
+			HashSet<Route> hs = loops.get(temp);
+			if (hs == null) {
+				hs = new HashSet<Route>();
+				loops.put(temp, hs);
+			}
+			if (e != null) {
+				loop.edges.add(e);
+			}
+			loop.nodes.add(temp);
+			hs.add(loop);
+
+			paths.add(newList);
+			return;
+		}
+
+		if (e != null) {
+			newList.edges.add(e);
+		}
+		newList.nodes.add(temp);
+
+		int numEdge = 0;
+		for (Edge ee : graph.edges) {
+			if (ee.fromNode == node &&
+					ee.fromProcedure.toString().compareTo(ms.toString()) == 0) {
+				traverse(ee.toNode, ee, ee.toProcedure, newList, loops,
+						paths, graph);
+				numEdge++;
+			}
+		}
+		if (numEdge == 0) { paths.add(newList); }
+	}
 }

@@ -67,15 +67,17 @@ public class V3 implements SeqConstCheckAlgorithm {
 
 					paths.clear();
 					Route al = new Route();
-					traverse(node, null, ms, al);
+					// traverse(node, null, ms, al);
+					ConsistencyUtil.traverse(node, null, ms, al, loops, paths,
+							graph);
 					checkPaths(paths);
 				}
 			}
 		}
 
 		System.out.println("V3 warnings = " + warnings.size());
-		System.out.println("V3 trim warnings = " +
-            ConsistencyUtil.trim(warnings).size());
+        HashSet<BiRoute> trimmed = ConsistencyUtil.trim(warnings);
+        System.out.println("V3 trim warnings = " + trimmed.size());
 	}
 
 	private final void checkPaths(HashSet<Route> paths) {
@@ -364,39 +366,5 @@ public class V3 implements SeqConstCheckAlgorithm {
 				}
 			}
 		}
-	}
-
-	private final void traverse(Node node, Edge e, MethodSymbol ms, Route curr) {
-		ClassMethod temp = new ClassMethod(node.capsule, ms, node);
-		Route newList = curr.cloneR();
-		if (curr.nodes.contains(temp)) {
-			// add the currently detected loop
-			Route loop = curr.cloneSubPath(temp);
-
-			HashSet<Route> hs = loops.get(temp);
-			if (hs == null) {
-				hs = new HashSet<Route>();
-				loops.put(temp, hs);
-			}
-			hs.add(loop);
-
-			paths.add(newList);
-			return;
-		}
-
-		if (e != null) {
-			newList.edges.add(e);
-		}
-		newList.nodes.add(temp);
-
-		int numEdge = 0;
-		for (Edge ee : graph.edges) {
-			if (ee.fromNode == node &&
-					ee.fromProcedure.toString().compareTo(ms.toString()) == 0) {
-				traverse(ee.toNode, ee, ee.toProcedure, newList);
-				numEdge++;
-			}
-		}
-		if (numEdge == 0) { paths.add(newList); }
 	}
 }
