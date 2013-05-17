@@ -40,10 +40,7 @@ capsule BankAccount() {
 
 capsule Client1(BankAccount account) {
 	void run() {
-		account.withdraw(10);
-		account.withdraw(10);
-		account.withdraw(10);
-		account.withdraw(10);
+		account.deposit(25);
 		account.withdraw(10);
 	}
 }
@@ -51,8 +48,6 @@ capsule Client1(BankAccount account) {
 capsule Client2(BankAccount account) {
 	void run() {
 		account.withdraw(25);
-		account.deposit(25);
-		account.deposit(25);
 		account.deposit(25);
 	}
 }
