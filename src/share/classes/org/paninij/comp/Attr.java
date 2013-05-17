@@ -109,14 +109,12 @@ public final class Attr extends CapsuleInternal {
 	public final void visitClassDef(JCClassDecl tree) {  /* SKIPPED */ }
 	public final void visitLabelled(JCLabeledStatement tree) {  /* SKIPPED */ }
 	public final void visitAssert(JCAssert tree) {  /* SKIPPED */ }
-	
-	public static long   start;
+
 	public final void preVisitMethodDef(JCMethodDecl tree,
 			final com.sun.tools.javac.comp.Attr attr) {
 		if (tree.sym.isProcedure) {
 			try {
 				((JCProcDecl) tree).switchToProc();
-				start=System.currentTimeMillis();
 				tree.accept(attr);
 			} catch (ClassCastException e) {
 			}
