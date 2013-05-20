@@ -120,6 +120,7 @@ javac.includes = \
         javax/tools/ \
         com/sun/source/ \
         com/sun/tools/javac/ \
+        com/sun/tools/panc/ \
 	org/paninij/
 
 javac.tests = \

@@ -503,6 +503,11 @@
         <build-tool name="javac"/>
     </target>
 
+    <target name="build-panc" depends="build-classes-javac">
+        <build-jar  name="panc" includes="${javac.includes}"/>
+        <build-tool name="panc"/>
+    </target>
+
     <target name="javadoc-javac" depends="build-javac,-def-javadoc-tool">
         <javadoc-tool name="javac" includes="${javac.includes}" options="${javadoc.jls.option}"/>
     </target>
