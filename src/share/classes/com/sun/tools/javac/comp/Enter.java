@@ -913,12 +913,6 @@ public class Enter extends JCTree.Visitor {
         	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
         		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
         		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
-        			mdecl.body.stats = mdecl.body.stats
-							.prepend(make.Exec(make.Apply(
-									List.<JCExpression> nil(),
-									make.Select(make.Ident(names._this), names
-											.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
-									List.<JCExpression> nil())));
             		MethodSymbol msym = new MethodSymbol(
             				PUBLIC|FINAL,
             				names.fromString("run"),
