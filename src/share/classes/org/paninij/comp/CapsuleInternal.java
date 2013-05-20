@@ -423,8 +423,9 @@ public class CapsuleInternal extends Internal {
 						args.add(falsev());
 					else if (v.type.isPrimitive())
 						args.add(intlit(0));
-					else
-						args.add(make.TypeCast(make.Ident(v.type.tsym), nullv()));
+					else{
+						args.add(make.TypeCast(make.Type(v.type), nullv()));
+					}
 				}
 		}
 
