@@ -1,13 +1,58 @@
 RELEASE NOTES FOR PANINI 0.9.1
 
-These release notes summarizes changes in Panini 0.9.0 release.
+These release notes summarizes changes in Panini 0.9.1 release.
 Note that feature releases and bug fixes are cumulative, that is, 
-bug fixes in previous  update versions are included in subsequent 
+bug fixes in previous update versions are included in subsequent 
 update versions.
 
-** Features included in this release
+** Programming language features included in this release
 
-* Support for implicitly-parallel foreach expression
+* Support for capsule initializers.
+    capsule C ( D d1, ...) {
+      BufferedReader reader;
+
+      => {
+        try {
+    		reader = ... ;
+    	} catch (IOException e) { ... }
+      }
+
+    }
+
+* Support for foreach expression.  
+      capsule C (Worker[] workers) {
+	    void run(){
+		 Number[] results = foreach(Worker w: workers) 
+		                       w.compute();
+        }
+      }
+
+* Support for separate compilation. This was one of the most 
+  important feature that we have added in this release. It allows 
+  capsule declaration and system declaration to be compiled 
+  separately. The compiled capsule declaration/s must be in the 
+  classpath when compiling the system declaration.
+
+* Better support for sequential consistency analysis. This release
+  includes a much better algorithm for sequential consistency 
+  analysis that is more precise, modular, and faster compared to 
+  our previous implementation. This algorithm discussed by the 
+  following report is also the first in its class.
+  
+  Long et al. "Automatic Detection of Sequential Inconsistencies 
+  in Actor-like Systems", Technical Report #13-08, Computer Science,
+  Iowa State University, May 17, 2013.
+      
+** Bug Fixes and Minor Updates
+
+* Compiler now gives proper version information.
+
+* Several new examples were added and improved to illustrate 
+  newly added language features.
+
+
+
+
 
 RELEASE NOTES FOR PANINI 0.9.0
 
