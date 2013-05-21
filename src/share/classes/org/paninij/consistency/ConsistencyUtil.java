@@ -21,11 +21,11 @@ public class ConsistencyUtil {
             SystemGraph sysGraph, Log log) {
         switch (type) {
         case BASE:
-            return new V1(sysGraph, log);
+            return new SequentialBase(sysGraph, log);
         case SYNC:
-            return new V2(sysGraph, log);
+            return new SequentialSync(sysGraph, log);
         case INORDER:
-            return new V3(sysGraph, log);
+            return new SequentialInorder(sysGraph, log);
         case TRANS:
             return new SequentialFIFO(sysGraph, log);
         // Keep the compiler happy. Will complain about not all paths returning

@@ -10,10 +10,10 @@
  * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
  * for the specific language governing rights and limitations under the
  * License.
- * 
+ *
  * For more details and the latest version of this code please see
  * http://paninij.org
- * 
+ *
  * Contributor(s): Yuheng Long, Sean L. Mooney
  */
 
@@ -29,19 +29,18 @@ import com.sun.tools.javac.code.Symbol.*;
 
 import org.paninij.effects.*;
 
-// This version of the sequential consistency violation detector considers the
-// FIFO and in order delivery, but not transitive in order, see the below
-// scenario.
-// capsule a, b and c
-// a sends b message m1 then m2, b processes m1 before m2 and m1 arrives in b
-// before m2;
-// a sends b message m1, a sends c message m2, c forwards m2 to b
-// there is no order guarantee for the arrival of the messages m1 and m2.
-public class V3 implements SeqConstCheckAlgorithm {
+/**
+ * Basic sequential inconsistency detection.
+ * This version of the sequential consistency violation detector signals warning
+ *  when two paths conflict.
+ */
+public class SequentialBase implements SeqConstCheckAlgorithm {
 	private SystemGraph graph;
 	private Log log;
 
-	public V3(SystemGraph graph, Log log) {
+	private final HashSet<Route> paths = new HashSet<Route>();
+
+	public SequentialBase(SystemGraph graph, Log log) {
 		this.graph = graph;
 		this.log = log;
 	}
@@ -49,8 +48,6 @@ public class V3 implements SeqConstCheckAlgorithm {
 	// all the loops for the capsule methods.
 	private final HashMap<ClassMethod, HashSet<Route>> loops =
 		new HashMap<ClassMethod, HashSet<Route>>();
-
-	private final HashSet<Route> paths = new HashSet<Route>();
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
@@ -67,17 +64,17 @@ public class V3 implements SeqConstCheckAlgorithm {
 
 					paths.clear();
 					Route al = new Route();
-					// traverse(node, null, ms, al);
 					ConsistencyUtil.traverse(node, null, ms, al, loops, paths,
 							graph);
+
 					checkPaths(paths);
 				}
 			}
 		}
 
-		System.out.println("V3 warnings = " + warnings.size());
+        System.out.println("V1 warnings = " + warnings.size());
         HashSet<BiRoute> trimmed = ConsistencyUtil.trim(warnings);
-        System.out.println("V3 trim warnings = " + trimmed.size());
+        System.out.println("V1 trim warnings = " + trimmed.size());
 	}
 
 	private final void checkPaths(HashSet<Route> paths) {
@@ -169,154 +166,30 @@ public class V3 implements SeqConstCheckAlgorithm {
 		Edge e2 = l2.get(0);
 		int pos1 = e1.pos;
 		int pos2 = e2.pos;
-		int size2 = ns2.size();
 
-		int j = 0;
+		HashSet<BiCall> allpairs = new HashSet<BiCall>(es.direct);
+		allpairs.addAll(es.indirect);
+
 		HashSet<Route> paths = loops.get(h1);
 		if (paths != null) {
-			boolean changed;
-			do {
-				changed = false;
-				for (Route r : paths) {
-					int temp = j;
-					j = check(r, 0, r2, j, er1, er2);
-
-					if (j >= size2 - 1) { return; }
-					if (j != temp) {
-						changed = true;
-					}
-				}
-			} while(changed);
-		}
-
-		if (j >= size2 - 1) {
 			/*log.warning("deterministic.inconsistency.warning",
 					er1.routeStr(), er2.routeStr());*/
 			warnings.add(new BiRoute(er1, er2));
 			return;
 		}
-		int size1 = ns1.size();
 
-		if (j != 0) {
-			int i = 0;
-			ClassMethod cm = ns1.get(0);
-			Edge ee = l1.get(0);
-
-			while (i < size1 - 1 && synchronousCall(cm, ee.pos)) {
-				i++;
-				cm = ns1.get(i);
-				ee = l1.get(i);
-			}
-			if (i < size1 - 1) { check(r1, i, r2, j, er1, er2); }
-			return;
-		}
-
-		HashSet<BiCall> direct = es.direct;
-		boolean existReverse = false;
-		for (BiCall bc : direct) {
+		for (BiCall bc : allpairs) {
 			CallEffect ce1 = bc.ce1;
 			CallEffect ce2 = bc.ce2;
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				check(r1, 0, r2, 0, er1, er2);
-				return;
-			} else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
-				// return;
-				existReverse = true;
-			}
-		}
-		if (existReverse) { return; }
-		HashSet<BiCall> indirect = es.indirect;
-		for (BiCall bc : indirect) {
-			CallEffect ce1 = bc.ce1;
-			CallEffect ce2 = bc.ce2;
-
-			// match
-			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				if (2 < size1) {
-					int i = 1;
-					ClassMethod cm = ns1.get(i);
-					Edge ee = l1.get(i);
-					while (i < size1 - 1 && synchronousCall(cm, ee.pos)) {
-						i++;
-						cm = ns1.get(i);
-						ee = l1.get(i);
-					}
-					if (i < size1 - 1) { check(r1, i, r2, 0, er1, er2); }
-				}
-				return;
-			}
-		}
-	}
-
-	private final boolean synchronousCall(ClassMethod cm, int pos) {
-		HashSet<CallEffect> collected = cm.meth.effect.collected;
-		for (CallEffect ce : collected) {
-			if (pos == ce.pos()) { return true; }
-		}
-		return false;
-	}
-
-	// this method should be called when the first edge of the first path is
-	// asychronous call.
-	private final int check(Route r1, int i, Route r2, int j, Route er1,
-			Route er2) {
-		int size1 = r1.size();
-		int size2 = r2.size();
-		ArrayList<ClassMethod> ns1 = r1.nodes;
-		ArrayList<Edge> l1 = r1.edges;
-		ArrayList<ClassMethod> ns2 = r2.nodes;
-
-		for (; i < size1 - 1;) {
-			ClassMethod cm = ns1.get(i);
-			ClassMethod cmp1 = ns1.get(i + 1);
-			for (; j < size2 - 1; j++) {
-				ClassMethod cm2 = ns2.get(j);
-				if (cm.node.equals(cm2.node)) {
-					ClassMethod cm2p1 = ns2.get(j + 1);
-					if (cmp1.node.equals(cm2p1.node)) {
-						i++;
-						j++;
-						break;
-					}
-				}
-			}
-			if (j >= size2 - 1 && i < size1 - 1) {
 				/*log.warning("deterministic.inconsistency.warning",
 						er1.routeStr(), er2.routeStr());*/
 				warnings.add(new BiRoute(er1, er2));
-				return size2 - 1;
-			}
-
-			if (i < size1 - 1) {
-				cm = ns1.get(i);
-				HashSet<Route> paths = loops.get(cm);
-				if (paths != null) {
-					boolean changed;
-					do {
-						changed = false;
-						for (Route r : paths) {
-							int temp = j;
-							j = check(r, 0, r2, j, er1, er2);
-							if (j != temp) {
-								changed = true;
-							}
-						}
-					} while(changed);
-				}
-
-				Edge ee = l1.get(i);
-				while (i < size1 - 1 && synchronousCall(cm, ee.pos)) {
-					i++;
-					if (i < size1 - 1) {
-						cm = ns1.get(i);
-						ee = l1.get(i);
-					}
-				}
+				return;
 			}
 		}
-		return j;
 	}
 
 	private final ArrayList<ClassMethod[]> getPairs(Route r1, Route r2) {

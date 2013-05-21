@@ -10,10 +10,10 @@
  * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
  * for the specific language governing rights and limitations under the
  * License.
- * 
+ *
  * For more details and the latest version of this code please see
  * http://paninij.org
- * 
+ *
  * Contributor(s): Yuheng Long, Sean L. Mooney
  */
 
@@ -29,13 +29,15 @@ import com.sun.tools.javac.code.Symbol.*;
 
 import org.paninij.effects.*;
 
-// This version of the sequential consistency violation detector considers only
-// synchronization.
-public class V2 implements SeqConstCheckAlgorithm {
+/**
+ * This version of the sequential consistency violation detector considers only
+ * synchronization.
+ */
+public class SequentialSync implements SeqConstCheckAlgorithm {
 	private SystemGraph graph;
 	private Log log;
 
-	public V2(SystemGraph graph, Log log) {
+	public SequentialSync(SystemGraph graph, Log log) {
 		this.graph = graph;
 		this.log = log;
 	}

@@ -29,8 +29,10 @@ import com.sun.tools.javac.code.Symbol.*;
 
 import org.paninij.effects.*;
 
-// This version of the sequential consistency violation detector considers the
-// FIFO of the Capsule message queue and the transitive in order delivery.
+/**
+ * This version of the sequential consistency violation detector considers the
+ * FIFO of the Capsule message queue and the transitive in order delivery.
+ */
 public class SequentialFIFO implements SeqConstCheckAlgorithm {
 	private SystemGraph graph;
 	private Log log;
