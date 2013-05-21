@@ -10,10 +10,10 @@
  * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
  * for the specific language governing rights and limitations under the
  * License.
- * 
+ *
  * For more details and the latest version of this code please see
  * http://paninij.org
- * 
+ *
  * Contributor(s): Yuheng Long, Sean L. Mooney
  */
 
@@ -29,21 +29,21 @@ import com.sun.tools.javac.code.Symbol.*;
 
 import org.paninij.effects.*;
 
-// This version of the sequential consistency violation detector considers the
-// FIFO and in order delivery, but not transitive in order, see the below
-// scenario.
-// capsule a, b and c
-// a sends b message m1 then m2, b processes m1 before m2 and m1 arrives in b
-// before m2;
-// a sends b message m1, a sends c message m2, c forwards m2 to b
-// there is no order guarantee for the arrival of the messages m1 and m2.
-public class V3 implements SeqConstCheckAlgorithm {
+/** This version of the sequential consistency violation detector considers the
+ * FIFO and in order delivery, but not transitive in order, see the below
+ * scenario.
+ * capsule a, b and c
+ * a sends b message m1 then m2, b processes m1 before m2 and m1 arrives in b
+ * before m2;
+ * a sends b message m1, a sends c message m2, c forwards m2 to b
+ * there is no order guarantee for the arrival of the messages m1 and m2.
+ */
+public class SequentialInorder extends SeqConstCheckAlgorithm {
 	private SystemGraph graph;
-	private Log log;
 
-	public V3(SystemGraph graph, Log log) {
+	public SequentialInorder(SystemGraph graph, Log log) {
+	    super("In-Order", log);
 		this.graph = graph;
-		this.log = log;
 	}
 
 	// all the loops for the capsule methods.
@@ -54,6 +54,7 @@ public class V3 implements SeqConstCheckAlgorithm {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
+	@Override
 	public void potentialPathCheck() {
 		HashSet<ClassMethod> traversed = new HashSet<ClassMethod>();
 		for (Node node : graph.nodes.values()) {
@@ -75,9 +76,9 @@ public class V3 implements SeqConstCheckAlgorithm {
 			}
 		}
 
-		System.out.println("V3 warnings = " + warnings.size());
+		reportTotalWarnings(warnings);
         HashSet<BiRoute> trimmed = ConsistencyUtil.trim(warnings);
-        System.out.println("V3 trim warnings = " + trimmed.size());
+        reportTrimmedWarnings(trimmed);
 	}
 
 	private final void checkPaths(HashSet<Route> paths) {
@@ -190,8 +191,6 @@ public class V3 implements SeqConstCheckAlgorithm {
 		}
 
 		if (j >= size2 - 1) {
-			/*log.warning("deterministic.inconsistency.warning",
-					er1.routeStr(), er2.routeStr());*/
 			warnings.add(new BiRoute(er1, er2));
 			return;
 		}
@@ -283,8 +282,6 @@ public class V3 implements SeqConstCheckAlgorithm {
 				}
 			}
 			if (j >= size2 - 1 && i < size1 - 1) {
-				/*log.warning("deterministic.inconsistency.warning",
-						er1.routeStr(), er2.routeStr());*/
 				warnings.add(new BiRoute(er1, er2));
 				return size2 - 1;
 			}

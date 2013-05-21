@@ -207,12 +207,18 @@ public enum Option {
             }
         },
 
-    SCLEVEL("-sc-level:", "opt.panini.sclevel",
-            STANDARD, BASIC, ONEOF, "V1", "V2", "V3", "FULL") {
+    XSCLEVEL("-Xseq.const.alg:", "opt.panini.sclevel",
+            EXTENDED, BASIC, ONEOF, "base", "+sync", "+inorder", "+trans") {
         @Override
         public boolean process(OptionHelper helper, String option) {
             boolean r = super.process(helper, option);
-            final String sclevel = helper.get(this);
+            String sclevel = helper.get(this);
+
+            //preprocess the sclevel to get it to one of SEQ_CONST_ALG values.
+            if( sclevel.startsWith("+") ) {
+                sclevel=sclevel.substring(1);
+            }
+            sclevel = sclevel.toUpperCase();
 
             // The valid options for the flags are the same as the
             // enum names. Quick way to set the value is use the enum valueOf

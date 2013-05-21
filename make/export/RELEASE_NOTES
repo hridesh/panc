@@ -50,7 +50,8 @@ update versions.
 * Several new examples were added and improved to illustrate 
   newly added language features.
 
-
+* Vim syntax hightlighting (editors/panini.vim) for new keywords: capsule,
+  system, signature.
 
 
 
@@ -94,4 +95,4 @@ update versions are included in subsequent update versions.
 * Basic support for confinement violation detection, where the Panini 
   compiler warns users about potentially leaking references to the 
   internal states of the capsule instance.
-  
+

@@ -20,13 +20,13 @@ public class ConsistencyUtil {
     public static SeqConstCheckAlgorithm createChecker(SEQ_CONST_ALG type,
             SystemGraph sysGraph, Log log) {
         switch (type) {
-        case V1:
-            return new V1(sysGraph, log);
-        case V2:
-            return new V2(sysGraph, log);
-        case V3:
-            return new V3(sysGraph, log);
-        case FULL:
+        case BASE:
+            return new SequentialBase(sysGraph, log);
+        case SYNC:
+            return new SequentialSync(sysGraph, log);
+        case INORDER:
+            return new SequentialInorder(sysGraph, log);
+        case TRANS:
             return new SequentialFIFO(sysGraph, log);
         // Keep the compiler happy. Will complain about not all paths returning
         // a values otherwise.
@@ -35,14 +35,16 @@ public class ConsistencyUtil {
         }
     }
   
-    /** Enumerate the types of detection
-     * algorithms that exist. L1 - L3 each add one more piece to the detection.
-     * FULL indicates everything is to be used. */
+    /**
+     * Enumerate the types of detection
+     * algorithms that exist. Base, Sync, Inorder and Trans
+     *  each add one more piece to the detection.
+     */
     public static enum SEQ_CONST_ALG {
-        V1,
-        V2,
-        V3,
-        FULL
+        BASE,
+        SYNC,
+        INORDER,
+        TRANS
     }
 
     // trim the warnings.

@@ -10,10 +10,10 @@
  * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
  * for the specific language governing rights and limitations under the
  * License.
- * 
+ *
  * For more details and the latest version of this code please see
  * http://paninij.org
- * 
+ *
  * Contributor(s): Yuheng Long, Sean L. Mooney
  */
 
@@ -29,17 +29,19 @@ import com.sun.tools.javac.code.Symbol.*;
 
 import org.paninij.effects.*;
 
-// This version of the sequential consistency violation detector signals warning
-// when two paths conflict.
-public class V1 implements SeqConstCheckAlgorithm {
+/**
+ * Basic sequential inconsistency detection.
+ * This version of the sequential consistency violation detector signals warning
+ *  when two paths conflict.
+ */
+public class SequentialBase extends SeqConstCheckAlgorithm {
 	private SystemGraph graph;
-	private Log log;
 
 	private final HashSet<Route> paths = new HashSet<Route>();
 
-	public V1(SystemGraph graph, Log log) {
+	public SequentialBase(SystemGraph graph, Log log) {
+	    super("Base", log);
 		this.graph = graph;
-		this.log = log;
 	}
 
 	// all the loops for the capsule methods.
@@ -48,6 +50,7 @@ public class V1 implements SeqConstCheckAlgorithm {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
+	@Override
 	public void potentialPathCheck() {
 		HashSet<ClassMethod> traversed = new HashSet<ClassMethod>();
 		for (Node node : graph.nodes.values()) {
@@ -69,9 +72,10 @@ public class V1 implements SeqConstCheckAlgorithm {
 			}
 		}
 
-        System.out.println("V1 warnings = " + warnings.size());
+
+        reportTotalWarnings(warnings);
         HashSet<BiRoute> trimmed = ConsistencyUtil.trim(warnings);
-        System.out.println("V1 trim warnings = " + trimmed.size());
+        reportTrimmedWarnings(trimmed);
 	}
 
 	private final void checkPaths(HashSet<Route> paths) {
@@ -169,8 +173,6 @@ public class V1 implements SeqConstCheckAlgorithm {
 
 		HashSet<Route> paths = loops.get(h1);
 		if (paths != null) {
-			/*log.warning("deterministic.inconsistency.warning",
-					er1.routeStr(), er2.routeStr());*/
 			warnings.add(new BiRoute(er1, er2));
 			return;
 		}
@@ -181,8 +183,6 @@ public class V1 implements SeqConstCheckAlgorithm {
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				/*log.warning("deterministic.inconsistency.warning",
-						er1.routeStr(), er2.routeStr());*/
 				warnings.add(new BiRoute(er1, er2));
 				return;
 			}
