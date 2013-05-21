@@ -42,10 +42,14 @@ Contributor(s): Sean L. Mooney
     </presetdef>
 
     <target name="build" description="Build all examples"
-        depends="build.Echo, build.HelloWorld, build.Pi,  build.Histogram, build.Philosophers, build.Pipeline, build.Signature, build.AddressBook"/>
+        depends="build.Echo, build.Barbershop, build.HelloWorld, build.Pi,  build.Histogram, build.Philosophers, build.Pipeline, build.Signature, build.AddressBook"/>
 
     <target name="build.Echo" description="">
         <build includes="EchoClient.java, EchoServer.java" example="Echo"/>
+    </target>
+
+    <target name="build.Barbershop" description="">
+        <build includes="Barbershop.java" example="Barbershop" />
     </target>
 
     <target name="build.HelloWorld" description="">
