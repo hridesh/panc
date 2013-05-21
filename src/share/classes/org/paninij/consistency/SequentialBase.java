@@ -34,15 +34,14 @@ import org.paninij.effects.*;
  * This version of the sequential consistency violation detector signals warning
  *  when two paths conflict.
  */
-public class SequentialBase implements SeqConstCheckAlgorithm {
+public class SequentialBase extends SeqConstCheckAlgorithm {
 	private SystemGraph graph;
-	private Log log;
 
 	private final HashSet<Route> paths = new HashSet<Route>();
 
 	public SequentialBase(SystemGraph graph, Log log) {
+	    super(log);
 		this.graph = graph;
-		this.log = log;
 	}
 
 	// all the loops for the capsule methods.
@@ -172,8 +171,7 @@ public class SequentialBase implements SeqConstCheckAlgorithm {
 
 		HashSet<Route> paths = loops.get(h1);
 		if (paths != null) {
-			/*log.warning("deterministic.inconsistency.warning",
-					er1.routeStr(), er2.routeStr());*/
+		    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 			warnings.add(new BiRoute(er1, er2));
 			return;
 		}
@@ -184,8 +182,7 @@ public class SequentialBase implements SeqConstCheckAlgorithm {
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				/*log.warning("deterministic.inconsistency.warning",
-						er1.routeStr(), er2.routeStr());*/
+			    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 				warnings.add(new BiRoute(er1, er2));
 				return;
 			}

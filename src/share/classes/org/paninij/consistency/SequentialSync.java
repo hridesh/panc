@@ -33,13 +33,12 @@ import org.paninij.effects.*;
  * This version of the sequential consistency violation detector considers only
  * synchronization.
  */
-public class SequentialSync implements SeqConstCheckAlgorithm {
+public class SequentialSync extends SeqConstCheckAlgorithm {
 	private SystemGraph graph;
-	private Log log;
 
 	public SequentialSync(SystemGraph graph, Log log) {
-		this.graph = graph;
-		this.log = log;
+	    super(log);
+	    this.graph = graph;
 	}
 
 	// all the loops for the capsule methods.
@@ -181,8 +180,7 @@ public class SequentialSync implements SeqConstCheckAlgorithm {
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				/*log.warning("deterministic.inconsistency.warning",
-						er1.routeStr(), er2.routeStr());*/
+			    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 				warnings.add(new BiRoute(er1, er2));
 				return;
 			} else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
@@ -224,8 +222,7 @@ public class SequentialSync implements SeqConstCheckAlgorithm {
 			Edge ee = l1.get(i);
 
 			if (!synchronousCall(cm, ee.pos)) {
-				/*log.warning("deterministic.inconsistency.warning",
-						er1.routeStr(), er2.routeStr());*/
+			    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 				warnings.add(new BiRoute(er1, er2));
 				return;
 			}

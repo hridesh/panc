@@ -33,13 +33,12 @@ import org.paninij.effects.*;
  * This version of the sequential consistency violation detector considers the
  * FIFO of the Capsule message queue and the transitive in order delivery.
  */
-public class SequentialFIFO implements SeqConstCheckAlgorithm {
+public class SequentialFIFO extends SeqConstCheckAlgorithm {
 	private SystemGraph graph;
-	private Log log;
 
 	public SequentialFIFO(SystemGraph graph, Log log) {
-		this.graph = graph;
-		this.log = log;
+	    super(log);
+	    this.graph = graph;
 	}
 
 	// all the loops for the capsule methods.
@@ -187,8 +186,7 @@ public class SequentialFIFO implements SeqConstCheckAlgorithm {
 		}
 
 		if (j >= size2 - 1) {
-			/*log.warning("deterministic.inconsistency.warning",
-					er1.routeStr(), er2.routeStr());*/
+		    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 			warnings.add(new BiRoute(er1, er2));
 			return;
 		}
@@ -286,8 +284,7 @@ public class SequentialFIFO implements SeqConstCheckAlgorithm {
 				}
 			}
 			if (j >= size2 - 1 && i < size1 - 1) {
-				/*log.warning("deterministic.inconsistency.warning",
-						er1.routeStr(), er2.routeStr());*/
+			    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 				warnings.add(new BiRoute(er1, er2));
 				return size2 - 1;
 			}

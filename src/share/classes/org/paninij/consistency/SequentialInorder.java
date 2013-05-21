@@ -38,13 +38,12 @@ import org.paninij.effects.*;
  * a sends b message m1, a sends c message m2, c forwards m2 to b
  * there is no order guarantee for the arrival of the messages m1 and m2.
  */
-public class SequentialInorder implements SeqConstCheckAlgorithm {
+public class SequentialInorder extends SeqConstCheckAlgorithm {
 	private SystemGraph graph;
-	private Log log;
 
 	public SequentialInorder(SystemGraph graph, Log log) {
+	    super(log);
 		this.graph = graph;
-		this.log = log;
 	}
 
 	// all the loops for the capsule methods.
@@ -191,8 +190,7 @@ public class SequentialInorder implements SeqConstCheckAlgorithm {
 		}
 
 		if (j >= size2 - 1) {
-			/*log.warning("deterministic.inconsistency.warning",
-					er1.routeStr(), er2.routeStr());*/
+		    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 			warnings.add(new BiRoute(er1, er2));
 			return;
 		}
@@ -284,8 +282,7 @@ public class SequentialInorder implements SeqConstCheckAlgorithm {
 				}
 			}
 			if (j >= size2 - 1 && i < size1 - 1) {
-				/*log.warning("deterministic.inconsistency.warning",
-						er1.routeStr(), er2.routeStr());*/
+			    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 				warnings.add(new BiRoute(er1, er2));
 				return size2 - 1;
 			}

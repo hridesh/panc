@@ -19,10 +19,33 @@
 
 package org.paninij.consistency;
 
+import com.sun.tools.javac.util.Log;
+
 /**
  * Interface for any class which implements a sequential consistency check
  */
-public interface SeqConstCheckAlgorithm {
-	public void potentialPathCheck();
+public abstract class SeqConstCheckAlgorithm {
+
+    /**
+     * The log object to use for reporting warnings.
+     */
+    protected final Log log;
+
+    public SeqConstCheckAlgorithm(Log log) {
+        assert( log != null );
+        this.log = log;
+    }
+
+	public abstract void potentialPathCheck();
+
+	/**
+	 * Warn a sequential inconsistency was detected.
+	 * @param route1
+	 * @param route2
+	 */
+	protected void warnSeqInconsistency(String route1, String route2) {
+	    log.warning("deterministic.inconsistency.warning",
+	            route1, route2);
+	}
 }
 
