@@ -68,16 +68,20 @@ Contributor(s): Sean L. Mooney
         <build includes="Pipeline.java" example="Pipeline"/>
     </target>
 
-    <target name="build.AddressBook" description="">
-        <build includes="AddressBook/**/*.java"
-               example="AddressBook"
-               classpath="AddressBook/htmlparser.jar"/>
+    <target name="build.Signature" description="">
+        <build includes="SignatureExample.java" example="Signature"/>
     </target>
 
     <target name="build.HelloWorld-separate" description="">
         <build includes="Console.java" example="HelloWorld-separate"/>
         <build includes="Greeter.java" example="HelloWorld-separate"/>
         <build includes="HelloWorld.java" example="HelloWorld-separate"/>
+    </target>
+
+    <target name="build.AddressBook" description="">
+        <build includes="AddressBook/**/*.java"
+               example="AddressBook"
+               classpath="AddressBook/htmlparser.jar"/>
     </target>
 
     <!--========================================================================
