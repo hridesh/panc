@@ -40,7 +40,7 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 	private final HashSet<Route> paths = new HashSet<Route>();
 
 	public SequentialBase(SystemGraph graph, Log log) {
-	    super(log);
+	    super("Base", log);
 		this.graph = graph;
 	}
 
@@ -50,6 +50,7 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
+	@Override
 	public void potentialPathCheck() {
 		HashSet<ClassMethod> traversed = new HashSet<ClassMethod>();
 		for (Node node : graph.nodes.values()) {
@@ -71,9 +72,10 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 			}
 		}
 
-        System.out.println("V1 warnings = " + warnings.size());
+
+        reportTotalWarnings(warnings);
         HashSet<BiRoute> trimmed = ConsistencyUtil.trim(warnings);
-        System.out.println("V1 trim warnings = " + trimmed.size());
+        reportTrimmedWarnings(trimmed);
 	}
 
 	private final void checkPaths(HashSet<Route> paths) {

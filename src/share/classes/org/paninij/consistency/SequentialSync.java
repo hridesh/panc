@@ -37,7 +37,7 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 	private SystemGraph graph;
 
 	public SequentialSync(SystemGraph graph, Log log) {
-	    super(log);
+	    super("Sync", log);
 	    this.graph = graph;
 	}
 
@@ -49,6 +49,7 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
+	@Override
 	public void potentialPathCheck() {
 		HashSet<ClassMethod> traversed = new HashSet<ClassMethod>();
 		for (Node node : graph.nodes.values()) {
@@ -70,9 +71,9 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 			}
 		}
 
-        System.out.println("V2 warnings = " + warnings.size());
+		reportTotalWarnings(warnings);
         HashSet<BiRoute> trimmed = ConsistencyUtil.trim(warnings);
-        System.out.println("V2 trim warnings = " + trimmed.size());
+        reportTrimmedWarnings(trimmed);
 	}
 
 	private final void checkPaths(HashSet<Route> paths) {

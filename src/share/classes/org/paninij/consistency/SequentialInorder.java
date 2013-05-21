@@ -42,7 +42,7 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 	private SystemGraph graph;
 
 	public SequentialInorder(SystemGraph graph, Log log) {
-	    super(log);
+	    super("In-Order", log);
 		this.graph = graph;
 	}
 
@@ -54,6 +54,7 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
+	@Override
 	public void potentialPathCheck() {
 		HashSet<ClassMethod> traversed = new HashSet<ClassMethod>();
 		for (Node node : graph.nodes.values()) {
@@ -75,9 +76,9 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 			}
 		}
 
-		System.out.println("V3 warnings = " + warnings.size());
+		reportTotalWarnings(warnings);
         HashSet<BiRoute> trimmed = ConsistencyUtil.trim(warnings);
-        System.out.println("V3 trim warnings = " + trimmed.size());
+        reportTrimmedWarnings(trimmed);
 	}
 
 	private final void checkPaths(HashSet<Route> paths) {

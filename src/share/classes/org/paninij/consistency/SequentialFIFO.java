@@ -37,7 +37,7 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 	private SystemGraph graph;
 
 	public SequentialFIFO(SystemGraph graph, Log log) {
-	    super(log);
+	    super("Trans", log);
 	    this.graph = graph;
 	}
 
@@ -49,6 +49,7 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
+	@Override
 	public void potentialPathCheck() {
 		HashSet<ClassMethod> traversed = new HashSet<ClassMethod>();
 		for (Node node : graph.nodes.values()) {
@@ -71,9 +72,9 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 			}
 		}
 
-		System.out.println("SF warnings = " + warnings.size());
+		reportTotalWarnings(warnings);
 		HashSet<BiRoute> trimmed = ConsistencyUtil.trim(warnings);
-		System.out.println("SF trim warnings = " + trimmed.size());
+		reportTrimmedWarnings(trimmed);
 	}
 
 	private final void checkPaths(HashSet<Route> paths) {

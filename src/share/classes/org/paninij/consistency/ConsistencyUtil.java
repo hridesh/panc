@@ -35,9 +35,11 @@ public class ConsistencyUtil {
         }
     }
   
-    /** Enumerate the types of detection
-     * algorithms that exist. L1 - L3 each add one more piece to the detection.
-     * FULL indicates everything is to be used. */
+    /**
+     * Enumerate the types of detection
+     * algorithms that exist. Base, Sync, Inorder and Trans
+     *  each add one more piece to the detection.
+     */
     public static enum SEQ_CONST_ALG {
         BASE,
         SYNC,

@@ -19,6 +19,8 @@
 
 package org.paninij.consistency;
 
+import java.util.HashSet;
+
 import com.sun.tools.javac.util.Log;
 
 /**
@@ -31,12 +33,39 @@ public abstract class SeqConstCheckAlgorithm {
      */
     protected final Log log;
 
-    public SeqConstCheckAlgorithm(Log log) {
+    /**
+     * The name of the detection algorithm.
+     */
+    protected final String name;
+
+    /**
+     * Constructor.
+     * Neither parameter should be null.
+     * @param name
+     * @param log
+     */
+    public SeqConstCheckAlgorithm(String name, Log log) {
         assert( log != null );
+        assert( name != null );
+
         this.log = log;
+        this.name = name;
     }
 
+    /**
+     * Hook method for sub-types. Sequential consistency
+     * checking algorithms should use this method as the
+     * entry-point for the algorithm.
+     */
 	public abstract void potentialPathCheck();
+
+	protected void reportTotalWarnings(HashSet<BiRoute> warnings) {
+	    System.out.println(name + " warnings = " + warnings.size());
+	}
+
+	protected void reportTrimmedWarnings(HashSet<BiRoute> warnings) {
+        System.out.println(name + " trim warnings = " + warnings.size());
+	}
 
 	/**
 	 * Warn a sequential inconsistency was detected.
