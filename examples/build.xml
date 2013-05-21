@@ -1,19 +1,35 @@
-<project name="pipesort" basedir=".">
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This file is part of the Panini project at Iowa State University.
+
+The contents of this file are subject to the Mozilla Public License
+Version 1.1 (the "License"); you may not use this file except in
+compliance with the License. You may obtain a copy of the License at
+http://www.mozilla.org/MPL/.
+
+Software distributed under the License is distributed on an "AS IS" basis,
+WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+for the specific language governing rights and limitations under the
+License.
+
+For more details and the latest version of this code please see
+http://paninij.org
+
+Contributor(s): Sean L. Mooney
+-->
+<project name="Panini Examples" basedir="." default="build">
     <property name="src.dir" value="${basedir}/." />
     <property name="panini.src.dir" value="${basedir}/." />
     <property name="build.dir" value="${basedir}/bin" />
     <property name="build.panini.dir" value="${build.dir}/panini"/>
 
-    <!-- Relative to distributable folder after export.sh runs. -->
-    <property name="panc.bin" 
+    <!-- Relative to distribution directory after. -->
+    <property name="panc.home"
               value=".."/>
     <property name="panc.jar"
-              value="${panc.bin}/lib/dist/bootstrap/lib/javac.jar" />
-    <!--Ensure commutativity.settings is set up properly-->
-    <available file="${panc.bin}" property="panc-bin-exists" />
-    <available file="${panc.jar}" property="panc-jar-exists" />
-    <fail message="panc home folder does not exist."
-          unless="panc-bin-exists" />
+              value="${panc.home}/lib/dist/lib/panc.jar" />
+    <!--Ensure path is set up properly-->
+    <available file="${panc.jar}" property="panc-jar-exists"/>
     <fail message="${panc.jar} does not exist."
           unless="panc-jar-exists" />
 
@@ -25,51 +41,43 @@
         </javac>
     </presetdef>
 
-    <!--========================================================================
-        name: build.helloworld
-        Compile the helloworld example.
-        =====================================================================-->
-    <target name="build.helloworld" description="">
-        <build includes="HelloWorld.java" />
+    <target name="build" description="Build all examples"
+        depends="build.Echo, build.HelloWorld, build.Pi,  build.Histogram, build.Philosophers, build.Pipeline, build.AddressBook"/>
+
+    <target name="build.Echo" description="">
+        <build includes="EchoClient.java, EchoServer.java" example="Echo"/>
     </target>
 
-    <target name="build.pi" description="">
-        <build includes="Pi.java" />
+    <target name="build.HelloWorld" description="">
+        <build includes="HelloWorld.java" example="HelloWorld"/>
     </target>
 
-    <target name="build.Barbershop" description="">
-        <build includes="Barbershop.java" />
-    </target>
-
-    <target name="build.Barbershop2" description="">
-        <build includes="Barbershop2.java" />
+    <target name="build.Pi" description="">
+        <build includes="Pi.java" example="Pi"/>
     </target>
 
     <target name="build.Histogram" description="">
-        <build includes="Histogram.java" />
+        <build includes="Histogram.java" example="Histogram"/>
     </target>
 
     <target name="build.Philosophers" description="">
-        <build includes="Philosophers.java" />
+        <build includes="Philosophers.java" example="Philosophers"/>
     </target>
 
     <target name="build.Pipeline" description="">
-        <build includes="Pipeline.java" />
-    </target>
-
-    <target name="build.SequentialConsistency" description="">
-        <build includes="SequentialConsistency.java" />
+        <build includes="Pipeline.java" example="Pipeline"/>
     </target>
 
     <target name="build.AddressBook" description="">
         <build includes="AddressBook/**/*.java"
+               example="AddressBook"
                classpath="AddressBook/htmlparser.jar"/>
     </target>
 
-    <target name="build.HellWorld-separate" description="">
-        <build includes="Console.java" />
-        <build includes="Greeter.java" />
-        <build includes="HelloWorld.java" />
+    <target name="build.HelloWorld-separate" description="">
+        <build includes="Console.java" example="HelloWorld-separate"/>
+        <build includes="Greeter.java" example="HelloWorld-separate"/>
+        <build includes="HelloWorld.java" example="HelloWorld-separate"/>
     </target>
 
     <!--========================================================================
@@ -78,11 +86,14 @@
         =====================================================================-->
     <macrodef name="build">
         <attribute name="includes" />
+        <attribute name="example" />
         <attribute name="classpath" default="" />
         <sequential>
-        <mkdir dir="${build.panini.dir}"/>
+            <property name="example.build.dir"
+                      value="${build.panini.dir}/@{example}" />
+        <mkdir dir="${example.build.dir}"/>
         <panc srcdir="${panini.src.dir}"
-              destdir="${build.panini.dir}"
+              destdir="${example.build.dir}"
               includes="@{includes}"
               includeantruntime="no"
               classpath="@{classpath}"
@@ -90,7 +101,6 @@
               <classpath />
         </panc>
         </sequential>
-
     </macrodef>
 
 
@@ -100,7 +110,6 @@
     <target name="clean" description="Delete generated files.">
         <delete failonerror="no">
             <fileset dir="${build.dir}" includes="**/*"/>
-            <fileset dir="${dist.dir}" includes="**/*"/>
         </delete>
     </target>
 
