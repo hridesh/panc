@@ -187,7 +187,6 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 		}
 
 		if (j >= size2 - 1) {
-		    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 			warnings.add(new BiRoute(er1, er2));
 			return;
 		}
@@ -285,7 +284,6 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 				}
 			}
 			if (j >= size2 - 1 && i < size1 - 1) {
-			    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 				warnings.add(new BiRoute(er1, er2));
 				return size2 - 1;
 			}

@@ -181,7 +181,6 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-			    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 				warnings.add(new BiRoute(er1, er2));
 				return;
 			} else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
@@ -223,7 +222,6 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 			Edge ee = l1.get(i);
 
 			if (!synchronousCall(cm, ee.pos)) {
-			    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 				warnings.add(new BiRoute(er1, er2));
 				return;
 			}

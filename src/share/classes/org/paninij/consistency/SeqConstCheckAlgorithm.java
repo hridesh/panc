@@ -60,11 +60,19 @@ public abstract class SeqConstCheckAlgorithm {
 	public abstract void potentialPathCheck();
 
 	protected void reportTotalWarnings(HashSet<BiRoute> warnings) {
-	    System.out.println(name + " warnings = " + warnings.size());
+	    //Do not report counts total warnings for release.
+	    //Reenable for benchmarking/testing for papers.
+	    //System.out.println(name + " warnings = " + warnings.size());
 	}
 
 	protected void reportTrimmedWarnings(HashSet<BiRoute> warnings) {
-        System.out.println(name + " trim warnings = " + warnings.size());
+	    final int warningsCount = warnings.size();
+	    if(warningsCount > 0){
+	        log.warning("deterministic.inconsistency.warning.count", warnings.size());
+	        for(BiRoute r : warnings) {
+	            warnSeqInconsistency(r.r1, r.r2);
+	        }
+	    }
 	}
 
 	/**
@@ -72,9 +80,9 @@ public abstract class SeqConstCheckAlgorithm {
 	 * @param route1
 	 * @param route2
 	 */
-	protected void warnSeqInconsistency(String route1, String route2) {
+	protected void warnSeqInconsistency(Route route1, Route route2) {
 	    log.warning("deterministic.inconsistency.warning",
-	            route1, route2);
+	            route1.routeStr(), route2.routeStr());
 	}
 }
 

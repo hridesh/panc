@@ -173,7 +173,6 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 
 		HashSet<Route> paths = loops.get(h1);
 		if (paths != null) {
-		    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 			warnings.add(new BiRoute(er1, er2));
 			return;
 		}
@@ -184,7 +183,6 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-			    warnSeqInconsistency(er1.routeStr(), er2.routeStr());
 				warnings.add(new BiRoute(er1, er2));
 				return;
 			}
