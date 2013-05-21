@@ -20,6 +20,7 @@ cp export/panini panini/bin/
 cp export/panini.bat panini/bin/
 cp export/panp panini/bin/
 cp export/panp.bat panini/bin/
+# Pull panini_rt.lib up to lib directory. Keeps existing scripts from breaking.
 mv panini/lib/dist/lib/panini_rt.jar panini/lib/
 cp export/profile.jar panini/lib/
 cp export/profile.properties panini/lib/
