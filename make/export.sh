@@ -24,7 +24,6 @@ cp export/panp.bat panini/bin/
 mv panini/lib/dist/lib/panini_rt.jar panini/lib/
 cp export/profile.jar panini/lib/
 cp export/profile.properties panini/lib/
-cp export/javac panini/lib/dist/bootstrap/bin/
 cp export/panini-mode.el panini/editors/
 cp export/panini.vim panini/editors/
 
