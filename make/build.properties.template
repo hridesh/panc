@@ -46,6 +46,7 @@ boot.javac.target = 6
 target.java = ${target.java.home}/bin/java
 
 # Version info -- override as needed
+panini_rt.version = 0.9.1
 jdk.version = 1.7.0
 build.number = b00
 milestone = internal
@@ -161,6 +162,9 @@ javap.includes = \
 javap.tests = \
         tools/javap/
 
+paninij.runtime.includes = \
+        org/paninij/runtime/ \
+        org/paninij/lang/
 #
 
 # The following files require the latest JDK to be available.

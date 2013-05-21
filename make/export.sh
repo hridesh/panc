@@ -20,7 +20,7 @@ cp export/panini panini/bin/
 cp export/panini.bat panini/bin/
 cp export/panp panini/bin/
 cp export/panp.bat panini/bin/
-cp export/panini_rt.jar panini/lib/
+mv panini/lib/dist/lib/panini_rt.jar panini/lib/
 cp export/profile.jar panini/lib/
 cp export/profile.properties panini/lib/
 cp export/javac panini/lib/dist/bootstrap/bin/

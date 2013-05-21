@@ -1082,14 +1082,35 @@
     </target>
 	
 
+    <target name="build-paninij-runtime" depends="build-panc">
+        <build-classes
+            includes="${paninij.runtime.includes}"/>
+    </target>
+
     <!-- Build the panini runtime -->
-	<target name="runtime" depends="build" description="Build the panini runtime">
-		<exec dir="make/" executable="./runtime.sh">
-		</exec>
+    <target name="runtime" depends="build-panc" description="Build the panini runtime">
+        <echo message="paninij.runtime.includes: ${paninij.runtime.includes}"/>
+        <jar destfile="${dist.lib.dir}/panini_rt.jar"
+             basedir="${build.classes.dir}"
+             includes="${paninij.runtime.includes}/**/*">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}" />
+                <attribute name="Specification-Title"
+                           value="Paninij Runtime" />
+                <attribute name="Specification-Vendor"
+                           value="Laboratory for Software Design at Iowa State University" />
+                <attribute name="Implementation-Title"
+                           value="Paninij Runtime" />
+                <attribute name="Implementation-Version"
+                           value="${panini_rt.version}" />
+                <attribute name="Implementation-Vendor"
+                           value="Laboratory for Software Design at Iowa State University" />
+            </manifest>
+        </jar>
     </target>
 
     <!-- Export the compiler and runtime -->
-	<target name="export" depends="build,runtime" description="Package the panini compiler and runtime for distribution.">
+	<target name="export" depends="build-panc,runtime" description="Package the panini compiler and runtime for distribution.">
 	      <exec dir="make/" executable="./export.sh">
 	      </exec>
 	</target>
