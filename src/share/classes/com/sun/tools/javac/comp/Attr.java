@@ -98,7 +98,7 @@ public class Attr extends JCTree.Visitor {
     org.paninij.comp.Attr pAttr;
     /*Defult to FULL, unless otherwise specified.*/
     public static ConsistencyUtil.SEQ_CONST_ALG seqConstAlg =
-        ConsistencyUtil.SEQ_CONST_ALG.FULL ;
+        ConsistencyUtil.SEQ_CONST_ALG.TRANS;
     SystemGraphsBuilder graphsBuilder;
     public static boolean doGraphs = false;
     // end Panini code
