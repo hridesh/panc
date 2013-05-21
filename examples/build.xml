@@ -93,11 +93,9 @@ Contributor(s): Sean L. Mooney
         <attribute name="example" />
         <attribute name="classpath" default="" />
         <sequential>
-            <property name="example.build.dir"
-                      value="${build.panini.dir}/@{example}" />
-        <mkdir dir="${example.build.dir}"/>
+        <mkdir dir="${build.panini.dir}/@{example}"/>
         <panc srcdir="${panini.src.dir}"
-              destdir="${example.build.dir}"
+              destdir="${build.panini.dir}/@{example}"
               includes="@{includes}"
               includeantruntime="no"
               classpath="@{classpath}"
