@@ -93,15 +93,25 @@ public class Route {
 		for (int i = 0; i < size - 1; i++) {
 			ClassMethod cm = nodes.get(i);
 			Edge e = edges.get(i);
-			s += cm.cs + "." + cm.node.name.toString() + "." + cm.meth + "-" +
-			e.line + "->";
+
+			s += removeDollar(cm.cs.toString()) + "." + cm.node.name.toString()
+					+ "." + cm.meth + "-" + e.line + "->";
 		}
 		ClassMethod cm = nodes.get(size - 1);
-		s += cm.cs + "." + cm.node.name.toString() + "." + cm.meth;
+		s += removeDollar(cm.cs.toString()) + "." + cm.node.name.toString() +
+				"." + cm.meth;
 
 		int edgeSize = edges.size();
 		if (edgeSize == size) {
 		    s += "-" + edges.get(edgeSize - 1).line + "->";
+		}
+		return s;
+	}
+
+	private final String removeDollar(String s) {
+		int temp = s.indexOf("$");
+		if (temp != -1) {
+			return s.substring(0, temp);
 		}
 		return s;
 	}
