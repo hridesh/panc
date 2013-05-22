@@ -86,6 +86,9 @@ Contributor(s): Sean L. Mooney
         <build includes="AddressBook/**/*.java"
                example="AddressBook"
                classpath="AddressBook/htmlparser.jar"/>
+        <copy todir="${build.panini.dir}/AddressBook">
+            <fileset dir="AddressBook" includes="*.xml, *.csv, *.jar" />
+        </copy>
     </target>
 
     <!--========================================================================
