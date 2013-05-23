@@ -62,6 +62,9 @@ Contributor(s): Sean L. Mooney
 
     <target name="build.Histogram" description="">
         <build includes="Histogram.java" example="Histogram"/>
+        <copy todir="${build.panini.dir}/Histogram">
+            <fileset dir="${basedir}" includes="shaks12.txt" />
+        </copy>
     </target>
 
     <target name="build.Philosophers" description="">
