@@ -30,6 +30,9 @@ cp export/panini.vim panini/editors/
 # Examples - new examples need to be included here to be part of the distribution.
 cp ../examples/build.xml panini/examples
 cp ../examples/HelloWorld.java panini/examples/
+# Distrubute Barbershop2 as Barbershop. Original kept around
+# in the source tree for historical purposes.
+cp ../examples/Barbershop2.java panini/examples/Barbershop.java
 cp ../examples/SignatureExample.java panini/examples/
 cp ../examples/Pi.java panini/examples/
 cp ../examples/Histogram.java panini/examples/
