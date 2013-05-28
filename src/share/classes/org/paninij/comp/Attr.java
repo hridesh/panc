@@ -602,9 +602,10 @@ public final class Attr extends CapsuleInternal {
 							argument = mi.args.get(j).toString().substring(0, mi.args.get(j).toString().indexOf("["));
 						}else
 							argument = mi.args.get(j).toString();
-						if(variables.get(names.fromString(argument))==null){
-							log.error(mi.args.get(j).pos, "symbol.not.found");
-						}
+						if(mi.args.get(j).getTag()!=Tag.NEWARRAY)
+							if(variables.get(names.fromString(argument))==null){
+								log.error(mi.args.get(j).pos, "symbol.not.found");
+							}
 					}
 				}
 				JCAssign newAssign = make
@@ -617,12 +618,13 @@ public final class Attr extends CapsuleInternal {
 				assigns.append(assignAssign);
 				if(!forEachLoop){
 					if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
-						if(syms.capsules.containsKey(names
-								.fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
-										.toString())))
-							systemGraphBuilder.addConnectionsOneToMany(sysGraph, 
-									names.fromString(mi.meth.toString()), c.capsuleParameters.get(j).getName(), 
-									names.fromString(mi.args.get(j).toString()));
+						if(mi.args.get(j).getTag()!=Tag.NEWARRAY)
+							if(syms.capsules.containsKey(names
+									.fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
+											.toString())))
+								systemGraphBuilder.addConnectionsOneToMany(sysGraph, 
+										names.fromString(mi.meth.toString()), c.capsuleParameters.get(j).getName(), 
+										names.fromString(mi.args.get(j).toString()));
 					}
 					if (syms.capsules.containsKey(names
 							.fromString(c.capsuleParameters.get(j).vartype
