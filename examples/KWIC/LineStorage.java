@@ -17,6 +17,9 @@
  * Contributor(s): Hridesh Rajan
  */
 
+import java.util.ArrayList;
+import lib.*;
+
 /*** 
  * Classic KWIC system using the Panini language 
  * 
@@ -53,8 +56,6 @@
  */
 
 capsule LineStorage () {
-	include Types;
-	include java.util.ArrayList;
 
 	/**
 	 * ArrayList holding all lines. Each line itself is represeneted as an

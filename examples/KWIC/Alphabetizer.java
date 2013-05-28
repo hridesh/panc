@@ -16,6 +16,7 @@
  * 
  * Contributor(s): Hridesh Rajan
  */
+import lib.*;
 
 /*** 
  * Classic KWIC system using the Panini language 
@@ -29,7 +30,6 @@
  */
 
 capsule Alphabetizer(CircularShifter shifter_){
-	include Types; 
 	
 	int sorted_[] = null; //Sorted indices of lines
 

@@ -17,6 +17,12 @@
  * Contributor(s): Hridesh Rajan
  */
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.FileNotFoundException;
+import java.util.StringTokenizer;
+
 /*** 
  * Classic KWIC system using the Panini language 
  * 
@@ -47,14 +53,7 @@
  *  </ul>
 */
 
-capsule Input (LineStorage line_storage){
-	
-	include java.io.BufferedReader;
-	include java.io.FileReader;
-	include java.io.IOException;
-	include java.io.FileNotFoundException;
-	include java.util.StringTokenizer;
-
+capsule Input (LineStorage line_storage){	
  void parse(String file) {
     try{
       BufferedReader reader = new BufferedReader(new FileReader(file));

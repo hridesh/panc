@@ -16,6 +16,7 @@
  * 
  * Contributor(s): Hridesh Rajan
  */
+import lib.*;
 
 /*** 
  * Classic KWIC system using the Panini language 
@@ -29,7 +30,6 @@
  */
 
 capsule CircularShifter(LineStorage lines, LineStorage shifts_){
-	include Types; 
 
 /**
 * Produces all circular shifts of lines in a given set. Circular shifts
