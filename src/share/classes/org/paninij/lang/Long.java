@@ -25,12 +25,17 @@
 
 package org.paninij.lang;
 
+import org.paninij.runtime.types.Panini$Duck;
+
 /**
  * The {@code Long} class wraps a value of the primitive type {@code
  * long} in an object. An object of type {@code Long} contains a
- * single field value whose type is {@code long}.
+ * single field value whose type is {@code long}. Adapted from
+ * {@link java.lang.Long} to act like a Long and provide the
+ * 'duck' behavior required by capsules.
  */
-public class Long extends Number implements Comparable<Long> {
+public class Long extends Number
+    implements Panini$Duck<java.lang.Long>, Comparable<Long> {
     /**
      * A constant holding the minimum value a {@code long} can
      * have, -2<sup>63</sup>.
@@ -324,14 +329,15 @@ public class Long extends Number implements Comparable<Long> {
      *
      * @param      s       the string to be parsed
      * @param      radix   the radix to be used in interpreting {@code s}
+     * @param      panini$message$id    message id for the {@code Duck$Long}.
      * @return     a {@code Long} object holding the value
      *             represented by the string argument in the specified
      *             radix.
      * @throws     NumberFormatException  If the {@code String} does not
      *             contain a parsable {@code long}.
      */
-    public static Long valueOf(String s, int radix) throws NumberFormatException {
-        return new Long(parseLong(s, radix));
+    public static Long valueOf(String s, int radix, int panini$message$id) throws NumberFormatException {
+        return new Long(parseLong(s, radix), panini$message$id);
     }
 
     /**
@@ -351,13 +357,14 @@ public class Long extends Number implements Comparable<Long> {
      * </blockquote>
      *
      * @param      s   the string to be parsed.
+     * @param      panini$message$id    message id for the {@code Duck$Long}.
      * @return     a {@code Long} object holding the value
      *             represented by the string argument.
      * @throws     NumberFormatException  If the string cannot be parsed
      *             as a {@code long}.
      */
-    public static Long valueOf(String s) throws NumberFormatException {
-        return new Long(parseLong(s, 10));
+    public static Long valueOf(String s, int panini$message$id) throws NumberFormatException {
+        return new Long(parseLong(s, 10), panini$message$id);
     }
 
     /**
@@ -375,11 +382,12 @@ public class Long extends Number implements Comparable<Long> {
      * range.
      *
      * @param  l a long value.
+     * @param  panini$message$id message id for the {@code Duck$Long}.
      * @return a {@code Long} instance representing {@code l}.
      * @since  1.5
      */
-    public static Long valueOf(long l) {
-        return new Long(l);
+    public static Long valueOf(long l, int panini$message$id) {
+        return new Long(l, panini$message$id);
     }
 
     /**
@@ -418,6 +426,7 @@ public class Long extends Number implements Comparable<Long> {
      * {@code String}.
      *
      * @param     nm the {@code String} to decode.
+     * @param     panini$message$id message id for the {@code Duck$Long}.
      * @return    a {@code Long} object holding the {@code long}
      *            value represented by {@code nm}
      * @throws    NumberFormatException  if the {@code String} does not
@@ -425,26 +434,126 @@ public class Long extends Number implements Comparable<Long> {
      * @see java.lang.Long#parseLong(String, int)
      * @since 1.2
      */
-    public static Long decode(String nm) throws NumberFormatException {
-        return new Long (java.lang.Long.decode(nm).longValue());
+    public static Long decode(String nm, int panini$message$id) throws NumberFormatException {
+        return new Long (java.lang.Long.decode(nm).longValue(), panini$message$id);
     }
 
     /**
      * The value of the {@code Long}.
      *
+     * This value is filled when either:
+     * <ol>
+     * <li> an {@code org.paninij.lang.Long} is constructed with the actual value</li>
+     * <li> the {@link #panini$finish(Long)} method is called. </li>
+     * </ol>
      * @serial
      */
-    private final long value;
+    private long value;
+
+    // Panini$Duck management
+    // Panini$Duck management adapted from the output of panc 0.9.1
+    // with the -XD-printflat flag for an Integer wrapper type of class.
+    /**
+     * Message ID for the generated dispatcher.
+     */
+    private final int panini$message$id;
+    /**
+     * Boolean indicating whether or not the actual value has been set.
+     * Should only be set in either a constructor that has an actual value
+     * or when the {@link #panini$finish(Long)} method is called.
+     */
+    private boolean panini$redeemed;
+
+    /**
+     * Save the value and notify listeners the value is available.
+     *
+     * @param l    {@code java.lang.Long} to use as a value. Method will pull
+     *             the wrapped {@code long} out as the value.
+     */
+    @Override
+    public void panini$finish(java.lang.Long l) {
+        synchronized(this) {
+            value = l.longValue();
+            panini$redeemed = true;
+            notifyAll();
+        }
+    }
+
+    /**
+     * Save the value and notify listeners the value is available.
+     *
+     * Does the same thing as {@link #panini$finish(Long)}, but for
+     * a {@code long} instead of a {@code Long}.
+     *
+     * @param l    {@code long} to use as a value.
+     */
+    public void panini$finish(long l) {
+        synchronized(this) {
+            value = l;
+            panini$redeemed = true;
+            notifyAll();
+        }
+    }
+
+    /**
+     * Get the message id for the duck. The message id is used by the generated
+     * dispatchers to choose what method is supposed to run to fill in the value
+     * of the duck.
+     */
+    @Override
+    public int panini$message$id() {
+        return this.panini$message$id;
+    }
+
+    /**
+     * Get the {@link java.lang.Long} the
+     * duck wraps. Getting the value will force
+     * a wait until the actual value is set.
+     */
+    @Override
+    public java.lang.Long panini$get() {
+        while (panini$redeemed == false) {
+            try{
+                synchronized (this) {
+                    while (panini$redeemed == false) {
+                        wait();
+                    }
+                }
+            }catch (InterruptedException e){
+            }
+        }
+        return java.lang.Long.valueOf(value);
+    }
+    // End Panini$Duck management
+
+    /**
+     * Constructs a new {@code Duck$Long} which does
+     * not yet have is value set.
+     *
+     * @param panini$message$id    message id (method to call) when this
+     *        duck is serviced in the message queue.
+     */
+    public Long(int panini$message$id) {
+        this.panini$message$id = panini$message$id;
+        this.panini$redeemed = false;
+    }
 
     /**
      * Constructs a newly allocated {@code Long} object that
      * represents the specified {@code long} argument.
      *
+     * A {@code Duck$Long} constructed with this constructor
+     * is available immediately.
+     *
      * @param   value   the value to be represented by the
      *          {@code Long} object.
+     * @param   panini$message$id    message id (method to call) when this
+     *          duck is serviced in the message queue.
      */
-    public Long(long value) {
+    public Long(long value, int panini$message$id) {
         this.value = value;
+        this.panini$message$id = panini$message$id;
+        this.panini$redeemed = true;
     }
 
     /**
@@ -454,14 +563,19 @@ public class Long extends Number implements Comparable<Long> {
      * {@code long} value in exactly the manner used by the
      * {@code parseLong} method for radix 10.
      *
+     * A {@code Duck$Long} constructed with this constructor
+     * is available immediately.
+     *
      * @param      s   the {@code String} to be converted to a
      *             {@code Long}.
      * @throws     NumberFormatException  if the {@code String} does not
      *             contain a parsable {@code long}.
      * @see        java.lang.Long#parseLong(java.lang.String, int)
      */
-    public Long(String s) throws NumberFormatException {
+    public Long(String s, int panini$message$id) throws NumberFormatException {
         this.value = parseLong(s, 10);
+        this.panini$message$id = panini$message$id;
+        this.panini$redeemed = true;
     }
 
     /**
@@ -469,6 +583,7 @@ public class Long extends Number implements Comparable<Long> {
      * {@code byte}.
      */
     public byte byteValue() {
+        if (panini$redeemed == false) panini$get();
         return (byte)value;
     }
 
@@ -477,6 +592,7 @@ public class Long extends Number implements Comparable<Long> {
      * {@code short}.
      */
     public short shortValue() {
+        if (panini$redeemed == false) panini$get();
         return (short)value;
     }
 
@@ -485,6 +601,7 @@ public class Long extends Number implements Comparable<Long> {
      * {@code int}.
      */
     public int intValue() {
+        if (panini$redeemed == false) panini$get();
         return (int)value;
     }
 
@@ -493,6 +610,7 @@ public class Long extends Number implements Comparable<Long> {
      * {@code long} value.
      */
     public long longValue() {
+        if (panini$redeemed == false) panini$get();
         return value;
     }
 
@@ -501,6 +619,7 @@ public class Long extends Number implements Comparable<Long> {
      * {@code float}.
      */
     public float floatValue() {
+        if (panini$redeemed == false) panini$get();
         return (float)value;
     }
 
@@ -509,6 +628,7 @@ public class Long extends Number implements Comparable<Long> {
      * {@code double}.
      */
     public double doubleValue() {
+        if (panini$redeemed == false) panini$get();
         return (double)value;
     }
 
@@ -523,6 +643,7 @@ public class Long extends Number implements Comparable<Long> {
      *          base&nbsp;10.
      */
     public String toString() {
+        if (panini$redeemed == false) panini$get();
         return toString(value);
     }
 
@@ -539,6 +660,7 @@ public class Long extends Number implements Comparable<Long> {
      * @return  a hash code value for this object.
      */
     public int hashCode() {
+        if (panini$redeemed == false) panini$get();
         return (int)(value ^ (value >>> 32));
     }
 
@@ -553,6 +675,7 @@ public class Long extends Number implements Comparable<Long> {
      *          {@code false} otherwise.
      */
     public boolean equals(Object obj) {
+        if (panini$redeemed == false) panini$get();
         if (obj instanceof Long) {
             return value == ((Long)obj).longValue();
         }
@@ -585,12 +708,13 @@ public class Long extends Number implements Comparable<Long> {
      * </blockquote>
      *
      * @param   nm   property name.
+     * @param   panini$message$id message id for the {@code Duck$Long}.
      * @return  the {@code Long} value of the property.
      * @see     java.lang.System#getProperty(java.lang.String)
      * @see     java.lang.System#getProperty(java.lang.String, java.lang.String)
      */
-    public static Long getLong(String nm) {
-        return getLong(nm, null);
+    public static Long getLong(String nm, int panini$message$id) {
+        return getLong(nm, null, panini$message$id);
     }
 
     /**
@@ -630,13 +754,14 @@ public class Long extends Number implements Comparable<Long> {
      *
      * @param   nm    property name.
      * @param   val   default value.
+     * @param   panini$message$id message id for the {@code Duck$Long}.
      * @return  the {@code Long} value of the property.
      * @see     java.lang.System#getProperty(java.lang.String)
      * @see     java.lang.System#getProperty(java.lang.String, java.lang.String)
      */
-    public static Long getLong(String nm, long val) {
-        Long result = Long.getLong(nm, null);
-        return (result == null) ? Long.valueOf(val) : result;
+    public static Long getLong(String nm, long val, int panini$message$id) {
+        Long result = Long.getLong(nm, null, panini$message$id);
+        return (result == null) ? Long.valueOf(val, panini$message$id) : result;
     }
 
     /**
@@ -682,7 +807,7 @@ public class Long extends Number implements Comparable<Long> {
      * @see java.lang.System#getProperty(java.lang.String, java.lang.String)
      * @see java.lang.Long#decode
      */
-    public static Long getLong(String nm, Long val) {
+    public static Long getLong(String nm, Long val, int panini$message$id) {
         String v = null;
         try {
             v = System.getProperty(nm);
@@ -691,7 +816,7 @@ public class Long extends Number implements Comparable<Long> {
         }
         if (v != null) {
             try {
-                return Long.decode(v);
+                return Long.decode(v, panini$message$id);
             } catch (NumberFormatException e) {
             }
         }
@@ -712,7 +837,28 @@ public class Long extends Number implements Comparable<Long> {
      * @since   1.2
      */
     public int compareTo(Long anotherLong) {
+        if (panini$redeemed == false) panini$get();
         return compare(this.value, anotherLong.value);
+    }
+
+    /**
+     * Compares two {@code Long} objects numerically.
+     *
+     * Utility to compare a {@code java} Long with a {@code panini Long}.
+     *
+     * @param   anotherLong   the {@code Long} to be compared.
+     * @return  the value {@code 0} if this {@code Long} is
+     *          equal to the argument {@code Long}; a value less than
+     *          {@code 0} if this {@code Long} is numerically less
+     *          than the argument {@code Long}; and a value greater
+     *          than {@code 0} if this {@code Long} is numerically
+     *           greater than the argument {@code Long} (signed
+     *           comparison).
+     * @since   1.2
+     */
+    public int compareTo(java.lang.Long anotherLong) {
+        if (panini$redeemed == false) panini$get();
+        return compare(this.value, anotherLong.longValue());
     }
 
     /**
