@@ -8,6 +8,14 @@ make/panc.zip
 make/panc/
 make/build.properties
 make/export/panini_rt.jar
+
+#eclipse project specific
 /.settings
 /.project
 /.classpath
+bin/
+
+#racket specific
+src/racket/sys-lang/compiled/
+
+
