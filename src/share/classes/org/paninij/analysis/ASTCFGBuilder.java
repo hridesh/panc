@@ -116,10 +116,11 @@ public class ASTCFGBuilder extends TreeScanner {
 
 	public void visitAssert(JCAssert tree) {
 		JCExpression cond = tree.cond;
-		ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
 
 		// fill the start/end/exit nodes
 		cond.accept(this);
+
+		ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
 
 		JCExpression detail = tree.detail;
 		if (detail != null) {
@@ -141,8 +142,6 @@ public class ASTCFGBuilder extends TreeScanner {
 			connectStartNodesToEndNodesOf(detail, cond);
 			connectToEndNodesOf(detail, tree);
 		} else {
-			this.currentStartNodes = currentStartNodes;
-
 			ArrayList<JCTree> finalEndNodes = new ArrayList<JCTree>(1);
 			ArrayList<JCTree> finalExcEndNodes = new ArrayList<JCTree>(1);
 			

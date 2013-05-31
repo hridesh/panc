@@ -9,7 +9,6 @@ public class ASTCFGPrinter extends TreeScanner {
 	public void visitImport(JCImport tree)               { /* do nothing */ }
 	public void visitMethodDef(JCMethodDecl tree)        { /* do nothing */ }
 	public void visitLetExpr(LetExpr tree)               { /* do nothing */ }
-	public void visitAssert(JCAssert tree)               { /* do nothing */ }
 	public void visitAnnotation(JCAnnotation tree)       { /* do nothing */ }
 	public void visitModifiers(JCModifiers tree)         { /* do nothing */ }
 	public void visitErroneous(JCErroneous tree)         { /* do nothing */ }
@@ -27,6 +26,11 @@ public class ASTCFGPrinter extends TreeScanner {
 	public void visitClassDef(JCClassDecl tree)          { printCurrent(tree); }
 	public void visitIdent(JCIdent tree)                 { printCurrent(tree); }
 	public void visitLiteral(JCLiteral tree)             { printCurrent(tree); }
+
+	public void visitAssert(JCAssert tree)               {
+		printCurrent(tree);
+		super.visitAssert(tree);
+	}
 
 	public void visitLabelled(JCLabeledStatement tree)   {
 		printCurrent(tree);
