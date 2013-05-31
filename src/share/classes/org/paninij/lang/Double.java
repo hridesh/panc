@@ -796,10 +796,15 @@ implements Panini$Duck<java.lang.Double>, Comparable<Double> {
      *          {@code false} otherwise.
      * @see java.lang.Double#doubleToLongBits(double)
      */
-	public boolean equals(Object obj) {
+	public boolean equals(java.lang.Object obj) {
 		if (panini$redeemed == false) panini$get();
 		if (obj instanceof Double) {
-			return doubleToLongBits(value) == doubleToLongBits(((Double)obj).value);
+			Double other = (Double)obj;
+			return doubleToLongBits(value) == doubleToLongBits(other.doubleValue());
+		}
+		else if (obj instanceof java.lang.Double){
+			java.lang.Double other = (java.lang.Double)obj;
+			return doubleToLongBits(value) == doubleToLongBits(other.doubleValue());
 		}
 		return false;
 	}
@@ -959,8 +964,8 @@ implements Panini$Duck<java.lang.Double>, Comparable<Double> {
 	 * @since   1.2
 	 */
 	public int compareTo(Double anotherDouble) {
-		if (panini$redeemed == false) panini$get();
-		return compare(this.value, anotherDouble.value);
+		if (panini$redeemed == false) panini$get(); 
+		return compare(this.value, anotherDouble.doubleValue());
 	}
 
 	/**

@@ -2922,10 +2922,15 @@ Panini$Duck<java.lang.Character>, Comparable<Character> {
 	 * @return  {@code true} if the objects are the same;
 	 *          {@code false} otherwise.
 	 */
-	public boolean equals(Object obj) {
+	public boolean equals(java.lang.Object obj) {
 		if (panini$redeemed == false) panini$get();
 		if (obj instanceof Character) {
-			return value == ((Character)obj).charValue();
+			Character other = (Character)obj;
+			return value == other.charValue();
+		}
+		else if (obj instanceof java.lang.Character){
+			java.lang.Character other = (java.lang.Character)obj;
+			return value == other.charValue();
 		}
 		return false;
 	}
@@ -2947,7 +2952,7 @@ Panini$Duck<java.lang.Character>, Comparable<Character> {
      */
     public int compareTo(Character anotherCharacter) {
     	if (panini$redeemed == false) panini$get();
-		return compare(this.value, anotherCharacter.value);
+		return compare(this.value, anotherCharacter.charValue());
     }
 
 	/**

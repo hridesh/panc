@@ -303,10 +303,15 @@ public class Boolean extends Object implements java.io.Serializable,
      * @return  {@code true} if the Boolean objects represent the
      *          same value; {@code false} otherwise.
      */
-    public boolean equals(Object obj) {
+    public boolean equals(java.lang.Object obj) {
     	if (panini$redeemed == false) panini$get();
         if (obj instanceof Boolean) {
-            return value == ((Boolean)obj).booleanValue();
+        	Boolean other = (Boolean)obj;
+            return value == other.booleanValue();
+        }
+        else if(obj instanceof java.lang.Boolean){
+        	java.lang.Boolean other = (java.lang.Boolean)obj;
+        	return value == other.booleanValue();
         }
         return false;
     }
