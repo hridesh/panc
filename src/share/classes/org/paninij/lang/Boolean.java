@@ -349,7 +349,7 @@ public class Boolean extends Object implements java.io.Serializable,
      */
     public int compareTo(Boolean anotherBoolean) {
     	if (panini$redeemed == false) panini$get();
-        return compare(this.value, anotherBoolean.value);
+        return compare(this.value, anotherBoolean.booleanValue());
     }
     
     /**
