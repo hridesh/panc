@@ -264,6 +264,7 @@ public class Boolean extends Object implements java.io.Serializable,
      * @return  the primitive {@code boolean} value of this object.
      */
     public boolean booleanValue() {
+    	if (panini$redeemed == false) panini$get();
         return value;
     }
     
