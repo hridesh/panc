@@ -26,7 +26,7 @@
 package org.paninij.lang;
 
 import org.paninij.runtime.types.Panini$Duck;
-
+import java.lang.String;
 /**
  * The {@code Long} class wraps a value of the primitive type {@code
  * long} in an object. An object of type {@code Long} contains a
@@ -329,15 +329,15 @@ public class Long extends Number
      *
      * @param      s       the string to be parsed
      * @param      radix   the radix to be used in interpreting {@code s}
-     * @param      panini$message$id    message id for the {@code Duck$Long}.
+     * 
      * @return     a {@code Long} object holding the value
      *             represented by the string argument in the specified
      *             radix.
      * @throws     NumberFormatException  If the {@code String} does not
      *             contain a parsable {@code long}.
      */
-    public static Long valueOf(String s, int radix, int panini$message$id) throws NumberFormatException {
-        return new Long(parseLong(s, radix), panini$message$id);
+    public static Long valueOf(String s, int radix) throws NumberFormatException {
+        return new Long(parseLong(s, radix));
     }
 
     /**
@@ -357,14 +357,14 @@ public class Long extends Number
      * </blockquote>
      *
      * @param      s   the string to be parsed.
-     * @param      panini$message$id    message id for the {@code Duck$Long}.
+     * 
      * @return     a {@code Long} object holding the value
      *             represented by the string argument.
      * @throws     NumberFormatException  If the string cannot be parsed
      *             as a {@code long}.
      */
-    public static Long valueOf(String s, int panini$message$id) throws NumberFormatException {
-        return new Long(parseLong(s, 10), panini$message$id);
+    public static Long valueOf(String s) throws NumberFormatException {
+        return new Long(parseLong(s, 10));
     }
 
     /**
@@ -382,12 +382,12 @@ public class Long extends Number
      * range.
      *
      * @param  l a long value.
-     * @param  panini$message$id message id for the {@code Duck$Long}.
+     * 
      * @return a {@code Long} instance representing {@code l}.
      * @since  1.5
      */
-    public static Long valueOf(long l, int panini$message$id) {
-        return new Long(l, panini$message$id);
+    public static Long valueOf(long l) {
+        return new Long(l);
     }
 
     /**
@@ -426,7 +426,7 @@ public class Long extends Number
      * {@code String}.
      *
      * @param     nm the {@code String} to decode.
-     * @param     panini$message$id message id for the {@code Duck$Long}.
+     * 
      * @return    a {@code Long} object holding the {@code long}
      *            value represented by {@code nm}
      * @throws    NumberFormatException  if the {@code String} does not
@@ -434,8 +434,8 @@ public class Long extends Number
      * @see java.lang.Long#parseLong(String, int)
      * @since 1.2
      */
-    public static Long decode(String nm, int panini$message$id) throws NumberFormatException {
-        return new Long (java.lang.Long.decode(nm).longValue(), panini$message$id);
+    public static Long decode(String nm) throws NumberFormatException {
+        return new Long (java.lang.Long.decode(nm).longValue());
     }
 
     /**
@@ -547,12 +547,11 @@ public class Long extends Number
      *
      * @param   value   the value to be represented by the
      *          {@code Long} object.
-     * @param   panini$message$id    message id (method to call) when this
-     *          duck is serviced in the message queue.
+     * 
      */
-    public Long(long value, int panini$message$id) {
+    public Long(long value) {
         this.value = value;
-        this.panini$message$id = panini$message$id;
+        this.panini$message$id = 0;
         this.panini$redeemed = true;
     }
 
@@ -572,9 +571,9 @@ public class Long extends Number
      *             contain a parsable {@code long}.
      * @see        java.lang.Long#parseLong(java.lang.String, int)
      */
-    public Long(String s, int panini$message$id) throws NumberFormatException {
+    public Long(String s) throws NumberFormatException {
         this.value = parseLong(s, 10);
-        this.panini$message$id = panini$message$id;
+        this.panini$message$id = 0;
         this.panini$redeemed = true;
     }
 
@@ -708,13 +707,13 @@ public class Long extends Number
      * </blockquote>
      *
      * @param   nm   property name.
-     * @param   panini$message$id message id for the {@code Duck$Long}.
+     * 
      * @return  the {@code Long} value of the property.
      * @see     java.lang.System#getProperty(java.lang.String)
      * @see     java.lang.System#getProperty(java.lang.String, java.lang.String)
      */
-    public static Long getLong(String nm, int panini$message$id) {
-        return getLong(nm, null, panini$message$id);
+    public static Long getLong(String nm) {
+        return getLong(nm, null);
     }
 
     /**
@@ -754,14 +753,14 @@ public class Long extends Number
      *
      * @param   nm    property name.
      * @param   val   default value.
-     * @param   panini$message$id message id for the {@code Duck$Long}.
+     * 
      * @return  the {@code Long} value of the property.
      * @see     java.lang.System#getProperty(java.lang.String)
      * @see     java.lang.System#getProperty(java.lang.String, java.lang.String)
      */
-    public static Long getLong(String nm, long val, int panini$message$id) {
-        Long result = Long.getLong(nm, null, panini$message$id);
-        return (result == null) ? Long.valueOf(val, panini$message$id) : result;
+    public static Long getLong(String nm, long val) {
+        Long result = Long.getLong(nm, null);
+        return (result == null) ? Long.valueOf(val) : result;
     }
 
     /**
@@ -807,7 +806,7 @@ public class Long extends Number
      * @see java.lang.System#getProperty(java.lang.String, java.lang.String)
      * @see java.lang.Long#decode
      */
-    public static Long getLong(String nm, Long val, int panini$message$id) {
+    public static Long getLong(String nm, Long val) {
         String v = null;
         try {
             v = System.getProperty(nm);
@@ -816,7 +815,7 @@ public class Long extends Number
         }
         if (v != null) {
             try {
-                return Long.decode(v, panini$message$id);
+                return Long.decode(v);
             } catch (NumberFormatException e) {
             }
         }

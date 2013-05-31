@@ -26,7 +26,7 @@
 package org.paninij.lang;
 
 import org.paninij.runtime.types.Panini$Duck;
-
+import java.lang.String;
 /**
  * The {@code Character} class wraps a value of the primitive type {@code
  * char} in an object. An object of type {@code Character} contains a
@@ -1994,12 +1994,12 @@ Panini$Duck<java.lang.Character>, Comparable<Character> {
 	 * cache other values outside of this range.
 	 *
 	 * @param  c a char value.
-	 * @param      panini$message$id    message id for the {@code Duck$Character}.
+	 * 
 	 * @return a <tt>Character</tt> instance representing <tt>c</tt>.
 	 * @since  1.5
 	 */
-	public static Character valueOf(char c, int panini$message$id) {
-		return new Character(c, panini$message$id);
+	public static Character valueOf(char c) {
+		return new Character(c);
 	}
 
 	/**
@@ -2816,12 +2816,11 @@ Panini$Duck<java.lang.Character>, Comparable<Character> {
 	 *
 	 * @param   value   the value to be represented by the
 	 *          {@code Character} object.
-	 * @param   panini$message$id    message id (method to call) when this
-	 *          duck is serviced in the message queue.
+	 * 
 	 */
-	public Character(char value, int panini$message$id) {
+	public Character(char value) {
 		this.value = value;
-		this.panini$message$id = panini$message$id;
+		this.panini$message$id = 0;
 		this.panini$redeemed = true;
 	}
 

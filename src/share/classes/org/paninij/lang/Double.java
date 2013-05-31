@@ -26,7 +26,7 @@
 package org.paninij.lang;
 
 import org.paninij.runtime.types.Panini$Duck;
-
+import java.lang.String;
 /**
  * The {@code Double} class wraps a value of the primitive type {@code
  * double} in an object. An object of type {@code Double} contains a
@@ -446,14 +446,14 @@ implements Panini$Duck<java.lang.Double>, Comparable<Double> {
      * </code>
      *
      * @param      s   the string to be parsed.
-     * @param      panini$message$id    message id for the {@code Duck$Long}.
+     * 
      * @return     a {@code Double} object holding the value
      *             represented by the {@code String} argument.
      * @throws     NumberFormatException  if the string does not contain a
      *             parsable number.
      */
-	public static Double valueOf(String s, int panini$message$id) throws NumberFormatException {
-		return new Double(parseDouble(s), panini$message$id);
+	public static Double valueOf(String s) throws NumberFormatException {
+		return new Double(parseDouble(s));
 	}
 
 	/**
@@ -466,13 +466,13 @@ implements Panini$Duck<java.lang.Double>, Comparable<Double> {
      * frequently requested values.
      *
      * @param  d a double value.
-     * @param  panini$message$id    message id for the {@code Duck$Long}.
+     * 
      * @return a {@code Double} instance representing {@code d}.
      * @since  1.5
 
      */
-	public static Double valueOf(double d, int panini$message$id) {
-		return new Double(d, panini$message$id);
+	public static Double valueOf(double d) {
+		return new Double(d);
 	}
 
 	/**
@@ -608,12 +608,11 @@ implements Panini$Duck<java.lang.Double>, Comparable<Double> {
 	 *
 	 * @param   value   the value to be represented by the
 	 *          {@code Double} object.
-	 * @param   panini$message$id    message id (method to call) when this
-	 *          duck is serviced in the message queue.
+	 *
 	 */
-	public Double(double value, int panini$message$id) {
+	public Double(double value) {
 		this.value = value;
-		this.panini$message$id = panini$message$id;
+		this.panini$message$id = 0;
 		this.panini$redeemed = true;
 	}
 
@@ -627,14 +626,14 @@ implements Panini$Duck<java.lang.Double>, Comparable<Double> {
 	 *
 	 * @param      s   the {@code String} to be converted to a
 	 *             {@code Double}.
-	 * @param   panini$message$id    message id (method to call) when this
+	 * 
 	 * @throws     NumberFormatException  if the {@code String} does not
 	 *             contain a parsable {@code double}.
 	 * @see        java.lang.Double#parseDouble(java.lang.String, int)
 	 */
-	public Double(String s, int panini$message$id) throws NumberFormatException {
+	public Double(String s) throws NumberFormatException {
 		this.value = parseDouble(s);
-		this.panini$message$id = panini$message$id;
+		this.panini$message$id = 0;
 		this.panini$redeemed = true;
 	}
 

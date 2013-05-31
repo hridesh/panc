@@ -26,7 +26,7 @@
 package org.paninij.lang;
 
 import org.paninij.runtime.types.Panini$Duck;
-
+import java.lang.String;
 /**
  * The {@code Boolean} class wraps a value of the primitive type {@code
  * boolean} in an object. An object of type {@code Boolean} contains a
@@ -96,8 +96,8 @@ public class Boolean extends Object implements java.io.Serializable,
      * @param   s   a string.
      * @return  the {@code Boolean} value represented by the string.
      */
-    public static Boolean valueOf(String s, int panini$message$id) {
-        return new Boolean(parseBoolean(s), panini$message$id);
+    public static Boolean valueOf(String s) {
+        return new Boolean(parseBoolean(s));
     }
     
     /**
@@ -111,12 +111,12 @@ public class Boolean extends Object implements java.io.Serializable,
      * significantly better space and time performance.
      *
      * @param  b a boolean value.
-     * @param  panini$message$id message id for the {@code Duck$Boolean}.
+     * 
      * @return a {@code Boolean} instance representing {@code b}.
      * @since  1.4
      */
-    public static Boolean valueOf(boolean b, int panini$message$id) {
-        return new Boolean(b, panini$message$id);
+    public static Boolean valueOf(boolean b) {
+        return new Boolean(b);
     }
 
     /**
@@ -228,12 +228,11 @@ public class Boolean extends Object implements java.io.Serializable,
      *
      * @param   value   the value to be represented by the
      *          {@code Boolean} object.
-     * @param   panini$message$id    message id (method to call) when this
-     *          duck is serviced in the message queue.
+     * 
      */
-    public Boolean(boolean value, int panini$message$id) {
+    public Boolean(boolean value) {
         this.value = value;
-        this.panini$message$id = panini$message$id;
+        this.panini$message$id = 0;
         this.panini$redeemed = true;
     }
 
@@ -247,15 +246,14 @@ public class Boolean extends Object implements java.io.Serializable,
      *
      * @param      s   the {@code String} to be converted to a
      *             {@code Boolean}.
-     * @param   panini$message$id    message id (method to call) when this
-     *          duck is serviced in the message queue.
+     * 
      * @throws     NumberFormatException  if the {@code String} does not
      *             contain a parsable {@code boolean}.
      * @see        java.lang.Boolean#parseBoolean(java.lang.String, int)
      */
-    public Boolean(String s, int panini$message$id) throws NumberFormatException {
+    public Boolean(String s) throws NumberFormatException {
         this.value = parseBoolean(s);
-        this.panini$message$id = panini$message$id;
+        this.panini$message$id = 0;
         this.panini$redeemed = true;
     }
 
