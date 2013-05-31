@@ -67,9 +67,10 @@ public abstract class SeqConstCheckAlgorithm {
 
 	protected void reportTrimmedWarnings(HashSet<BiRoute> warnings) {
 	    final int warningsCount = warnings.size();
-	    if(warningsCount > 0){
-	        log.warning("deterministic.inconsistency.warning.count", warnings.size());
-	        for(BiRoute r : warnings) {
+	    if (warningsCount > 0) {
+	        log.warning("deterministic.inconsistency.warning.count",
+	        		warnings.size());
+	        for (BiRoute r : warnings) {
 	            warnSeqInconsistency(r.r1, r.r2);
 	        }
 	    }
@@ -85,4 +86,3 @@ public abstract class SeqConstCheckAlgorithm {
 	            route1.routeStr(), route2.routeStr());
 	}
 }
-
