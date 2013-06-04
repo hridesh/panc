@@ -64,6 +64,8 @@ import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
+
+import org.paninij.system.SystemDeclRewriter;
 import org.paninij.systemgraph.*;
 
 /***
@@ -260,6 +262,10 @@ public final class Attr extends CapsuleInternal {
 		SystemGraph sysGraph = systemGraphBuilder.createSystemGraph();
 		Set<Name> capsules = new HashSet<Name>();
 
+		SystemDeclRewriter interp = new SystemDeclRewriter(make, log);
+		JCSystemDecl transDecl = interp.translate(tree);
+		System.out.println(transDecl);
+
 		for(JCStatement currentSystemStmt : tree.body.stats){
 			Tag systemStmtKind = currentSystemStmt.getTag();
 			if(systemStmtKind == VARDEF){
@@ -287,6 +293,8 @@ public final class Attr extends CapsuleInternal {
 				JCExpressionStatement currentExprStmt = (JCExpressionStatement) currentSystemStmt;
 				if(currentExprStmt.expr.getTag()==APPLY){
 					processCapsuleWiring(currentExprStmt.expr, assigns, variables, capsules, sysGraph);
+				} else {
+				    //FIXME: What about the else case, e.g. size = 7;
 				}
 			}else if(systemStmtKind == FOREACHLOOP)
 				processForEachLoop((JCEnhancedForLoop) currentSystemStmt, assigns, variables, capsules, sysGraph);
