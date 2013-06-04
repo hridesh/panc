@@ -1902,7 +1902,12 @@ public class JavacParser implements Parser {
     }
     
     public JCBlock systemBlock(){
-    		return systemBlock(token.pos, 0);
+        JCBlock systemBlock =  systemBlock(token.pos, 0);
+        
+        //Interpret the system block to get a fixed topology, and continue with
+        //the resulting fixed system.
+    	return new org.paninij.system.SystemInterpreter(log)
+    	            .interpret(systemBlock);
     }
     
     // end Panini code
