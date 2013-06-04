@@ -21,7 +21,8 @@ package org.paninij.comp;
 
 
 import static com.sun.tools.javac.code.Flags.*;
-import static com.sun.tools.javac.code.TypeTags.INT;
+import static com.sun.tools.javac.code.Kinds.*;
+import static com.sun.tools.javac.code.TypeTags.*;
 import static com.sun.tools.javac.tree.JCTree.Tag.APPLY;
 import static com.sun.tools.javac.tree.JCTree.Tag.ASSIGN;
 import static com.sun.tools.javac.tree.JCTree.Tag.CAPSULEARRAY;
@@ -338,13 +339,22 @@ public final class Attr extends CapsuleInternal {
 
 	public final void visitProcDef(JCProcDecl tree){
 		Type restype = ((MethodType)tree.sym.type).restype;
-		if(restype.tsym instanceof CapsuleSymbol||tree.sym.getReturnType().isPrimitive()||
-				tree.sym.getReturnType().toString().equals("java.lang.String"))
-		{
-			log.error("procedure.restype.illegal", tree.sym.getReturnType(), tree.sym);
-			System.exit(1);
+		if(restype.tsym instanceof CapsuleSymbol){
+			log.error(tree.pos(), "procedure.restype.illegal.capsule");
 		}
+//		if(!(tree.sym.owner.toString().contains("$serial")||tree.sym.owner.toString().contains("$monitor"))){
+//		if(tree.sym.getReturnType().isPrimitive()||
+//				tree.sym.getReturnType().toString().equals("java.lang.String"))
+//			{
+//				switch (restype.tag){
+//				case LONG:
+//					tree.restype = make.Ident(names.fromString("Long"));
+//					((MethodType)tree.sym.type).restype = syms.classType;
+//				}
+//			}
+//		}
 		tree.switchToMethod();
+		System.out.println(tree);
 	}
 	
 	// Helper functions
@@ -593,7 +603,7 @@ public final class Attr extends CapsuleInternal {
 					param = c.capsuleParameters.get(j).vartype.toString().substring(0, c.capsuleParameters.get(j).vartype.toString().indexOf("["));
 				}else
 					param = c.capsuleParameters.get(j).vartype.toString();
-				if(syms.capsules.containsKey(names.fromString(param))){
+				if(syms.capsules.containsKey(names.fromString(param))){//if its a capsule type
 					if(mi.args.get(j).toString().equals("null")){
 						log.error(mi.args.get(j).pos(), "capsule.null.declare");
 					}else{

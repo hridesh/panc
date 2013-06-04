@@ -412,10 +412,10 @@ public class Enter extends JCTree.Visitor {
         							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
 	    			copiedDefs.add(copyTask);
 	    			copyTask.parentCapsule = copyCapsule;
-	    			copiedDefs.add(copySerial);
-	    			copySerial.parentCapsule = copyCapsule;
-	    			copiedDefs.add(copyMonitor);
-	    			copyMonitor.parentCapsule = copyCapsule;
+//	    			copiedDefs.add(copySerial);
+//	    			copySerial.parentCapsule = copyCapsule;
+//	    			copiedDefs.add(copyMonitor);
+//	    			copyMonitor.parentCapsule = copyCapsule;
     			}
     		}
     		else
@@ -793,6 +793,17 @@ public class Enter extends JCTree.Visitor {
 	    	}
         	c.definedRun = true;
         }
+        for(JCTree defs : tree.defs){
+        	if(defs instanceof JCMethodDecl){
+        		if(((JCMethodDecl) defs).restype.toString().equals("long")&&!((JCMethodDecl) defs).name.toString().contains("$Original")){
+        			JCExpression longExp = make.Ident(names.fromString("org"));
+        			longExp = make.Select(longExp, names.fromString("paninij"));
+        			longExp = make.Select(longExp, names.fromString("lang"));
+        			longExp = make.Select(longExp, names.fromString("Long"));
+        			((JCMethodDecl) defs).restype = longExp;
+        		}
+        	}
+        }
         ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
         params.appendList(tree.params);
         c.capsuleParameters = params.toList();
@@ -988,14 +999,36 @@ public class Enter extends JCTree.Visitor {
 	            	vars.add(make.VarDef(tc.copy(v.mods), v.name, tc.copy(v.vartype), null));
 	            	args.append(make.Ident(v.name));
 	            }
-	            copyBody.prepend(make.Try(make.Block(0, List.<JCStatement>of(make.Exec(make.Assign( 
-            			make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE)), 
-            			make.NewClass(null, List.<JCExpression>nil(), 
-            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
-            					args.toList(), null))))), List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), names.fromString("e"), make.Ident(names.fromString("Exception")), null),
-            							make.Block(0, List.<JCStatement>of(make.Throw(make.NewClass(null, List.<JCExpression>nil(), make.Ident(names.fromString("DuckException")), List.<JCExpression>of(make.Ident(names.fromString("e"))), null))))//this is catch clause body
-            							)), null));
-	            copyBody.prepend(make.VarDef(make.Modifiers(0), names.fromString(PaniniConstants.PANINI_DUCK_TYPE), make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), make.Literal(TypeTags.BOT, null)));
+	            JCExpression duckType = getDuckType(tree, mdecl);
+				copyBody.prepend(make.Try(
+						make.Block(
+								0,
+								List.<JCStatement> of(make.Exec(make.Assign(
+										make.Ident(names
+												.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+										make.NewClass(null, List
+												.<JCExpression> nil(), duckType,
+												args.toList(), null))))),
+						List.<JCCatch> of(make.Catch(
+								make.VarDef(make.Modifiers(0), names
+										.fromString("e"), make.Ident(names
+										.fromString("Exception")), null),
+								make.Block(
+										0,
+										List.<JCStatement> of(make.Throw(make.NewClass(
+												null,
+												List.<JCExpression> nil(),
+												make.Ident(names
+														.fromString("DuckException")),
+												List.<JCExpression> of(make.Ident(names
+														.fromString("e"))),
+												null))))// this is catch clause
+														// body
+						)), null));
+				copyBody.prepend(make.VarDef(make.Modifiers(0),
+						names.fromString(PaniniConstants.PANINI_DUCK_TYPE),
+						duckType,
+						make.Literal(TypeTags.BOT, null)));
 	            if(!mdecl.restype.toString().equals("void"))
 	            	copyBody.append(make.Return(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))));
 	            
@@ -1136,14 +1169,36 @@ public class Enter extends JCTree.Visitor {
 	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
 	            	args.append(make.Ident(v.name));
 	            }
-	            copyBody.prepend(make.Try(make.Block(0, List.<JCStatement>of(make.Exec(make.Assign( 
-            			make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE)), 
-            			make.NewClass(null, List.<JCExpression>nil(), 
-            					make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), 
-            					args.toList(), null))))), List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0), names.fromString("e"), make.Ident(names.fromString("Exception")), null),
-            							make.Block(0, List.<JCStatement>of(make.Throw(make.NewClass(null, List.<JCExpression>nil(), make.Ident(names.fromString("DuckException")), List.<JCExpression>of(make.Ident(names.fromString("e"))), null))))//this is catch clause body
-            							)), null));
-	            copyBody.prepend(make.VarDef(make.Modifiers(0), names.fromString(PaniniConstants.PANINI_DUCK_TYPE), make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString())), make.Literal(TypeTags.BOT, null)));
+	            JCExpression duckType = getDuckType(tree, mdecl);
+				copyBody.prepend(make.Try(
+						make.Block(
+								0,
+								List.<JCStatement> of(make.Exec(make.Assign(
+										make.Ident(names
+												.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+										make.NewClass(null, List
+												.<JCExpression> nil(), duckType,
+												args.toList(), null))))),
+						List.<JCCatch> of(make.Catch(
+								make.VarDef(make.Modifiers(0), names
+										.fromString("e"), make.Ident(names
+										.fromString("Exception")), null),
+								make.Block(
+										0,
+										List.<JCStatement> of(make.Throw(make.NewClass(
+												null,
+												List.<JCExpression> nil(),
+												make.Ident(names
+														.fromString("DuckException")),
+												List.<JCExpression> of(make.Ident(names
+														.fromString("e"))),
+												null))))// this is catch clause
+														// body
+						)), null));
+				copyBody.prepend(make.VarDef(make.Modifiers(0),
+						names.fromString(PaniniConstants.PANINI_DUCK_TYPE),
+						duckType,
+						make.Literal(TypeTags.BOT, null)));
 	            if(!mdecl.restype.toString().equals("void"))
 	            	copyBody.append(make.Return(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))));
 	            
@@ -1249,6 +1304,22 @@ public class Enter extends JCTree.Visitor {
 		else
 			log.error(annotation.pos(), "annotation.value.not.allowable.type");
 		return c.flags_field;
+    }
+    
+    private JCExpression getDuckType(JCCapsuleDecl tree, JCMethodDecl mdecl){
+    	String returnType = mdecl.restype.toString();
+    	JCExpression duck = null;
+    	if(returnType.equals("long")){
+    		JCExpression longExp = make.Ident(names.fromString("org"));
+    		longExp = make.Select(longExp, names.fromString("paninij"));
+    		longExp = make.Select(longExp, names.fromString("lang"));
+    		longExp = make.Select(longExp, names.fromString("Long"));
+			duck = longExp;
+    	}
+    	else
+    			duck = make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString()));
+    	
+    	return duck;
     }
     
     private void translateCapsuleAnnotations(){

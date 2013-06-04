@@ -106,8 +106,6 @@ public class CapsuleInternal extends Internal {
 						PaniniConstants.PANINI_FINISH,
 						args(createOriginalCall(method, args)))));
 			} else {
-				System.out.println("Unsupported return type in a public capsule method. Can only be void or non-primitive.");
-				System.exit(5555);
 			}
 			caseStatements.append(break_());
 			String constantName = PaniniConstants.PANINI_METHOD_CONST
@@ -180,8 +178,6 @@ public class CapsuleInternal extends Internal {
 						PaniniConstants.PANINI_FINISH,
 						args(createOriginalCall(method, args)))));
 			} else {
-				System.out.println("Unsupported return type in a public capsule method. Can only be void or non-primitive.");
-				System.exit(5555);
 			}
 			caseStatements.append(returnt(falsev()));
 			String constantName = PaniniConstants.PANINI_METHOD_CONST
@@ -847,16 +843,16 @@ public class CapsuleInternal extends Internal {
 					names.fromString(PaniniConstants.DUCK_INTERFACE_NAME
 							+ "$Void"), TYP);
 		else if (restype.isPrimitive()) {
-			System.out.println("\n\nNon-void primitive return types for capsule procedure calls are not yet supported.\n\n");
-			System.exit(10);
-			c = null;
+//			System.out.println("\n\nNon-void primitive return types for capsule procedure calls are not yet supported.\n\n");
+//			System.exit(10);
+			return null;
 		} else
 			c = (ClassSymbol) restype.tsym;
 
-		if (c.type.isFinal()) {
-			System.out.println("\n\nFinal classes as return types for capsule procedure calls are not supported.\n\n");
-			System.exit(10);
-		}
+//		if (c.type.isFinal()) {
+//			System.out.println("\n\nFinal classes as return types for capsule procedure calls are not supported.\n\n");
+//			System.exit(10);
+//		}
 		return c;
 	}
 
