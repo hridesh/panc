@@ -18,6 +18,8 @@
  */
 package org.paninij.system;
 
+import java.util.List;
+
 import com.sun.tools.javac.tree.JCTree.JCBlock;
 import com.sun.tools.javac.util.Log;
 
@@ -41,14 +43,37 @@ public class SystemInterpreter {
         this.log = log;
     }
     
-    public JCBlock interpret(JCBlock systemBlock) {
+    /**
+     * Interpret a system block and ensure it has
+     * a fixed topolgy. This method may diverge!
+     * @param systemBlock
+     * @return
+     */
+    public JCBlock interpret(final JCBlock systemBlock) {
         //FIXME: Delete when working.
         log.rawWarning(-1, "Interpretting a system block.");
+        List<?> classifiedStmts = classifyStmts(systemBlock);
+        transform(classifiedStmts);
+        JCBlock fixedSystem = execute();
         
         //FIXME: Delete when working.
         log.rawWarning(-1, "System block interpretation finished.");
         
-        //TODO-XXX: Interpret the system.
-        return systemBlock;
+        //TODO: If fixedSystem is null, there are larger problems.
+        return (fixedSystem != null ? fixedSystem : systemBlock);
+    }
+
+    private JCBlock execute() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private void transform(List<?> classifiedStmts) {
+        // TODO Auto-generated method stub
+    }
+
+    private List<?> classifyStmts(JCBlock systemBlock) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }
