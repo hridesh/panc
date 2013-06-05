@@ -1044,14 +1044,14 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         /**
 		 * This is the capsule array of which all elements should be wired with the same arguments. 
 		 */
-		public JCExpression capsuleArrayExpr;
+		public JCExpression many;
 
 		/**
          * @param expr
          */
         protected JCManyToOne(JCExpression capsuleArrayExpr, List<JCExpression> args) {
         	super();
-			this.capsuleArrayExpr = capsuleArrayExpr;
+			this.many = capsuleArrayExpr;
         	this.args = args;
         }
 

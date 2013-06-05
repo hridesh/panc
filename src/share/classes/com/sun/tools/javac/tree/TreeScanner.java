@@ -99,6 +99,12 @@ public class TreeScanner extends Visitor {
     	scan(tree.expr);
     	scan(tree.body);
     }
+    
+	@Override
+	public void visitManyToOne(JCManyToOne tree) {
+		scan(tree.many);
+		scan(tree.args);
+	}
     // end Panini code
 
     public void visitTopLevel(JCCompilationUnit tree) {
