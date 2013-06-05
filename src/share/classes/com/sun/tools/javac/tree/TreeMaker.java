@@ -142,6 +142,12 @@ public class TreeMaker implements JCTree.Factory {
 		tree.pos = pos;
 		return tree;
 	}
+	
+	public JCManyToOne ManyToOne(List<JCExpression> args){
+		JCManyToOne tree = new JCManyToOne(args.head, args.tail);
+		tree.pos = pos;
+		return tree;
+	}
 
 	public JCStateDecl StateDef(JCModifiers mods, Name name,
 			JCExpression vartype, JCExpression init) {

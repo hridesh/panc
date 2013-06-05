@@ -52,6 +52,10 @@ import static com.sun.tools.javac.parser.Tokens.TokenKind.GT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.IMPORT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.LT;
 
+// Panini code
+import org.paninij.parser.PaniniTokens;
+// end Panini code
+
 /** The parser maps a token sequence into an abstract syntax
  *  tree. It operates by recursive descent, with code derived
  *  systematically from an LL(1) grammar. For efficiency reasons, an
@@ -2004,12 +2008,18 @@ public class JavacParser implements Parser {
     @SuppressWarnings("fallthrough")
     List<JCStatement> systemStatement(){
     	if(token.kind == IDENTIFIER){
-    		if(token.name().toString().equals("task"))
+    		if(token.name().toString().equals(PaniniTokens.TASK))
     			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.TASK));
-    		else if(token.name().toString().equals("sequential"))
+    		else if(token.name().toString().equals(PaniniTokens.SEQUENTIAL))
     			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.SERIAL));
-    		else if(token.name().toString().equals("monitor"))
+    		else if(token.name().toString().equals(PaniniTokens.MONITOR))
     			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.MONITOR));
+    		else if (token.name().toString().equals(PaniniTokens.SYSLANG_MANY_TO_ONE)){
+    			//FIXME: remove syso
+    			System.out.println("starting to parse a many2one expression");
+    			return parseManyToOne();
+    			}
+    		
     	}
     	if(token.kind != FOR &&((token.kind.tag != Token.Tag.NAMED && (token.kind != RBRACE))
     			|| token.kind == ASSERT || token.kind == ENUM 
@@ -2099,7 +2109,26 @@ public class JavacParser implements Parser {
     		}
     	}
     }
-    // end Panini code
+   
+    /**
+	 * 
+	 */
+	private List<JCStatement> parseManyToOne() {
+		int positionAfterMany2One = token.pos;
+		accept(IDENTIFIER);
+		List<JCExpression> expressions = arguments();
+		accept(SEMI);
+		if(expressions.size() < 2){
+			log.error(token.pos, "compiler.err.system.topology.m2one.size");
+		}
+		
+		 JCManyToOne expr = toP(F.at(positionAfterMany2One).ManyToOne(expressions));
+		 JCExpressionStatement statement = to(F.Exec(expr));
+		 return List.<JCStatement>of(statement);
+		 
+	}
+
+	// end Panini code
     
     @SuppressWarnings("fallthrough")
     List<JCStatement> blockStatement() {
