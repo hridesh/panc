@@ -455,6 +455,13 @@ public class TreeTranslator extends JCTree.Visitor {
         tree.body = translate(tree.body);
         result = tree;
     }
+    
+    @Override
+    public void visitManyToOne(JCManyToOne tree) {
+    	tree.many = translate(tree.many);
+    	tree.args = translate(tree.args);
+    	result = tree;
+    }
     // end Panini code
     public void visitTree(JCTree tree) {
         throw new AssertionError(tree);
