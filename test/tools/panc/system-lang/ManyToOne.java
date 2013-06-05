@@ -14,16 +14,22 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  *
- * Contributor(s): Sean L. Mooney, Lorand Szakacs, Bryan Shrader
+ * Contributor(s): Sean L. Mooney
  */
-package com.sun.source.tree;
-
-/**
- * @author Sean L. Mooney
- * @author Lorand Szakacs
- * @author Bryan Shrader
- * @since panini-0.9.2
- */
-public interface Topology extends ExpressionTree {
-
+//panini
+capsule M(O o, int fortyTwo){
+	void run(){
+		System.out.println(fortyTwo);
+	}
 }
+
+capsule O{
+}
+
+system ManyToOne {
+    M many[5];
+    O one;
+    
+	m2one (many, one, 42);
+}
+

@@ -1087,16 +1087,22 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	}
 
-    public static class JCManyToOne extends JCExpressionStatement implements ManyToOneTree {
+    public static class JCManyToOne extends JCExpression implements ManyToOneTree {
 
-
-
+        public List<JCExpression> args;
+		
         /**
+		 * This is the capsule array of which all elements should be wired with the same arguments. 
+		 */
+		public JCExpression capsuleArrayExpr;
+
+		/**
          * @param expr
          */
-        protected JCManyToOne(JCExpression expr) {
-            super(expr);
-            // TODO Auto-generated constructor stub
+        protected JCManyToOne(JCExpression capsuleArrayExpr, List<JCExpression> args) {
+        	super();
+			this.capsuleArrayExpr = capsuleArrayExpr;
+        	this.args = args;
         }
 
         @Override
@@ -1113,6 +1119,14 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public <R, D> R accept(TreeVisitor<R, D> v, D d) {
             return v.visitManyToOne(this, d);
         }
+
+		/* (non-Javadoc)
+		 * @see com.sun.source.tree.Tree#getKind()
+		 */
+		@Override
+		public Kind getKind() {
+			return Kind.MANY_TO_ONE;
+		}
    }
 
    // end Panini code

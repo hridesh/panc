@@ -14,16 +14,26 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  *
- * Contributor(s): Sean L. Mooney, Lorand Szakacs, Bryan Shrader
+ * Contributor(s):
  */
-package com.sun.source.tree;
+package org.paninij.parser;
 
 /**
- * @author Sean L. Mooney
- * @author Lorand Szakacs
- * @author Bryan Shrader
+ * @author lorand
  * @since panini-0.9.2
  */
-public interface Topology extends ExpressionTree {
-
+public interface PaniniTokens {
+	public static final String SYSLANG_MANY_TO_ONE = "m2one";
+	/**
+	 * 
+	 */
+	public static final String TASK = "task";
+	/**
+	 * 
+	 */
+	public static final String MONITOR = "monitor";
+	/**
+	 * 
+	 */
+	public static final String SEQUENTIAL = "sequential";
 }
