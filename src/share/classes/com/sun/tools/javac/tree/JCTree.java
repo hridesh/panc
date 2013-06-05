@@ -3093,7 +3093,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }
         public void visitInitDef(JCInitDecl that) 			 { visitTree(that); }
         public void visitForeach(JCForeach that)	 	     { visitTree(that); }
-        public void visitManyToOne(JCManyToOne that)        { visitTree(that); }
+        public void visitManyToOne(JCManyToOne that)         { visitTree(that); }
         // end Panini code
         public void visitTree(JCTree that)                   { Assert.error(); }
     }
