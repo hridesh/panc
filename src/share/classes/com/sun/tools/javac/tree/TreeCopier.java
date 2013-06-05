@@ -521,5 +521,9 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         JCExpression defaultValue = copy(t.defaultValue, p);
         return M.at(t.pos).MethodDef(mods, t.name, restype, typarams, params, thrown, body, defaultValue);
 	}
+
+	public JCTree visitManyToOne(ManyToOneTree node, P p) {
+	    return null; //FIXME
+	};
 	// end Panini code
 }

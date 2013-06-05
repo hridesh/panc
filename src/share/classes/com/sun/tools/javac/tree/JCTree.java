@@ -360,7 +360,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         PROCCALL,
         FREE,
         INIT,
-        FORALLLOOP;
+        FORALLLOOP,
+        /** Many-to-one topology.
+         */
+        MANY_TO_ONE;
         // end Panini code
 
 
@@ -1034,7 +1037,35 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	}
 
-    // end Panini code
+    public static class JCManyToOne extends JCExpressionStatement implements ManyToOneTree {
+
+
+
+        /**
+         * @param expr
+         */
+        protected JCManyToOne(JCExpression expr) {
+            super(expr);
+            // TODO Auto-generated constructor stub
+        }
+
+        @Override
+        public Tag getTag() {
+            return Tag.MANY_TO_ONE;
+        }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visitManyToOne(this);
+        }
+
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            return v.visitManyToOne(this, d);
+        }
+   }
+
+   // end Panini code
 
     /**
      * Everything in one source file is kept in a TopLevel structure.
@@ -3048,6 +3079,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }
         public void visitInitDef(JCInitDecl that) 			 { visitTree(that); }
         public void visitForeach(JCForeach that)	 	     { visitTree(that); }
+        public void visitManyToOne(JCManyToOne that)        { visitTree(that); }
         // end Panini code
         public void visitTree(JCTree that)                   { Assert.error(); }
     }

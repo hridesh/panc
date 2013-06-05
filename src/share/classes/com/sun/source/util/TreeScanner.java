@@ -465,5 +465,9 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     	r = scanAndReduce(node.getMethod(), p, r);
     	return r;
     }
+
+	public R visitManyToOne(ManyToOneTree node, P p) {
+	    return null; //FIXME
+	};
 	//end Panini code
 }
