@@ -47,12 +47,14 @@ import com.sun.tools.javac.util.Name;
 public class SystemDeclRewriter extends TreeTranslator {
 
     InterpEnv<Name, JCTree> env;
-    Log log;
+    final Log log;
     final TreeMaker make;
+    final ArithTreeInterp atInterp;
 
     public SystemDeclRewriter(TreeMaker treeMaker, Log log) {
         this.log = log;
         this.make = treeMaker;
+        this.atInterp = new ArithTreeInterp();
     }
 
     @Override
@@ -60,7 +62,7 @@ public class SystemDeclRewriter extends TreeTranslator {
         System.out.println("Visiting " + tree.name.toString());
         JCTree bound = env.lookup(tree.name);
 
-        // Don't loose the identifier if we don't know about it!
+        // Don't lose the identifier if we don't know about it!
         if (bound != null) {
             result = bound;
         } else {
@@ -81,9 +83,9 @@ public class SystemDeclRewriter extends TreeTranslator {
     @Override
     public void visitAssign(JCAssign tree) {
 
-        JCExpression translate = this.translate(tree.rhs);
-        if (translate != null) {
-            tree.rhs = translate;
+        final JCExpression translatedRHS = this.translate(tree.rhs);
+        if (translatedRHS != null) {
+            tree.rhs = translatedRHS;
         }
 
         if (tree.lhs instanceof JCIdent) {
@@ -101,142 +103,13 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitBinary(final JCBinary tree) {
-
-        // TODO: Deal with something besides ints.
-        class hell {
-            final JCTree interpPlus(JCLiteral lhs, JCLiteral rhs) {
-                if (lhs.typetag != rhs.typetag) {
-                    // FIXME rawWarning
-                    log.rawWarning(tree.pos, tree
-                            + "did not have the same typetag for lhs and rhs");
-                    return tree;
-                } else {
-                    switch (lhs.typetag) {
-                    case TypeTags.INT:
-                        int vLHS = asInt(lhs.value);
-                        int vRHS = asInt(rhs.value);
-                        make.pos = tree.pos;
-                        return make.Literal(lhs.typetag,
-                                Integer.valueOf(vLHS + vRHS));
-                    default:
-                        return tree;
-                    }
-                }
-            }
-
-            final JCTree interpMinus(JCLiteral lhs, JCLiteral rhs) {
-                if (lhs.typetag != rhs.typetag) {
-                    // FIXME rawWarning
-                    log.rawWarning(tree.pos, tree
-                            + "did not have the same typetag for lhs and rhs");
-                    return tree;
-                } else {
-                    switch (lhs.typetag) {
-                    case TypeTags.INT:
-                        int vLHS = asInt(lhs.value);
-                        int vRHS = asInt(rhs.value);
-                        make.pos = tree.pos;
-                        return make.Literal(lhs.typetag,
-                                Integer.valueOf(vLHS - vRHS));
-                    default:
-                        return tree;
-                    }
-                }
-            }
-
-            final JCTree interpMul(JCLiteral lhs, JCLiteral rhs) {
-                if (lhs.typetag != rhs.typetag) {
-                    // FIXME rawWarning
-                    log.rawWarning(tree.pos, tree
-                            + "did not have the same typetag for lhs and rhs");
-                    return tree;
-                } else {
-                    switch (lhs.typetag) {
-                    case TypeTags.INT:
-                        int vLHS = asInt(lhs.value);
-                        int vRHS = asInt(rhs.value);
-                        make.pos = tree.pos;
-                        return make.Literal(lhs.typetag,
-                                Integer.valueOf(vLHS * vRHS));
-                    default:
-                        return tree;
-                    }
-                }
-            }
-
-            final JCTree interpDiv(JCLiteral lhs, JCLiteral rhs) {
-                if (lhs.typetag != rhs.typetag) {
-                    // FIXME rawWarning
-                    log.rawWarning(tree.pos, tree
-                            + "did not have the same typetag for lhs and rhs");
-                    return tree;
-                } else {
-                    switch (lhs.typetag) {
-                    case TypeTags.INT:
-                        int vLHS = asInt(lhs.value);
-                        int vRHS = asInt(rhs.value);
-                        make.pos = tree.pos;
-                        return make.Literal(lhs.typetag,
-                                Integer.valueOf(vLHS / vRHS));
-                    default:
-                        return tree;
-                    }
-                }
-            }
-
-            final JCTree interpMod(JCLiteral lhs, JCLiteral rhs) {
-                if (lhs.typetag != rhs.typetag) {
-                    // FIXME rawWarning
-                    log.rawWarning(tree.pos, tree
-                            + "did not have the same typetag for lhs and rhs");
-                    return tree;
-                } else {
-                    switch (lhs.typetag) {
-                    case TypeTags.INT:
-                        int vLHS = asInt(lhs.value);
-                        int vRHS = asInt(rhs.value);
-                        make.pos = tree.pos;
-                        return make.Literal(lhs.typetag,
-                                Integer.valueOf(vLHS % vRHS));
-                    default:
-                        return tree;
-                    }
-                }
-            }
-
-            final int asInt(Object obj) {
-                return (Integer) obj;
-            }
-        }
-
-        hell hell = new hell();
-
         JCTree lhs = translate(tree.lhs);
         JCTree rhs = translate(tree.rhs);
 
         if (lhs instanceof JCLiteral && rhs instanceof JCLiteral) {
             JCLiteral lhsLit = (JCLiteral) lhs;
             JCLiteral rhsLit = (JCLiteral) rhs;
-            switch (tree.getTag()) {
-            case PLUS:
-                result = hell.interpPlus(lhsLit, rhsLit);
-                break;
-            case MINUS:
-                result = hell.interpMinus(lhsLit, rhsLit);
-                break;
-            case MUL:
-                result = hell.interpMul(lhsLit, rhsLit);
-                break;
-            case DIV:
-                result = hell.interpDiv(lhsLit, rhsLit);
-                break;
-            case MOD:
-                result = hell.interpMod(lhsLit, rhsLit);
-                break;
-            // TODO: Other cases?
-            default:
-                result = tree;
-            }
+            result = atInterp.interp(tree, lhsLit, rhsLit);
         } else {
             result = tree;
             log.rawError(tree.pos, "Trying to interpret " + tree
@@ -258,6 +131,157 @@ public class SystemDeclRewriter extends TreeTranslator {
 
         tree.body = translate(tree.body);
         result = tree;
+    }
+
+    /**
+     * Helper to interpret arithmetic expression trees.
+     *
+     *  TODO: Deal with something besides ints.
+     * @author sean
+     *
+     */
+    private class ArithTreeInterp {
+
+        /**
+         * A reference to the origin tree, for diagnostic purposes.
+         */
+        JCTree tree;
+
+        public JCTree interp(final JCTree tree, final JCLiteral lhs, final JCLiteral rhs) {
+            this.tree = tree; //bind the tree we are current working on;
+            final JCTree result;
+
+            switch (tree.getTag()) {
+            case PLUS:
+                result = interpPlus(lhs, rhs);
+                break;
+            case MINUS:
+                result = interpMinus(lhs, rhs);
+                break;
+            case MUL:
+                result = interpMul(lhs, rhs);
+                break;
+            case DIV:
+                result = interpDiv(lhs, rhs);
+                break;
+            case MOD:
+                result = interpMod(lhs, rhs);
+                break;
+            // TODO: Other cases?
+            default:
+                result = tree;
+            }
+
+            //get rid of the reference when we are done interpretting it.
+            //prevents stale tree type errors.
+            this.tree = null;
+            return result;
+        }
+
+        final JCTree interpPlus(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.INT:
+                    int vLHS = asInt(lhs.value);
+                    int vRHS = asInt(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Integer.valueOf(vLHS + vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
+
+        final JCTree interpMinus(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.INT:
+                    int vLHS = asInt(lhs.value);
+                    int vRHS = asInt(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Integer.valueOf(vLHS - vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
+
+        final JCTree interpMul(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.INT:
+                    int vLHS = asInt(lhs.value);
+                    int vRHS = asInt(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Integer.valueOf(vLHS * vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
+
+        final JCTree interpDiv(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.INT:
+                    int vLHS = asInt(lhs.value);
+                    int vRHS = asInt(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Integer.valueOf(vLHS / vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
+
+        final JCTree interpMod(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.INT:
+                    int vLHS = asInt(lhs.value);
+                    int vRHS = asInt(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Integer.valueOf(vLHS % vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
+
+        final int asInt(Object obj) {
+            //FIXME Possible class cast exception.
+            return (Integer) obj;
+        }
     }
 
     /**
