@@ -425,6 +425,15 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         memberEnter(tree.defs, env);
     }
 
+    // Panini code
+    /**Enter the parameters and body for a system.
+     */
+    void finishSystem(JCSystemDecl tree, Env<AttrContext> env) {
+        memberEnter(tree.params, env);
+        memberEnter(tree.body.stats, env);
+    }
+    // end Panini code
+
     /** Add the implicit members for an enum type
      *  to the symbol table.
      */
@@ -641,6 +650,16 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         if ((tree.mods.flags & STATIC) != 0) localEnv.info.staticLevel++;
         return localEnv;
     }
+
+    // Panini code
+    Env<AttrContext> systemEnv(JCSystemDecl tree, Env<AttrContext> env) {
+        Env<AttrContext> localEnv =
+                env.dup(tree, env.info.dup(env.info.scope.dupUnshared()));
+        localEnv.enclClass=tree;
+        localEnv.info.scope.owner = tree.sym;
+        return localEnv;
+    }
+    // end Panini code
 
     public void visitVarDef(JCVariableDecl tree) {    	
         Env<AttrContext> localEnv = env;
@@ -1073,6 +1092,23 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         try {
             JCClassDecl tree = (JCClassDecl)env.tree;
             finishClass(tree, env);
+
+            // Panini code
+
+            /*
+             * There are certain parts of finishing a class that always need to
+             * happen (e.g. entering symbols for methods and marking it as a
+             * procedure or not.) Execute finish class unconditionally. Then
+             * there are extra steps that need to be taken to finish a
+             * JCSystemDecl (e.g. enter symbols for the parameter and the
+             * statements in the body). Only execute that if the tree is a
+             * JCSystemDecl.
+             */
+            // TODO: Better way to tell when we have a systemDecl?
+            if (env.tree instanceof JCSystemDecl) {
+                JCSystemDecl stree = (JCSystemDecl) env.tree;
+                finishSystem(stree, env);
+            }
         } finally {
             log.useSource(prev);
         }

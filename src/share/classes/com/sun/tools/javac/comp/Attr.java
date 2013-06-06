@@ -741,8 +741,56 @@ public class Attr extends JCTree.Visitor {
     	}*/
     }
 
+    /**
+     * Adapted from {@link #visitMethodDef(JCMethodDecl)}.
+     */
     public final void visitSystemDef(final JCSystemDecl tree){
-		pAttr.visitSystemDef(tree, rs, env, doGraphs, seqConstAlg);
+        //TODO-XXX checking still needs defined/performed.
+        ClassSymbol s = tree.sym;
+
+        // Create a new environment with local scope
+        // for attributing the method.
+        Env<AttrContext> localEnv = memberEnter.systemEnv(tree, env);
+
+        Lint lint = env.info.lint.augment(s.attributes_field, s.flags());
+        Lint prevLint = chk.setLint(lint);
+
+        try {
+            deferredLintHandler.flush(tree.pos());
+
+            // Enter all type parameters into the local method scope.
+            //TODO: Do we have type parameters for systems?
+            for (List<JCTypeParameter> l = tree.typarams; l.nonEmpty(); l = l.tail)
+                localEnv.info.scope.enterIfAbsent(l.head.type.tsym);
+
+            ClassSymbol owner = env.enclClass.sym;
+            if ((owner.flags() & ANNOTATION) != 0 &&
+                    tree.params.nonEmpty())
+                log.error(tree.params.head.pos(),
+                        "intf.annotation.members.cant.have.params");
+
+
+            // Attribute all input parameters.
+            for (List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail) {
+                attribStat(l.head, localEnv);
+            }
+
+            // Check that type parameters are well-formed.
+            chk.validate(tree.typarams, localEnv);
+
+
+            // Attribute the body statements.
+            for(List<JCStatement> l = tree.body.stats; l.nonEmpty(); l = l.tail) {
+                attribStat(l.head, env);
+            }
+
+            // visit the system def for rewriting and analysis.
+            pAttr.visitSystemDef(tree, rs, localEnv, doGraphs, seqConstAlg);
+
+            localEnv.info.scope.leave();
+        } finally {
+            chk.setLint(prevLint);
+        }
     }
     
     public void visitProcDef(JCProcDecl tree){
