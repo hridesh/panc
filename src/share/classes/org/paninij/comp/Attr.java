@@ -81,15 +81,15 @@ public final class Attr extends CapsuleInternal {
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
 
-	public Attr(TreeMaker make, Names names, Enter enter,
-			MemberEnter memberEnter, Symtab syms, Log log,  
-			Annotate annotate) {
-		super(make, names, enter, memberEnter, syms);
-		this.log = log;
-		this.annotate = annotate;
-		this.annotationProcessor = new AnnotationProcessor(names, make, log);
-		this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
-	}
+    public Attr(TreeMaker make, Names names, Enter enter,
+            MemberEnter memberEnter, Symtab syms, Log log,
+            Annotate annotate) {
+        super(make, names, enter, memberEnter, syms);
+        this.log = log;
+        this.annotate = annotate;
+        this.annotationProcessor = new AnnotationProcessor(names, make, log);
+        this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
+    }
 
 	public void visitTopLevel(JCCompilationUnit tree) { /* SKIPPED */ }
 	public void visitImport(JCImport tree) { /* SKIPPED */ }
