@@ -1089,6 +1089,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
     public static class JCManyToOne extends JCExpression implements ManyToOneTree {
 
+        public List<JCStatement> unrolled;
         public List<JCExpression> args;
 		
         /**

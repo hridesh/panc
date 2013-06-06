@@ -18,9 +18,9 @@
  */
 //panini
 capsule M(O o, int fortyTwo){
-	void run(){
-		System.out.println(fortyTwo);
-	}
+    void run(){
+        System.out.println(fortyTwo);
+    }
 }
 
 capsule O{
@@ -30,6 +30,7 @@ system ManyToOne {
     M many[5];
     O one;
     
+    one();
 	m2one (many, one, 42);
 }
 

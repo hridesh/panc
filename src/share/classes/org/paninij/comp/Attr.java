@@ -56,6 +56,7 @@ import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.comp.*;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
+import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.util.List;
@@ -67,6 +68,8 @@ import com.sun.tools.javac.util.PaniniConstants;
 
 import org.paninij.system.SystemDeclRewriter;
 import org.paninij.systemgraph.*;
+import com.sun.source.tree.Tree.Kind;
+import java.util.ArrayList;
 
 /***
  * Panini-specific context-dependent analysis. All public functions in 
@@ -263,20 +266,19 @@ public final class Attr extends CapsuleInternal {
 		Set<Name> capsules = new HashSet<Name>();
 
 		SystemDeclRewriter interp = new SystemDeclRewriter(make, log);
-		JCSystemDecl transDecl = interp.translate(tree);
-		System.out.println(transDecl);
-
-		for(JCStatement currentSystemStmt : tree.body.stats){
+		JCSystemDecl rewritenTree = interp.rewrite(tree);
+		
+		for(JCStatement currentSystemStmt : rewritenTree.body.stats){
 			Tag systemStmtKind = currentSystemStmt.getTag();
 			if(systemStmtKind == VARDEF){
 				JCVariableDecl vdecl = (JCVariableDecl) currentSystemStmt;
 				Name vdeclTypeName = names.fromString(vdecl.vartype.toString());
 				if (syms.capsules.containsKey(vdeclTypeName)) 
-					processCapsuleDef(tree, decls, inits, submits, starts,
+					processCapsuleDef(rewritenTree, decls, inits, submits, starts,
 							joins, variables, capsules, vdecl, rs, env, sysGraph);
 				else {
 					if (vdecl.vartype.getTag() == CAPSULEARRAY) 
-						processCapsuleArray(tree, decls, assigns, submits,
+						processCapsuleArray(rewritenTree, decls, assigns, submits,
 								starts, joins, variables, capsules, modArrays, vdecl, rs,
 								env, sysGraph);
 					else {
@@ -308,13 +310,13 @@ public final class Attr extends CapsuleInternal {
 				log.error("capsule.instance.not.initialized", n);
 			}
 		}
-		if(tree.hasTaskCapsule)
-			processSystemAnnotation(tree, inits, env);
+		if(rewritenTree.hasTaskCapsule)
+			processSystemAnnotation(rewritenTree, inits, env);
 
 		List<JCStatement> mainStmts;
 		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
-		JCMethodDecl maindecl = createMainMethod(tree.sym, tree.body, tree.params, mainStmts);
-		tree.defs = tree.defs.append(maindecl);
+		JCMethodDecl maindecl = createMainMethod(rewritenTree.sym, rewritenTree.body, rewritenTree.params, mainStmts);
+		rewritenTree.defs = rewritenTree.defs.append(maindecl);
 
 		systemGraphBuilder.completeEdges(sysGraph, annotationProcessor, env, rs);
 
@@ -323,7 +325,7 @@ public final class Attr extends CapsuleInternal {
 		    ConsistencyUtil.createChecker(seqConstAlg, sysGraph, log);
 		sca.potentialPathCheck();
 
-		tree.switchToClass();
+		rewritenTree.switchToClass();
 
 		memberEnter.memberEnter(maindecl, env);
 		if (doGraphs) {
@@ -475,7 +477,7 @@ public final class Attr extends CapsuleInternal {
 			capsules.remove(mi.name);
 		}
 	}
-
+	
 	private void processForEachLoop(JCEnhancedForLoop loop, ListBuffer<JCStatement> assigns, Map<Name, Name> variables, Set<Name> capsules, SystemGraph sysGraph) {
 		CapsuleSymbol c = syms.capsules.get(names.fromString(loop.var.vartype.toString()));
 		if(c==null){
