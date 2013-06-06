@@ -2975,22 +2975,22 @@ Panini$Duck<java.lang.Character>, Comparable<Character> {
 	}
 
 	/**
-	 * Compares two {@code char} values numerically.
-	 * The value returned is identical to what would be returned by:
-	 * <pre>
-	 *    Character.valueOf(x).compareTo(Character.valueOf(y))
-	 * </pre>
-	 *
-	 * @param  x the first {@code char} to compare
-	 * @param  y the second {@code char} to compare
-	 * @return the value {@code 0} if {@code x == y};
-	 *         a value less than {@code 0} if {@code x < y}; and
-	 *         a value greater than {@code 0} if {@code x > y}
-	 * @since 1.7
-	 */
-	public static int compare(char x, char y) {
-		return (x < y) ? -1 : ((x == y) ? 0 : 1);
-	}
+     * Compares two {@code char} values numerically.
+     * The value returned is identical to what would be returned by:
+     * <pre>
+     *    Character.valueOf(x).compareTo(Character.valueOf(y))
+     * </pre>
+     *
+     * @param  x the first {@code char} to compare
+     * @param  y the second {@code char} to compare
+     * @return the value {@code 0} if {@code x == y};
+     *         a value less than {@code 0} if {@code x < y}; and
+     *         a value greater than {@code 0} if {@code x > y}
+     * @since 1.7
+     */
+    public static int compare(char x, char y) {
+        return x - y;
+    }
 
 	/** use serialVersionUID from JDK 1.0.2 for interoperability */
 	private static final long serialVersionUID = 3786198910865385080L;
