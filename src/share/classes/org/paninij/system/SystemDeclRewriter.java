@@ -18,39 +18,86 @@
  */
 package org.paninij.system;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.sun.source.tree.Tree.Kind;
 import com.sun.tools.javac.code.TypeTags;
-import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCAssign;
 import com.sun.tools.javac.tree.JCTree.JCBinary;
+import com.sun.tools.javac.tree.JCTree.JCBlock;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleArray;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleArrayCall;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
+import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
+import com.sun.tools.javac.tree.JCTree.JCManyToOne;
+import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
-import com.sun.tools.javac.tree.JCTree.Tag;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.TreeTranslator;
+import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 
 /**
  * Visit the system and interpret java computations to their values.
- *
+ * 
  * @author Sean L. Mooney, Lorand Szakacs
- *
+ * 
  */
 public class SystemDeclRewriter extends TreeTranslator {
 
-    InterpEnv<Name, JCTree> env;
+    InterpEnv<Name, JCTree> valueEnv;
+
+    /**
+     * this is a hack required for keeping track of array sizes.
+     */
+    InterpEnv<Name, JCVariableDecl> varDefToAstNodeEnv;
     final Log log;
     final TreeMaker make;
     final ArithTreeInterp atInterp;
 
+    public JCSystemDecl rewrite(JCSystemDecl tree) {
+        JCSystemDecl translated = super.translate(tree);
+        translated.body.stats = unrollStatementsFromBodyStats(translated.body.stats);
+        return translated;
+    }
+    
+    /**
+     * TODO: Refactor to removethis at some points in the future.
+     * 
+     * This method flattens the statements. Unrolled topology statements
+     * are implemented as JCStatements nodes that contain a list of statements.
+     * 
+     * @param stats
+     * @return
+     */
+    private List<JCStatement> unrollStatementsFromBodyStats(
+            List<JCStatement> stats) {
+        
+        ArrayList<JCStatement> newStats = new ArrayList<JCStatement>(
+                stats.size());
+        
+        for (JCStatement statement : stats) {
+            if (statement.getKind() == Kind.EXPRESSION_STATEMENT) {
+                JCExpressionStatement exprStatement = ((JCExpressionStatement)statement);
+                if(exprStatement.expr.getKind() == Kind.MANY_TO_ONE) {
+                    JCManyToOne m2one = (JCManyToOne)exprStatement.expr;
+                    for(JCStatement unrolledStatement: m2one.unrolled){
+                        newStats.add(unrolledStatement);
+                    }
+                } else newStats.add(statement);
+             } else newStats.add(statement);
+        }
+        List<JCStatement> result = List.<JCStatement>from(newStats.toArray(new JCStatement[1]));
+        return result;
+    }
+    
     public SystemDeclRewriter(TreeMaker treeMaker, Log log) {
         this.log = log;
         this.make = treeMaker;
@@ -59,8 +106,8 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitIdent(JCIdent tree) {
-        System.out.println("Visiting " + tree.name.toString());
-        JCTree bound = env.lookup(tree.name);
+        System.out.println("Visiting identifier: " + tree.name.toString());
+        JCTree bound = valueEnv.lookup(tree.name);
 
         // Don't lose the identifier if we don't know about it!
         if (bound != null) {
@@ -72,10 +119,12 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitVarDef(JCVariableDecl tree) {
+        System.out.println("Visiting var definition: " + tree.toString());
         if (tree.init != null) {
             tree.init = translate(tree.init);
         }
-        env.bind(tree.name, tree.init);
+        valueEnv.bind(tree.name, tree.init);
+        varDefToAstNodeEnv.bind(tree.name, tree);
 
         result = tree;
     }
@@ -90,7 +139,7 @@ public class SystemDeclRewriter extends TreeTranslator {
 
         if (tree.lhs instanceof JCIdent) {
             Name assignTo = ((JCIdent) tree.lhs).name;
-            env.bind(assignTo, tree.rhs);
+            valueEnv.bind(assignTo, tree.rhs);
         } else {
             // FIXME: Non-raw error message.
             log.rawError(tree.pos, tree
@@ -118,27 +167,81 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     }
 
+    /**
+     * This function will replace the JCManyToOne node with a JCManyToOneUnrolled
+     */
+    @Override
+    public void visitManyToOne(JCManyToOne tree) {
+        System.out.println("Visiting many to one: " + tree.toString());
+        int capsuleArraySize = getCapsuleArraySize(tree);
+
+        JCStatement statements[] = new JCStatement[capsuleArraySize];
+        for (int i = 0; i < capsuleArraySize; i++) {
+            Name capsuleArrayName = getCapsuleArrayName(tree);
+            statements[i] = make.CapsuleArrayCall(capsuleArrayName,
+                    make.Literal(i), tree.many, tree.args);
+        }
+
+        System.out.println("Rewritten m2one statement: " + List.from(statements).toString());
+        tree.unrolled = List.from(statements);
+        result = tree;
+    }
+
+    /**
+     * @param arrayName
+     * @return
+     */
+    private int getCapsuleArraySize(JCManyToOne array) {
+        Name arrayName = getCapsuleArrayName(array);
+        ;
+        JCVariableDecl arrayAST = varDefToAstNodeEnv.lookup(arrayName);
+        assert (arrayAST.vartype instanceof JCCapsuleArray) : "m2one expects capsule arrays as the first element";
+        int capsuleArraySize = ((JCCapsuleArray) arrayAST.vartype).amount;
+        assert (capsuleArraySize > 0) : "capsule array sizes should always be > 0; something went wrong";
+        return capsuleArraySize;
+    }
+
+    /**
+     * @param tree
+     * @return
+     */
+    private Name getCapsuleArrayName(JCManyToOne tree) {
+        assert (tree.many instanceof JCIdent) : "Many2One arrays should always be referenced through identifiers";
+        Name arrayName = ((JCIdent) tree.many).name;
+        return arrayName;
+    }
+
+    // TODO: probably redundant method.
     @Override
     public void visitCapsuleDef(JCCapsuleDecl tree) {
         System.out.println("Visiting capsule def " + tree);
         super.visitCapsuleDef(tree);
+        result = tree;
     }
 
     @Override
     public void visitSystemDef(JCSystemDecl tree) {
         System.out.println("Visiting a system decl " + tree.name.toString());
-        env = new InterpEnv<Name, JCTree>();
+        valueEnv = new InterpEnv<Name, JCTree>();
+        varDefToAstNodeEnv = new InterpEnv<Name, JCVariableDecl>();
 
         tree.body = translate(tree.body);
         result = tree;
     }
 
+    @Override
+    public void visitCapsuleArrayCall(JCCapsuleArrayCall tree) {
+        System.out.println("Visiting capsule array call: " + tree.toString());
+        result = tree;
+    }
+
     /**
      * Helper to interpret arithmetic expression trees.
-     *
-     *  TODO: Deal with something besides ints.
+     * 
+     * TODO: Deal with something besides ints.
+     * 
      * @author sean
-     *
+     * 
      */
     private class ArithTreeInterp {
 
@@ -147,8 +250,9 @@ public class SystemDeclRewriter extends TreeTranslator {
          */
         JCTree tree;
 
-        public JCTree interp(final JCTree tree, final JCLiteral lhs, final JCLiteral rhs) {
-            this.tree = tree; //bind the tree we are current working on;
+        public JCTree interp(final JCTree tree, final JCLiteral lhs,
+                final JCLiteral rhs) {
+            this.tree = tree; // bind the tree we are current working on;
             final JCTree result;
 
             switch (tree.getTag()) {
@@ -172,8 +276,8 @@ public class SystemDeclRewriter extends TreeTranslator {
                 result = tree;
             }
 
-            //get rid of the reference when we are done interpretting it.
-            //prevents stale tree type errors.
+            // get rid of the reference when we are done interpretting it.
+            // prevents stale tree type errors.
             this.tree = null;
             return result;
         }
@@ -279,16 +383,16 @@ public class SystemDeclRewriter extends TreeTranslator {
         }
 
         final int asInt(Object obj) {
-            //FIXME Possible class cast exception.
+            // FIXME Possible class cast exception.
             return (Integer) obj;
         }
     }
 
     /**
      * Standard linked environment for the interpretor
-     *
+     * 
      * @author sean
-     *
+     * 
      */
     private static class InterpEnv<K, V> {
         private final HashMap<K, V> table;
