@@ -67,37 +67,40 @@ public class SystemDeclRewriter extends TreeTranslator {
         translated.body.stats = unrollStatementsFromBodyStats(translated.body.stats);
         return translated;
     }
-    
+
     /**
      * TODO: Refactor to removethis at some points in the future.
      * 
-     * This method flattens the statements. Unrolled topology statements
-     * are implemented as JCStatements nodes that contain a list of statements.
+     * This method flattens the statements. Unrolled topology statements are
+     * implemented as JCStatements nodes that contain a list of statements.
      * 
      * @param stats
      * @return
      */
     private List<JCStatement> unrollStatementsFromBodyStats(
             List<JCStatement> stats) {
-        
+
         ArrayList<JCStatement> newStats = new ArrayList<JCStatement>(
                 stats.size());
-        
+
         for (JCStatement statement : stats) {
             if (statement.getKind() == Kind.EXPRESSION_STATEMENT) {
-                JCExpressionStatement exprStatement = ((JCExpressionStatement)statement);
-                if(exprStatement.expr.getKind() == Kind.MANY_TO_ONE) {
-                    JCManyToOne m2one = (JCManyToOne)exprStatement.expr;
-                    for(JCStatement unrolledStatement: m2one.unrolled){
+                JCExpressionStatement exprStatement = ((JCExpressionStatement) statement);
+                if (exprStatement.expr.getKind() == Kind.MANY_TO_ONE) {
+                    JCManyToOne m2one = (JCManyToOne) exprStatement.expr;
+                    for (JCStatement unrolledStatement : m2one.unrolled) {
                         newStats.add(unrolledStatement);
                     }
-                } else newStats.add(statement);
-             } else newStats.add(statement);
+                } else
+                    newStats.add(statement);
+            } else
+                newStats.add(statement);
         }
-        List<JCStatement> result = List.<JCStatement>from(newStats.toArray(new JCStatement[1]));
+        List<JCStatement> result = List.<JCStatement> from(newStats
+                .toArray(new JCStatement[1]));
         return result;
     }
-    
+
     public SystemDeclRewriter(TreeMaker treeMaker, Log log) {
         this.log = log;
         this.make = treeMaker;
@@ -106,6 +109,7 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitIdent(JCIdent tree) {
+        // FIXME: remove syso
         System.out.println("Visiting identifier: " + tree.name.toString());
         JCTree bound = valueEnv.lookup(tree.name);
 
@@ -119,6 +123,7 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitVarDef(JCVariableDecl tree) {
+        // FIXME: remove syso
         System.out.println("Visiting var definition: " + tree.toString());
         if (tree.init != null) {
             tree.init = translate(tree.init);
@@ -146,6 +151,7 @@ public class SystemDeclRewriter extends TreeTranslator {
                     + " does not have an identifier on the left hand side!");
         }
 
+        // FIXME: remove syso
         System.out.println("New assn: " + tree);
         result = tree;
     }
@@ -168,10 +174,12 @@ public class SystemDeclRewriter extends TreeTranslator {
     }
 
     /**
-     * This function will replace the JCManyToOne node with a JCManyToOneUnrolled
+     * This function will replace the JCManyToOne node with a
+     * JCManyToOneUnrolled
      */
     @Override
     public void visitManyToOne(JCManyToOne tree) {
+        // FIXME: remove syso
         System.out.println("Visiting many to one: " + tree.toString());
         int capsuleArraySize = getCapsuleArraySize(tree);
 
@@ -182,7 +190,8 @@ public class SystemDeclRewriter extends TreeTranslator {
                     make.Literal(i), tree.many, tree.args);
         }
 
-        System.out.println("Rewritten m2one statement: " + List.from(statements).toString());
+        System.out.println("Rewritten m2one statement: "
+                + List.from(statements).toString());
         tree.unrolled = List.from(statements);
         result = tree;
     }
@@ -193,7 +202,6 @@ public class SystemDeclRewriter extends TreeTranslator {
      */
     private int getCapsuleArraySize(JCManyToOne array) {
         Name arrayName = getCapsuleArrayName(array);
-        ;
         JCVariableDecl arrayAST = varDefToAstNodeEnv.lookup(arrayName);
         assert (arrayAST.vartype instanceof JCCapsuleArray) : "m2one expects capsule arrays as the first element";
         int capsuleArraySize = ((JCCapsuleArray) arrayAST.vartype).amount;
@@ -214,6 +222,7 @@ public class SystemDeclRewriter extends TreeTranslator {
     // TODO: probably redundant method.
     @Override
     public void visitCapsuleDef(JCCapsuleDecl tree) {
+        // FIXME: remove syso
         System.out.println("Visiting capsule def " + tree);
         super.visitCapsuleDef(tree);
         result = tree;
@@ -221,6 +230,7 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitSystemDef(JCSystemDecl tree) {
+        // FIXME: remove syso
         System.out.println("Visiting a system decl " + tree.name.toString());
         valueEnv = new InterpEnv<Name, JCTree>();
         varDefToAstNodeEnv = new InterpEnv<Name, JCVariableDecl>();
@@ -231,6 +241,7 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitCapsuleArrayCall(JCCapsuleArrayCall tree) {
+        // FIXME: remove syso
         System.out.println("Visiting capsule array call: " + tree.toString());
         result = tree;
     }
