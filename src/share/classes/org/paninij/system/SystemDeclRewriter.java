@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.sun.source.tree.Tree.Kind;
+import com.sun.source.tree.TreeVisitor;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCAssign;
@@ -32,15 +33,18 @@ import com.sun.tools.javac.tree.JCTree.JCCapsuleArrayCall;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
+import com.sun.tools.javac.tree.JCTree.JCForLoop;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
 import com.sun.tools.javac.tree.JCTree.JCManyToOne;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
+import com.sun.tools.javac.tree.TreeCopier;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.TreeTranslator;
 import com.sun.tools.javac.util.List;
+import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 
@@ -61,6 +65,8 @@ public class SystemDeclRewriter extends TreeTranslator {
     final Log log;
     final TreeMaker make;
     final ArithTreeInterp atInterp;
+
+    final TreeCopier<Void> copy;
 
     public JCSystemDecl rewrite(JCSystemDecl tree) {
         JCSystemDecl translated = super.translate(tree);
@@ -83,6 +89,7 @@ public class SystemDeclRewriter extends TreeTranslator {
         ArrayList<JCStatement> newStats = new ArrayList<JCStatement>(
                 stats.size());
 
+        //FIXME: refactor m2one to use JCUnrolledCrap
         for (JCStatement statement : stats) {
             if (statement.getKind() == Kind.EXPRESSION_STATEMENT) {
                 JCExpressionStatement exprStatement = ((JCExpressionStatement) statement);
@@ -91,10 +98,15 @@ public class SystemDeclRewriter extends TreeTranslator {
                     for (JCStatement unrolledStatement : m2one.unrolled) {
                         newStats.add(unrolledStatement);
                     }
-                } else
+                }  else
                     newStats.add(statement);
-            } else
-                newStats.add(statement);
+            } else if (statement.getKind() == null) {
+                JCUnrolledStatement unrolledCrap = (JCUnrolledStatement)(JCTree)statement;
+                for (JCStatement unrolledStatement : unrolledCrap.unrolled) {
+                    newStats.add(unrolledStatement);
+                }
+
+            }else newStats.add(statement);
         }
         List<JCStatement> result = List.<JCStatement> from(newStats
                 .toArray(new JCStatement[1]));
@@ -104,6 +116,7 @@ public class SystemDeclRewriter extends TreeTranslator {
     public SystemDeclRewriter(TreeMaker treeMaker, Log log) {
         this.log = log;
         this.make = treeMaker;
+        this.copy = new TreeCopier<Void>(make);
         this.atInterp = new ArithTreeInterp();
     }
 
@@ -183,9 +196,9 @@ public class SystemDeclRewriter extends TreeTranslator {
         System.out.println("Visiting many to one: " + tree.toString());
         int capsuleArraySize = getCapsuleArraySize(tree);
 
+        Name capsuleArrayName = getCapsuleArrayName(tree);
         JCStatement statements[] = new JCStatement[capsuleArraySize];
         for (int i = 0; i < capsuleArraySize; i++) {
-            Name capsuleArrayName = getCapsuleArrayName(tree);
             statements[i] = make.CapsuleArrayCall(capsuleArrayName,
                     make.Literal(i), tree.many, tree.args);
         }
@@ -194,6 +207,61 @@ public class SystemDeclRewriter extends TreeTranslator {
                 + List.from(statements).toString());
         tree.unrolled = List.from(statements);
         result = tree;
+    }
+
+    // /* (non-Javadoc)
+    // * @see
+    // com.sun.tools.javac.tree.TreeTranslator#visitBlock(com.sun.tools.javac.tree.JCTree.JCBlock)
+    // */
+    // @Override
+    // public void visitBlock(JCBlock tree) {
+    // assert(tree.stats.size() == 1) :
+    // "blocks are supposed to be returned only from one-liner fors";
+    // assert(tree.stats.head instanceof JCCapsuleArrayCall) :
+    // "one liner fors should onyl contain capsule array calls";
+    //
+    // result = tree;
+    // }
+    @Override
+    public void visitForLoop(JCForLoop tree) {
+        List<JCStatement> unrolledLoop = executeForLoop(tree);
+        result = new JCUnrolledStatement(unrolledLoop);
+    }
+
+    /**
+     * @param tree
+     * @return
+     */
+    private List<JCStatement> executeForLoop(JCForLoop tree) {
+        valueEnv = valueEnv.extend();
+
+        // put the symbols in the env;
+        for (JCStatement c : tree.init)
+            translate(c);
+
+        ListBuffer<JCStatement> buffer = new ListBuffer<JCStatement>();
+        boolean cond = atInterp.asBoolean(((JCLiteral)translate(copy.copy(tree.cond))).value);
+        while (cond) {
+            if (tree.body.getKind() == Kind.BLOCK) {
+                JCBlock b = (JCBlock) tree.body;
+                for (JCStatement s : b.stats) {
+                    JCStatement copyOfS = translate(copy.copy(s));
+                    if (copyOfS.getKind() == Kind.CAPSULE_ARRAY_CALL) {
+                        buffer.add(copyOfS);
+                    }
+                }
+            } else {
+                throw new AssertionError(
+                        "Don't forget to implement proper for unrolling for syslang");
+
+            }
+
+            translate(copy.copy(tree.step));
+            cond = atInterp.asBoolean(((JCLiteral)translate(copy.copy(tree.cond))).value);
+        }
+
+        valueEnv = valueEnv.pop();
+        return buffer.toList();
     }
 
     /**
@@ -235,7 +303,14 @@ public class SystemDeclRewriter extends TreeTranslator {
         valueEnv = new InterpEnv<Name, JCTree>();
         varDefToAstNodeEnv = new InterpEnv<Name, JCVariableDecl>();
 
-        tree.body = translate(tree.body);
+        // translate all individual statements from the system block. This is
+        // necessary because we want all subsequent blocks to enclose for
+        // statements.
+        ListBuffer<JCStatement> statsBuff = new ListBuffer<JCStatement>();
+        for (List<JCStatement> l = tree.body.stats; l.nonEmpty(); l = l.tail) {
+            statsBuff.add(translate(l.head));
+        }
+        tree.body.stats = statsBuff.toList();
         result = tree;
     }
 
@@ -243,6 +318,9 @@ public class SystemDeclRewriter extends TreeTranslator {
     public void visitCapsuleArrayCall(JCCapsuleArrayCall tree) {
         // FIXME: remove syso
         System.out.println("Visiting capsule array call: " + tree.toString());
+        tree.index = translate(tree.index);
+        tree.indexed = translate(tree.indexed);
+        tree.arguments = translate(tree.arguments);
         result = tree;
     }
 
@@ -282,6 +360,31 @@ public class SystemDeclRewriter extends TreeTranslator {
             case MOD:
                 result = interpMod(lhs, rhs);
                 break;
+            case LT:
+                result = interpretLT(lhs, rhs);
+                break;
+            case LE:
+                result = interpretLE(lhs, rhs);
+                break;
+            case GT:
+                result = interpretGT(lhs, rhs);
+                break;
+            case GE:
+                result = interpretGE(lhs, rhs);
+                break;
+            case EQ:
+                result = interpretEQ(lhs, rhs);
+                break;
+            case NE:
+                result = interpretNE(lhs, rhs);
+                break;
+            case AND:
+                result = interpretAND(lhs, rhs);
+                break;
+            case OR:
+                result = interpretOR(lhs, rhs);
+                break;
+            
             // TODO: Other cases?
             default:
                 result = tree;
@@ -292,7 +395,198 @@ public class SystemDeclRewriter extends TreeTranslator {
             this.tree = null;
             return result;
         }
+/**
+         * @param lhs
+         * @param rhs
+         * @return
+         */
+        private JCTree interpretOR(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.BOOLEAN:
+                    boolean vLHS = asBoolean(lhs.value);
+                    boolean vRHS = asBoolean(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Boolean.valueOf(vLHS || vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
+/**
+         * @param lhs
+         * @param rhs
+         * @return
+         */
+        private JCTree interpretAND(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.BOOLEAN:
+                    boolean vLHS = asBoolean(lhs.value);
+                    boolean vRHS = asBoolean(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Boolean.valueOf(vLHS && vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
+/**
+         * @param lhs
+         * @param rhs
+         * @return
+         */
+        private JCTree interpretNE(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.INT:
+                    int vLHS = asInt(lhs.value);
+                    int vRHS = asInt(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Boolean.valueOf(vLHS != vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
+/**
+         * @param lhs
+         * @param rhs
+         * @return
+         */
+        private JCTree interpretEQ(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.INT:
+                    int vLHS = asInt(lhs.value);
+                    int vRHS = asInt(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Boolean.valueOf(vLHS == vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
+/**
+         * @param lhs
+         * @param rhs
+         * @return
+         */
+        private JCTree interpretGE(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.INT:
+                    int vLHS = asInt(lhs.value);
+                    int vRHS = asInt(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Boolean.valueOf(vLHS >= vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
+/**
+         * @param lhs
+         * @param rhs
+         * @return
+         */
+        private JCTree interpretGT(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.INT:
+                    int vLHS = asInt(lhs.value);
+                    int vRHS = asInt(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Boolean.valueOf(vLHS > vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
+/**
+         * @param lhs
+         * @param rhs
+         * @return
+         */
+        private JCTree interpretLE(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.INT:
+                    int vLHS = asInt(lhs.value);
+                    int vRHS = asInt(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Boolean.valueOf(vLHS <= vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
+/**
+         * @return
+         */
+        private JCTree interpretLT(JCLiteral lhs, JCLiteral rhs) {
+            if (lhs.typetag != rhs.typetag) {
+                // FIXME rawWarning
+                log.rawWarning(tree.pos, tree
+                        + "did not have the same typetag for lhs and rhs");
+                return tree;
+            } else {
+                switch (lhs.typetag) {
+                case TypeTags.INT:
+                    int vLHS = asInt(lhs.value);
+                    int vRHS = asInt(rhs.value);
+                    make.pos = tree.pos;
+                    return make.Literal(lhs.typetag,
+                            Boolean.valueOf(vLHS < vRHS));
+                default:
+                    return tree;
+                }
+            }
+        }
 
+    
         final JCTree interpPlus(JCLiteral lhs, JCLiteral rhs) {
             if (lhs.typetag != rhs.typetag) {
                 // FIXME rawWarning
@@ -397,6 +691,10 @@ public class SystemDeclRewriter extends TreeTranslator {
             // FIXME Possible class cast exception.
             return (Integer) obj;
         }
+
+        final boolean asBoolean(Object obj) {
+            return (Boolean) obj;
+        }
     }
 
     /**
@@ -439,5 +737,51 @@ public class SystemDeclRewriter extends TreeTranslator {
         public InterpEnv<K, V> pop() {
             return parent;
         }
+    }
+
+    // FIXME: do something to have a generic solution for both m2one and for;
+    private static class JCUnrolledStatement extends JCStatement {
+        public List<JCStatement> unrolled;
+
+        /**
+         * @param unrolledLoop
+         */
+        public JCUnrolledStatement(List<JCStatement> unrolledLoop) {
+            unrolled = unrolledLoop;
+        }
+
+        @Override
+        public Kind getKind() {
+            return null;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.tools.javac.tree.JCTree#getTag()
+         */
+        @Override
+        public Tag getTag() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.tools.javac.tree.JCTree#accept(com.sun.tools.javac.tree.JCTree.Visitor)
+         */
+        @Override
+        public void accept(Visitor v) {
+            // TODO Auto-generated method stub
+            
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.tools.javac.tree.JCTree#accept(com.sun.source.tree.TreeVisitor, java.lang.Object)
+         */
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+
     }
 }

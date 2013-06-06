@@ -1833,6 +1833,7 @@ public class JavacParser implements Parser {
      */
     public JCExpression variableInitializer() {
     	// Panini code
+        //FIXME: remove
     	if(token.kind == IDENTIFIER && token.name().toString().equals("forall")){
     		return parseForAllLoop();
     	}
@@ -1841,6 +1842,7 @@ public class JavacParser implements Parser {
     }
     
     // Panini code
+    //FIXME: remove
     public JCExpression parseForAllLoop(){
     	nextToken();
     	accept(LPAREN);
@@ -1932,10 +1934,10 @@ public class JavacParser implements Parser {
                 if (token.pos <= endPosTable.errorEndPos) {
                     skip(false, true, true, true);
                 }
-                for(JCStatement s : stat){
-                	if(s.getTag() == FORLOOP)
-                		reportSyntaxError(s.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.system");
-                }
+//                for(JCStatement s : stat){
+//                	if(s.getTag() == FORLOOP)
+//                		reportSyntaxError(s.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.system");
+//                }
                 stats.addAll(stat);
             }
         }
@@ -2031,7 +2033,7 @@ public class JavacParser implements Parser {
     	switch (token.kind) {
     	case RBRACE: case CASE: case DEFAULT: case EOF:
     		return List.nil();
-    	case LBRACE: case IF: case FOR: case WHILE: case DO: case TRY:
+    	case LBRACE: case IF: case WHILE: case DO: case TRY:
     	case SWITCH: case SYNCHRONIZED: case RETURN: case THROW: case BREAK:
     	case CONTINUE: case SEMI: case ELSE: case FINALLY: case CATCH:
     		return List.of(parseStatement());
@@ -2070,43 +2072,65 @@ public class JavacParser implements Parser {
     			return List.of(classOrInterfaceOrEnumDeclaration(modifiersOpt(), dc));
     		} else if (allowAsserts && token.kind == ASSERT) {
     			return List.of(parseStatement());
-    		}            
+    		}
+    	case FOR:{
+    	    System.out.println("hijacking for");
+    	    nextToken();
+    	    accept(LPAREN);
+    	    List<JCStatement> forInit = forInit();
+    	    accept(SEMI);
+            JCExpression cond = token.kind == SEMI ? null : parseExpression();
+            accept(SEMI);
+            List<JCExpressionStatement> steps = token.kind == RPAREN ? List.<JCExpressionStatement>nil() : forUpdate();
+            accept(RPAREN);
+            JCStatement body = F.at(token.pos).Block(0, defaultSystemStatement(token.pos));//defaultSystemStatement();
+            return List.<JCStatement>of(F.at(pos).ForLoop(forInit, cond, steps, body));
+    	    
+    	}
     		/* fall through to default */
     	default:
-    		Token prevToken = token;
-    		JCExpression t = term(EXPR | TYPE);
-    		if(token.kind == LPAREN){
-    			List<JCExpression> args = arguments();
-    			accept(SEMI);
-    			JCStatement stm = F.at(pos).
-    					CapsuleArrayCall(names.fromString(((JCArrayAccess)t).indexed.toString()), 
-    							((JCArrayAccess)t).index, ((JCArrayAccess)t).indexed, args);
-    			return List.<JCStatement>of(stm);
-    		}else if (token.kind == COLON && t.hasTag(IDENT)) {
-    			nextToken();
-    			JCStatement stat = parseStatement();
-    			return List.<JCStatement>of(F.at(pos).Labelled(prevToken.name(), stat));
-    		} else if ((lastmode & TYPE) != 0 &&
-    				(token.kind == IDENTIFIER ||
-    				token.kind == ASSERT ||
-    				token.kind == ENUM)) {
-    			pos = token.pos;
-    			JCModifiers mods = F.at(Position.NOPOS).Modifiers(0);
-    			F.at(pos);
-    			ListBuffer<JCStatement> stats =
-    					systemVariableDeclarators(mods, t, new ListBuffer<JCStatement>());
-    			// A "LocalVariableDeclarationStatement" subsumes the terminating semicolon
-    			storeEnd(stats.elems.last(), token.endPos);
-    			accept(SEMI);
-    			return stats.toList();
-    		} else {
-    			//System.out.println("Default " + prevToken.kind + (prevToken.kind == IDENTIFIER ? prevToken.name() : ""));
-    			// This Exec is an "ExpressionStatement"; it subsumes the terminating semicolon
-    			JCExpressionStatement expr = to(F.at(pos).Exec(checkExprStat(t)));
-    			accept(SEMI);
-    			return List.<JCStatement>of(expr);
-    		}
+    		return defaultSystemStatement(pos);
     	}
+    }
+
+    /**
+     * @param pos
+     * @return
+     */
+    private List<JCStatement> defaultSystemStatement(int pos) {
+        Token prevToken = token;
+        JCExpression t = term(EXPR | TYPE);
+        if(token.kind == LPAREN){
+        	List<JCExpression> args = arguments();
+        	accept(SEMI);
+        	JCStatement stm = F.at(pos).
+        			CapsuleArrayCall(names.fromString(((JCArrayAccess)t).indexed.toString()), 
+        					((JCArrayAccess)t).index, ((JCArrayAccess)t).indexed, args);
+        	return List.<JCStatement>of(stm);
+        }else if (token.kind == COLON && t.hasTag(IDENT)) {
+        	nextToken();
+        	JCStatement stat = parseStatement();
+        	return List.<JCStatement>of(F.at(pos).Labelled(prevToken.name(), stat));
+        } else if ((lastmode & TYPE) != 0 &&
+        		(token.kind == IDENTIFIER ||
+        		token.kind == ASSERT ||
+        		token.kind == ENUM)) {
+        	pos = token.pos;
+        	JCModifiers mods = F.at(Position.NOPOS).Modifiers(0);
+        	F.at(pos);
+        	ListBuffer<JCStatement> stats =
+        			systemVariableDeclarators(mods, t, new ListBuffer<JCStatement>());
+        	// A "LocalVariableDeclarationStatement" subsumes the terminating semicolon
+        	storeEnd(stats.elems.last(), token.endPos);
+        	accept(SEMI);
+        	return stats.toList();
+        } else {
+        	//System.out.println("Default " + prevToken.kind + (prevToken.kind == IDENTIFIER ? prevToken.name() : ""));
+        	// This Exec is an "ExpressionStatement"; it subsumes the terminating semicolon
+        	JCExpressionStatement expr = to(F.at(pos).Exec(checkExprStat(t)));
+        	accept(SEMI);
+        	return List.<JCStatement>of(expr);
+        }
     }
    
     /**
