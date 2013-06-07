@@ -27,10 +27,21 @@ import java.util.ArrayList;
  */
 public abstract class CompileKnownExample {
     final File testDir = new File(System.getProperty("test.src", "."));
-    final File examples = new File(testDir, "examples");
+    final File examples;
     //Don't pollute the src directory with test code.
     final File dest_dir = new File(".");
 
+    public CompileKnownExample() {
+        this.examples = getSrcDir();
+    }
+
+    /**
+     * Get the source directory. Tests that do not have sources in examples should
+     * override this method.
+     */
+    File getSrcDir() {
+        return new File(testDir, "examples");
+    }
 
     void run(File[] files) throws Exception {
         ArrayList<String> pancArgs = new ArrayList<String>();
