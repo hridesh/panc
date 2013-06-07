@@ -1,0 +1,18 @@
+Notes on running jtreg for panc.
+
+Install Jtreg:
+===============================================================================
+Debian derivitives
+    sudo apt-get install jtreg
+
+
+Run Jtreg for panc:
+===============================================================================
+$> cd tests
+$> jtreg -jdk:/path/to/installed/jdk7 -Xbootclasspath/p:path/to/dist/lib/panc.jar tools/panc/
+
+    -jdk: The Java Virtual Machine in this path will be used to run the tests.
+    -Xbootclasspath/p:  prepends the panc.jar on the boot classpath. Ensures the panc versions of the compiler are used.
+
+
+
