@@ -257,134 +257,136 @@ public class CapsuleInternal extends Internal {
 			Type restype = ((MethodType) method.sym.type).restype;
 			ClassSymbol c = checkAndResolveReturnType(env, rs, restype);
 
-			Iterator<Symbol> iter = c.members().getElements().iterator();
-			if (restype.tag == TypeTags.CLASS) {
-				if (!alreadedAddedDuckClasses.containsKey(restype.toString())) {
-					JCClassDecl duckClass = generateNewDuckClass(
-							tree.name.toString(), method, constructors,
-							restype, iter, c, env);
-					classes.add(duckClass);
-					alreadedAddedDuckClasses.put(restype.toString(), duckClass);
-				} else {
-					if (!method.params.isEmpty()) {
-						JCClassDecl duckClass = alreadedAddedDuckClasses
-								.get(restype.toString());
-						adaptDuckClass(method, iter, duckClass);
+			if(c!=null){
+				Iterator<Symbol> iter = c.members().getElements().iterator();
+				if (restype.tag == TypeTags.CLASS) {
+					if (!alreadedAddedDuckClasses.containsKey(restype.toString())) {
+						JCClassDecl duckClass = generateNewDuckClass(
+								tree.name.toString(), method, constructors,
+								restype, iter, c, env);
+						classes.add(duckClass);
+						alreadedAddedDuckClasses.put(restype.toString(), duckClass);
+					} else {
+						if (!method.params.isEmpty()) {
+							JCClassDecl duckClass = alreadedAddedDuckClasses
+									.get(restype.toString());
+							adaptDuckClass(method, iter, duckClass);
+						}
 					}
-				}
-			} else if (restype.toString().equals("void")) {
-				if (!alreadedAddedDuckClasses.containsKey(restype.toString())) {
-					List<JCExpression> implement;
-					ListBuffer<JCTree> wrappedMethods = new ListBuffer<JCTree>();
-
-					JCVariableDecl fieldMessageId = var(mods(PRIVATE | FINAL),
-							PaniniConstants.PANINI_MESSAGE_ID,
-							make.TypeIdent(TypeTags.INT));
-					JCVariableDecl fieldRedeemed = var(mods(PRIVATE),
-							PaniniConstants.REDEEMED,
-							make.TypeIdent(TypeTags.BOOLEAN),
-							make.Literal(TypeTags.BOOLEAN, 0));
-
-					wrappedMethods
-							.add(constructor(
-									mods(PUBLIC),
-									params(var(mods(0),
-											PaniniConstants.PANINI_MESSAGE_ID,
-											make.TypeIdent(TypeTags.INT))),
-									body(es(supert()),
-											es(assign(
-													select(thist(),
-															PaniniConstants.PANINI_MESSAGE_ID),
-													id(PaniniConstants.PANINI_MESSAGE_ID))))));
-
-					wrappedMethods.add(createValueMethod());
-
-					// Code to be generated for the flag logic.
-					// public final void panini$finish(Void t) {
-					// synchronized (this) {
-					// redeemed = true;
-					// notifyAll();
-					// }
-					// }
-					JCMethodDecl paniniFinish;
-					paniniFinish = method(
-							mods(PUBLIC | FINAL),
-							PaniniConstants.PANINI_FINISH,
-							voidt(),
-							params(var(mods(0), "t", id("Void"))),
-							body(sync(
-									thist(),
-									// The duck is ready.
-									body(es(assign(PaniniConstants.REDEEMED,
-											truev())), es(apply("notifyAll"))))));
-
-					wrappedMethods.add(this.createPaniniMessageID());
-					wrappedMethods.add(createVoidFutureGetMethod());
-					implement = implementing(
-							ta(id(PaniniConstants.DUCK_INTERFACE_NAME),
-									args(id("Void")))).toList();
-
-					ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
-
-					if (!method.params.isEmpty()) {
-						ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
-						ListBuffer<JCVariableDecl> consParams = new ListBuffer<JCVariableDecl>();
-						consParams.add(var(mods(0),
+				} else if (restype.toString().equals("void")) {
+					if (!alreadedAddedDuckClasses.containsKey(restype.toString())) {
+						List<JCExpression> implement;
+						ListBuffer<JCTree> wrappedMethods = new ListBuffer<JCTree>();
+	
+						JCVariableDecl fieldMessageId = var(mods(PRIVATE | FINAL),
 								PaniniConstants.PANINI_MESSAGE_ID,
-								make.TypeIdent(TypeTags.INT)));
-						consBody.add(es(assign(
-								select(thist(),
-										PaniniConstants.PANINI_MESSAGE_ID),
-								id(PaniniConstants.PANINI_MESSAGE_ID))));
-
-						for (JCVariableDecl par : method.params) {
-							consParams.add(var(mods(0), par.name, par.vartype));
+								make.TypeIdent(TypeTags.INT));
+						JCVariableDecl fieldRedeemed = var(mods(PRIVATE),
+								PaniniConstants.REDEEMED,
+								make.TypeIdent(TypeTags.BOOLEAN),
+								make.Literal(TypeTags.BOOLEAN, 0));
+	
+						wrappedMethods
+								.add(constructor(
+										mods(PUBLIC),
+										params(var(mods(0),
+												PaniniConstants.PANINI_MESSAGE_ID,
+												make.TypeIdent(TypeTags.INT))),
+										body(es(supert()),
+												es(assign(
+														select(thist(),
+																PaniniConstants.PANINI_MESSAGE_ID),
+														id(PaniniConstants.PANINI_MESSAGE_ID))))));
+	
+						wrappedMethods.add(createValueMethod());
+	
+						// Code to be generated for the flag logic.
+						// public final void panini$finish(Void t) {
+						// synchronized (this) {
+						// redeemed = true;
+						// notifyAll();
+						// }
+						// }
+						JCMethodDecl paniniFinish;
+						paniniFinish = method(
+								mods(PUBLIC | FINAL),
+								PaniniConstants.PANINI_FINISH,
+								voidt(),
+								params(var(mods(0), "t", id("Void"))),
+								body(sync(
+										thist(),
+										// The duck is ready.
+										body(es(assign(PaniniConstants.REDEEMED,
+												truev())), es(apply("notifyAll"))))));
+	
+						wrappedMethods.add(this.createPaniniMessageID());
+						wrappedMethods.add(createVoidFutureGetMethod());
+						implement = implementing(
+								ta(id(PaniniConstants.DUCK_INTERFACE_NAME),
+										args(id("Void")))).toList();
+	
+						ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
+	
+						if (!method.params.isEmpty()) {
+							ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
+							ListBuffer<JCVariableDecl> consParams = new ListBuffer<JCVariableDecl>();
+							consParams.add(var(mods(0),
+									PaniniConstants.PANINI_MESSAGE_ID,
+									make.TypeIdent(TypeTags.INT)));
 							consBody.add(es(assign(
 									select(thist(),
-											createFieldString(method.name, par,
-													method.params)),
-									id(par.name))));
-							variableFields.add(var(mods(PUBLIC), names
-									.fromString(createFieldString(method.name,
-											par, method.params)), par.vartype));
-							if (!par.vartype.type.isPrimitive())
-								paniniFinish.body.stats = paniniFinish.body.stats
-										.append(es(assign(
-												select(thist(),
-														createFieldString(
-																method.name,
-																par,
-																method.params)),
-												nullv())));
+											PaniniConstants.PANINI_MESSAGE_ID),
+									id(PaniniConstants.PANINI_MESSAGE_ID))));
+	
+							for (JCVariableDecl par : method.params) {
+								consParams.add(var(mods(0), par.name, par.vartype));
+								consBody.add(es(assign(
+										select(thist(),
+												createFieldString(method.name, par,
+														method.params)),
+										id(par.name))));
+								variableFields.add(var(mods(PUBLIC), names
+										.fromString(createFieldString(method.name,
+												par, method.params)), par.vartype));
+								if (!par.vartype.type.isPrimitive())
+									paniniFinish.body.stats = paniniFinish.body.stats
+											.append(es(assign(
+													select(thist(),
+															createFieldString(
+																	method.name,
+																	par,
+																	method.params)),
+													nullv())));
+							}
+							constructors.add(constructor(mods(PUBLIC), consParams,
+									body(consBody)));
 						}
-						constructors.add(constructor(mods(PUBLIC), consParams,
-								body(consBody)));
-					}
-					wrappedMethods.add(paniniFinish);
-
-					JCClassDecl wrappedClass = make
-							.ClassDef(
-									mods(0),
-									names.fromString(PaniniConstants.DUCK_INTERFACE_NAME
-											+ "$"
-											+ restype.toString()
-											+ "$"
-											+ tree.name.toString()), List
-											.<JCTypeParameter> nil(), null,
-									implement,
-									defs(fieldMessageId, fieldRedeemed)
-											.appendList(variableFields)
-											.appendList(wrappedMethods)
-											.appendList(constructors).toList());
-
-					classes.add(wrappedClass);
-					alreadedAddedDuckClasses.put(restype.toString(),
-							wrappedClass);
-				} else {
-					if (!method.params.isEmpty()) {
-						JCClassDecl duckClass = alreadedAddedDuckClasses
-								.get(restype.toString());
-						adaptDuckClass(method, iter, duckClass);
+						wrappedMethods.add(paniniFinish);
+	
+						JCClassDecl wrappedClass = make
+								.ClassDef(
+										mods(0),
+										names.fromString(PaniniConstants.DUCK_INTERFACE_NAME
+												+ "$"
+												+ restype.toString()
+												+ "$"
+												+ tree.name.toString()), List
+												.<JCTypeParameter> nil(), null,
+										implement,
+										defs(fieldMessageId, fieldRedeemed)
+												.appendList(variableFields)
+												.appendList(wrappedMethods)
+												.appendList(constructors).toList());
+	
+						classes.add(wrappedClass);
+						alreadedAddedDuckClasses.put(restype.toString(),
+								wrappedClass);
+					} else {
+						if (!method.params.isEmpty()) {
+							JCClassDecl duckClass = alreadedAddedDuckClasses
+									.get(restype.toString());
+							adaptDuckClass(method, iter, duckClass);
+						}
 					}
 				}
 			}
