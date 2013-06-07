@@ -369,13 +369,14 @@ public class Enter extends JCTree.Visitor {
     				if(capsuleDefs.getTag() == METHODDEF){
     					if(((JCMethodDecl)capsuleDefs).name.toString().equals("run")&&((JCMethodDecl)capsuleDefs).params.isEmpty())
     						hasRun = true;
-    					if((((JCMethodDecl)capsuleDefs).mods.flags & PRIVATE)==0 && !((JCMethodDecl)capsuleDefs).name.toString().equals(PaniniConstants.PANINI_CAPSULE_INIT))
-    					interfaceBody.add(make.MethodDef(tc.copy(((JCMethodDecl)capsuleDefs).mods), 
-    							((JCMethodDecl)capsuleDefs).name, 
-    							tc.copy(((JCMethodDecl)capsuleDefs).restype), 
-    							tc.copy(((JCMethodDecl)capsuleDefs).typarams), 
-    							tc.copy(((JCMethodDecl)capsuleDefs).params), 
-    							tc.copy(((JCMethodDecl)capsuleDefs).thrown), null, tc.copy(((JCMethodDecl)capsuleDefs).defaultValue)));
+    					if((((JCMethodDecl)capsuleDefs).mods.flags & PRIVATE)==0 && !((JCMethodDecl)capsuleDefs).name.toString().equals(PaniniConstants.PANINI_CAPSULE_INIT)){
+	    					interfaceBody.add(make.MethodDef(tc.copy(((JCMethodDecl)capsuleDefs).mods), 
+	    							((JCMethodDecl)capsuleDefs).name, 
+	    							tc.copy(((JCMethodDecl)capsuleDefs).restype), 
+	    							tc.copy(((JCMethodDecl)capsuleDefs).typarams), 
+	    							tc.copy(((JCMethodDecl)capsuleDefs).params), 
+	    							tc.copy(((JCMethodDecl)capsuleDefs).thrown), null, tc.copy(((JCMethodDecl)capsuleDefs).defaultValue)));
+    					}
     				}else if(capsuleDefs.getTag() == VARDEF){
     					interfaceBody.add(make.VarDef(tc.copy(((JCVariableDecl)capsuleDefs).mods), ((JCVariableDecl)capsuleDefs).name, 
     							tc.copy(((JCVariableDecl)capsuleDefs).vartype), null));
@@ -412,10 +413,10 @@ public class Enter extends JCTree.Visitor {
         							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
 	    			copiedDefs.add(copyTask);
 	    			copyTask.parentCapsule = copyCapsule;
-//	    			copiedDefs.add(copySerial);
-//	    			copySerial.parentCapsule = copyCapsule;
-//	    			copiedDefs.add(copyMonitor);
-//	    			copyMonitor.parentCapsule = copyCapsule;
+	    			copiedDefs.add(copySerial);
+	    			copySerial.parentCapsule = copyCapsule;
+	    			copiedDefs.add(copyMonitor);
+	    			copyMonitor.parentCapsule = copyCapsule;
     			}
     		}
     		else
@@ -793,17 +794,6 @@ public class Enter extends JCTree.Visitor {
 	    	}
         	c.definedRun = true;
         }
-        for(JCTree defs : tree.defs){
-        	if(defs instanceof JCMethodDecl){
-        		if(((JCMethodDecl) defs).restype.toString().equals("long")&&!((JCMethodDecl) defs).name.toString().contains("$Original")){
-        			JCExpression longExp = make.Ident(names.fromString("org"));
-        			longExp = make.Select(longExp, names.fromString("paninij"));
-        			longExp = make.Select(longExp, names.fromString("lang"));
-        			longExp = make.Select(longExp, names.fromString("Long"));
-        			((JCMethodDecl) defs).restype = longExp;
-        		}
-        	}
-        }
         ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
         params.appendList(tree.params);
         c.capsuleParameters = params.toList();
@@ -1030,7 +1020,7 @@ public class Enter extends JCTree.Visitor {
 						duckType,
 						make.Literal(TypeTags.BOT, null)));
 	            if(!mdecl.restype.toString().equals("void"))
-	            	copyBody.append(make.Return(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))));
+	            	copyBody.append(procedureReturnStatement(mdecl));
 	            
 	            JCMethodDecl methodCopy = make.MethodDef(
 	            		make.Modifiers(PRIVATE|FINAL), 
@@ -1199,8 +1189,9 @@ public class Enter extends JCTree.Visitor {
 						names.fromString(PaniniConstants.PANINI_DUCK_TYPE),
 						duckType,
 						make.Literal(TypeTags.BOT, null)));
-	            if(!mdecl.restype.toString().equals("void"))
-	            	copyBody.append(make.Return(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))));
+				if(!mdecl.restype.toString().equals("void")){
+	            	copyBody.append(procedureReturnStatement(mdecl));
+	            }
 	            
 	            JCMethodDecl methodCopy = make.MethodDef(
 	            		make.Modifiers(PRIVATE|FINAL), 
@@ -1306,7 +1297,18 @@ public class Enter extends JCTree.Visitor {
 		return c.flags_field;
     }
     
-    private JCExpression getDuckType(JCCapsuleDecl tree, JCMethodDecl mdecl){
+    private JCStatement procedureReturnStatement(final JCMethodDecl mdecl){
+    	String returnType = mdecl.restype.toString();
+    	JCStatement returnStat;
+    	if(returnType.equals("long")){
+			returnStat = make.Return(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE)), names.fromString("longValue")), List.<JCExpression>nil()));
+    	}else{
+    		returnStat = make.Return(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE)));
+    	}
+    	return returnStat;
+    }
+    
+    private JCExpression getDuckType(final JCCapsuleDecl tree, final JCMethodDecl mdecl){
     	String returnType = mdecl.restype.toString();
     	JCExpression duck = null;
     	if(returnType.equals("long")){
@@ -1315,10 +1317,8 @@ public class Enter extends JCTree.Visitor {
     		longExp = make.Select(longExp, names.fromString("lang"));
     		longExp = make.Select(longExp, names.fromString("Long"));
 			duck = longExp;
-    	}
-    	else
+    	}else
     			duck = make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString()));
-    	
     	return duck;
     }
     

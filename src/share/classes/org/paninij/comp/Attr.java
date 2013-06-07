@@ -181,7 +181,7 @@ public final class Attr extends CapsuleInternal {
 		if (tree.needsDefaultRun){
 			List<JCClassDecl> wrapperClasses = generateClassWrappers(tree, env, rs);
 			enter.classEnter(wrapperClasses, env.outer);
-			//        	System.out.println(wrapperClasses);
+//			        	System.out.println(wrapperClasses);
 			attr.attribClassBody(env, tree.sym);
 			if((tree.sym.flags_field & TASK) !=0)
 				tree.computeMethod.body = generateTaskCapsuleComputeMethodBody(tree);
@@ -217,6 +217,8 @@ public final class Attr extends CapsuleInternal {
 					((JCVariableDecl)def).mods.flags |= FINAL;
 			}
 		}
+		
+		System.out.println(tree);
 		/*if (doGraphs)
             effects.computeEffects(tree);*/
 	}

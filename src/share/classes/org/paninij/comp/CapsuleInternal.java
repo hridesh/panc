@@ -100,13 +100,12 @@ public class CapsuleInternal extends Internal {
 				caseStatements.append(es(apply(
 						PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_FINISH, args(nullv()))));
-			} else if (returnType.tag == TypeTags.CLASS) {
+			} else {
 				caseStatements.append(es(apply(
 						PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_FINISH,
 						args(createOriginalCall(method, args)))));
-			} else {
-			}
+			} 
 			caseStatements.append(break_());
 			String constantName = PaniniConstants.PANINI_METHOD_CONST
 					+ method.name.toString();
@@ -172,12 +171,13 @@ public class CapsuleInternal extends Internal {
 				caseStatements.append(es(apply(
 						PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_FINISH, args(nullv()))));
-			} else if (returnType.tag == TypeTags.CLASS) {
+			} else{
+				caseStatements.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Select(make.Select(make.Ident(names.fromString("System")), names.fromString("out")), names.fromString("println")), 
+						List.<JCExpression>of(stringc("got it")))));
 				caseStatements.append(es(apply(
 						PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_FINISH,
 						args(createOriginalCall(method, args)))));
-			} else {
 			}
 			caseStatements.append(returnt(falsev()));
 			String constantName = PaniniConstants.PANINI_METHOD_CONST
