@@ -434,8 +434,8 @@ public class Long extends Number
      * @see java.lang.Long#parseLong(String, int)
      * @since 1.2
      */
-    public static Long decode(String nm) throws NumberFormatException {
-        return new Long (java.lang.Long.decode(nm).longValue());
+    public static java.lang.Long decode(String nm) throws NumberFormatException {
+        return java.lang.Long.decode(nm);
     }
 
     /**
@@ -712,7 +712,7 @@ public class Long extends Number
      * @see     java.lang.System#getProperty(java.lang.String)
      * @see     java.lang.System#getProperty(java.lang.String, java.lang.String)
      */
-    public static Long getLong(String nm) {
+    public static java.lang.Long getLong(String nm) {
         return getLong(nm, null);
     }
 
@@ -758,9 +758,9 @@ public class Long extends Number
      * @see     java.lang.System#getProperty(java.lang.String)
      * @see     java.lang.System#getProperty(java.lang.String, java.lang.String)
      */
-    public static Long getLong(String nm, long val) {
-        Long result = Long.getLong(nm, null);
-        return (result == null) ? Long.valueOf(val) : result;
+    public static java.lang.Long getLong(String nm, long val) {
+        java.lang.Long result = java.lang.Long.getLong(nm, null);
+        return (result == null) ? java.lang.Long.valueOf(val) : result;
     }
 
     /**
@@ -806,7 +806,7 @@ public class Long extends Number
      * @see java.lang.System#getProperty(java.lang.String, java.lang.String)
      * @see java.lang.Long#decode
      */
-    public static Long getLong(String nm, Long val) {
+    public static java.lang.Long getLong(String nm, java.lang.Long val) {
         String v = null;
         try {
             v = System.getProperty(nm);
@@ -815,7 +815,7 @@ public class Long extends Number
         }
         if (v != null) {
             try {
-                return Long.decode(v);
+                return java.lang.Long.decode(v);
             } catch (NumberFormatException e) {
             }
         }
@@ -837,7 +837,7 @@ public class Long extends Number
      */
     public int compareTo(Long anotherLong) {
         if (panini$redeemed == false) panini$get();
-        return compare(this.value, anotherLong.value);
+        return compare(this.value, anotherLong.longValue());
     }
 
     /**

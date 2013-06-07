@@ -35,9 +35,8 @@ public class TestDuck_Long {
     @Test(timeout=10)
     public void testDuck$LongWithValue() {
         final long exVal = 100;
-        final int mId = 0;
-        org.paninij.lang.Long l = new Long(exVal, mId);
-        assertEquals("Incorrect Message ID", mId, l.panini$message$id());
+        final int mId = 5;
+        org.paninij.lang.Long l = new Long(exVal);
         assertEquals("Incorrect Value", exVal, l.longValue());
     }
 

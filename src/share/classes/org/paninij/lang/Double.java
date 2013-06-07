@@ -699,6 +699,7 @@ implements Panini$Duck<java.lang.Double>, Comparable<Double> {
      *          NaN; {@code false} otherwise.
      */
     public boolean isNaN() {
+    	if(panini$redeemed == false) panini$get();
         return isNaN(value);
     }
     
@@ -711,6 +712,7 @@ implements Panini$Duck<java.lang.Double>, Comparable<Double> {
      *          {@code false} otherwise.
      */
     public boolean isInfinite() {
+    	if(panini$redeemed == false) panini$get();
         return isInfinite(value);
     }
 
@@ -988,22 +990,37 @@ implements Panini$Duck<java.lang.Double>, Comparable<Double> {
 	}
 
 	/**
-	 * Compares two {@code double} values numerically.
-	 * The value returned is identical to what would be returned by:
-	 * <pre>
-	 *    Double.valueOf(x).compareTo(Double.valueOf(y))
-	 * </pre>
-	 *
-	 * @param  x the first {@code double} to compare
-	 * @param  y the second {@code double} to compare
-	 * @return the value {@code 0} if {@code x == y};
-	 *         a value less than {@code 0} if {@code x < y}; and
-	 *         a value greater than {@code 0} if {@code x > y}
-	 * @since 1.7
-	 */
-	public static int compare(double x, double y) {
-		return (x < y) ? -1 : ((x == y) ? 0 : 1);
-	}
+     * Compares the two specified {@code double} values. The sign
+     * of the integer value returned is the same as that of the
+     * integer that would be returned by the call:
+     * <pre>
+     *    new Double(d1).compareTo(new Double(d2))
+     * </pre>
+     *
+     * @param   d1        the first {@code double} to compare
+     * @param   d2        the second {@code double} to compare
+     * @return  the value {@code 0} if {@code d1} is
+     *          numerically equal to {@code d2}; a value less than
+     *          {@code 0} if {@code d1} is numerically less than
+     *          {@code d2}; and a value greater than {@code 0}
+     *          if {@code d1} is numerically greater than
+     *          {@code d2}.
+     * @since 1.4
+     */
+    public static int compare(double d1, double d2) {
+        if (d1 < d2)
+            return -1;           // Neither val is NaN, thisVal is smaller
+        if (d1 > d2)
+            return 1;            // Neither val is NaN, thisVal is larger
+
+        // Cannot use doubleToRawLongBits because of possibility of NaNs.
+        long thisBits    = Double.doubleToLongBits(d1);
+        long anotherBits = Double.doubleToLongBits(d2);
+
+        return (thisBits == anotherBits ?  0 : // Values are equal
+                (thisBits < anotherBits ? -1 : // (-0.0, 0.0) or (!NaN, NaN)
+                 1));                          // (0.0, -0.0) or (NaN, !NaN)
+    }
 
 	/** use serialVersionUID from JDK 1.0.2 for interoperability */
 	private static final long serialVersionUID = 4290774380558885855L;
