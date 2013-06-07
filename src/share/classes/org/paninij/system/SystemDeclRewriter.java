@@ -142,6 +142,7 @@ public class SystemDeclRewriter extends TreeTranslator {
             tree.init = translate(tree.init);
         }
         valueEnv.bind(tree.name, tree.init);
+        //FIXME
         varDefToAstNodeEnv.bind(tree.name, tree);
 
         result = tree;
@@ -151,10 +152,13 @@ public class SystemDeclRewriter extends TreeTranslator {
     public void visitAssign(JCAssign tree) {
 
         final JCExpression translatedRHS = this.translate(tree.rhs);
+       //in case of uninitialized variables
+       //FIXME: might want to consider failing; artifact of not having attribution
         if (translatedRHS != null) {
             tree.rhs = translatedRHS;
         }
 
+        //TODO: explore cases like x = y = 42;
         if (tree.lhs instanceof JCIdent) {
             Name assignTo = ((JCIdent) tree.lhs).name;
             valueEnv.bind(assignTo, tree.rhs);
@@ -166,6 +170,7 @@ public class SystemDeclRewriter extends TreeTranslator {
 
         // FIXME: remove syso
         System.out.println("New assn: " + tree);
+        //TODO return translatedRHS instead of tree;
         result = tree;
     }
 
@@ -190,6 +195,10 @@ public class SystemDeclRewriter extends TreeTranslator {
      * This function will replace the JCManyToOne node with a
      * JCManyToOneUnrolled
      */
+    //capsule C(A a, B b, int fortyTwo);
+    //A capsuleArray[4];
+    //m2one(capsuleArray, a, b, 42);
+    //TODO: name suggestions: wireall
     @Override
     public void visitManyToOne(JCManyToOne tree) {
         // FIXME: remove syso
@@ -199,6 +208,7 @@ public class SystemDeclRewriter extends TreeTranslator {
         Name capsuleArrayName = getCapsuleArrayName(tree);
         JCStatement statements[] = new JCStatement[capsuleArraySize];
         for (int i = 0; i < capsuleArraySize; i++) {
+            //TODO: refactor the name of make.CapsuleArrayCall -> CapsuleArrayWiring; 
             statements[i] = make.CapsuleArrayCall(capsuleArrayName,
                     make.Literal(i), tree.many, tree.args);
         }
@@ -246,6 +256,9 @@ public class SystemDeclRewriter extends TreeTranslator {
                 JCBlock b = (JCBlock) tree.body;
                 for (JCStatement s : b.stats) {
                     JCStatement copyOfS = translate(copy.copy(s));
+                    //int b = 4 * 2
+                    //a[i](b)
+                    //TODO: treat case of wiring regular capsules.
                     if (copyOfS.getKind() == Kind.CAPSULE_ARRAY_CALL) {
                         buffer.add(copyOfS);
                     }
@@ -314,6 +327,7 @@ public class SystemDeclRewriter extends TreeTranslator {
         result = tree;
     }
 
+    //TODO:remove because it does exactly what super does.
     @Override
     public void visitCapsuleArrayCall(JCCapsuleArrayCall tree) {
         // FIXME: remove syso
@@ -327,7 +341,7 @@ public class SystemDeclRewriter extends TreeTranslator {
     /**
      * Helper to interpret arithmetic expression trees.
      * 
-     * TODO: Deal with something besides ints.
+     * TODO: Deal with something besides ints. rename because now it supports booleans
      * 
      * @author sean
      * 
