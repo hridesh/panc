@@ -218,7 +218,6 @@ public final class Attr extends CapsuleInternal {
 			}
 		}
 		
-		System.out.println(tree);
 		/*if (doGraphs)
             effects.computeEffects(tree);*/
 	}
