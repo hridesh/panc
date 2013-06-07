@@ -1298,28 +1298,132 @@ public class Enter extends JCTree.Visitor {
     }
     
     private JCStatement procedureReturnStatement(final JCMethodDecl mdecl){
-    	String returnType = mdecl.restype.toString();
-    	JCStatement returnStat;
-    	if(returnType.equals("long")){
-			returnStat = make.Return(make.Apply(List.<JCExpression>nil(), make.Select(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE)), names.fromString("longValue")), List.<JCExpression>nil()));
-    	}else{
-    		returnStat = make.Return(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE)));
-    	}
-    	return returnStat;
+		String returnType = mdecl.restype.toString();
+		JCStatement returnStat;
+		if (returnType.equals("long")) {
+			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
+					.Select(make.Ident(names
+							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+							names.fromString("longValue")), List
+					.<JCExpression> nil()));
+		} else if (returnType.equals("boolean")) {
+			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
+					.Select(make.Ident(names
+							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+							names.fromString("booleanValue")), List
+					.<JCExpression> nil()));
+		} else if (returnType.equals("byte")) {
+			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
+					.Select(make.Ident(names
+							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+							names.fromString("byteValue")), List
+					.<JCExpression> nil()));
+		} else if (returnType.equals("char")) {
+			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
+					.Select(make.Ident(names
+							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+							names.fromString("charValue")), List
+					.<JCExpression> nil()));
+		} else if (returnType.equals("double")) {
+			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
+					.Select(make.Ident(names
+							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+							names.fromString("doubleValue")), List
+					.<JCExpression> nil()));
+		} else if (returnType.equals("float")) {
+			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
+					.Select(make.Ident(names
+							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+							names.fromString("floatValue")), List
+					.<JCExpression> nil()));
+		} else if (returnType.equals("int")) {
+			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
+					.Select(make.Ident(names
+							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+							names.fromString("intValue")), List
+					.<JCExpression> nil()));
+		} else if (returnType.equals("short")) {
+			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
+					.Select(make.Ident(names
+							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+							names.fromString("shortValue")), List
+					.<JCExpression> nil()));
+		} else if (returnType.equals("String")) {
+			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
+					.Select(make.Ident(names
+							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+							names.fromString("toString")), List
+					.<JCExpression> nil()));
+		} else {
+			returnStat = make.Return(make.Ident(names
+					.fromString(PaniniConstants.PANINI_DUCK_TYPE)));
+		}
+		return returnStat;
     }
     
     private JCExpression getDuckType(final JCCapsuleDecl tree, final JCMethodDecl mdecl){
     	String returnType = mdecl.restype.toString();
-    	JCExpression duck = null;
-    	if(returnType.equals("long")){
-    		JCExpression longExp = make.Ident(names.fromString("org"));
-    		longExp = make.Select(longExp, names.fromString("paninij"));
-    		longExp = make.Select(longExp, names.fromString("lang"));
-    		longExp = make.Select(longExp, names.fromString("Long"));
+		JCExpression duck = null;
+		if (returnType.equals("long")) {
+			JCExpression longExp = make.Ident(names.fromString("org"));
+			longExp = make.Select(longExp, names.fromString("paninij"));
+			longExp = make.Select(longExp, names.fromString("lang"));
+			longExp = make.Select(longExp, names.fromString("Long"));
 			duck = longExp;
-    	}else
-    			duck = make.Ident(names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$" + mdecl.restype.toString() + "$" +tree.name.toString()));
-    	return duck;
+		} else if (returnType.equals("boolean")) {
+			JCExpression booleanExp = make.Ident(names.fromString("org"));
+			booleanExp = make.Select(booleanExp, names.fromString("paninij"));
+			booleanExp = make.Select(booleanExp, names.fromString("lang"));
+			booleanExp = make.Select(booleanExp, names.fromString("Boolean"));
+			duck = booleanExp;
+		} else if (returnType.equals("byte")) {
+			JCExpression byteExp = make.Ident(names.fromString("org"));
+			byteExp = make.Select(byteExp, names.fromString("paninij"));
+			byteExp = make.Select(byteExp, names.fromString("lang"));
+			byteExp = make.Select(byteExp, names.fromString("Byte"));
+			duck = byteExp;
+		} else if (returnType.equals("char")) {
+			JCExpression charExp = make.Ident(names.fromString("org"));
+			charExp = make.Select(charExp, names.fromString("paninij"));
+			charExp = make.Select(charExp, names.fromString("lang"));
+			charExp = make.Select(charExp, names.fromString("Character"));
+			duck = charExp;
+		} else if (returnType.equals("double")) {
+			JCExpression doubleExp = make.Ident(names.fromString("org"));
+			doubleExp = make.Select(doubleExp, names.fromString("paninij"));
+			doubleExp = make.Select(doubleExp, names.fromString("lang"));
+			doubleExp = make.Select(doubleExp, names.fromString("Double"));
+			duck = doubleExp;
+		} else if (returnType.equals("float")) {
+			JCExpression floatExp = make.Ident(names.fromString("org"));
+			floatExp = make.Select(floatExp, names.fromString("paninij"));
+			floatExp = make.Select(floatExp, names.fromString("lang"));
+			floatExp = make.Select(floatExp, names.fromString("Float"));
+			duck = floatExp;
+		} else if (returnType.equals("int")) {
+			JCExpression intExp = make.Ident(names.fromString("org"));
+			intExp = make.Select(intExp, names.fromString("paninij"));
+			intExp = make.Select(intExp, names.fromString("lang"));
+			intExp = make.Select(intExp, names.fromString("Integer"));
+			duck = intExp;
+		} else if (returnType.equals("short")) {
+			JCExpression shortExp = make.Ident(names.fromString("org"));
+			shortExp = make.Select(shortExp, names.fromString("paninij"));
+			shortExp = make.Select(shortExp, names.fromString("lang"));
+			shortExp = make.Select(shortExp, names.fromString("Short"));
+			duck = shortExp;
+		} else if (returnType.equals("String")) {
+			JCExpression stringExp = make.Ident(names.fromString("org"));
+			stringExp = make.Select(stringExp, names.fromString("paninij"));
+			stringExp = make.Select(stringExp, names.fromString("lang"));
+			stringExp = make.Select(stringExp, names.fromString("String"));
+			duck = stringExp;
+		} else
+			duck = make.Ident(names
+					.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$"
+							+ mdecl.restype.toString() + "$"
+							+ tree.name.toString()));
+		return duck;
     }
     
     private void translateCapsuleAnnotations(){
