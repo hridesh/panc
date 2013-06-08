@@ -281,6 +281,11 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 		return defaultAction(node, p);
 	}
 
+	@Override
+	public R visitCapsuleWiring(CapsuleWiringTree node, P p) {
+	    return defaultAction(node, p);
+	}
+
 	public R visitCapsuleArrayCall(CapsuleArrayCallTree node, P p) {
 		return defaultAction(node, p);
 	}

@@ -49,6 +49,7 @@ public interface Tree {
     	PROCCALL(ProcInvocationTree.class),
     	PROCEDURE(ProcedureTree.class),
     	STATE(StateTree.class),
+    	CAPSULE_WIRING(CapsuleWiringTree.class),
     	CAPSULE_ARRAY_CALL(CapsuleArrayCallTree.class),
     	CAPSULE_ARRAY(CapsuleArrayTree.class),
     	SYSTEM(SystemTree.class),

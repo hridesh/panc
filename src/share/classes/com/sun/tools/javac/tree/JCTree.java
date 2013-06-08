@@ -353,6 +353,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         // Panini code
         PROC,
         MAAPPLY,
+        CAPSULE_WIRING,
         CAPSULEARRAY,
         SYSTEMDEF,
         CAPSULEDEF,
@@ -718,6 +719,48 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		}
 	}
 
+	public static class JCCapsuleWiring extends JCStatement implements
+	        CapsuleWiringTree {
+	    public Name name;
+	    public List<JCExpression> arguments;
+
+	    public JCCapsuleWiring (Name name, List<JCExpression> arguments) {
+	        this.name = name;
+	        this.arguments = arguments;
+	    }
+
+        @Override
+        public Kind getKind() {
+            return Kind.CAPSULE_WIRING;
+        }
+
+        @Override
+        public Name getName() {
+            return name;
+        }
+
+        @Override
+        public List<JCExpression> getArguments() {
+            return arguments;
+        }
+
+        @Override
+        public Tag getTag() {
+            return CAPSULE_WIRING;
+        }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visitCapsuleWiring(this);
+        }
+
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            return v.visitCapsuleWiring(this, d);
+        }
+
+	}
+	
 	public static class JCCapsuleArrayCall extends JCStatement implements
 			CapsuleArrayCallTree {
 
@@ -3086,6 +3129,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitProcDef(JCProcDecl that)            { visitTree(that); }
         public void visitProcApply(JCProcInvocation that)    { visitTree(that); }
         public void visitStateDef(JCStateDecl that)	         { visitTree(that); }
+        public void visitCapsuleWiring(JCCapsuleWiring that) { visitTree(that); }
         public void visitCapsuleArrayCall(JCCapsuleArrayCall that) { visitTree(that); }
         public void visitCapsuleArray(JCCapsuleArray that)   { visitTree(that); }
         public void visitSystemDef(JCSystemDecl that)	     { visitTree(that); }

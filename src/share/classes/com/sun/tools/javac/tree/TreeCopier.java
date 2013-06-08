@@ -26,6 +26,7 @@
 package com.sun.tools.javac.tree;
 
 import com.sun.source.tree.*;
+import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
@@ -469,6 +470,13 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         return M.at(t.pos).StateDef(mods, t.name, vartype, init);
     }
     
+    @Override
+    public JCTree visitCapsuleWiring(CapsuleWiringTree node, P p) {
+        JCCapsuleWiring t = (JCCapsuleWiring) node;
+        List<JCExpression> args = copy(t.arguments, p);
+        return M.at(t.pos).CapsuleWiring(t.name, args);
+    }
+
     @Override
 	public JCTree visitCapsuleArrayCall(CapsuleArrayCallTree node, P p) {
 		JCCapsuleArrayCall t = (JCCapsuleArrayCall) node;
