@@ -112,6 +112,7 @@ public interface TreeVisitor<R,P> {
     R visitProc(ProcedureTree tree, P p);
     R visitProcInvocation(ProcInvocationTree tree, P p);
     R visitState(StateTree tree, P p);
+    R visitCapsuleWiring(CapsuleWiringTree node, P p);
     R visitCapsuleArrayCall(CapsuleArrayCallTree tree, P p);
     R visitCapsuleArray(CapsuleArrayTree tree, P p);
     R visitSystem(SystemTree node, P p);

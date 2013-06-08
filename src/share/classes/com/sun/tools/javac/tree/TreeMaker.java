@@ -150,6 +150,14 @@ public class TreeMaker implements JCTree.Factory {
 		return tree;
 	}
 
+	/**Create a new capsule wiring statement.
+	 */
+	public JCCapsuleWiring CapsuleWiring(Name name, List<JCExpression> arguments) {
+	    JCCapsuleWiring tree = new JCCapsuleWiring(name, arguments);
+	    tree.pos = pos;
+	    return tree;
+	}
+
 	public JCCapsuleArrayCall CapsuleArrayCall(Name name, JCExpression index,
 			JCExpression indexed, List<JCExpression> args) {
 		JCCapsuleArrayCall tree = new JCCapsuleArrayCall(name, index, indexed,

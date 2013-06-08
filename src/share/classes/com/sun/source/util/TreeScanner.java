@@ -415,6 +415,12 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 		return visitVariable(node, p);
 	}
     
+    @Override
+    public R visitCapsuleWiring(CapsuleWiringTree node, P p) {
+        R r = scan(node.getArguments(), p);
+        return r;
+    }
+
     public R visitCapsuleArrayCall(CapsuleArrayCallTree node, P p) {
 		R r = scan(node.getArgs(), p);
 		return r;
