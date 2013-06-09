@@ -764,6 +764,11 @@ public class Attr extends JCTree.Visitor {
     	tree.startNodes = new java.util.LinkedList<JCTree>();
     	tree.type = proto;
     }
+
+    public void visitCapsuleWiring(JCCapsuleWiring tree) {
+        System.out.println("Here!");
+        System.out.println(tree);
+    }
     // end Panini code
 
     public void visitClassDef(JCClassDecl tree) {
