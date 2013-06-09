@@ -355,7 +355,6 @@ public final class Attr extends CapsuleInternal {
 //			}
 //		}
 		tree.switchToMethod();
-		System.out.println(tree);
 	}
 	
 	// Helper functions
