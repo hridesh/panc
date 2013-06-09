@@ -496,6 +496,18 @@ public class Pretty extends JCTree.Visitor {
 		}
     }
     
+    @Override
+    public void visitCapsuleWiring(JCCapsuleWiring tree) {
+        try{
+            printExpr(tree.meth);
+            print("(");
+            printExprs(tree.args);
+            print(")");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     public void visitCapsuleArray(JCCapsuleArray tree) {
         try {
             printBaseElementType(tree);

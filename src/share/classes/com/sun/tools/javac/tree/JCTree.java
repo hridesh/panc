@@ -719,14 +719,18 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		}
 	}
 
-	public static class JCCapsuleWiring extends JCStatement implements
+	/**
+	 * Some of the super type is re-used. Capsule selection statements
+	 * are modeled as method selection statements and arguments exactly
+	 * the same.
+	 *
+	 * @since panini-0.9.2
+	 */
+	public static class JCCapsuleWiring extends JCMethodInvocation implements
 	        CapsuleWiringTree {
-	    public Name name;
-	    public List<JCExpression> arguments;
 
-	    public JCCapsuleWiring (Name name, List<JCExpression> arguments) {
-	        this.name = name;
-	        this.arguments = arguments;
+	    public JCCapsuleWiring (JCExpression cap, List<JCExpression> args) {
+	        super(null, cap, args);
 	    }
 
         @Override
@@ -735,13 +739,14 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         }
 
         @Override
-        public Name getName() {
-            return name;
-        }
-
-        @Override
-        public List<JCExpression> getArguments() {
-            return arguments;
+        /**
+         * Duplicate of {@link JCMethodInvocation#getMethodSelect()}.
+         *
+         * Returns same part of the tree as the super getMethodSelect() function,
+         * duplicated here to make operations on the tree easier to read.
+         */
+        public JCExpression getCapsuleSelect() {
+            return meth;
         }
 
         @Override

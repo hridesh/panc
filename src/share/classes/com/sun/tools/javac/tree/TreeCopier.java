@@ -473,8 +473,9 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     @Override
     public JCTree visitCapsuleWiring(CapsuleWiringTree node, P p) {
         JCCapsuleWiring t = (JCCapsuleWiring) node;
-        List<JCExpression> args = copy(t.arguments, p);
-        return M.at(t.pos).CapsuleWiring(t.name, args);
+        JCExpression capSel = copy(t.meth, p);
+        List<JCExpression> args = copy(t.args, p);
+        return M.at(t.pos).CapsuleWiring(capSel, args);
     }
 
     @Override
