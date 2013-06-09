@@ -30,6 +30,8 @@ import javax.lang.model.element.ElementKind;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.*;
+import static com.sun.tools.javac.code.Flags.ANNOTATION;
+import static com.sun.tools.javac.code.Flags.BLOCK;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
@@ -54,8 +56,6 @@ import org.paninij.systemgraphs.*;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
-import static com.sun.tools.javac.code.Flags.ANNOTATION;
-import static com.sun.tools.javac.code.Flags.BLOCK;
 import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.Kinds.ERRONEOUS;
 import static com.sun.tools.javac.code.TypeTags.*;
@@ -797,6 +797,29 @@ public class Attr extends JCTree.Visitor {
     	pAttr.visitProcDef(tree);
     }
     
+    @Override
+    public void visitProcApply(JCProcInvocation tree) {
+        //TODO: Extend the env?
+
+        //find the capsule instance.
+        Name capsuleName = TreeInfo.name(tree.meth);
+        //attribute wiring, maybe?
+        //check the args.
+        List<Type> argTypes = attribArgs(tree.args, env);
+        //Find the Capsule type for the name of the symbol
+        Type cwt = newWiringTemplate(argTypes);
+        //localEnv.info.varArgs = false;
+        Type cType = attribExpr(tree.meth, env, cwt);
+    }
+
+    /** Obtain a method type with given argument types.
+     */
+    Type newWiringTemplate(List<Type> argtypes) {
+
+        MethodType mt = new MethodType(argtypes, null, null, syms.methodClass);
+        return mt;
+    }
+
     public void visitForeach(JCForeach tree){
     	
     	attribStat(tree.var, env);
@@ -812,11 +835,20 @@ public class Attr extends JCTree.Visitor {
     	tree.startNodes = new java.util.LinkedList<JCTree>();
     	tree.type = proto;
     }
-
+    /**
+     * Adapted from {@link #visitApply(JCMethodInvocation)}.
+     */
     public void visitCapsuleWiring(JCCapsuleWiring tree) {
-        System.out.println("Here!");
-        System.out.println(tree);
+        Env<AttrContext> localEnv = env.dup(tree, env.info.dup());
+
+        Name capsuleName = TreeInfo.name(tree.meth);
+        //FIXME check the type of the symbol is a Capsule type.
+        List<?> argTypes = attribArgs(tree.args, localEnv);
+        localEnv.info.varArgs = false; //TODO: Varargs for capsule wiring?
+
+        Type wType = attribExpr(tree.meth, localEnv, null);
     }
+
     // end Panini code
 
     public void visitClassDef(JCClassDecl tree) {
