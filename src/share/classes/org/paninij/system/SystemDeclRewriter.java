@@ -31,12 +31,14 @@ import com.sun.tools.javac.tree.JCTree.JCBlock;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleArray;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleArrayCall;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleWiring;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
 import com.sun.tools.javac.tree.JCTree.JCForLoop;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
 import com.sun.tools.javac.tree.JCTree.JCManyToOne;
+import com.sun.tools.javac.tree.JCTree.JCProcInvocation;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
@@ -325,6 +327,20 @@ public class SystemDeclRewriter extends TreeTranslator {
         }
         tree.body.stats = statsBuff.toList();
         result = tree;
+    }
+
+    @Override
+    public void visitCapsuleWiring(JCCapsuleWiring tree) {
+        //TODO: full capusule wiring.
+        //currently switches to ProcInvocation. Should be the 'actual'
+        //statements used to wire a capsule. See the second half of
+        //org.paninij.comp.Attr#visitSystemDef() for the current wiring
+        //strategy
+        JCProcInvocation pi = make.at(tree.pos)
+                .ProcApply(tree.typeargs, tree.meth, tree.args);
+        pi.switchToMethod();
+        //Visit it for whatever rewriting is required.
+        pi.accept(this);
     }
 
     //TODO:remove because it does exactly what super does.
