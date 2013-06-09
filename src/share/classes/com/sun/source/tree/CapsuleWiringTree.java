@@ -19,18 +19,19 @@
 package com.sun.source.tree;
 
 import java.util.List;
-import javax.lang.model.element.Name;
 
 /**
  * A tree node for a capsule wiring statement.
  * For example:
+ *
  * <pre>
  *   <em>identifier</em> ( <em>arguments</em> ) ;
  * </pre>
+ *
  * @author Sean L. Mooney
  * @since panini-0.9.2
  */
-public interface CapsuleWiringTree extends StatementTree {
-    Name getName();
+public interface CapsuleWiringTree extends ExpressionTree {
+    ExpressionTree getCapsuleSelect();
     List<? extends ExpressionTree> getArguments();
 }
