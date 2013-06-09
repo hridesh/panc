@@ -217,7 +217,7 @@ public class JavacParser implements Parser {
     private int lastmode = 0;
     
     // Panini code
-    boolean inCapsule = false;
+    boolean inSystem = false;
     // end Panini code
 
     /* ---------- token management -------------- */
@@ -1456,10 +1456,9 @@ public class JavacParser implements Parser {
         int pos = token.pos;
         List<JCExpression> args = arguments();
         // Panini code
-        if(inCapsule){
-        	JCProcInvocation proc = toP(F.at(pos).ProcApply(typeArgs, t, args));
-        	proc.switchToMethod();
-        	return proc;
+        if(inSystem){
+            JCCapsuleWiring proc = toP(F.at(pos).WiringApply(t, args));
+            return proc;
         }
         else
         // end Panini code
@@ -3035,7 +3034,7 @@ public class JavacParser implements Parser {
 
     // Panini code
      JCStatement systemDecl(JCModifiers mod, String dc){
-    	inCapsule = true;
+     	inSystem = true;
      	accept(IDENTIFIER);
      	int pos = token.pos;
      	Name name = ident();
@@ -3053,7 +3052,7 @@ public class JavacParser implements Parser {
      	JCBlock body = systemBlock();
      	JCSystemDecl result = toP(F.at(pos).SystemDef(mod, name, body, params));
      	attach(result, dc);
-     	inCapsule = false;
+     	inSystem = false;
      	return result;
      }
      
@@ -3675,6 +3674,9 @@ public class JavacParser implements Parser {
         case MUL_ASG: case DIV_ASG: case MOD_ASG:
         case APPLY: case NEWCLASS:
         case ERRONEOUS:
+        // Panini code
+        case CAPSULE_WIRING:
+        // end Panini code
             return t;
         default:
             JCExpression ret = F.at(t.pos).Erroneous(List.<JCTree>of(t));

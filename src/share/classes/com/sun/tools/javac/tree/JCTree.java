@@ -353,6 +353,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         // Panini code
         PROC,
         MAAPPLY,
+        /** Capsule wiring expressions.
+         */
         CAPSULE_WIRING,
         CAPSULEARRAY,
         SYSTEMDEF,

@@ -158,7 +158,7 @@ public class TreeMaker implements JCTree.Factory {
 
 	/**Create a new capsule wiring statement.
 	 */
-	public JCCapsuleWiring CapsuleWiring(JCExpression t, List<JCExpression> args) {
+	public JCCapsuleWiring WiringApply(JCExpression t, List<JCExpression> args) {
 	    JCCapsuleWiring tree = new JCCapsuleWiring(t, args);
 	    tree.pos = pos;
 	    return tree;
