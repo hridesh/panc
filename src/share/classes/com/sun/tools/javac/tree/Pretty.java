@@ -526,6 +526,33 @@ public class Pretty extends JCTree.Visitor {
 		}
     }
     
+    @Override
+    public void visitStar(JCStar that){
+    	try {
+			print("star" + "(" + that.center + "," + that.others + "," + that.args + ")");
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+    }
+    
+    @Override
+    public void visitRing(JCRing that){
+    	try {
+			print("ring" + "(" + that.capsules + "," + that.args + ")");
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+    }
+    
+    @Override
+    public void visitAssociate(JCAssociate that){
+    	try {
+			print("associate" + "(" + that.first + "," + that.second + "," + that.args + ")");
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+    }
+    
     private void printBrackets(JCCapsuleArray tree) throws IOException {
         JCTree elem;
         while (true) {

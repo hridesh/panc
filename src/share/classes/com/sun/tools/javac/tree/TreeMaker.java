@@ -148,6 +148,24 @@ public class TreeMaker implements JCTree.Factory {
 		tree.pos = pos;
 		return tree;
 	}
+	
+	public JCStar Star(JCExpression center, JCExpression others, List<JCExpression> args){
+		JCStar tree = new JCStar(center, others, args);
+		tree.pos = pos;
+		return tree;
+	}
+	
+	public JCRing Ring(JCExpression capsules, List<JCExpression> args){
+		JCRing tree = new JCRing(capsules, args);
+		tree.pos = pos;
+		return tree;
+	}
+	
+	public JCAssociate Associate(JCExpression first, JCExpression second, List<JCExpression> args){
+		JCAssociate tree = new JCAssociate(first, second, args);
+		tree.pos = pos;
+		return tree;
+	}
 
 	public JCStateDecl StateDef(JCModifiers mods, Name name,
 			JCExpression vartype, JCExpression init) {

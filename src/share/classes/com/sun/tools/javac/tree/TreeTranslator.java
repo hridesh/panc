@@ -464,6 +464,29 @@ public class TreeTranslator extends JCTree.Visitor {
     }
     
     @Override
+    public void visitStar(JCStar tree){
+    	tree.center = translate(tree.center);
+    	tree.others = translate(tree.others);
+    	tree.args = translate(tree.args);
+    	result = tree;
+    }
+    
+    @Override
+    public void visitRing(JCRing tree){
+    	tree.capsules = translate(tree.capsules);
+    	tree.args = translate(tree.args);
+    	result = tree;
+    }
+    
+    @Override
+    public void visitAssociate(JCAssociate tree){
+    	tree.first = translate(tree.first);
+    	tree.second = translate(tree.second);
+    	tree.args = translate(tree.args);
+    	result = tree;
+    }
+    
+    @Override
     public void visitCapsuleArrayCall(JCCapsuleArrayCall tree) {
         tree.arguments = translate(tree.arguments);
         tree.index = translate(tree.index);

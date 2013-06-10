@@ -533,6 +533,18 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 
 	public JCTree visitManyToOne(ManyToOneTree node, P p) {
 	    return null; //FIXME
+	}
+	
+	public JCTree visitStar(StarTree node, P p){
+		return null; //FIXME
+	}
+	
+	public JCTree visitRing(RingTree node, P p){
+		return null; //FIXME
+	}
+	
+	public JCTree visitAssociate(AssociateTree node, P p){
+		return null; //FIXME
 	};
 	// end Panini code
 }

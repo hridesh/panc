@@ -475,5 +475,25 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 	public R visitManyToOne(ManyToOneTree node, P p) {
 	    return null; //FIXME
 	};
+	
+	public R visitStar(StarTree node, P p){
+		R r = scan(node.getCenter(), p);
+		r = scanAndReduce(node.getOrbiters(), p, r);
+		r = scanAndReduce(node.getArgs(), p, r);
+		return r;
+	}
+	
+	public R visitRing(RingTree node, P p){
+		R r = scan(node.getCapsules(), p);
+		r = scanAndReduce(node.getArgs(), p, r);
+		return r;
+	}
+	
+	public R visitAssociate(AssociateTree node, P p){
+		R r = scan(node.getFirst(), p);
+		r = scanAndReduce(node.getSecond(), p, r);
+		r = scanAndReduce(node.getArgs(), p, r);
+		return r;
+	}
 	//end Panini code
 }

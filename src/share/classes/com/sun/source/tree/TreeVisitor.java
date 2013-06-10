@@ -122,5 +122,8 @@ public interface TreeVisitor<R,P> {
     R visitForeach(ForeachTree node, P p);
     R visitInit(InitMethodTree node, P p);
     R visitManyToOne(ManyToOneTree node, P p);
+    R visitStar(StarTree node, P p);
+    R visitRing(RingTree node, P p);
+    R visitAssociate(AssociateTree node, P p);
     //end Panini Code
 }

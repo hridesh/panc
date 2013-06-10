@@ -324,6 +324,18 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 
 	public R visitManyToOne(ManyToOneTree node, P p) {
 	    return defaultAction(node, p);
+	}
+	
+	public R visitStar(StarTree node, P p){
+		return defaultAction(node, p);
+	}
+	
+	public R visitRing(RingTree node, P p){
+		return defaultAction(node, p);
+	}
+	
+	public R visitAssociate(AssociateTree node, P p){
+		return defaultAction(node, p);
 	};
 	// end Panini code
 }

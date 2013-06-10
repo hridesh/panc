@@ -366,7 +366,16 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         FORALLLOOP,
         /** Many-to-one topology.
          */
-        MANY_TO_ONE;
+        MANY_TO_ONE,
+        /** Star topology
+         */
+        STAR_TOP,
+        /** Ring topology
+         */
+        RING,
+        /** one-to-one capsule mapping/association
+         */
+        ASSOCIATE;
         // end Panini code
 
 
@@ -1128,6 +1137,149 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		public Kind getKind() {
 			return Kind.MANY_TO_ONE;
 		}
+   }
+    
+   public static class JCStar extends JCExpression implements StarTree{
+
+	 public JCExpression center;
+	 public JCExpression others;
+	 public List<JCExpression> args;
+	 
+	 protected JCStar(JCExpression center, JCExpression others, List<JCExpression> args){
+		 this.center = center;
+		 this.others = others;
+		 this.args = args;
+	 }
+	   
+	@Override
+	public Kind getKind() {
+		return Kind.STAR_TOP;
+	}
+
+	@Override
+	public ExpressionTree getCenter() {
+		return center;
+	}
+
+	@Override
+	public ExpressionTree getOrbiters() {
+		return others;
+	}
+
+	@Override
+	public List<? extends ExpressionTree> getArgs() {
+		return args;
+	}
+
+	@Override
+	public Tag getTag() {
+		return Tag.STAR_TOP;
+	}
+
+	@Override
+	public void accept(Visitor v) {
+		v.visitStar(this);
+	}
+
+	@Override
+	public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+		return v.visitStar(this, d);
+	}
+	   
+   }
+   
+   public static class JCRing extends JCExpression implements RingTree{
+
+		public JCExpression capsules;
+		public List<JCExpression> args;
+		
+		protected JCRing(JCExpression capsules, List<JCExpression> args){
+			this.capsules = capsules;
+			this.args = args;
+		}
+		
+		@Override
+		public Kind getKind() {
+			return Kind.RING;
+		}
+
+		@Override
+		public ExpressionTree getCapsules() {
+			return capsules;
+		}
+
+		@Override
+		public List<? extends ExpressionTree> getArgs() {
+			return args;
+		}
+
+		@Override
+		public Tag getTag() {
+			return Tag.RING;
+		}
+
+		@Override
+		public void accept(Visitor v) {
+			v.visitRing(this);
+		}
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitRing(this, d);
+		}
+		
+	}
+   
+   public static class JCAssociate extends JCExpression implements AssociateTree{
+
+	   public JCExpression first;
+	   public JCExpression second;
+	   public List<JCExpression> args;
+	   
+	   protected JCAssociate(JCExpression first, JCExpression second, List<JCExpression> args){
+		   this.first = first;
+		   this.second = second;
+		   this.args = args;
+	   }
+	   
+	@Override
+	public Kind getKind() {
+		return Kind.ASSOCIATE;
+	}
+
+	@Override
+	public ExpressionTree getFirst() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ExpressionTree getSecond() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<? extends ExpressionTree> getArgs() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Tag getTag() {
+		return Tag.ASSOCIATE;
+	}
+
+	@Override
+	public void accept(Visitor v) {
+		v.visitAssociate(this);
+	}
+
+	@Override
+	public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+		return v.visitAssociate(this, d);
+	}
+	   
    }
 
    // end Panini code
@@ -3146,6 +3298,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitInitDef(JCInitDecl that) 			 { visitTree(that); }
         public void visitForeach(JCForeach that)	 	     { visitTree(that); }
         public void visitManyToOne(JCManyToOne that)         { visitTree(that); }
+        public void visitStar(JCStar that)					 { visitTree(that); }
+        public void visitRing(JCRing that)					 { visitTree(that); }
+        public void visitAssociate(JCAssociate that)		 { visitTree(that); }
         // end Panini code
         public void visitTree(JCTree that)                   { Assert.error(); }
     }
