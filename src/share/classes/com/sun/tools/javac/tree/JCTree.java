@@ -1141,6 +1141,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
     
    public static class JCStar extends JCExpression implements StarTree{
 
+	 public List<JCStatement> unrolled;
 	 public JCExpression center;
 	 public JCExpression others;
 	 public List<JCExpression> args;
@@ -1190,7 +1191,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
    
    public static class JCRing extends JCExpression implements RingTree{
 
-		public JCExpression capsules;
+	    public List<JCStatement> unrolled;
+	    public JCExpression capsules;
 		public List<JCExpression> args;
 		
 		protected JCRing(JCExpression capsules, List<JCExpression> args){
@@ -1232,6 +1234,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
    
    public static class JCAssociate extends JCExpression implements AssociateTree{
 
+	   public List<JCStatement> unrolled;
 	   public JCExpression first;
 	   public JCExpression second;
 	   public List<JCExpression> args;
@@ -1249,20 +1252,17 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	@Override
 	public ExpressionTree getFirst() {
-		// TODO Auto-generated method stub
-		return null;
+		return first;
 	}
 
 	@Override
 	public ExpressionTree getSecond() {
-		// TODO Auto-generated method stub
-		return null;
+		return second;
 	}
 
 	@Override
 	public List<? extends ExpressionTree> getArgs() {
-		// TODO Auto-generated method stub
-		return null;
+		return args;
 	}
 
 	@Override

@@ -26,6 +26,7 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCAssign;
+import com.sun.tools.javac.tree.JCTree.JCAssociate;
 import com.sun.tools.javac.tree.JCTree.JCBinary;
 import com.sun.tools.javac.tree.JCTree.JCBlock;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleArray;
@@ -39,6 +40,8 @@ import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
 import com.sun.tools.javac.tree.JCTree.JCManyToOne;
 import com.sun.tools.javac.tree.JCTree.JCProcInvocation;
+import com.sun.tools.javac.tree.JCTree.JCRing;
+import com.sun.tools.javac.tree.JCTree.JCStar;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
@@ -220,6 +223,77 @@ public class SystemDeclRewriter extends TreeTranslator {
         tree.unrolled = List.from(statements);
         result = tree;
     }
+    
+    @Override
+    public void visitStar(JCStar tree){
+    	// FIXME: remove syso
+    	System.out.println("visiting star: " + tree.toString());
+    	JCExpression center = tree.center;
+    	JCExpression others = tree.others;
+    	List<JCExpression> args = tree.args;
+    	int capsuleArraySize = getCapsuleArraySize(others);
+    	ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
+    	
+    	for(int i = 0; i < capsuleArraySize; i++){
+    		unrolledStats.add(make.Exec( //others -> center
+    				make.WiringApply(make.Indexed(others, make.Literal(i)), args.prepend(center))
+    				)
+    		);
+    	}
+    	unrolledStats.add(make.Exec(
+				make.WiringApply(center, args.prepend(others))
+			)
+	    );
+    	System.out.println("Rewritten star statement: " + unrolledStats.toList().toString());
+    	tree.unrolled = unrolledStats.toList();
+    	result = tree;
+    }
+    
+    @Override
+    public void visitRing(JCRing tree){
+    	// FIXME: remove syso
+    	System.out.println("visiting ring: " + tree.toString());
+    	JCExpression capsules = tree.capsules;
+    	List<JCExpression> args = tree.args;
+    	int capsuleArraySize = getCapsuleArraySize(capsules);
+    	ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
+    	for(int i = 0; i < capsuleArraySize-1; i++){
+    		unrolledStats.add(make.Exec(
+    					make.WiringApply(make.Indexed(capsules, make.Literal(i)),
+    							args.prepend(make.Indexed(capsules, make.Literal(i+1))))
+    				)
+    		);
+    	}
+    	unrolledStats.add(make.Exec(
+    				make.WiringApply(make.Indexed(capsules, make.Literal(capsuleArraySize-1)),
+    						args.prepend(make.Indexed(capsules, make.Literal(0))))
+    			)
+    	);
+    	System.out.println("Rewritten ring statement: "+ unrolledStats.toList().toString());
+    	tree.unrolled = unrolledStats.toList();
+    	result = tree;
+    }
+    
+    @Override
+    public void visitAssociate(JCAssociate tree){
+    	// FIXME: remove syso
+    	System.out.println("visiting associate: "+ tree.toString());
+    	JCExpression first = tree.first;
+    	JCExpression second = tree.second;
+    	List<JCExpression> args = tree.args;
+    	int capsuleArraySize = getCapsuleArraySize(first);
+    	ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
+    	for(int i = 0; i < capsuleArraySize; i++){
+    		unrolledStats.add(make.Exec(
+    					make.WiringApply(make.Indexed(first, make.Literal(i)),
+    							args.prepend(make.Indexed(second, make.Literal(i))))
+    				)
+    		);
+    	}
+    	System.out.println("Rewritten associate statement: "+ unrolledStats.toList().toString());
+    	tree.unrolled = unrolledStats.toList();
+    	result = tree;
+    }
 
     // /* (non-Javadoc)
     // * @see
@@ -291,6 +365,15 @@ public class SystemDeclRewriter extends TreeTranslator {
         assert (capsuleArraySize > 0) : "capsule array sizes should always be > 0; something went wrong";
         return capsuleArraySize;
     }
+    
+    private int getCapsuleArraySize(JCExpression array) {
+        Name arrayName = getIdentifierName(array);
+        JCVariableDecl arrayAST = varDefToAstNodeEnv.lookup(arrayName);
+        assert (arrayAST.vartype instanceof JCCapsuleArray) : "m2one expects capsule arrays as the first element";
+        int capsuleArraySize = ((JCCapsuleArray) arrayAST.vartype).amount;
+        assert (capsuleArraySize > 0) : "capsule array sizes should always be > 0; something went wrong";
+        return capsuleArraySize;
+    }
 
     /**
      * @param tree
@@ -300,6 +383,23 @@ public class SystemDeclRewriter extends TreeTranslator {
         assert (tree.many instanceof JCIdent) : "Many2One arrays should always be referenced through identifiers";
         Name arrayName = ((JCIdent) tree.many).name;
         return arrayName;
+    }
+    
+    /**
+     * @param tree
+     * @return
+     */
+    private Name getIdentifierName(JCExpression tree) {
+        if(tree instanceof JCIdent){
+        	Name arrayName = ((JCIdent) tree).name;
+        	return arrayName;
+        }
+        else{
+        	//TODO log the error properly:
+        	//we expected an identifier, but got something else
+        	log.error("unexpected.type", "identifier", tree.getKind().toString());
+        	return null;
+        }
     }
 
     // TODO: probably redundant method.

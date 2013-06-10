@@ -24,6 +24,9 @@ package org.paninij.parser;
  */
 public interface PaniniTokens {
 	public static final String SYSLANG_MANY_TO_ONE = "m2one";
+	public static final String SYSLANG_STAR = "star";
+	public static final String SYSLANG_RING = "ring";
+	public static final String SYSLANG_ASSOCIATE = "associate";
 	/**
 	 * 
 	 */
