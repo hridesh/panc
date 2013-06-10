@@ -53,6 +53,7 @@ import com.sun.source.util.SimpleTreeVisitor;
 // Panini code
 import org.paninij.consistency.*;
 import org.paninij.systemgraphs.*;
+import static org.paninij.code.TypeTags.CAPSULE_WIRING;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -225,7 +226,17 @@ public class Attr extends JCTree.Visitor {
      *  @param resultInfo  The expected result of the tree
      */
     Type check(JCTree tree, Type owntype, int ownkind, ResultInfo resultInfo) {
-        if (owntype.tag != ERROR && resultInfo.pt.tag != METHOD && resultInfo.pt.tag != FORALL) {
+        // Panini code
+        /* Special case for capsule wiring. Not in the if stmt below
+         * to make the change less intrusive.
+         */
+        if ( resultInfo.pt.tag == CAPSULE_WIRING ) {
+            tree.type = owntype;
+            return owntype;
+        }
+        // end Panini code
+
+        if (owntype.tag != ERROR && resultInfo.pt.tag != METHOD && resultInfo.pt.tag != FORALL ) {
             if ((ownkind & ~resultInfo.pkind) == 0) {
                 owntype = resultInfo.check(tree, owntype);
             } else {
@@ -747,6 +758,8 @@ public class Attr extends JCTree.Visitor {
     public final void visitSystemDef(final JCSystemDecl tree){
         //TODO-XXX checking still needs defined/performed.
         ClassSymbol s = tree.sym;
+        //Make the sym look like a method kind.
+        tree.sym.kind = MTH;
 
         // Create a new environment with local scope
         // for attributing the method.
@@ -815,8 +828,10 @@ public class Attr extends JCTree.Visitor {
     /** Obtain a method type with given argument types.
      */
     Type newWiringTemplate(List<Type> argtypes) {
-
-        MethodType mt = new MethodType(argtypes, null, null, syms.methodClass);
+        List<Type> wiringTypes = argtypes;
+        ClassSymbol tsym = syms.capsuleWiring;
+        org.paninij.code.Type.CapsuleType mt
+            = new org.paninij.code.Type.CapsuleType(wiringTypes, tsym);
         return mt;
     }
 
@@ -841,12 +856,16 @@ public class Attr extends JCTree.Visitor {
     public void visitCapsuleWiring(JCCapsuleWiring tree) {
         Env<AttrContext> localEnv = env.dup(tree, env.info.dup());
 
-        Name capsuleName = TreeInfo.name(tree.meth);
+        //Find the capsule interface and use that for template.
+        //then the arguments types have to match up with the
+        //expected capsule types. There's some 'tricky' stuff to deal with
+        //to get signatures implemented properly for 'isSubType'.
         //FIXME check the type of the symbol is a Capsule type.
-        List<?> argTypes = attribArgs(tree.args, localEnv);
+        List<Type> argtypes = attribArgs(tree.args, localEnv);
         localEnv.info.varArgs = false; //TODO: Varargs for capsule wiring?
+        Type wpt = newWiringTemplate(argtypes);
 
-        Type wType = attribExpr(tree.meth, localEnv, null);
+        attribExpr(tree.meth, localEnv, wpt);
     }
 
     // end Panini code
@@ -2334,6 +2353,8 @@ public class Attr extends JCTree.Visitor {
         Symbol sym;
         boolean varArgs = false;
 
+        int pttag = pt().tag;
+
         // Find symbol
         if (pt().tag == METHOD || pt().tag == FORALL) {
             // If we are looking for a method, the prototype `pt' will be a
@@ -2341,6 +2362,11 @@ public class Attr extends JCTree.Visitor {
             env.info.varArgs = false;
             sym = rs.resolveMethod(tree.pos(), env, tree.name, pt().getParameterTypes(), pt().getTypeArguments());
             varArgs = env.info.varArgs;
+        // Panini code
+        } else if (pt().tag == CAPSULE_WIRING) {
+            //sym = rs.resloveCapsuleWiring(tree.pos(), env, tree.name);
+            sym = rs.resolveWiring(tree.pos(), env, tree.name, pkind());
+        // end panini code
         } else if (tree.sym != null && tree.sym.kind != VAR) {
             sym = tree.sym;
         } else {
@@ -2762,6 +2788,13 @@ public class Attr extends JCTree.Visitor {
                                       env.info.varArgs);
                 break;
             }
+            // Panini code
+            case CAPSULE_WIRING: {
+                JCCapsuleWiring wire = (JCCapsuleWiring)env.tree;
+                owntype = checkWiring(site, sym, env, wire.args);
+                break;
+            }
+            // end Panini code
             case PCK: case ERR:
                 owntype = sym.type;
                 break;
@@ -2950,6 +2983,16 @@ public class Attr extends JCTree.Visitor {
             return chk.checkMethod(owntype, sym, env, argtrees, argtypes, useVarargs, unchecked);
         }
     }
+
+    // Panini code
+    public Type checkWiring(Type site,
+            Symbol sym,
+            Env<AttrContext> env,
+            final List<JCExpression> argtrees) {
+        //FIXME: Implement wiring check against the template.
+        return sym.type;
+    }
+    // end Panini code
 
     /**
      * Check that constructor arguments conform to its instantiation.

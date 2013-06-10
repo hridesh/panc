@@ -1696,6 +1696,52 @@ public class Resolve {
         }
     }
 
+    // Panini code
+    Symbol resolveWiring(DiagnosticPosition pos,
+                         Env<AttrContext> env,
+                         Name name,
+                         int kind) {
+        try {
+            currentResolutionContext = new MethodResolutionContext();
+            Symbol sym = methodNotFound;
+            sym = findWiring(env, name, kind);
+
+            if (sym.kind >= AMBIGUOUS) {//if nothing is found return the 'first' error
+                MethodResolutionPhase errPhase =
+                        currentResolutionContext.firstErroneousResolutionPhase();
+                sym = access(currentResolutionContext.resolutionCache.get(errPhase),
+                        pos, env.enclClass.sym.type, name, false, List.<Type>nil(), List.<Type>nil());
+                env.info.varArgs = errPhase.isVarargsRequired;
+            }
+            return sym;
+        }
+        finally {
+        }
+
+    }
+
+    Symbol findWiring(Env<AttrContext>env, Name name, int kind) {
+        Symbol cap = findIdent(env, name, kind);
+        Type t = cap.type;
+        Symbol tSym = t.tsym;
+        if( tSym instanceof CapsuleSymbol) {
+            // TODO: Create a capsule wiring symbol when the Capsule
+            // tree is attributed.
+            CapsuleSymbol cSym = (CapsuleSymbol)tSym;
+            CapsuleSymbol wSym = new CapsuleSymbol(cSym.flags_field,
+                    names.panini.Wiring,
+                    cSym.type, cSym);
+            wSym.kind = org.paninij.code.TypeTags.CAPSULE_WIRING;
+            return wSym;
+        } else {
+            //FIXME: Proper warning message string.
+            log.rawError(-1, name + " is a Capsule type.");
+            return null;//return env.info.
+        }
+
+    }
+    // end Panini code
+
     /** Resolve a qualified method identifier
      *  @param pos       The position to use for error reporting.
      *  @param env       The environment current at the method invocation.
