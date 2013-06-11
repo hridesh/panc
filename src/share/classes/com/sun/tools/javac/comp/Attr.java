@@ -757,18 +757,19 @@ public class Attr extends JCTree.Visitor {
      */
     public final void visitSystemDef(final JCSystemDecl tree){
         //TODO-XXX checking still needs defined/performed.
-        ClassSymbol s = tree.sym;
+        final ClassSymbol treeSym = tree.sym;
+
         //Make the sym look like a method kind.
         // Otherwise visiting the local vardefs fails.
         // But reset it at the end, or Lower fails.
-        final int oldKind = s.kind;
-        tree.sym.kind = MTH;
+        final int oldKind = treeSym.kind;
+        treeSym.kind = MTH;
 
         // Create a new environment with local scope
         // for attributing the method.
         Env<AttrContext> localEnv = memberEnter.systemEnv(tree, env);
 
-        Lint lint = env.info.lint.augment(s.attributes_field, s.flags());
+        Lint lint = env.info.lint.augment(treeSym.attributes_field, treeSym.flags());
         Lint prevLint = chk.setLint(lint);
 
         try {
@@ -807,7 +808,7 @@ public class Attr extends JCTree.Visitor {
 
 
         } finally {
-            tree.sym.kind = oldKind;
+            treeSym.kind = oldKind;
             chk.setLint(prevLint);
         }
     }
