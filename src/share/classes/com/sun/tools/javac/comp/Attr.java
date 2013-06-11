@@ -759,6 +759,9 @@ public class Attr extends JCTree.Visitor {
         //TODO-XXX checking still needs defined/performed.
         ClassSymbol s = tree.sym;
         //Make the sym look like a method kind.
+        // Otherwise visiting the local vardefs fails.
+        // But reset it at the end, or Lower fails.
+        final int oldKind = s.kind;
         tree.sym.kind = MTH;
 
         // Create a new environment with local scope
@@ -797,11 +800,14 @@ public class Attr extends JCTree.Visitor {
                 attribStat(l.head, localEnv);
             }
 
-            // visit the system def for rewriting and analysis.
-            pAttr.visitSystemDef(tree, rs, localEnv, doGraphs, seqConstAlg);
-
             localEnv.info.scope.leave();
+
+            // visit the system def for rewriting and analysis.
+            pAttr.visitSystemDef(tree, rs, env, doGraphs, seqConstAlg);
+
+
         } finally {
+            tree.sym.kind = oldKind;
             chk.setLint(prevLint);
         }
     }
