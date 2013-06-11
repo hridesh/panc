@@ -794,7 +794,7 @@ public class Attr extends JCTree.Visitor {
 
             // Attribute the body statements.
             for(List<JCStatement> l = tree.body.stats; l.nonEmpty(); l = l.tail) {
-                attribStat(l.head, env);
+                attribStat(l.head, localEnv);
             }
 
             // visit the system def for rewriting and analysis.
