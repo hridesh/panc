@@ -725,11 +725,15 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 	 *
 	 * @since panini-0.9.2
 	 */
-	public static class JCCapsuleWiring extends JCMethodInvocation implements
+	public static class JCCapsuleWiring extends JCExpression implements
 	        CapsuleWiringTree {
 
+	    public JCExpression capsule;
+	    public List<JCExpression> args;
+
 	    public JCCapsuleWiring (JCExpression cap, List<JCExpression> args) {
-	        super(null, cap, args);
+	        this.capsule = cap;
+	        this.args = args;
 	    }
 
         @Override
@@ -738,14 +742,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         }
 
         @Override
-        /**
-         * Duplicate of {@link JCMethodInvocation#getMethodSelect()}.
-         *
-         * Returns same part of the tree as the super getMethodSelect() function,
-         * duplicated here to make operations on the tree easier to read.
-         */
         public JCExpression getCapsuleSelect() {
-            return meth;
+            return capsule;
+        }
+
+        @Override
+        public List<JCExpression> getArguments() {
+            return this.args;
         }
 
         @Override

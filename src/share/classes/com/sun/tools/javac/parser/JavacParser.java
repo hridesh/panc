@@ -1448,17 +1448,31 @@ public class JavacParser implements Parser {
         return args.toList();
     }
 
-    JCMethodInvocation arguments(List<JCExpression> typeArgs, JCExpression t) {
+    // Panini code
+    /*
+     * Change return of the method from JCMethodInvocation to JCExpression.
+     * This method now returns either a WiringApply or a 'normal' apply depending
+     * if we are in a system or not.  This may need to be further refined to
+     * support some types of method invocations in systems.
+     */
+    // end Panini code
+    JCExpression arguments(List<JCExpression> typeArgs, JCExpression t) {
         int pos = token.pos;
         List<JCExpression> args = arguments();
         // Panini code
         if(inSystem){
-            JCCapsuleWiring proc = toP(F.at(pos).WiringApply(t, args));
-            return proc;
+            return toP(F.at(pos).WiringApply(t, args));
         }
         else
         // end Panini code
         	return toP(F.at(pos).Apply(typeArgs, t, args));
+    }
+
+    JCCapsuleWiring wiringArguments(JCExpression t) {
+        int pos = token.pos;
+        List<JCExpression> args = arguments();
+        JCCapsuleWiring proc = toP(F.at(pos).WiringApply(t, args));
+        return proc;
     }
 
     /**  TypeArgumentsOpt = [ TypeArguments ]
@@ -2981,7 +2995,7 @@ public class JavacParser implements Parser {
 
     // Panini code
      JCStatement systemDecl(JCModifiers mod, String dc){
-     	inSystem = true;
+        inSystem = true;
      	accept(IDENTIFIER);
      	int pos = token.pos;
      	Name name = ident();
@@ -3622,6 +3636,7 @@ public class JavacParser implements Parser {
         case APPLY: case NEWCLASS:
         case ERRONEOUS:
         // Panini code
+        case PROCCALL:
         case CAPSULE_WIRING:
         // end Panini code
             return t;

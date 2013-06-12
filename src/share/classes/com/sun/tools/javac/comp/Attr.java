@@ -872,7 +872,7 @@ public class Attr extends JCTree.Visitor {
         localEnv.info.varArgs = false; //TODO: Varargs for capsule wiring?
         Type wpt = newWiringTemplate(argtypes);
 
-        attribExpr(tree.meth, localEnv, wpt);
+        attribExpr(tree.capsule, localEnv, wpt);
     }
 
     // end Panini code

@@ -495,7 +495,7 @@ public class Pretty extends JCTree.Visitor {
     @Override
     public void visitCapsuleWiring(JCCapsuleWiring tree) {
         try{
-            printExpr(tree.meth);
+            printExpr(tree.capsule);
             print("(");
             printExprs(tree.args);
             print(")");
