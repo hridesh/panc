@@ -64,7 +64,7 @@ system Histogram (String[] args){
 	sequential Printer p;
 	
 	r(args, buckets);
-	m2one(b, p);
+	m2one(buckets, p);
 }
 
 
