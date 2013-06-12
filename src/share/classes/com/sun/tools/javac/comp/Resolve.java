@@ -102,6 +102,11 @@ public class Resolve {
         typeNotFound = new
             SymbolNotFoundError(ABSENT_TYP);
 
+        // Panini code
+        wiringNotFound = new
+            SymbolNotFoundError(ABSENT_WIRE);
+        // end Panini code
+
         names = Names.instance(context);
         log = Log.instance(context);
         attr = Attr.instance(context);
@@ -131,6 +136,9 @@ public class Resolve {
     private final InapplicableSymbolsError wrongMethods;
     private final SymbolNotFoundError methodNotFound;
     private final SymbolNotFoundError typeNotFound;
+    // Panini code
+    private final SymbolNotFoundError wiringNotFound;
+    // end Panini code
 
     public static Resolve instance(Context context) {
         Resolve instance = context.get(resolveKey);
@@ -2639,6 +2647,24 @@ public class Resolve {
                     "non-static.cant.be.ref", kindName(sym), errSym);
         }
     }
+
+    // Panini code
+    class UnknownWiringError extends ResolveError {
+        UnknownWiringError(int kind) {
+            super(kind, "wiring not found error");
+        }
+
+        @Override
+        JCDiagnostic getDiagnostic(DiagnosticType dkind,
+                DiagnosticPosition pos, Symbol location, Type site, Name name,
+                List<Type> argtypes, List<Type> typeargtypes) {
+            // TODO-XXX Real diagnostic.
+            return diags.create(dkind, log.currentSource(), pos,
+                    "", "", "", //symbol kindname, name
+                    typeargtypes, argtypes);
+        }
+    }
+    // end Panini code
 
     /**
      * InvalidSymbolError error class indicating that a pair of symbols

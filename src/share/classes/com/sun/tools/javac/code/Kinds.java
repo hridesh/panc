@@ -91,6 +91,10 @@ public class Kinds {
     public static final int ABSENT_MTH   = ERRONEOUS+7; // missing method
     public static final int ABSENT_TYP   = ERRONEOUS+8; // missing type
 
+    // Panini code
+    public static final int ABSENT_WIRE  = ERRONEOUS+9; //missing capsule wiring
+    // end Panini code
+
     public enum KindName implements Formattable {
         ANNOTATION("kindname.annotation"),
         CONSTRUCTOR("kindname.constructor"),
