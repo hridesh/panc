@@ -1709,42 +1709,42 @@ public class Resolve {
                          Env<AttrContext> env,
                          Name name,
                          int kind) {
-        try {
-            currentResolutionContext = new MethodResolutionContext();
-            Symbol sym = methodNotFound;
-            sym = findWiring(env, name, kind);
 
-            if (sym.kind >= AMBIGUOUS) {//if nothing is found return the 'first' error
-                MethodResolutionPhase errPhase =
-                        currentResolutionContext.firstErroneousResolutionPhase();
-                sym = access(currentResolutionContext.resolutionCache.get(errPhase),
-                        pos, env.enclClass.sym.type, name, false, List.<Type>nil(), List.<Type>nil());
-                env.info.varArgs = errPhase.isVarargsRequired;
-            }
-            return sym;
-        }
-        finally {
-        }
+        System.out.println("Resolving wiring for kind " + kind);
 
+        Symbol sym = wiringNotFound;
+        sym = findWiring(env, name, kind);
+
+        return sym;
     }
 
     Symbol findWiring(Env<AttrContext>env, Name name, int kind) {
         Symbol cap = findIdent(env, name, kind);
-        Type t = cap.type;
-        Symbol tSym = t.tsym;
-        if( tSym instanceof CapsuleSymbol) {
-            // TODO: Create a capsule wiring symbol when the Capsule
-            // tree is attributed.
-            CapsuleSymbol cSym = (CapsuleSymbol)tSym;
-            CapsuleSymbol wSym = new CapsuleSymbol(cSym.flags_field,
-                    names.panini.Wiring,
-                    cSym.type, cSym);
-            wSym.kind = org.paninij.code.TypeTags.CAPSULE_WIRING;
-            return wSym;
+
+        if(cap.exists()){
+            Type t = cap.type;
+            Symbol tSym; // = t.tsym;
+            if (types.isArray(t)) {
+                tSym = types.elemtype(t).tsym;
+            } else {
+                tSym = t.tsym;
+            }
+
+            //TODO: Use a kind check instead of instanceof
+            if( tSym instanceof CapsuleSymbol ) {
+                // TODO: Create a capsule wiring symbol when the Capsule
+                // tree is attributed.
+                CapsuleSymbol cSym = (CapsuleSymbol)tSym;
+                //FIXME: Part of creating the symbol.
+                cSym.wiringSym.name = names.panini.Wiring;
+                return cSym.wiringSym;
+            } else {
+                //FIXME: Proper warning message string.
+                log.rawError(-1, name + " is not a Capsule type.");
+                return null;//return env.info.
+            }
         } else {
-            //FIXME: Proper warning message string.
-            log.rawError(-1, name + " is a Capsule type.");
-            return null;//return env.info.
+            return wiringNotFound;
         }
 
     }

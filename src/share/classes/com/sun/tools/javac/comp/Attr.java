@@ -2396,7 +2396,6 @@ public class Attr extends JCTree.Visitor {
             varArgs = env.info.varArgs;
         // Panini code
         } else if (pt().tag == CAPSULE_WIRING) {
-            //sym = rs.resloveCapsuleWiring(tree.pos(), env, tree.name);
             sym = rs.resolveWiring(tree.pos(), env, tree.name, pkind());
         // end panini code
         } else if (tree.sym != null && tree.sym.kind != VAR) {
