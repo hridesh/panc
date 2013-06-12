@@ -91,6 +91,11 @@ public final class Attr extends CapsuleInternal {
         this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
     }
 
+    void attribSystemDecl(JCSystemDecl tree, Resolve rs, Env<AttrContext> env ) {
+        //This is where the systemDecl attribution will go, when
+        //pulled in from sun.tools.javac.comp.Attr.visitSystemDecl
+    }
+
 	public void visitTopLevel(JCCompilationUnit tree) { /* SKIPPED */ }
 	public void visitImport(JCImport tree) { /* SKIPPED */ }
 	public void visitLetExpr(LetExpr tree) { /* SKIPPED */ }
@@ -223,7 +228,10 @@ public final class Attr extends CapsuleInternal {
 	}
 
 	public final void visitSystemDef(final JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
-		/*if (doGraphs) {
+
+	    attribSystemDecl(tree, rs, env);
+
+	    /*if (doGraphs) {
           ((Symbol.SystemSymbol)tree.sym).graphs = graphsBuilder.buildGraphs(tree);
             effects.substituteProcEffects(tree);
             ConsistencyCheck cc = 
