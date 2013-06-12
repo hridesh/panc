@@ -2402,10 +2402,6 @@ public class Attr extends JCTree.Visitor {
             env.info.varArgs = false;
             sym = rs.resolveMethod(tree.pos(), env, tree.name, pt().getParameterTypes(), pt().getTypeArguments());
             varArgs = env.info.varArgs;
-        // Panini code
-        } else if (pt().tag == CAPSULE_WIRING) {
-            sym = rs.resolveWiring(tree.pos(), env, tree.name, pkind());
-        // end panini code
         } else if (tree.sym != null && tree.sym.kind != VAR) {
             sym = tree.sym;
         } else {
@@ -2827,14 +2823,6 @@ public class Attr extends JCTree.Visitor {
                                       env.info.varArgs);
                 break;
             }
-            // Panini code
-            case CAPSULE_WIRING: {
-                //JCCapsuleWiring wire = (JCCapsuleWiring)env.tree;
-                //owntype = checkWiring(site, sym, env, wire.args);
-                //break;
-                throw new UnsupportedOperationException();
-            }
-            // end Panini code
             case PCK: case ERR:
                 owntype = sym.type;
                 break;
