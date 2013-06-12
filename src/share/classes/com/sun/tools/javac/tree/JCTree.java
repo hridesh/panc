@@ -811,7 +811,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 		@Override
 		public void accept(Visitor v) {
-			v.visitCapsuleArrayCall(this);
+			v.visitIndexedCapsuleWiring(this);
 		}
 
 		@Override
@@ -3094,7 +3094,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitProcApply(JCProcInvocation that)    { visitTree(that); }
         public void visitStateDef(JCStateDecl that)	         { visitTree(that); }
         public void visitCapsuleWiring(JCCapsuleWiring that) { visitTree(that); }
-        public void visitCapsuleArrayCall(JCCapsuleArrayCall that) { visitTree(that); }
+        public void visitIndexedCapsuleWiring(JCCapsuleArrayCall that) { visitTree(that); }
         public void visitCapsuleArray(JCCapsuleArray that)   { visitTree(that); }
         public void visitSystemDef(JCSystemDecl that)	     { visitTree(that); }
         public void visitCapsuleDef(JCCapsuleDecl that)	     { visitTree(that); }

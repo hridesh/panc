@@ -285,7 +285,7 @@ public class SystemGraphsBuilder extends TreeScanner {
         }
     }
 
-    public void visitCapsuleArrayCall(JCCapsuleArrayCall tree) { 
+    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
         if(tree.index.getTag()!=Tag.LITERAL) { 
             System.out.println("Illegal capsule array call index");
             System.exit(1);

@@ -752,6 +752,31 @@ public class Attr extends JCTree.Visitor {
     	}*/
     }
 
+    @Override
+    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
+        Type owntype = types.createErrorType(tree.type);
+        Type atype =attribExpr(tree.indexed, env);
+        attribExpr(tree.index, env, syms.intType);
+        List<Type> argTypes = attribArgs(tree.arguments, env);
+
+        if( types.isArray(atype) ) {
+            owntype = types.elemtype(atype);
+        } else {
+            //TODO error message
+            log.rawError(tree.pos, "Expected indexed wiring, found something else.");
+        }
+
+        System.out.println("Do the rest of the system checks here!");
+        System.out.println("Check the index");
+        //result = check(tree, owntype, CAPSULE_WIRING, resultInfo);
+        result = owntype; //FIXME type is actually WIRING, not the Capsule type.
+    }
+
+    @Override
+    public void visitCapsuleArray(JCCapsuleArray tree) {
+        visitTypeArray(tree);
+    }
+
     /**
      * Adapted from {@link #visitMethodDef(JCMethodDecl)}.
      */

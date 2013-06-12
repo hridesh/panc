@@ -455,6 +455,12 @@ public class TreeTranslator extends JCTree.Visitor {
         tree.body = translate(tree.body);
         result = tree;
     }
+    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
+        tree.arguments = translate(tree.arguments);
+        tree.index = translate(tree.index);
+        tree.indexed = translate(tree.indexed);
+        result = tree;
+    }
     // end Panini code
     public void visitTree(JCTree tree) {
         throw new AssertionError(tree);
