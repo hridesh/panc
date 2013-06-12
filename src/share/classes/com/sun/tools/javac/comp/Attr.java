@@ -891,6 +891,11 @@ public class Attr extends JCTree.Visitor {
         checkWiring(tree.capsule, tree.args, localEnv);
     }
 
+    public void visitManyToOne(JCManyToOne tree) {
+        Type mType = attribExpr(tree.many, env);
+        List<Type> argsTypes = attribArgs(tree.args, env);
+        //check
+    }
     // end Panini code
 
     public void visitClassDef(JCClassDecl tree) {
