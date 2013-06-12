@@ -754,22 +754,19 @@ public class Attr extends JCTree.Visitor {
 
     @Override
     public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
-        Type owntype = types.createErrorType(tree.type);
-        Type atype =attribExpr(tree.indexed, env);
+
         attribExpr(tree.index, env, syms.intType);
-        List<Type> argTypes = attribArgs(tree.arguments, env);
+        attribArgs(tree.arguments, env);
+        attribExpr(tree.indexed, env);
 
-        if( types.isArray(atype) ) {
-            owntype = types.elemtype(atype);
-        } else {
-            //TODO error message
-            log.rawError(tree.pos, "Expected indexed wiring, found something else.");
-        }
+        checkIndexedWiring(tree.indexed, tree.arguments, env);
+    }
 
-        System.out.println("Do the rest of the system checks here!");
-        System.out.println("Check the index");
-        //result = check(tree, owntype, CAPSULE_WIRING, resultInfo);
-        result = owntype; //FIXME type is actually WIRING, not the Capsule type.
+    Type checkIndexedWiring(JCExpression indexed, List<JCExpression> arguments, Env<AttrContext> env) {
+        Type owntype = checkWiring(indexed, arguments, env);
+
+        System.out.println("Check the index for " + indexed);
+        return owntype; //FIXME type is actually WIRING, not the Capsule type.
     }
 
     @Override
@@ -885,27 +882,13 @@ public class Attr extends JCTree.Visitor {
     /**
      * Adapted from {@link #visitApply(JCMethodInvocation)}.
      */
+    @Override
     public void visitCapsuleWiring(JCCapsuleWiring tree) {
         Env<AttrContext> localEnv = env.dup(tree, env.info.dup());
+        attribExpr(tree.capsule, localEnv);
+        attribArgs(tree.args, env);
 
-        //Find the capsule interface and use that for template.
-        //then the arguments types have to match up with the
-        //expected capsule types. There's some 'tricky' stuff to deal with
-        //to get signatures implemented properly for 'isSubType'.
-        //FIXME check the type of the symbol is a Capsule type.
-
-        Type t = attribExpr(tree.capsule, localEnv);
-
-        if (t.tsym instanceof CapsuleSymbol) {
-            CapsuleSymbol cs  = (CapsuleSymbol)t.tsym;
-            attribArgs(tree.args, localEnv);
-
-            localEnv.info.varArgs = false; //TODO: Varargs for capsule wiring?
-
-            result = checkWiring(t, cs, localEnv, tree.args);
-        } else {
-            log.error(tree.pos(), "capsule.type.error", tree.capsule);
-        }
+        checkWiring(tree.capsule, tree.args, localEnv);
     }
 
     // end Panini code
@@ -3013,7 +2996,7 @@ public class Attr extends JCTree.Visitor {
     }
 
     // Panini code
-    public Type checkWiring(Type site,
+    Type checkWiring(Type site,
             CapsuleSymbol sym,
             Env<AttrContext> env,
             final List<JCExpression> argtrees) {
@@ -3027,12 +3010,32 @@ public class Attr extends JCTree.Visitor {
         List<JCVariableDecl> e = wiringArgs;
         List<JCExpression> a = argtrees;
         for ( ; e.nonEmpty() && a.nonEmpty(); e = e.tail, a = a.tail ) {
-            JCTree esym = sym.members_field.lookup(e.head.name).sym.tree;
-            check(e.head, a.head.type, VAR, resultInfo);
+            Type eType =
+                    sym.members_field.lookup(e.head.name).sym.type;
+
+            check(e.head, a.head.type, VAR, new ResultInfo(VAL, eType));
             //checkAssignable(a.head.pos(), esym, a.head, env);
         }
 
         return syms.voidType;
+    }
+
+    Type checkWiring(JCExpression capsule, List<JCExpression> args, Env<AttrContext> env) {
+        Type owntype = capsule.type;
+
+        if (types.isArray(owntype)) {
+            owntype = types.elemtype(owntype);
+        }
+
+        //TODO: Kind instead of instanceof
+        if (owntype.tsym instanceof CapsuleSymbol) {
+            CapsuleSymbol cs  = (CapsuleSymbol)owntype.tsym;
+            env.info.varArgs = false; //TODO: Varargs for capsule wiring?
+            return checkWiring(owntype, cs, env, args);
+        } else {
+            log.error(capsule.pos(), "capsule.type.error", capsule);
+            return types.createErrorType(owntype);
+        }
     }
     // end Panini code
 
