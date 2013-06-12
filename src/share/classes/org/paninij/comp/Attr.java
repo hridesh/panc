@@ -46,6 +46,8 @@ import static org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
@@ -223,6 +225,17 @@ public final class Attr extends CapsuleInternal {
 			}
 		}
 		
+		for(List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail) {
+		    Symbol psym = tree.sym.members_field.lookup(l.head.name).sym;
+		    if(psym.kind == VAR) {
+		        l.head.sym = (VarSymbol)psym;
+		    } else {
+		        //FIXME Error message.
+		        log.rawError(l.head.pos, "Could not find a symbol for parameter " + l.head);
+		    }
+		}
+
+
 		/*if (doGraphs)
             effects.computeEffects(tree);*/
 	}

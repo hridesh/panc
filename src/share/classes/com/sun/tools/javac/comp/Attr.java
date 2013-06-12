@@ -893,11 +893,19 @@ public class Attr extends JCTree.Visitor {
         //expected capsule types. There's some 'tricky' stuff to deal with
         //to get signatures implemented properly for 'isSubType'.
         //FIXME check the type of the symbol is a Capsule type.
-        List<Type> argtypes = attribArgs(tree.args, localEnv);
-        localEnv.info.varArgs = false; //TODO: Varargs for capsule wiring?
-        Type wpt = newWiringTemplate(argtypes);
 
-        attribExpr(tree.capsule, localEnv, wpt);
+        Type t = attribExpr(tree.capsule, localEnv);
+
+        if (t.tsym instanceof CapsuleSymbol) {
+            CapsuleSymbol cs  = (CapsuleSymbol)t.tsym;
+            attribArgs(tree.args, localEnv);
+
+            localEnv.info.varArgs = false; //TODO: Varargs for capsule wiring?
+
+            result = checkWiring(t, cs, localEnv, tree.args);
+        } else {
+            log.error(tree.pos(), "capsule.type.error", tree.capsule);
+        }
     }
 
     // end Panini code
@@ -2821,9 +2829,10 @@ public class Attr extends JCTree.Visitor {
             }
             // Panini code
             case CAPSULE_WIRING: {
-                JCCapsuleWiring wire = (JCCapsuleWiring)env.tree;
-                owntype = checkWiring(site, sym, env, wire.args);
-                break;
+                //JCCapsuleWiring wire = (JCCapsuleWiring)env.tree;
+                //owntype = checkWiring(site, sym, env, wire.args);
+                //break;
+                throw new UnsupportedOperationException();
             }
             // end Panini code
             case PCK: case ERR:
@@ -3017,11 +3026,25 @@ public class Attr extends JCTree.Visitor {
 
     // Panini code
     public Type checkWiring(Type site,
-            Symbol sym,
+            CapsuleSymbol sym,
             Env<AttrContext> env,
             final List<JCExpression> argtrees) {
-        //FIXME: Implement wiring check against the template.
-        return sym.type;
+        //No notion of generics for capsule types yet.
+        List<JCVariableDecl> wiringArgs = sym.capsuleParameters;
+
+        if(wiringArgs.length() != argtrees.length()) {
+            log.error("arguments.of.wiring.mismatch");
+        }
+
+        List<JCVariableDecl> e = wiringArgs;
+        List<JCExpression> a = argtrees;
+        for ( ; e.nonEmpty() && a.nonEmpty(); e = e.tail, a = a.tail ) {
+            JCTree esym = sym.members_field.lookup(e.head.name).sym.tree;
+            check(e.head, a.head.type, VAR, resultInfo);
+            //checkAssignable(a.head.pos(), esym, a.head, env);
+        }
+
+        return syms.voidType;
     }
     // end Panini code
 

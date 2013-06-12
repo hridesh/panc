@@ -1720,6 +1720,7 @@ public class Resolve {
 
     Symbol findWiring(Env<AttrContext>env, Name name, int kind) {
         Symbol cap = findIdent(env, name, kind);
+        Symbol sym = wiringNotFound;
 
         if(cap.exists()){
             Type t = cap.type;
@@ -1737,16 +1738,13 @@ public class Resolve {
                 CapsuleSymbol cSym = (CapsuleSymbol)tSym;
                 //FIXME: Part of creating the symbol.
                 cSym.wiringSym.name = names.panini.Wiring;
-                return cSym.wiringSym;
+                sym = cSym.wiringSym;
             } else {
-                //FIXME: Proper warning message string.
-                log.rawError(-1, name + " is not a Capsule type.");
-                return null;//return env.info.
+                log.error("capsule.type.error", tSym);
             }
-        } else {
-            return wiringNotFound;
         }
 
+        return sym;
     }
     // end Panini code
 
