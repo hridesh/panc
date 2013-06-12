@@ -1704,49 +1704,6 @@ public class Resolve {
         }
     }
 
-    // Panini code
-    Symbol resolveWiring(DiagnosticPosition pos,
-                         Env<AttrContext> env,
-                         Name name,
-                         int kind) {
-
-        System.out.println("Resolving wiring for kind " + kind);
-
-        Symbol sym = wiringNotFound;
-        sym = findWiring(env, name, kind);
-
-        return sym;
-    }
-
-    Symbol findWiring(Env<AttrContext>env, Name name, int kind) {
-        Symbol cap = findIdent(env, name, kind);
-        Symbol sym = wiringNotFound;
-
-        if(cap.exists()){
-            Type t = cap.type;
-            Symbol tSym; // = t.tsym;
-            if (types.isArray(t)) {
-                tSym = types.elemtype(t).tsym;
-            } else {
-                tSym = t.tsym;
-            }
-
-            //TODO: Use a kind check instead of instanceof
-            if( tSym instanceof CapsuleSymbol ) {
-                // TODO: Create a capsule wiring symbol when the Capsule
-                // tree is attributed.
-                CapsuleSymbol cSym = (CapsuleSymbol)tSym;
-                //FIXME: Part of creating the symbol.
-                cSym.wiringSym.name = names.panini.Wiring;
-                sym = cSym.wiringSym;
-            } else {
-                log.error("capsule.type.error", tSym);
-            }
-        }
-
-        return sym;
-    }
-    // end Panini code
 
     /** Resolve a qualified method identifier
      *  @param pos       The position to use for error reporting.
