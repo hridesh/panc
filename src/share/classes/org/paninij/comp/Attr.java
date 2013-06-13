@@ -66,6 +66,7 @@ import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
+import org.paninij.system.SystemDeclRewriter;
 import org.paninij.systemgraph.*;
 
 /***
@@ -240,7 +241,7 @@ public final class Attr extends CapsuleInternal {
             effects.computeEffects(tree);*/
 	}
 
-	public final void visitSystemDef(final JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
+	public final void visitSystemDef(JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
 
 	    attribSystemDecl(tree, rs, env);
 
@@ -280,6 +281,9 @@ public final class Attr extends CapsuleInternal {
 
 		SystemGraph sysGraph = systemGraphBuilder.createSystemGraph();
 		Set<Name> capsules = new HashSet<Name>();
+
+		SystemDeclRewriter interp = new SystemDeclRewriter(make, log, names);
+		tree = interp.rewrite(tree);
 
 		for(JCStatement currentSystemStmt : tree.body.stats){
 			Tag systemStmtKind = currentSystemStmt.getTag();
