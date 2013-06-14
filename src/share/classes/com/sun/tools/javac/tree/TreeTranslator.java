@@ -435,6 +435,8 @@ public class TreeTranslator extends JCTree.Visitor {
     }
     
     public void visitSystemDef(JCSystemDecl tree){
+        tree.params = translate(tree.params);
+        tree.body = translate(tree.body);
         result = tree;
     }
     
@@ -442,6 +444,11 @@ public class TreeTranslator extends JCTree.Visitor {
     	result = tree;
     }
     
+    public void visitCapsuleArray(JCCapsuleArray tree) {
+        tree.elemtype = translate(tree.elemtype);
+        result = tree;
+    }
+
     public void visitInitDef(JCInitDecl tree){
     	visitMethodDef(tree);
     }
