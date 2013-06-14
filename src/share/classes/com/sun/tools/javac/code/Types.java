@@ -581,6 +581,10 @@ public class Types {
             undet.lobounds = undet.lobounds.prepend(s);
             return true;
         }
+        // Panini code
+        case org.paninij.code.TypeTags.CAPSULE_WIRING:
+            return false;
+        // end Panini code
         default:
             return isSubtype(s, t);
         }

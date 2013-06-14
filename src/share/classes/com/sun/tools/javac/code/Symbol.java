@@ -708,6 +708,31 @@ public abstract class Symbol implements Element {
         }
     }
     // Panini code
+
+    /**
+     * A symbol representing what argument types are needed to
+     * correctly wire a capsule instance.
+     * 
+     * @author Sean L. Mooney
+     * @since panini-0.9.2
+     */
+    public static class WiringSymbol extends Symbol {
+        public WiringSymbol(long flags, Name name, Type type, Symbol owner) {
+            //TODO: Is this public? 
+            // Conceptually, wiring is only accessible in a system.
+            super(PUBLIC, flags, name, type, owner);
+            this.kind = org.paninij.code.TypeTags.CAPSULE_WIRING;
+        }
+
+        //FIXME: MODEL THE WIRING SIGNATURE!
+
+        @Override
+        public <R, P> R accept(ElementVisitor<R, P> v, P p) {
+            //TODO-XXX ElementVisitor case for WiringSymbols
+            return v.visit(this, p);
+        }
+    }
+
     /**
      * A class for capsule symbols
      */
@@ -718,6 +743,8 @@ public abstract class Symbol implements Element {
     	public CapsuleSymbol translated_task;
     	public CapsuleSymbol translated_thread;
     	public CapsuleSymbol parentCapsule;
+    	public WiringSymbol wiringSym;
+    	
     	public boolean definedRun;
     	public List<JCTree.JCVariableDecl> capsuleParameters;
     	
@@ -739,10 +766,17 @@ public abstract class Symbol implements Element {
 
 		public CapsuleSymbol(long flags, Name name, Type type, Symbol owner) {
             super(flags, name, type, owner);
+            createWiringSymbol();
         }
 
         public CapsuleSymbol(long flags, Name name, Symbol owner) {
             super(flags, name, owner);
+            createWiringSymbol();
+        }
+
+        private void createWiringSymbol() {
+            System.err.println("Ignoring the wiring symbol for " + name);
+            wiringSym = new WiringSymbol(flags_field, name, type, this);
         }
         
         public static CapsuleSymbol fromClassSymbol(ClassSymbol c){

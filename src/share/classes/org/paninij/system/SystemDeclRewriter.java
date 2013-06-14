@@ -138,6 +138,18 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitVarDef(JCVariableDecl tree) {
+        /* Create a new VariableDef. Needed to properly attribute
+         * the main method that will get written. If not copied, the
+         * symbol gets aliased, which causes the scope resolution logic
+         * to think the name is defined in an inner class.
+         */
+        tree = make.VarDef(
+                tree.getModifiers(),
+                tree.name,
+                tree.vartype,
+                tree.init
+                );
+
         // FIXME: remove syso
         System.out.println("Visiting var definition: " + tree.toString());
         if (tree.init != null) {
@@ -337,7 +349,7 @@ public class SystemDeclRewriter extends TreeTranslator {
         //org.paninij.comp.Attr#visitSystemDef() for the current wiring
         //strategy
         JCProcInvocation pi = make.at(tree.pos)
-                .ProcApply(tree.typeargs, tree.meth, tree.args);
+                .ProcApply(List.<JCExpression>nil(), tree.capsule, tree.args);
         pi.switchToMethod();
         //Visit it for whatever rewriting is required.
         pi.accept(this);
@@ -345,7 +357,7 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     //TODO:remove because it does exactly what super does.
     @Override
-    public void visitCapsuleArrayCall(JCCapsuleArrayCall tree) {
+    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
         // FIXME: remove syso
         System.out.println("Visiting capsule array call: " + tree.toString());
         tree.index = translate(tree.index);

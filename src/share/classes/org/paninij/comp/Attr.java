@@ -46,6 +46,8 @@ import static org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
@@ -86,15 +88,20 @@ public final class Attr extends CapsuleInternal {
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
 
-	public Attr(TreeMaker make, Names names, Enter enter,
-			MemberEnter memberEnter, Symtab syms, Log log,  
-			Annotate annotate) {
-		super(make, names, enter, memberEnter, syms);
-		this.log = log;
-		this.annotate = annotate;
-		this.annotationProcessor = new AnnotationProcessor(names, make, log);
-		this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
-	}
+    public Attr(TreeMaker make, Names names, Enter enter,
+            MemberEnter memberEnter, Symtab syms, Log log,
+            Annotate annotate) {
+        super(make, names, enter, memberEnter, syms);
+        this.log = log;
+        this.annotate = annotate;
+        this.annotationProcessor = new AnnotationProcessor(names, make, log);
+        this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
+    }
+
+    void attribSystemDecl(JCSystemDecl tree, Resolve rs, Env<AttrContext> env ) {
+        //This is where the systemDecl attribution will go, when
+        //pulled in from sun.tools.javac.comp.Attr.visitSystemDecl
+    }
 
 	public void visitTopLevel(JCCompilationUnit tree) { /* SKIPPED */ }
 	public void visitImport(JCImport tree) { /* SKIPPED */ }
@@ -223,12 +230,26 @@ public final class Attr extends CapsuleInternal {
 			}
 		}
 		
+		for(List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail) {
+		    Symbol psym = tree.sym.members_field.lookup(l.head.name).sym;
+		    if(psym.kind == VAR) {
+		        l.head.sym = (VarSymbol)psym;
+		    } else {
+		        //FIXME Error message.
+		        log.rawError(l.head.pos, "Could not find a symbol for parameter " + l.head);
+		    }
+		}
+
+
 		/*if (doGraphs)
             effects.computeEffects(tree);*/
 	}
 
-	public final void visitSystemDef(final JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
-		/*if (doGraphs) {
+	public final void visitSystemDef(JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
+
+	    attribSystemDecl(tree, rs, env);
+
+	    /*if (doGraphs) {
           ((Symbol.SystemSymbol)tree.sym).graphs = graphsBuilder.buildGraphs(tree);
             effects.substituteProcEffects(tree);
             ConsistencyCheck cc = 

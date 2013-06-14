@@ -462,14 +462,14 @@ public class TreeTranslator extends JCTree.Visitor {
     	tree.args = translate(tree.args);
     	result = tree;
     }
-    
-    @Override
-    public void visitCapsuleArrayCall(JCCapsuleArrayCall tree) {
+
+    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
         tree.arguments = translate(tree.arguments);
         tree.index = translate(tree.index);
         tree.indexed = translate(tree.indexed);
         result = tree;
     }
+    
     // end Panini code
     
     

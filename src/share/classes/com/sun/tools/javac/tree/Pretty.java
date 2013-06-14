@@ -488,7 +488,7 @@ public class Pretty extends JCTree.Visitor {
     	visitVarDef(tree);
     }
     
-    public void visitCapsuleArrayCall(JCCapsuleArrayCall tree){
+    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree){
     	try {
 			print(tree.name + "[" + tree.index + "]" + "(" + tree.arguments + ");");
 		} catch (IOException e) {
@@ -499,7 +499,7 @@ public class Pretty extends JCTree.Visitor {
     @Override
     public void visitCapsuleWiring(JCCapsuleWiring tree) {
         try{
-            printExpr(tree.meth);
+            printExpr(tree.capsule);
             print("(");
             printExprs(tree.args);
             print(")");

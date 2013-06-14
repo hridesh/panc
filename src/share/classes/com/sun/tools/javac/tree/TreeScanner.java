@@ -74,7 +74,7 @@ public class TreeScanner extends Visitor {
         visitApply(tree);
     }
     
-    public void visitCapsuleArrayCall(JCCapsuleArrayCall tree) {
+    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
         scan(tree.arguments);
     }
     

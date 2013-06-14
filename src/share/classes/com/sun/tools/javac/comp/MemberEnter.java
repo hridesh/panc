@@ -642,6 +642,16 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         return localEnv;
     }
 
+    // Panini code
+    Env<AttrContext> systemEnv(JCSystemDecl tree, Env<AttrContext> env) {
+        Env<AttrContext> localEnv =
+                env.dup(tree, env.info.dup(env.info.scope.dupUnshared()));
+        localEnv.enclClass=tree;
+        localEnv.info.scope.owner = tree.sym;
+        return localEnv;
+    }
+    // end Panini code
+
     public void visitVarDef(JCVariableDecl tree) {    	
         Env<AttrContext> localEnv = env;
         if ((tree.mods.flags & STATIC) != 0 ||
