@@ -84,28 +84,6 @@ public class SystemDeclRewriter extends TreeTranslator {
     }
 
     @Override
-    public void visitVarDef(JCVariableDecl tree) {
-        /* Create a new VariableDef. Needed to properly attribute
-         * the main method that will get written. If not copied, the
-         * symbol gets aliased, which causes the scope resolution logic
-         * to think the name is defined in an inner class.
-         */
-        tree = make.VarDef(
-                tree.getModifiers(),
-                tree.name,
-                tree.vartype,
-                tree.init
-                );
-
-
-        if (tree.init != null) {
-            tree.init = translate(tree.init);
-        }
-
-        result = tree;
-    }
-
-    @Override
     public void visitSystemDef(JCSystemDecl tree) {
         // translate all individual statements from the system block. This is
         // necessary because we want all subsequent blocks to enclose for

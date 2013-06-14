@@ -66,7 +66,7 @@ import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
-import org.paninij.system.SystemDeclRewriter;
+import org.paninij.system.*;
 import org.paninij.systemgraph.*;
 
 /***
@@ -270,61 +270,31 @@ public final class Attr extends CapsuleInternal {
                 }
         }*/
 		//    	tree.sym.graphs = graphsBuilder.buildGraphs(tree);
-		ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
-		ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
-		ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
-		ListBuffer<JCStatement> submits = new ListBuffer<JCStatement>();
-		ListBuffer<JCStatement> starts = new ListBuffer<JCStatement>();
-		ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
-		Map<Name, Name> variables = new HashMap<Name, Name>();
-		Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
+	    ListBuffer<JCStatement> decls;
+        ListBuffer<JCStatement> inits;
+        ListBuffer<JCStatement> assigns;
+        ListBuffer<JCStatement> submits;
+        ListBuffer<JCStatement> starts;
+        ListBuffer<JCStatement> joins;
 
-		SystemGraph sysGraph = systemGraphBuilder.createSystemGraph();
-		Set<Name> capsules = new HashSet<Name>();
+        SystemGraph sysGraph;
 
-		SystemDeclRewriter interp = new SystemDeclRewriter(make, log, names);
-		tree = interp.rewrite(tree);
+        SystemDeclRewriter interp = new SystemDeclRewriter(make, log, names);
+        tree = interp.rewrite(tree);
 
-		for(JCStatement currentSystemStmt : tree.body.stats){
-			Tag systemStmtKind = currentSystemStmt.getTag();
-			if(systemStmtKind == VARDEF){
-				JCVariableDecl vdecl = (JCVariableDecl) currentSystemStmt;
-				Name vdeclTypeName = names.fromString(vdecl.vartype.toString());
-				if (syms.capsules.containsKey(vdeclTypeName)) 
-					processCapsuleDef(tree, decls, inits, submits, starts,
-							joins, variables, capsules, vdecl, rs, env, sysGraph);
-				else {
-					if (vdecl.vartype.getTag() == CAPSULEARRAY) 
-						processCapsuleArray(tree, decls, assigns, submits,
-								starts, joins, variables, capsules, modArrays, vdecl, rs,
-								env, sysGraph);
-					else {
-						if (vdecl.vartype.getTag() == TYPEIDENT
-								|| vdecl.vartype.toString().equals("String")) {
-							vdecl.mods.flags |= FINAL;
-							decls.add(vdecl);
-						} else
-							log.error(vdecl.pos(),
-									"only.primitive.types.or.strings.allowed");
-					}
-				}
-			} else if(systemStmtKind == EXEC){
-				JCExpressionStatement currentExprStmt = (JCExpressionStatement) currentSystemStmt;
-				if(currentExprStmt.expr.getTag()==APPLY){
-					processCapsuleWiring(currentExprStmt.expr, assigns, variables, capsules, sysGraph);
-				}
-			}else if(systemStmtKind == FOREACHLOOP)
-				processForEachLoop((JCEnhancedForLoop) currentSystemStmt, assigns, variables, capsules, sysGraph);
-			else if(systemStmtKind == MAAPPLY)
-				processCapsuleArrayWiring((JCCapsuleArrayCall) currentSystemStmt, assigns, variables, capsules, modArrays, rs, env, sysGraph);
-			else  			
-				throw new AssertionError("Invalid statement gone through the parser");
-		}
-		if(!capsules.isEmpty()){
-			for(Name n : capsules){
-				log.error("capsule.instance.not.initialized", n);
-			}
-		}
+        SystemMainTransformer mt = new SystemMainTransformer(syms, names, log,
+                rs, env, make, systemGraphBuilder);
+        tree = mt.translate(tree);
+
+        //pull data structures back out for reference here.
+        decls = mt.decls;
+        inits = mt.inits;
+        assigns = mt.assigns;
+        submits = mt.submits;
+        starts = mt.starts;
+        joins = mt.joins;
+        sysGraph = mt.sysGraph;
+
 		if(tree.hasTaskCapsule)
 			processSystemAnnotation(tree, inits, env);
 
