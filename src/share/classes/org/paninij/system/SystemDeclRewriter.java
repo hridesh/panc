@@ -278,20 +278,34 @@ public class SystemDeclRewriter extends TreeTranslator {
     public void visitAssociate(JCAssociate tree){
     	// FIXME: remove syso
     	System.out.println("visiting associate: "+ tree.toString());
-    	JCExpression first = tree.first;
-    	JCExpression second = tree.second;
+    	JCExpression src = tree.src;
+    	JCExpression dest = tree.dest;
     	List<JCExpression> args = tree.args;
-    	int capsuleArraySize = getCapsuleArraySize(first);
-    	ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
-    	for(int i = 0; i < capsuleArraySize; i++){
-    		unrolledStats.add(make.Exec(
-    					make.WiringApply(make.Indexed(first, make.Literal(i)),
-    							args.prepend(make.Indexed(second, make.Literal(i))))
-    				)
-    		);
+    	if(tree.srcPos instanceof JCLiteral && tree.destPos instanceof JCLiteral 
+    			&& tree.len instanceof JCLiteral){
+    		try{
+    		int srcPos = ((Integer)((JCLiteral)tree.srcPos).value).intValue();
+    		int destPos = ((Integer)((JCLiteral)tree.destPos).value).intValue();
+    		int len = ((Integer)((JCLiteral)tree.len).value).intValue();
+    		ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
+    		for(int i = 0; i < len; i++){
+    			unrolledStats.add(make.Exec(
+    					make.WiringApply(make.Indexed(src, make.Literal(srcPos+i)),
+    							args.prepend(make.Indexed(dest, make.Literal(destPos+i))))
+    					)
+    			);
+    		}
+    		System.out.println("Rewritten associate statement: "+ unrolledStats.toList().toString());
+    		tree.unrolled = unrolledStats.toList();
+    		}
+    		catch(ClassCastException e){
+    			log.rawError(tree.pos, "only Integer types are allowed as indeces/sizes: "
+    					+ tree);
+    		}
     	}
-    	System.out.println("Rewritten associate statement: "+ unrolledStats.toList().toString());
-    	tree.unrolled = unrolledStats.toList();
+    	else{
+    		log.rawError(tree.pos, "index/size is not a literal: " + tree);
+    	}
     	result = tree;
     }
 

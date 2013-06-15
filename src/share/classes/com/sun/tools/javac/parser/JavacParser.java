@@ -2204,13 +2204,17 @@ public class JavacParser implements Parser {
 		accept(IDENTIFIER);
 		List<JCExpression> expressions = arguments();
 		accept(SEMI);
-		if(expressions.size() < 2){
+		if(expressions.size() < 5){
 			log.error(token.pos, "compiler.err.system.topology.m2one.size");
 		}
-		JCExpression first = expressions.head;
-		JCExpression second = expressions.tail.head;
-		List<JCExpression> args = expressions.tail.tail;
-		 JCAssociate expr = toP(F.at(positionAfterStat).Associate(first, second, args));
+		JCExpression src = expressions.head;
+		JCExpression srcPos = expressions.tail.head;
+		JCExpression dest = expressions.tail.tail.head;
+		JCExpression destPos = expressions.tail.tail.tail.head;
+		JCExpression len = expressions.tail.tail.tail.tail.head;
+		List<JCExpression> args = expressions.tail.tail.tail.tail.tail;
+		 JCAssociate expr = toP(F.at(positionAfterStat).Associate(src, srcPos,
+				 dest, destPos, len, args));
 		 JCExpressionStatement statement = to(F.Exec(expr));
 		 return List.<JCStatement>of(statement);
 		 

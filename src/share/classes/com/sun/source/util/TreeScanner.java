@@ -490,8 +490,11 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 	}
 	
 	public R visitAssociate(AssociateTree node, P p){
-		R r = scan(node.getFirst(), p);
-		r = scanAndReduce(node.getSecond(), p, r);
+		R r = scan(node.getSrc(), p);
+		r = scanAndReduce(node.getSrcPosition(), p, r);
+		r = scanAndReduce(node.getDest(), p, r);
+		r = scanAndReduce(node.getDestPosition(), p, r);
+		r = scanAndReduce(node.getLength(), p, r);
 		r = scanAndReduce(node.getArgs(), p, r);
 		return r;
 	}

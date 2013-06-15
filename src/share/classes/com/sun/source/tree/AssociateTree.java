@@ -26,7 +26,10 @@ import java.util.List;
  * @since panini-0.9.2
  */
 public interface AssociateTree extends Topology {
-	public ExpressionTree getFirst();
-	public ExpressionTree getSecond();
+	public ExpressionTree getSrc();
+	public ExpressionTree getSrcPosition();
+	public ExpressionTree getDest();
+	public ExpressionTree getDestPosition();
+	public ExpressionTree getLength();
 	public List<? extends ExpressionTree> getArgs();
 }

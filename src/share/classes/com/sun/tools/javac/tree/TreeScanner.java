@@ -121,8 +121,11 @@ public class TreeScanner extends Visitor {
 	
 	@Override
 	public void visitAssociate(JCAssociate tree){
-		scan(tree.first);
-		scan(tree.second);
+		scan(tree.src);
+		scan(tree.srcPos);
+		scan(tree.dest);
+		scan(tree.destPos);
+		scan(tree.len);
 		scan(tree.args);
 	}
 	

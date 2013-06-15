@@ -480,8 +480,11 @@ public class TreeTranslator extends JCTree.Visitor {
     
     @Override
     public void visitAssociate(JCAssociate tree){
-    	tree.first = translate(tree.first);
-    	tree.second = translate(tree.second);
+    	tree.src = translate(tree.src);
+    	tree.srcPos = translate(tree.srcPos);
+    	tree.dest = translate(tree.dest);
+    	tree.destPos = translate(tree.destPos);
+    	tree.len = translate(tree.len);
     	tree.args = translate(tree.args);
     	result = tree;
     }

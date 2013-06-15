@@ -1235,51 +1235,73 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
    public static class JCAssociate extends JCExpression implements AssociateTree{
 
 	   public List<JCStatement> unrolled;
-	   public JCExpression first;
-	   public JCExpression second;
+	   public JCExpression src;
+	   public JCExpression srcPos;
+	   public JCExpression dest;
+	   public JCExpression destPos;
+	   public JCExpression len;
 	   public List<JCExpression> args;
-	   
-	   protected JCAssociate(JCExpression first, JCExpression second, List<JCExpression> args){
-		   this.first = first;
-		   this.second = second;
+
+	   protected JCAssociate(JCExpression src, JCExpression srcPos, JCExpression dest,
+			   JCExpression destPos, JCExpression len, List<JCExpression> args){
+		   this.src = src;
+		   this.srcPos = srcPos;
+		   this.dest = dest;
+		   this.destPos = destPos;
+		   this.len = len;
 		   this.args = args;
 	   }
-	   
-	@Override
-	public Kind getKind() {
-		return Kind.ASSOCIATE;
-	}
 
-	@Override
-	public ExpressionTree getFirst() {
-		return first;
-	}
+	   @Override
+	   public Kind getKind() {
+		   return Kind.ASSOCIATE;
+	   }
 
-	@Override
-	public ExpressionTree getSecond() {
-		return second;
-	}
+	   @Override
+	   public List<? extends ExpressionTree> getArgs() {
+		   return args;
+	   }
 
-	@Override
-	public List<? extends ExpressionTree> getArgs() {
-		return args;
-	}
+	   @Override
+	   public Tag getTag() {
+		   return Tag.ASSOCIATE;
+	   }
 
-	@Override
-	public Tag getTag() {
-		return Tag.ASSOCIATE;
-	}
+	   @Override
+	   public void accept(Visitor v) {
+		   v.visitAssociate(this);
+	   }
 
-	@Override
-	public void accept(Visitor v) {
-		v.visitAssociate(this);
-	}
+	   @Override
+	   public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+		   return v.visitAssociate(this, d);
+	   }
 
-	@Override
-	public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-		return v.visitAssociate(this, d);
-	}
-	   
+
+	   @Override
+	   public ExpressionTree getSrc() {
+		   return src;
+	   }
+
+	   @Override
+	   public ExpressionTree getSrcPosition() {
+		   return srcPos;
+	   }
+
+	   @Override
+	   public ExpressionTree getDest() {
+		   return dest;
+	   }
+
+	   @Override
+	   public ExpressionTree getDestPosition() {
+		   return destPos;
+	   }
+
+	   @Override
+	   public ExpressionTree getLength() {
+		   return len;
+	   }   
    }
 
    // end Panini code

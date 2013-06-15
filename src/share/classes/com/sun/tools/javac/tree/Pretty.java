@@ -547,10 +547,11 @@ public class Pretty extends JCTree.Visitor {
     @Override
     public void visitAssociate(JCAssociate that){
     	try {
-			print("associate" + "(" + that.first + "," + that.second + "," + that.args + ")");
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
+    		print("associate" + "(" + that.src + "," + that.srcPos + "," + that.dest + "," 
+    				+ that.destPos + "," + that.len + "," + that.args + ")");
+    	} catch (IOException e) {
+    		throw new UncheckedIOException(e);
+    	}
     }
     
     private void printBrackets(JCCapsuleArray tree) throws IOException {

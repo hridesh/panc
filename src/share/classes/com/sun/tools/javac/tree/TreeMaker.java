@@ -161,8 +161,9 @@ public class TreeMaker implements JCTree.Factory {
 		return tree;
 	}
 	
-	public JCAssociate Associate(JCExpression first, JCExpression second, List<JCExpression> args){
-		JCAssociate tree = new JCAssociate(first, second, args);
+	public JCAssociate Associate(JCExpression src, JCExpression srcPos, JCExpression dest,
+			JCExpression destPos, JCExpression len, List<JCExpression> args){
+		JCAssociate tree = new JCAssociate(src, srcPos, dest, destPos, len, args);
 		tree.pos = pos;
 		return tree;
 	}
