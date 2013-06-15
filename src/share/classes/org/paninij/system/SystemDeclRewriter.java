@@ -208,6 +208,7 @@ public class SystemDeclRewriter extends TreeTranslator {
     public void visitWireall(JCWireall tree) {
         // FIXME: remove syso
         System.out.println("Visiting wireall: " + tree.toString());
+        super.visitWireall(tree);
         int capsuleArraySize = getCapsuleArraySize(tree);
 
         Name capsuleArrayName = getCapsuleArrayName(tree);
@@ -228,6 +229,7 @@ public class SystemDeclRewriter extends TreeTranslator {
     public void visitStar(JCStar tree){
     	// FIXME: remove syso
     	System.out.println("visiting star: " + tree.toString());
+    	super.visitStar(tree);
     	JCExpression center = tree.center;
     	JCExpression others = tree.others;
     	List<JCExpression> args = tree.args;
@@ -253,6 +255,7 @@ public class SystemDeclRewriter extends TreeTranslator {
     public void visitRing(JCRing tree){
     	// FIXME: remove syso
     	System.out.println("visiting ring: " + tree.toString());
+    	super.visitRing(tree);
     	JCExpression capsules = tree.capsules;
     	List<JCExpression> args = tree.args;
     	int capsuleArraySize = getCapsuleArraySize(capsules);
@@ -278,6 +281,7 @@ public class SystemDeclRewriter extends TreeTranslator {
     public void visitAssociate(JCAssociate tree){
     	// FIXME: remove syso
     	System.out.println("visiting associate: "+ tree.toString());
+    	super.visitAssociate(tree);
     	JCExpression src = tree.src;
     	JCExpression dest = tree.dest;
     	List<JCExpression> args = tree.args;
