@@ -457,7 +457,7 @@ public class TreeTranslator extends JCTree.Visitor {
     }
     
     @Override
-    public void visitManyToOne(JCManyToOne tree) {
+    public void visitWireall(JCWireall tree) {
     	tree.many = translate(tree.many);
     	tree.args = translate(tree.args);
     	result = tree;

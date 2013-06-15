@@ -143,8 +143,8 @@ public class TreeMaker implements JCTree.Factory {
 		return tree;
 	}
 	
-	public JCManyToOne ManyToOne(List<JCExpression> args){
-		JCManyToOne tree = new JCManyToOne(args.head, args.tail);
+	public JCWireall ManyToOne(List<JCExpression> args){
+		JCWireall tree = new JCWireall(args.head, args.tail);
 		tree.pos = pos;
 		return tree;
 	}

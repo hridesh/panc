@@ -38,7 +38,7 @@ import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
 import com.sun.tools.javac.tree.JCTree.JCForLoop;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
-import com.sun.tools.javac.tree.JCTree.JCManyToOne;
+import com.sun.tools.javac.tree.JCTree.JCWireall;
 import com.sun.tools.javac.tree.JCTree.JCProcInvocation;
 import com.sun.tools.javac.tree.JCTree.JCRing;
 import com.sun.tools.javac.tree.JCTree.JCStar;
@@ -94,13 +94,13 @@ public class SystemDeclRewriter extends TreeTranslator {
         ArrayList<JCStatement> newStats = new ArrayList<JCStatement>(
                 stats.size());
 
-        //FIXME: refactor m2one to use JCUnrolledCrap
+        //FIXME: refactor wireall to use JCUnrolledCrap
         for (JCStatement statement : stats) {
             if (statement.getKind() == Kind.EXPRESSION_STATEMENT) {
                 JCExpressionStatement exprStatement = ((JCExpressionStatement) statement);
-                if (exprStatement.expr.getKind() == Kind.MANY_TO_ONE) {
-                    JCManyToOne m2one = (JCManyToOne) exprStatement.expr;
-                    for (JCStatement unrolledStatement : m2one.unrolled) {
+                if (exprStatement.expr.getKind() == Kind.WIREALL) {
+                    JCWireall wireall = (JCWireall) exprStatement.expr;
+                    for (JCStatement unrolledStatement : wireall.unrolled) {
                         newStats.add(unrolledStatement);
                     }
                 }  else
@@ -202,12 +202,12 @@ public class SystemDeclRewriter extends TreeTranslator {
      */
     //capsule C(A a, B b, int fortyTwo);
     //A capsuleArray[4];
-    //m2one(capsuleArray, a, b, 42);
+    //wireall(capsuleArray, a, b, 42);
     //TODO: name suggestions: wireall
     @Override
-    public void visitManyToOne(JCManyToOne tree) {
+    public void visitWireall(JCWireall tree) {
         // FIXME: remove syso
-        System.out.println("Visiting many to one: " + tree.toString());
+        System.out.println("Visiting wireall: " + tree.toString());
         int capsuleArraySize = getCapsuleArraySize(tree);
 
         Name capsuleArrayName = getCapsuleArrayName(tree);
@@ -218,7 +218,7 @@ public class SystemDeclRewriter extends TreeTranslator {
                     make.Literal(i), tree.many, tree.args);
         }
 
-        System.out.println("Rewritten m2one statement: "
+        System.out.println("Rewritten wireall statement: "
                 + List.from(statements).toString());
         tree.unrolled = List.from(statements);
         result = tree;
@@ -371,10 +371,10 @@ public class SystemDeclRewriter extends TreeTranslator {
      * @param arrayName
      * @return
      */
-    private int getCapsuleArraySize(JCManyToOne array) {
+    private int getCapsuleArraySize(JCWireall array) {
         Name arrayName = getCapsuleArrayName(array);
         JCVariableDecl arrayAST = varDefToAstNodeEnv.lookup(arrayName);
-        assert (arrayAST.vartype instanceof JCCapsuleArray) : "m2one expects capsule arrays as the first element";
+        assert (arrayAST.vartype instanceof JCCapsuleArray) : "wireall expects capsule arrays as the first element";
         int capsuleArraySize = ((JCCapsuleArray) arrayAST.vartype).amount;
         assert (capsuleArraySize > 0) : "capsule array sizes should always be > 0; something went wrong";
         return capsuleArraySize;
@@ -383,7 +383,7 @@ public class SystemDeclRewriter extends TreeTranslator {
     private int getCapsuleArraySize(JCExpression array) {
         Name arrayName = getIdentifierName(array);
         JCVariableDecl arrayAST = varDefToAstNodeEnv.lookup(arrayName);
-        assert (arrayAST.vartype instanceof JCCapsuleArray) : "m2one expects capsule arrays as the first element";
+        assert (arrayAST.vartype instanceof JCCapsuleArray) : "wireall expects capsule arrays as the first element";
         int capsuleArraySize = ((JCCapsuleArray) arrayAST.vartype).amount;
         assert (capsuleArraySize > 0) : "capsule array sizes should always be > 0; something went wrong";
         return capsuleArraySize;
@@ -393,7 +393,7 @@ public class SystemDeclRewriter extends TreeTranslator {
      * @param tree
      * @return
      */
-    private Name getCapsuleArrayName(JCManyToOne tree) {
+    private Name getCapsuleArrayName(JCWireall tree) {
         assert (tree.many instanceof JCIdent) : "Many2One arrays should always be referenced through identifiers";
         Name arrayName = ((JCIdent) tree.many).name;
         return arrayName;
@@ -883,7 +883,7 @@ public class SystemDeclRewriter extends TreeTranslator {
         }
     }
 
-    // FIXME: do something to have a generic solution for both m2one and for;
+    // FIXME: do something to have a generic solution for both wireall and for;
     private static class JCUnrolledStatement extends JCStatement {
         public List<JCStatement> unrolled;
 

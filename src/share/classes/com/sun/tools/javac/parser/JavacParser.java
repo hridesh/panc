@@ -2157,10 +2157,10 @@ public class JavacParser implements Parser {
 		List<JCExpression> expressions = arguments();
 		accept(SEMI);
 		if(expressions.size() < 2){
-			log.error(token.pos, "compiler.err.system.topology.m2one.size");
+			log.error(token.pos, "compiler.err.system.topology.wireall.size");
 		}
 		
-		 JCManyToOne expr = toP(F.at(positionAfterMany2One).ManyToOne(expressions));
+		 JCWireall expr = toP(F.at(positionAfterMany2One).ManyToOne(expressions));
 		 JCExpressionStatement statement = to(F.Exec(expr));
 		 return List.<JCStatement>of(statement);
 		 
@@ -2172,7 +2172,7 @@ public class JavacParser implements Parser {
 		List<JCExpression> expressions = arguments();
 		accept(SEMI);
 		if(expressions.size() < 2){
-			log.error(token.pos, "compiler.err.system.topology.m2one.size");
+			log.error(token.pos, "compiler.err.system.topology.wireall.size");
 		}
 		JCExpression center = expressions.head;
 		JCExpression others = expressions.tail.head;
@@ -2189,7 +2189,7 @@ public class JavacParser implements Parser {
 		List<JCExpression> expressions = arguments();
 		accept(SEMI);
 		if(expressions.size() < 1){
-			log.error(token.pos, "compiler.err.system.topology.m2one.size");
+			log.error(token.pos, "compiler.err.system.topology.wireall.size");
 		}
 		JCExpression capsules = expressions.head;
 		List<JCExpression> args = expressions.tail;
@@ -2205,7 +2205,7 @@ public class JavacParser implements Parser {
 		List<JCExpression> expressions = arguments();
 		accept(SEMI);
 		if(expressions.size() < 5){
-			log.error(token.pos, "compiler.err.system.topology.m2one.size");
+			log.error(token.pos, "compiler.err.system.topology.wireall.size");
 		}
 		JCExpression src = expressions.head;
 		JCExpression srcPos = expressions.tail.head;

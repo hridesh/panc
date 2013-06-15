@@ -472,7 +472,7 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     	return r;
     }
 
-	public R visitManyToOne(ManyToOneTree node, P p) {
+	public R visitWireall(WireallTree node, P p) {
 	    return null; //FIXME
 	};
 	

@@ -25,6 +25,6 @@ package com.sun.source.tree;
  *
  * @since panini-0.9.2
  */
-public interface ManyToOneTree extends Topology {
+public interface WireallTree extends Topology {
 
 }

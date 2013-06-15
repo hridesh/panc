@@ -322,7 +322,7 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 		return defaultAction(node, p);
 	}
 
-	public R visitManyToOne(ManyToOneTree node, P p) {
+	public R visitWireall(WireallTree node, P p) {
 	    return defaultAction(node, p);
 	}
 	

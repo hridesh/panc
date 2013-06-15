@@ -366,7 +366,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         FORALLLOOP,
         /** Many-to-one topology.
          */
-        MANY_TO_ONE,
+        WIREALL,
         /** Star topology
          */
         STAR_TOP,
@@ -1096,7 +1096,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	}
 
-    public static class JCManyToOne extends JCExpression implements ManyToOneTree {
+    public static class JCWireall extends JCExpression implements WireallTree {
 
         public List<JCStatement> unrolled;
         public List<JCExpression> args;
@@ -1109,7 +1109,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		/**
          * @param expr
          */
-        protected JCManyToOne(JCExpression capsuleArrayExpr, List<JCExpression> args) {
+        protected JCWireall(JCExpression capsuleArrayExpr, List<JCExpression> args) {
         	super();
 			this.many = capsuleArrayExpr;
         	this.args = args;
@@ -1117,17 +1117,17 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
         @Override
         public Tag getTag() {
-            return Tag.MANY_TO_ONE;
+            return Tag.WIREALL;
         }
 
         @Override
         public void accept(Visitor v) {
-            v.visitManyToOne(this);
+            v.visitWireall(this);
         }
 
         @Override
         public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-            return v.visitManyToOne(this, d);
+            return v.visitWireall(this, d);
         }
 
 		/* (non-Javadoc)
@@ -1135,7 +1135,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		 */
 		@Override
 		public Kind getKind() {
-			return Kind.MANY_TO_ONE;
+			return Kind.WIREALL;
 		}
    }
     
@@ -3319,7 +3319,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }
         public void visitInitDef(JCInitDecl that) 			 { visitTree(that); }
         public void visitForeach(JCForeach that)	 	     { visitTree(that); }
-        public void visitManyToOne(JCManyToOne that)         { visitTree(that); }
+        public void visitWireall(JCWireall that)         { visitTree(that); }
         public void visitStar(JCStar that)					 { visitTree(that); }
         public void visitRing(JCRing that)					 { visitTree(that); }
         public void visitAssociate(JCAssociate that)		 { visitTree(that); }

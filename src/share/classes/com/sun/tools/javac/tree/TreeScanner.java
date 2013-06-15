@@ -101,7 +101,7 @@ public class TreeScanner extends Visitor {
     }
     
 	@Override
-	public void visitManyToOne(JCManyToOne tree) {
+	public void visitWireall(JCWireall tree) {
 		scan(tree.many);
 		scan(tree.args);
 	}

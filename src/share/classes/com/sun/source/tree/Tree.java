@@ -63,7 +63,7 @@ public interface Tree {
         /**
          * Used for instances of {@link ManyToOne} topology construction.
          */
-        MANY_TO_ONE(ManyToOneTree.class),
+        WIREALL(WireallTree.class),
         STAR_TOP(StarTree.class),
         RING(RingTree.class),
         ASSOCIATE(AssociateTree.class),
