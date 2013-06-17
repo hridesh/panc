@@ -59,6 +59,7 @@ import com.sun.tools.javac.tree.JCTree.JCEnhancedForLoop;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
 import com.sun.tools.javac.tree.JCTree.JCForLoop;
+import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
 import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 import com.sun.tools.javac.tree.JCTree.JCNewArray;
@@ -97,7 +98,7 @@ public class SystemMainTransformer extends TreeTranslator {
     final Names names;
     final Log log;
     public final SystemGraph sysGraph;
-    final Set<Name> capsules = new HashSet<Name>();
+    final HashSet<Name> capsulesToWire = new HashSet<Name>();
     final Resolve rs;
     final Env<AttrContext> env;
     final TreeMaker make;
@@ -130,8 +131,8 @@ public class SystemMainTransformer extends TreeTranslator {
         //in the panini Attr, and we can ignore the params, they just
         //get copied straight into the main method def.
         tree.body.accept(this);
-        if (!capsules.isEmpty()) {
-            for (Name n : capsules) {
+        if (!capsulesToWire.isEmpty()) {
+            for (Name n : capsulesToWire) {
                 log.error("capsule.instance.not.initialized", n);
             }
         }
@@ -154,17 +155,16 @@ public class SystemMainTransformer extends TreeTranslator {
         //Use the type from the previously attributed tree. It has a type
         //associated with it already, vdecl does not.
         if (syms.isCapsuleSym(tree.type.tsym.name)) {
-            processCapsuleDef(systemDecl, decls, inits, submits, starts,
-                    joins, variables, capsules, vdecl, rs, env, sysGraph);
+            processCapsuleDef(systemDecl, vdecl);
         } else {
             if (vdecl.vartype.getTag() == CAPSULEARRAY)
                 processCapsuleArray(systemDecl, decls, assigns, submits,
-                        starts, joins, variables, capsules, modArrays, vdecl, rs,
+                        starts, joins, variables, capsulesToWire, modArrays, vdecl, rs,
                         env, sysGraph);
             else {
                 if (vdecl.vartype.getTag() == TYPEIDENT
                         || vdecl.vartype.toString().equals("String")) {
-                    vdecl.mods.flags |= FINAL;
+                    //vdecl.mods.flags |= FINAL;
                     decls.add(vdecl);
                 } else
                     log.error(vdecl.pos(),
@@ -177,19 +177,19 @@ public class SystemMainTransformer extends TreeTranslator {
 
     @Override
     public void visitCapsuleWiring(JCCapsuleWiring tree) {
-        processCapsuleWiring(tree, assigns, variables, capsules, sysGraph);
+        processCapsuleWiring(tree, assigns, variables, capsulesToWire, sysGraph);
         result = tree;
     }
 
     @Override
     public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
-        processCapsuleArrayWiring(tree, assigns, variables, capsules, modArrays, rs, env, sysGraph);
+        processCapsuleArrayWiring(tree, assigns, variables, capsulesToWire, modArrays, rs, env, sysGraph);
         result = tree;
     }
 
     @Override
     public void visitForeachLoop(JCEnhancedForLoop tree) {
-        processForEachLoop(tree, assigns, variables, capsules, sysGraph);
+        processForEachLoop(tree, assigns, variables, capsulesToWire, sysGraph);
         result = tree;
     }
 
@@ -290,9 +290,9 @@ public class SystemMainTransformer extends TreeTranslator {
                 }else if(((JCExpressionStatement)s).expr.getTag()!=APPLY){
                     log.error(s.pos(),"foreachloop.statement.error");
                 }
-                JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)s).expr;
+                JCCapsuleWiring mi = (JCCapsuleWiring)((JCExpressionStatement)s).expr;
                 loopBody.appendList(transWiring(mi,variables, capsules, sysGraph, true));
-                if(loop.var.name.toString().equals(mi.meth.toString()))
+                if(loop.var.name.toString().equals(mi.capsule.toString()))
                     capsules.remove(names.fromString(loop.expr.toString()));
                 if (mi.args.length() != c.capsuleParameters.length()) {
                     log.error(mi.pos(), "arguments.of.wiring.mismatch");
@@ -324,9 +324,9 @@ public class SystemMainTransformer extends TreeTranslator {
             }else if(((JCExpressionStatement)loop.body).expr.getTag()!=APPLY){
                 log.error(loop.body.pos(),"foreachloop.statement.error");
             }
-            JCMethodInvocation mi = (JCMethodInvocation)((JCExpressionStatement)loop.body).expr;
+            JCCapsuleWiring mi = (JCCapsuleWiring)((JCExpressionStatement)loop.body).expr;
             loopBody.appendList(transWiring(mi,variables, capsules, sysGraph, true));
-            if(loop.var.name.toString().equals(mi.meth.toString()))
+            if(loop.var.name.toString().equals(mi.capsule.toString()))
                 capsules.remove(names.fromString(loop.expr.toString()));
             if (mi.args.length() != c.capsuleParameters.length()) {
                 log.error(mi.pos(), "arguments.of.wiring.mismatch");
@@ -360,75 +360,78 @@ public class SystemMainTransformer extends TreeTranslator {
         assigns.append(floop);
     }
 
-    private void processCapsuleWiring(final JCExpression wiring, final ListBuffer<JCStatement> assigns, final Map<Name, Name> variables, Set<Name> capsules, SystemGraph sysGraph) {
-        JCMethodInvocation mi = (JCMethodInvocation) wiring;
+    private void processCapsuleWiring(final JCCapsuleWiring wiring, final ListBuffer<JCStatement> assigns, final Map<Name, Name> variables, Set<Name> capsules, SystemGraph sysGraph) {
         try{
-            assigns.appendList(transWiring(mi, variables, capsules, sysGraph, false));
+            assigns.appendList(transWiring(wiring, variables, capsules, sysGraph, false));
         }catch (NullPointerException e){
-            log.error(mi.pos(), "only.capsule.types.allowed");
+            //FIXME: Should be caught by typechecking.
+            log.error(wiring.pos(), "only.capsule.types.allowed");
         }
     }
 
-    private List<JCStatement> transWiring(final JCMethodInvocation mi, final Map<Name, Name> variables, Set<Name> capsules, SystemGraph sysGraph, boolean forEachLoop){
+    private List<JCStatement> transWiring(final JCCapsuleWiring mi, final Map<Name, Name> variables, Set<Name> capsules, SystemGraph sysGraph, boolean forEachLoop){
+        CapsuleSymbol c = null;
+        if(mi.capsule.hasTag(Tag.IDENT)) {
+            JCIdent mId = (JCIdent)mi.capsule;
+            capsules.remove(mId.name);
+            c =  (CapsuleSymbol)(mId.sym.type.tsym);
+        } else {
+            log.error("unknown object to wire", mi.capsule);
+            return List.<JCStatement>nil(); // there's a problem here.
+        }
 
-        CapsuleSymbol c = syms.capsules.get(variables.get(names
-                .fromString(mi.meth.toString())));
         ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
 
-        if (mi.args.length() != c.capsuleParameters.length()) {
-            log.error(mi.pos(), "arguments.of.wiring.mismatch");
-        } else {
-            for (int j = 0; j < mi.args.length(); j++) {
-                String param = "";
-                if(c.capsuleParameters.get(j).vartype.toString().contains("[")){
-                    param = c.capsuleParameters.get(j).vartype.toString().substring(0, c.capsuleParameters.get(j).vartype.toString().indexOf("["));
-                }else
-                    param = c.capsuleParameters.get(j).vartype.toString();
-                if(syms.capsules.containsKey(names.fromString(param))){//if its a capsule type
-                    if(mi.args.get(j).toString().equals("null")){
-                        log.error(mi.args.get(j).pos(), "capsule.null.declare");
-                    }else{
-                        String argument = "";
-                        if(mi.args.get(j).toString().contains("[")){
-                            argument = mi.args.get(j).toString().substring(0, mi.args.get(j).toString().indexOf("["));
-                        }else
-                            argument = mi.args.get(j).toString();
-                        if(mi.args.get(j).getTag()!=Tag.NEWARRAY)
-                            if(variables.get(names.fromString(argument))==null){
-                                log.error(mi.args.get(j).pos, "symbol.not.found");
-                            }
-                    }
-                }
-                JCAssign newAssign = make
-                        .at(mi.pos())
-                        .Assign(make.Select(make.TypeCast(make.Ident(c), mi.meth),
-                                c.capsuleParameters.get(j)
-                                .getName()), mi.args.get(j));
-                JCExpressionStatement assignAssign = make
-                        .Exec(newAssign);
-                assigns.append(assignAssign);
-                if(!forEachLoop){
-                    if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
-                        if(mi.args.get(j).getTag()!=Tag.NEWARRAY)
-                            if(syms.capsules.containsKey(names
-                                    .fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
-                                            .toString())))
-                                systemGraphBuilder.addConnectionsOneToMany(sysGraph,
-                                        names.fromString(mi.meth.toString()), c.capsuleParameters.get(j).getName(),
-                                        names.fromString(mi.args.get(j).toString()));
-                    }
-                    if (syms.capsules.containsKey(names
-                            .fromString(c.capsuleParameters.get(j).vartype
-                                    .toString()))) {
-                        systemGraphBuilder.addConnection(sysGraph,
-                                names.fromString(mi.meth.toString()),
-                                c.capsuleParameters.get(j).getName(),
-                                names.fromString(mi.args.get(j).toString()));
-                    }
+        for (int j = 0; j < mi.args.length(); j++) {
+            String param = "";
+            if(c.capsuleParameters.get(j).vartype.toString().contains("[")){
+                param = c.capsuleParameters.get(j).vartype.toString().substring(0, c.capsuleParameters.get(j).vartype.toString().indexOf("["));
+            }else
+                param = c.capsuleParameters.get(j).vartype.toString();
+            if(syms.capsules.containsKey(names.fromString(param))){//if its a capsule type
+                if(mi.args.get(j).toString().equals("null")){
+                    log.error(mi.args.get(j).pos(), "capsule.null.declare");
+                }else{
+                    String argument = "";
+                    if(mi.args.get(j).toString().contains("[")){
+                        argument = mi.args.get(j).toString().substring(0, mi.args.get(j).toString().indexOf("["));
+                    }else
+                        argument = mi.args.get(j).toString();
+                    if(mi.args.get(j).getTag()!=Tag.NEWARRAY)
+                        if(variables.get(names.fromString(argument))==null){
+                            log.error(mi.args.get(j).pos, "symbol.not.found");
+                        }
                 }
             }
-            capsules.remove(names.fromString(mi.meth.toString()));
+            JCAssign newAssign = make
+                    .at(mi.pos())
+                    .Assign(make.Select(make.TypeCast(make.Ident(c), mi.capsule),
+                            c.capsuleParameters.get(j)
+                            .getName()), mi.args.get(j));
+            JCExpressionStatement assignAssign = make
+                    .Exec(newAssign);
+            assigns.append(assignAssign);
+            if(!forEachLoop){
+                if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
+                    if(mi.args.get(j).getTag()!=Tag.NEWARRAY)
+                        if(syms.capsules.containsKey(names
+                                .fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
+                                        .toString())))
+                            systemGraphBuilder.addConnectionsOneToMany(sysGraph,
+                                    names.fromString(mi.capsule.toString()), c.capsuleParameters.get(j).getName(),
+                                    names.fromString(mi.args.get(j).toString()));
+                }
+                if (syms.capsules.containsKey(names
+                        .fromString(c.capsuleParameters.get(j).vartype
+                                .toString()))) {
+                    systemGraphBuilder.addConnection(sysGraph,
+                            names.fromString(mi.capsule.toString()),
+                            c.capsuleParameters.get(j).getName(),
+                            names.fromString(mi.args.get(j).toString()));
+                }
+            }
         }
+
         return assigns.toList();
     }
 
@@ -525,11 +528,7 @@ public class SystemMainTransformer extends TreeTranslator {
         modArrays.put(vdecl.name, mat.amount);
     }
 
-    private void processCapsuleDef(JCSystemDecl tree,
-            ListBuffer<JCStatement> decls, ListBuffer<JCStatement> inits,
-            ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
-            ListBuffer<JCStatement> joins, Map<Name, Name> variables,
-            Set<Name> capsules, JCVariableDecl vdecl, Resolve rs, Env<AttrContext> env, SystemGraph sysGraph) {
+    private void processCapsuleDef(JCSystemDecl tree, JCVariableDecl vdecl) {
         String initName = vdecl.vartype.toString()+"$thread";
         if((vdecl.mods.flags & Flags.TASK) !=0){
             initName = vdecl.vartype.toString()+"$task";
@@ -586,6 +585,6 @@ public class SystemMainTransformer extends TreeTranslator {
         //      tree.defs = tree.defs.append(ownerIface);
         variables.put(vdecl.name, c.name);
         if(c.capsuleParameters.nonEmpty())
-            capsules.add(vdecl.name);
+            capsulesToWire.add(vdecl.name);
     }
 }
