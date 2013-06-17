@@ -96,26 +96,6 @@ public class SystemDeclRewriter extends TreeTranslator {
         result = tree;
     }
 
-    @Override
-    public void visitCapsuleWiring(JCCapsuleWiring tree) {
-        //TODO: full capusule wiring.
-        //currently switches to ProcInvocation. Should be the 'actual'
-        //statements used to wire a capsule. See the second half of
-        //org.paninij.comp.Attr#visitSystemDef() for the current wiring
-        //strategy
-
-        JCIdent capID = ((JCIdent)tree.capsule);
-        Name n = names.fromString(capID.name.toString());
-        capID = make.Ident(n);
-
-        JCProcInvocation pi = make.at(tree.pos)
-                .ProcApply(List.<JCExpression>nil(), capID, tree.args);
-
-        pi.switchToMethod();
-        //Visit it for whatever rewriting is required.
-        pi.accept(this);
-    }
-
     //TODO:remove because it does exactly what super does.
     @Override
     public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
