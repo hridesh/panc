@@ -462,6 +462,13 @@ public class TreeTranslator extends JCTree.Visitor {
         tree.body = translate(tree.body);
         result = tree;
     }
+
+    public void visitCapsuleWiring(JCCapsuleWiring tree) {
+        tree.capsule = translate(tree.capsule);
+        tree.args = translate(tree.args);
+        result = tree;
+    }
+
     public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
         tree.arguments = translate(tree.arguments);
         tree.index = translate(tree.index);
