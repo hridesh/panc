@@ -374,7 +374,10 @@ public class SystemMainTransformer extends TreeTranslator {
         if(mi.capsule.hasTag(Tag.IDENT)) {
             JCIdent mId = (JCIdent)mi.capsule;
             capsules.remove(mId.name);
-            c =  (CapsuleSymbol)(mId.sym.type.tsym);
+            
+            c = (CapsuleSymbol) rs
+                    .findType(env, variables.get(names
+                            .fromString(mId.toString())));
         } else {
             log.error("unknown object to wire", mi.capsule);
             return List.<JCStatement>nil(); // there's a problem here.
