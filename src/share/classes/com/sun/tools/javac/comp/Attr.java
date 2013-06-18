@@ -888,7 +888,8 @@ public class Attr extends JCTree.Visitor {
         attribExpr(tree.capsule, localEnv);
         attribArgs(tree.args, env);
 
-        checkWiring(tree.capsule, tree.args, localEnv);
+        result = checkWiring(tree.capsule, tree.args, localEnv);
+        tree.type = result;
     }
 
     // end Panini code
@@ -3017,6 +3018,7 @@ public class Attr extends JCTree.Visitor {
             //checkAssignable(a.head.pos(), esym, a.head, env);
         }
 
+        //TODO-XXX Should be the wiring type for the capsule, not void.
         return syms.voidType;
     }
 
