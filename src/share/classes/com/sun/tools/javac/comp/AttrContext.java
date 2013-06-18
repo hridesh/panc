@@ -88,7 +88,7 @@ public class AttrContext {
 
     /** Duplicate this context, copying all fields.
      */
-    AttrContext dup() {
+    public AttrContext dup() {
         return dup(scope);
     }
 
@@ -101,4 +101,10 @@ public class AttrContext {
     public String toString() {
         return "AttrContext[" + scope.toString() + "]";
     }
+
+    // Panini code
+    public Scope getScope() {
+        return scope;
+    }
+    // end Panini code
 }

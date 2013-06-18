@@ -154,6 +154,8 @@ public class SystemMainTransformer extends TreeTranslator {
                 tree.init
                 );
 
+        env.info.getScope().enter(tree.sym);
+
         //Use the type from the previously attributed tree. It has a type
         //associated with it already, vdecl does not.
         if (syms.isCapsuleSym(tree.type.tsym.name)) {
@@ -177,6 +179,7 @@ public class SystemMainTransformer extends TreeTranslator {
 
     @Override
     public void visitCapsuleWiring(JCCapsuleWiring tree) {
+        Env<AttrContext> wiringEnv = env.dup(tree, env.info.dup());
         processCapsuleWiring(tree, wiringEnv);
         result = tree;
     }
