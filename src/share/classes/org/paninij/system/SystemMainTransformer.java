@@ -160,9 +160,7 @@ public class SystemMainTransformer extends TreeTranslator {
             processCapsuleDef(systemDecl, vdecl);
         } else {
             if (vdecl.vartype.getTag() == CAPSULEARRAY)
-                processCapsuleArray(systemDecl, decls, assigns, submits,
-                        starts, joins, variables, capsulesToWire, modArrays, vdecl, rs,
-                        env, sysGraph);
+                processCapsuleArray(systemDecl, vdecl, env);
             else {
                 if (vdecl.vartype.getTag() == TYPEIDENT
                         || vdecl.vartype.toString().equals("String")) {
@@ -179,13 +177,13 @@ public class SystemMainTransformer extends TreeTranslator {
 
     @Override
     public void visitCapsuleWiring(JCCapsuleWiring tree) {
-        processCapsuleWiring(tree, assigns, variables, capsulesToWire, sysGraph);
+        processCapsuleWiring(tree, wiringEnv);
         result = tree;
     }
 
     @Override
     public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
-        processCapsuleArrayWiring(tree, assigns, variables, capsulesToWire, modArrays, rs, env, sysGraph);
+        processCapsuleArrayWiring(tree, env);
         result = tree;
     }
 
@@ -197,9 +195,7 @@ public class SystemMainTransformer extends TreeTranslator {
 
     //FIXME: Case for types that shouldn't make it through the parser?    throw new AssertionError("Invalid statement gone through the parser");
 
-    private void processCapsuleArrayWiring(JCCapsuleArrayCall mi,
-            ListBuffer<JCStatement> assigns, Map<Name, Name> variables,
-            Set<Name> capsules, Map<Name, Integer> modArrays, Resolve rs, Env<AttrContext> env, SystemGraph sysGraph) {
+    private void processCapsuleArrayWiring(JCCapsuleArrayCall mi, Env<AttrContext> env) {
         if(!variables.containsKey(names
                 .fromString(mi.name.toString()))){
             log.error(mi.pos(), "symbol.not.found");
@@ -250,7 +246,7 @@ public class SystemMainTransformer extends TreeTranslator {
                             names.fromString(mi.arguments.get(j).toString()));
                 }
             }
-            capsules.remove(mi.name);
+            capsulesToWire.remove(mi.name);
         }
     }
 
@@ -293,7 +289,7 @@ public class SystemMainTransformer extends TreeTranslator {
                     log.error(s.pos(),"foreachloop.statement.error");
                 }
                 JCCapsuleWiring mi = (JCCapsuleWiring)((JCExpressionStatement)s).expr;
-                loopBody.appendList(transWiring(mi,variables, capsules, sysGraph, true));
+                loopBody.appendList(transWiring(mi, env, true));
                 if(loop.var.name.toString().equals(mi.capsule.toString()))
                     capsules.remove(names.fromString(loop.expr.toString()));
                 if (mi.args.length() != c.capsuleParameters.length()) {
@@ -327,7 +323,7 @@ public class SystemMainTransformer extends TreeTranslator {
                 log.error(loop.body.pos(),"foreachloop.statement.error");
             }
             JCCapsuleWiring mi = (JCCapsuleWiring)((JCExpressionStatement)loop.body).expr;
-            loopBody.appendList(transWiring(mi,variables, capsules, sysGraph, true));
+            loopBody.appendList(transWiring(mi, env, true));
             if(loop.var.name.toString().equals(mi.capsule.toString()))
                 capsules.remove(names.fromString(loop.expr.toString()));
             if (mi.args.length() != c.capsuleParameters.length()) {
@@ -362,20 +358,20 @@ public class SystemMainTransformer extends TreeTranslator {
         assigns.append(floop);
     }
 
-    private void processCapsuleWiring(final JCCapsuleWiring wiring, final ListBuffer<JCStatement> assigns, final Map<Name, Name> variables, Set<Name> capsules, SystemGraph sysGraph) {
+    private void processCapsuleWiring(final JCCapsuleWiring wiring, Env<AttrContext> env) {
         try{
-            assigns.appendList(transWiring(wiring, variables, capsules, sysGraph, false));
+            assigns.appendList(transWiring(wiring, env, false));
         }catch (NullPointerException e){
             //FIXME: Should be caught by typechecking.
             log.error(wiring.pos(), "only.capsule.types.allowed");
         }
     }
 
-    private List<JCStatement> transWiring(final JCCapsuleWiring mi, final Map<Name, Name> variables, Set<Name> capsules, SystemGraph sysGraph, boolean forEachLoop){
+    private List<JCStatement> transWiring(final JCCapsuleWiring mi, Env<AttrContext> env, boolean forEachLoop){
         CapsuleSymbol c = null;
         if(mi.capsule.hasTag(Tag.IDENT)) {
             JCIdent mId = (JCIdent)mi.capsule;
-            capsules.remove(mId.name);
+            capsulesToWire.remove(mId.name);
 
             Symbol s = rs.findType(env, variables.get(mId.name) );
             
@@ -387,6 +383,7 @@ public class SystemMainTransformer extends TreeTranslator {
                 return List.<JCStatement>nil(); // there's a problem here.
             }
         } else {
+            //FIXME: Error message.
             log.error("unknown object to wire", mi.capsule);
             return List.<JCStatement>nil(); // there's a problem here.
         }
@@ -446,12 +443,7 @@ public class SystemMainTransformer extends TreeTranslator {
         return assigns.toList();
     }
 
-    private void processCapsuleArray(JCSystemDecl tree,
-            ListBuffer<JCStatement> decls, ListBuffer<JCStatement> assigns,
-            ListBuffer<JCStatement> submits, ListBuffer<JCStatement> starts,
-            ListBuffer<JCStatement> joins, Map<Name, Name> variables,
-            Set<Name> capsules, Map<Name, Integer> modArrays,
-            JCVariableDecl vdecl, Resolve rs, Env<AttrContext> env, SystemGraph sysGraph) {
+    private void processCapsuleArray(JCSystemDecl tree, JCVariableDecl vdecl, Env<AttrContext> env) {
         JCCapsuleArray mat = (JCCapsuleArray)vdecl.vartype;
         String initName = mat.elemtype.toString()+"$thread";
         if((vdecl.mods.flags & Flags.TASK) !=0){
@@ -535,7 +527,7 @@ public class SystemMainTransformer extends TreeTranslator {
 
         variables.put(vdecl.name, c.name);
         if(c.capsuleParameters.nonEmpty())
-            capsules.add(vdecl.name);
+            capsulesToWire.add(vdecl.name);
         modArrays.put(vdecl.name, mat.amount);
     }
 
