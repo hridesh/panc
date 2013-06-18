@@ -18,8 +18,7 @@
  */
 package org.paninij.code;
 
-
-import com.sun.tools.javac.code.Symbol.ClassSymbol;
+import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
 import com.sun.tools.javac.util.List;
 
 import static org.paninij.code.TypeTags.*;
@@ -35,14 +34,25 @@ import static org.paninij.code.TypeTags.*;
  */
 public abstract class Type  {
 
-    public static class CapsuleType extends com.sun.tools.javac.code.Type {
+    public static class WiringType extends com.sun.tools.javac.code.Type {
 
         List<com.sun.tools.javac.code.Type> wiringTypes;
 
-        public CapsuleType(List<com.sun.tools.javac.code.Type> wiringTypes, ClassSymbol tsym) {
+        public WiringType(List<com.sun.tools.javac.code.Type> wiringTypes, CapsuleSymbol tsym) {
             super(CAPSULE_WIRING, tsym);
             this.wiringTypes = wiringTypes;
         }
 
+        public List<com.sun.tools.javac.code.Type> getWiringTypes () {
+            return wiringTypes;
+        }
+
+        @Override
+        public List<com.sun.tools.javac.code.Type>        getParameterTypes() { return wiringTypes; }
+
+        public String toString() {
+            return "(" + wiringTypes + ")";
+        }
     }
+
 }

@@ -28,6 +28,8 @@ package com.sun.tools.javac.code;
 import java.lang.ref.SoftReference;
 import java.util.*;
 
+import org.paninij.code.Type.WiringType;
+
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
 

@@ -41,6 +41,7 @@ import java.util.Set;
 
 import org.paninij.analysis.ASTCFGBuilder;
 import org.paninij.consistency.*;
+import static org.paninij.code.Type.*;
 import static org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
 
 import com.sun.tools.javac.code.CapsuleProcedure;
@@ -226,15 +227,22 @@ public final class Attr extends CapsuleInternal {
 			}
 		}
 		
+		ListBuffer<Type> wiringSig = new ListBuffer<Type>();
 		for(List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail) {
 		    Symbol psym = tree.sym.members_field.lookup(l.head.name).sym;
 		    if(psym.kind == VAR) {
 		        l.head.sym = (VarSymbol)psym;
+		        wiringSig.add(psym.type);
 		    } else {
 		        //FIXME Error message.
 		        log.rawError(l.head.pos, "Could not find a symbol for parameter " + l.head);
+		        wiringSig.add(null); //FIXME: Unknown symbol?
 		    }
 		}
+
+
+		((CapsuleSymbol)tree.sym.type.tsym)
+		    .createWiringSymbol(names, wiringSig.toList());
 
 
 		/*if (doGraphs)

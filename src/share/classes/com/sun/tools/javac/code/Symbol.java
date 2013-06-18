@@ -45,6 +45,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import org.paninij.systemgraphs.SystemGraphs;
 import org.paninij.analysis.CFG;
+import org.paninij.code.Type.WiringType;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -717,6 +718,7 @@ public abstract class Symbol implements Element {
      * @since panini-0.9.2
      */
     public static class WiringSymbol extends Symbol {
+
         public WiringSymbol(long flags, Name name, Type type, Symbol owner) {
             //TODO: Is this public? 
             // Conceptually, wiring is only accessible in a system.
@@ -724,7 +726,10 @@ public abstract class Symbol implements Element {
             this.kind = org.paninij.code.TypeTags.CAPSULE_WIRING;
         }
 
-        //FIXME: MODEL THE WIRING SIGNATURE!
+        @Override
+        public String toString() {
+            return owner + "." + name;
+        }
 
         @Override
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
@@ -766,17 +771,24 @@ public abstract class Symbol implements Element {
 
 		public CapsuleSymbol(long flags, Name name, Type type, Symbol owner) {
             super(flags, name, type, owner);
-            createWiringSymbol();
         }
 
         public CapsuleSymbol(long flags, Name name, Symbol owner) {
             super(flags, name, owner);
-            createWiringSymbol();
         }
 
-        private void createWiringSymbol() {
-            System.err.println("Ignoring the wiring symbol for " + name);
-            wiringSym = new WiringSymbol(flags_field, name, type, this);
+        /**
+         * Create a wiring symbol for the symbl.
+         * PRE: Capsule Parameters have symbols and types.
+         */
+        public void createWiringSymbol(Names names, List<Type> paramTypes) {
+            wiringSym = new WiringSymbol(flags_field,
+                    names.panini.Wiring,
+                    createWiringType(paramTypes, this), this);
+        }
+
+        WiringType createWiringType(List<Type> capsuleParamTypes, CapsuleSymbol tsym) {
+            return new WiringType(capsuleParamTypes, tsym);
         }
         
         public static CapsuleSymbol fromClassSymbol(ClassSymbol c){

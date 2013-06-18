@@ -51,6 +51,7 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
+import org.paninij.code.Type.WiringType;
 import org.paninij.consistency.*;
 import org.paninij.systemgraphs.*;
 import static org.paninij.code.TypeTags.CAPSULE_WIRING;
@@ -2386,6 +2387,10 @@ public class Attr extends JCTree.Visitor {
             env.info.varArgs = false;
             sym = rs.resolveMethod(tree.pos(), env, tree.name, pt().getParameterTypes(), pt().getTypeArguments());
             varArgs = env.info.varArgs;
+        // Panini code
+        } else if (pt().tag == CAPSULE_WIRING) {
+            sym = rs.resolveWiring(tree.pos(), env, tree.name, pt().getParameterTypes());
+        // end Panini code
         } else if (tree.sym != null && tree.sym.kind != VAR) {
             sym = tree.sym;
         } else {
