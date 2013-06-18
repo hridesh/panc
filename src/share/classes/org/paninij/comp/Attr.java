@@ -343,17 +343,6 @@ public final class Attr extends CapsuleInternal {
 		if(restype.tsym instanceof CapsuleSymbol){
 			log.error(tree.pos(), "procedure.restype.illegal.capsule");
 		}
-//		if(!(tree.sym.owner.toString().contains("$serial")||tree.sym.owner.toString().contains("$monitor"))){
-//		if(tree.sym.getReturnType().isPrimitive()||
-//				tree.sym.getReturnType().toString().equals("java.lang.String"))
-//			{
-//				switch (restype.tag){
-//				case LONG:
-//					tree.restype = make.Ident(names.fromString("Long"));
-//					((MethodType)tree.sym.type).restype = syms.classType;
-//				}
-//			}
-//		}
 		tree.switchToMethod();
 	}
 	
