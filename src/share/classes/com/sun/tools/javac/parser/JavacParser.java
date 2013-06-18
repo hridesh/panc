@@ -54,6 +54,8 @@ import static com.sun.tools.javac.parser.Tokens.TokenKind.LT;
 
 // Panini code
 import org.paninij.parser.PaniniTokens;
+import org.paninij.parser.SystemParser;
+import org.paninij.parser.SystemParser.SystemParserResult;
 // end Panini code
 
 /** The parser maps a token sequence into an abstract syntax
@@ -1905,7 +1907,7 @@ public class JavacParser implements Parser {
 
     // Panini code
     
-    JCBlock systemBlock(int pos, long flags) {
+    private JCBlock systemBlock(int pos, long flags) {
         accept(LBRACE);
         List<JCStatement> stats = systemStatements();
         JCBlock t = F.at(pos).Block(flags, stats);
@@ -1920,7 +1922,7 @@ public class JavacParser implements Parser {
         return toP(t);
     }
     
-    public JCBlock systemBlock(){
+    private JCBlock systemBlock(){
         return systemBlock(token.pos, 0);
     }
     
@@ -1938,7 +1940,7 @@ public class JavacParser implements Parser {
      *                  = { FINAL | '@' Annotation } Type VariableDeclarators ";"
      */
     // Panini code
-    List<JCStatement> systemStatements(){
+    private List<JCStatement> systemStatements(){
     	ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
         while (true) {
             List<JCStatement> stat = systemStatement();
@@ -2021,7 +2023,7 @@ public class JavacParser implements Parser {
     }
     
     @SuppressWarnings("fallthrough")
-    List<JCStatement> systemStatement(){
+    private List<JCStatement> systemStatement(){
     	if(token.kind == IDENTIFIER){
     		if(token.name().toString().equals(PaniniTokens.TASK))
     			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.TASK));
@@ -2852,7 +2854,7 @@ public class JavacParser implements Parser {
     // Panini code
     /** VariableDeclarators = VariableDeclarator { "," VariableDeclarator }
      */
-    public <T extends ListBuffer<? super JCVariableDecl>> T systemVariableDeclarators(JCModifiers mods,
+    private <T extends ListBuffer<? super JCVariableDecl>> T systemVariableDeclarators(JCModifiers mods,
                                                                          JCExpression type,
                                                                          T vdefs)
     {
@@ -2865,7 +2867,7 @@ public class JavacParser implements Parser {
      *  @param reqInit  Is an initializer always required?
      *  @param dc       The documentation comment for the variable declarations, or null.
      */
-    <T extends ListBuffer<? super JCVariableDecl>> T systemVariableDeclaratorsRest(int pos,
+    private <T extends ListBuffer<? super JCVariableDecl>> T systemVariableDeclaratorsRest(int pos,
                                                                      JCModifiers mods,
                                                                      JCExpression type,
                                                                      Name name,
@@ -2886,7 +2888,7 @@ public class JavacParser implements Parser {
         /** VariableDeclarator = Ident VariableDeclaratorRest
      *  ConstantDeclarator = Ident ConstantDeclaratorRest
      */
-    JCVariableDecl systemVariableDeclarator(JCModifiers mods, JCExpression type, boolean reqInit, String dc) {
+    private JCVariableDecl systemVariableDeclarator(JCModifiers mods, JCExpression type, boolean reqInit, String dc) {
         return variableDeclaratorRest(token.pos, mods, type, ident(), reqInit, dc);
     }
 
@@ -2896,7 +2898,7 @@ public class JavacParser implements Parser {
      *  @param reqInit  Is an initializer always required?
      *  @param dc       The documentation comment for the variable declarations, or null.
      */
-    JCVariableDecl systemVariableDeclaratorRest(int pos, JCModifiers mods, JCExpression type, Name name,
+    private JCVariableDecl systemVariableDeclaratorRest(int pos, JCModifiers mods, JCExpression type, Name name,
                                   boolean reqInit, String dc) {
         type = systemBracketsOpt(type);
         JCExpression init = null;
@@ -3046,6 +3048,22 @@ public class JavacParser implements Parser {
             return classOrInterfaceOrEnumDeclaration(modifiersOpt(mods), docComment);
         }
     }
+    
+    // Panini code
+    private Map<JCTree, Integer> getInitialEndPosTable(){
+        if (this.endPosTable instanceof SimpleEndPosTable)
+            return ((SimpleEndPosTable)this.endPosTable).getEndPosMap();
+        else return null;
+    }
+    
+    private void restoreParserState(SystemParserResult result){
+        this.token = result.token;
+        //TODO: treat for case when endPosTable is null;
+        this.endPosTable.errorEndPos = result.errorEndPos;
+        this.mode = result.mode;
+        this.lastmode = result.lastMode;
+    }
+    // end Panini code
 
     /** ClassOrInterfaceOrEnumDeclaration = ModifiersOpt
      *           (ClassDeclaration | InterfaceDeclaration | EnumDeclaration)
@@ -3059,8 +3077,13 @@ public class JavacParser implements Parser {
             return interfaceDeclaration(mods, dc);
         } // Panini code
         else if(token.kind == IDENTIFIER){
-        	if(token.name().toString().equals("system"))
-         		return systemDecl(mods, dc);
+        	if(token.name().toString().equals("system")){
+        	    SystemParser systemParser = new SystemParser(F, log, names, source, S, keepDocComments, keepLineMap, getInitialEndPosTable(), token, mode,this.lastmode);
+        	    SystemParserResult result = systemParser.parseSystemBlock(mods, dc);
+        	    restoreParserState(result);
+                return result.systemDeclaration;
+//        	    return systemDecl(mods, dc);
+        	}
          	else if(token.name().toString().equals("capsule")) 
          		return capsuleDecl(mods, dc);
          	else if(token.name().toString().equals("signature"))
@@ -3106,7 +3129,7 @@ public class JavacParser implements Parser {
     
 
     // Panini code
-     JCStatement systemDecl(JCModifiers mod, String dc){
+     private JCStatement systemDecl(JCModifiers mod, String dc){
         inSystem = true;
      	accept(IDENTIFIER);
      	int pos = token.pos;
@@ -3997,6 +4020,12 @@ public class JavacParser implements Parser {
             }
             return Position.NOPOS;
         }
+        
+        // Panini code
+        public Map<JCTree, Integer> getEndPosMap() {
+            return endPosMap;
+        }
+        // end Panini code
     }
 
     /*
