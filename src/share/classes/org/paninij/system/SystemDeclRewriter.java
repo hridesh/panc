@@ -95,13 +95,4 @@ public class SystemDeclRewriter extends TreeTranslator {
         tree.body.stats = statsBuff.toList();
         result = tree;
     }
-
-    //TODO:remove because it does exactly what super does.
-    @Override
-    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
-        tree.index = translate(tree.index);
-        tree.indexed = translate(tree.indexed);
-        tree.arguments = translate(tree.arguments);
-        result = tree;
-    }
 }
