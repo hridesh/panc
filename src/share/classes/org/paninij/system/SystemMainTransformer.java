@@ -39,6 +39,8 @@ import org.paninij.systemgraph.SystemGraph;
 import org.paninij.systemgraph.SystemGraphBuilder;
 
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Kinds;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
@@ -374,10 +376,16 @@ public class SystemMainTransformer extends TreeTranslator {
         if(mi.capsule.hasTag(Tag.IDENT)) {
             JCIdent mId = (JCIdent)mi.capsule;
             capsules.remove(mId.name);
+
+            Symbol s = rs.findType(env, variables.get(mId.name) );
             
-            c = (CapsuleSymbol) rs
-                    .findType(env, variables.get(names
-                            .fromString(mId.toString())));
+            if (s.kind == Kinds.TYP) {
+                c = (CapsuleSymbol)s;
+            } else {
+                //FIXME uknown type error
+                log.error("Unknown type for ", mi.capsule);
+                return List.<JCStatement>nil(); // there's a problem here.
+            }
         } else {
             log.error("unknown object to wire", mi.capsule);
             return List.<JCStatement>nil(); // there's a problem here.
