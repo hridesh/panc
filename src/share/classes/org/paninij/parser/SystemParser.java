@@ -344,10 +344,6 @@ public class SystemParser {
      */
     private int lastmode = 0;
 
-    // Panini code
-    boolean inCapsule = false;
-    // end Panini code
-
     /* ---------- token management -------------- */
 
     protected Token token;
@@ -386,6 +382,7 @@ public class SystemParser {
     /**
      * Skip forward until a suitable stop token is found.
      */
+    @Deprecated
     private void skip(boolean stopAtImport, boolean stopAtMemberDecl,
             boolean stopAtIdentifier, boolean stopAtStatement) {
         while (true) {
@@ -774,24 +771,71 @@ public class SystemParser {
      * terms can be either expressions or types.
      */
     public JCExpression parseExpression() {
-        return term(EXPR);
+        return literal(names.empty);
     }
 
     public JCExpression parseType() {
-        return term(TYPE);
+        JCExpression vartype;
+
+        if (token.kind == IDENTIFIER) {
+            Name typeName = ident();
+            vartype = F.at(token.pos).Ident(typeName);
+            if (acceptableTypeForNormalArray(typeName)) {
+                vartype = parseArrayTypeOptional(vartype);
+            } else {
+                vartype = parseCapsuleArrayTypeOptional(vartype);
+            }
+        } else {
+            vartype = basicType();
+            vartype = parseArrayTypeOptional(vartype);
+        }
+        return vartype;
     }
 
-    JCExpression term(int newmode) {
-        int prevmode = mode;
-        mode = newmode;
-        // JCExpression t = term();
+    /**
+     * We have to differentiate capsule arrays and other arrays.
+     * @return
+     */
+    private boolean acceptableTypeForNormalArray(Name typeName) {
+        ListBuffer<String> acc = new ListBuffer<String>();
+        acc.add("String");
+        return acc.contains(typeName.toString());
+    }
 
-        lastmode = mode;
-        mode = prevmode;
+    private JCExpression parseCapsuleArrayTypeOptional(JCExpression vartype) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private JCExpression parseArrayTypeOptional(JCExpression vartype) {
+        if (token.kind == LBRACKET) {
+            nextToken();
+            accept(RBRACKET);
+            vartype = toP(F.at(token.pos).TypeArray(vartype));
+        }
+        return vartype;
+    }
+
+    /**
+     * BasicType = BYTE | SHORT | CHAR | INT | LONG | FLOAT | DOUBLE | BOOLEAN
+     */
+    private JCPrimitiveTypeTree basicType() {
+        JCPrimitiveTypeTree t = to(F.at(token.pos).TypeIdent(
+                typetag(token.kind)));
+        nextToken();
+        return t;
+    }
+
+    private JCStatement parseStatement() {
         return null;
     }
 
     /**
+     * 
+     * <pre>
+     *    "system" Identifier [VariableDeclaration] Block
+     * </pre>
+     * 
      * @param mods
      * @param dc
      * @return
@@ -802,44 +846,44 @@ public class SystemParser {
         Name systemName = ident();
 
         List<JCVariableDecl> params = systemParametersOptional();
-        
+
         JCBlock body = systemBlock();
-        JCSystemDecl result = toP(F.at(pos).SystemDef(mod, systemName, body, params));
+        JCSystemDecl result = toP(F.at(pos).SystemDef(mod, systemName, body,
+                params));
         attach(result, dc);
         return new SystemParserResult(result);
     }
-    
 
     private List<JCVariableDecl> systemParametersOptional() {
-        List<JCVariableDecl> params = List.<JCVariableDecl>nil();
-        
-        if(token.kind == LPAREN){
+        List<JCVariableDecl> params = List.<JCVariableDecl> nil();
+
+        if (token.kind == LPAREN) {
             accept(LPAREN);
             params.head = variableDeclaration(false);
             accept(RPAREN);
         }
-        if(params.length() > 1 
-                || (params.length() == 1 && !params.get(0).getType().toString().equals("String[]")) )
+        // TODO: remove this, it should be done during type checking;
+        if (params.length() > 1
+                || (params.length() == 1 && !params.get(0).getType().toString()
+                        .equals("String[]")))
             log.error(token.pos, "system.argument.illegal");
 
         return params;
     }
-    
-    
+
     /**
+     * <pre>
+     * Identifier
+     * </pre>
      * 
      */
     private JCVariableDecl variableDeclaration(boolean isInitAllowed) {
-        Name typeName = ident();
-        JCExpression vartype = F.at(token.pos).Ident(typeName);
-        if(token.kind == LBRACKET){
-            accept(LBRACKET);
-            accept(RBRACKET);
-            vartype = toP(F.at(token.pos).TypeArray(vartype));
-        }
+        JCExpression vartype = parseType();
         Name variableName = ident();
-        
-        return toP(F.at(token.pos).VarDef(F.at(token.pos).Modifiers(0), variableName, vartype, variableInitializerOptional(isInitAllowed)));
+
+        return toP(F.at(token.pos).VarDef(F.at(token.pos).Modifiers(0),
+                variableName, vartype,
+                variableInitializerOptional(isInitAllowed)));
     }
 
     /**
@@ -847,33 +891,66 @@ public class SystemParser {
      * @return
      */
     private JCExpression variableInitializerOptional(boolean isInitAllowed) {
-        if(token.kind == EQ){
-            if(!isInitAllowed){
-                rawError("Cannot initialize system args");
+        if (token.kind == EQ) {
+            if (!isInitAllowed) {
+                rawError("Cannot initialize this variable");
             }
-            return null;
+            nextToken();
+            return parseExpression();
         }
         return null;
+    }
+
+    private JCBlock systemBlock() {
+        accept(LBRACE);
+        List<JCStatement> stats = systemStatements();
+        JCBlock t = F.at(token.pos).Block(0, stats);
+        t.endpos = token.pos;
+        accept(RBRACE);
+        return toP(t);
     }
 
     /**
      * @return
      */
-    private JCBlock systemBlock() {
-        // TODO Auto-generated method stub
-        return F.at(token.pos).Block(0, List.<JCStatement>nil());
+    private List<JCStatement> systemStatements() {
+        ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
+        while (true) {
+            JCStatement statement = systemStatement();
+            if (statement == null) {
+                return stats.toList();
+            } else {
+                if (token.pos <= endPosTable.errorEndPos) {
+                    skip(false, true, true, true);
+                }
+                stats.add(statement);
+            }
+        }
+    }
+
+    /**
+     * @return
+     */
+    private JCStatement systemStatement() {
+        if (token.kind == RBRACE && peekToken(EOF)) {
+            return null;
+        }
+
+        JCVariableDecl variableDeclaration = variableDeclaration(true);
+        accept(SEMI);
+        return variableDeclaration;
     }
 
     /* ---------- auxiliary methods -------------- */
-    //TODO: replace all of these
+    // TODO: replace all of these
     void rawError(String msg) {
         log.rawError(token.pos, msg);
     }
-    
+
     void rawError(int pos, String msg) {
         log.rawError(pos, msg);
     }
-    
+
     void error(int pos, String key, Object... args) {
         log.error(DiagnosticFlag.SYNTAX, pos, key, args);
     }
@@ -1142,7 +1219,9 @@ public class SystemParser {
 
         private final Map<JCTree, Integer> endPosMap;
 
-        // FIXME: remember this.
+        // FIXME: might consider a better solution for this. This data type is
+        // duplicated
+        // from JavacParser.
         SimpleEndPosTable(Map<JCTree, Integer> initialTable) {
             endPosMap = initialTable;
         }

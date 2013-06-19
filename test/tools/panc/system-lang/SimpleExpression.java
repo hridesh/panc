@@ -27,6 +27,11 @@ capsule O{
 }
 
 system SimpleExpression(String[] args){
-    
+    int fortyTwo = 42;
+    int thirtyThree = 33;
+    byte by;
+    long l;
+    long la;
+    String sA;
 }
 
