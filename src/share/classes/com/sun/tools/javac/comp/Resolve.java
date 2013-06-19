@@ -1704,41 +1704,6 @@ public class Resolve {
         }
     }
 
-    // Panini code
-    Symbol resolveWiring(DiagnosticPosition pos,
-            Env<AttrContext> env,
-            Name name,
-            List<Type> argtypes ) {
-        Symbol bestSoFar = wiringNotFound;
-        Type site = env.enclClass.sym.type;
-
-        for (Scope.Entry e = env.info.scope.lookup(name);
-                e.scope != null;
-                e = e.next() ){
-            if (e.sym != null && e.sym.type.tsym instanceof CapsuleSymbol) { //TODO-XXX No instanceof;
-                CapsuleSymbol cs = (CapsuleSymbol)e.sym.type.tsym ;
-                Symbol sym = cs.wiringSym;
-
-                //If we ever add more wiring expression types,
-                //this will need to be expanded.
-                try {
-                    Type mt = rawInstantiate(env, site, sym, argtypes, List.<Type>nil(),
-                            //FIXME: Pass in allowBoxing from somewhere.
-                            true, false, Warner.noWarnings);
-                    if (mt.tsym instanceof CapsuleSymbol) {
-                        cs = (CapsuleSymbol)mt.tsym;
-                        bestSoFar = cs.wiringSym;
-                    }
-                } catch (InapplicableMethodException ex) {
-                    //Nothing to be done.
-                }
-            }
-        }
-
-        //Make sure we can access the symbol. Will cause an error, if wiring resolution failed.
-        return access(bestSoFar, pos, site, name, false, argtypes, List.<Type>nil());
-    }
-    // end Panini code
 
     /** Resolve a qualified method identifier
      *  @param pos       The position to use for error reporting.

@@ -227,18 +227,6 @@ public class Attr extends JCTree.Visitor {
      *  @param resultInfo  The expected result of the tree
      */
     Type check(JCTree tree, Type owntype, int ownkind, ResultInfo resultInfo) {
-        // Panini code
-        /* Special case for capsule wiring. Not in the if stmt below
-         * to make the change less intrusive.
-         * Nothing to be done to check a Capsule. If the type made
-         * it this far, it was instantiated correctly.
-         */
-        if ( resultInfo.pt.tag == CAPSULE_WIRING ) {
-            tree.type = owntype;
-            return owntype;
-        }
-        // end Panini code
-
         if (owntype.tag != ERROR && resultInfo.pt.tag != METHOD && resultInfo.pt.tag != FORALL ) {
             if ((ownkind & ~resultInfo.pkind) == 0) {
                 owntype = resultInfo.check(tree, owntype);
@@ -736,35 +724,28 @@ public class Attr extends JCTree.Visitor {
     }
     
     // Panini code
-    Type checkWiring(Type site, Symbol sym,
-            List<JCExpression> argtrees,
-            List<Type> argtypes, Env<AttrContext> env) {
-        Type owntype = rs.instantiate(env,
-                site,
-                sym,
-                argtypes,
-                List.<Type>nil(),
-                true,
-                false,
-                noteWarner);
+    Type checkWiring(Type owntype, List<JCExpression> argtrees, List<Type> argtypes) {
+        //TODO-XXX Instanceof check.
+        if( owntype.tsym instanceof CapsuleSymbol ){
+            CapsuleSymbol ownsym = (CapsuleSymbol)owntype.tsym;
 
-        // If this fails, something went wrong; we should not have
-        // found the identifier in the first place.
-        if (owntype == null) {
-            if (!pt().isErroneous())
-                log.error(env.tree.pos(),
-                           "internal.error.cant.instantiate",
-                           sym, site,
-                          Type.toString(pt().getParameterTypes()));
-            owntype = types.createErrorType(site);
-            return types.createErrorType(site);
+            //FIXME: Wrong number of args check.
+
+            List<Type> wt = ownsym.wiringSym.type.getParameterTypes();
+            List<JCExpression> as = argtrees;
+            List<Type> ats = argtypes;
+            while(wt.nonEmpty()){
+                check(as.head, ats.head, VAL, new ResultInfo(VAL, wt.head));
+
+                wt = wt.tail;
+                as = as.tail;
+                ats = ats.tail;
+            }
+
+            return ownsym.wiringSym.type;
         } else {
-            return chk.checkWiring(owntype, argtrees, argtypes);
+            return types.createErrorType(owntype);
         }
-    }
-
-    void checkIndexedWiring(JCExpression indexed, List<JCExpression> arguments, Env<AttrContext> env) {
-        System.err.println("Check the index for " + indexed);
     }
 
     public final void visitCapsuleDef(final JCCapsuleDecl tree){
@@ -2404,10 +2385,6 @@ public class Attr extends JCTree.Visitor {
             env.info.varArgs = false;
             sym = rs.resolveMethod(tree.pos(), env, tree.name, pt().getParameterTypes(), pt().getTypeArguments());
             varArgs = env.info.varArgs;
-        // Panini code
-        } else if (pt().tag == CAPSULE_WIRING) {
-            sym = rs.resolveWiring(tree.pos(), env, tree.name, pt().getParameterTypes());
-        // end Panini code
         } else if (tree.sym != null && tree.sym.kind != VAR) {
             sym = tree.sym;
         } else {
@@ -2829,13 +2806,6 @@ public class Attr extends JCTree.Visitor {
                                       env.info.varArgs);
                 break;
             }
-            // Panini code
-            case CAPSULE_WIRING: {
-                JCCapsuleWiring wire = (JCCapsuleWiring)env.tree;
-                owntype = checkWiring(site, sym, wire.args, resultInfo.pt.getParameterTypes(), env);
-                break;
-            }
-            // end Panini code
             case PCK: case ERR:
                 owntype = sym.type;
                 break;

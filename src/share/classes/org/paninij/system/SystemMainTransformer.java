@@ -391,7 +391,7 @@ public class SystemMainTransformer extends TreeTranslator {
                 Assert.error("Unknown type for " + mi.capsule);
             }
 
-            capId = make.at(mId.pos()).Ident(mId.name);
+            capId = mId;
         } else {
             Assert.error("unknown object to wire " + mi.capsule);
         }
