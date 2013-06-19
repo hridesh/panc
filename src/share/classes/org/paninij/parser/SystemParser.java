@@ -360,7 +360,9 @@ public class SystemParser {
     }
 
     private boolean peekToken(TokenKind tk1, TokenKind tk2) {
-        return S.token(1).kind == tk1 && S.token(2).kind == tk2;
+        TokenKind t1 = S.token(1).kind;
+        TokenKind t2 = S.token(2).kind;
+        return t1 == tk1 && t2 == tk2;
     }
 
     private boolean peekToken(TokenKind tk1, TokenKind tk2, TokenKind tk3) {
@@ -1093,21 +1095,16 @@ public class SystemParser {
                     pos = token.pos;
                     // TODO: consider removing this;
                     switch (token.kind) {
-                    case LBRACKET:
+                    case LBRACKET: {
                         nextToken();
-                        if (token.kind == RBRACKET) {
-                            nextToken();
-                            t = bracketsOpt(t);
-                            t = toP(F.at(pos).TypeArray(t));
-                            t = bracketsSuffix(t);
-                        } else {
-                            if ((mode & EXPR) != 0) {
-                                mode = EXPR;
-                                JCExpression t1 = term();
-                                t = to(F.at(pos).Indexed(t, t1));
-                            }
+                        if ((mode & EXPR) != 0) {
+                            mode = EXPR;
+                            JCExpression t1 = term();
+                            t = to(F.at(pos).Indexed(t, t1));
                             accept(RBRACKET);
+                             t = suffixCapsuleWiring(t);
                         }
+                    }
                         break loop;
                     default:
                         break loop;
@@ -1125,7 +1122,7 @@ public class SystemParser {
                 accept(RPAREN);
                 lastmode = mode;
                 mode = EXPR;
-                //TODO: add typecasting
+                // TODO: add typecasting
             } else {
                 return illegal();
             }
@@ -1140,53 +1137,12 @@ public class SystemParser {
         return t;
     }
 
-    /**
-     * BracketsOpt = {"[" "]"}
-     */
-    private JCExpression bracketsOpt(JCExpression t) {
-        if (token.kind == LBRACKET) {
-            int pos = token.pos;
-            nextToken();
-            t = bracketsOptCont(t, pos);
-            F.at(pos);
-        }
-        return t;
-    }
-
-    private JCArrayTypeTree bracketsOptCont(JCExpression t, int pos) {
-        accept(RBRACKET);
-        t = bracketsOpt(t);
-        return toP(F.at(pos).TypeArray(t));
-    }
-
-    /**
-     * BracketsSuffixExpr = "." CLASS BracketsSuffixType =
-     */
     // TODO: replace this with capsule wiring statement;
-    JCExpression bracketsSuffix(JCExpression t) {
-        if ((mode & EXPR) != 0 && token.kind == DOT) {
-            mode = EXPR;
-            int pos = token.pos;
-            nextToken();
-            accept(CLASS);
-            if (token.pos == endPosTable.errorEndPos) {
-                // error recovery
-                Name name = null;
-                if (token.kind == IDENTIFIER) {
-                    name = token.name();
-                    nextToken();
-                } else {
-                    name = names.error;
-                }
-                t = F.at(pos).Erroneous(
-                        List.<JCTree> of(toP(F.at(pos).Select(t, name))));
-            } else {
-                t = toP(F.at(pos).Select(t, names._class));
+    JCExpression suffixCapsuleWiring(JCExpression t) {
+        if ((mode & EXPR) != 0) {
+            if (token.kind == LPAREN) {
+                System.out.println("yup!");
             }
-        } else if ((mode & TYPE) != 0) {
-            mode = TYPE;
-        } else {
-            syntaxError(token.pos, "dot.class.expected");
         }
         return t;
     }
@@ -1248,6 +1204,7 @@ public class SystemParser {
     }
 
     private JCStatement parseStatement() {
+        // TODO: implement parsing of topology expressions, statements and such
         return null;
     }
 
@@ -1356,10 +1313,37 @@ public class SystemParser {
         if (token.kind == RBRACE && peekToken(EOF)) {
             return null;
         }
+        if (isStatementStartingToken(token.kind)) {
+            return parseStatement();
+        } else {
+            boolean isVariableDeclStart = isVariableDeclStart();
+            if (isVariableDeclStart) {
+                JCVariableDecl variableDeclaration = variableDeclaration(true);
+                accept(SEMI);
+                return variableDeclaration;
+            } else {
+                JCExpression expression = parseExpression();
+                accept(SEMI);
+                return to(F.at(token.pos).Exec(checkExprStat(expression)));
+            }
+        }
 
-        JCVariableDecl variableDeclaration = variableDeclaration(true);
-        accept(SEMI);
-        return variableDeclaration;
+    }
+
+    // TODO: repair;
+    private boolean isVariableDeclStart() {
+        return (typetag(token.kind) > 0) || (token.kind == IDENTIFIER)
+                && peekToken(IDENTIFIER) || (token.kind == IDENTIFIER)
+                && peekToken(LBRACKET);
+    }
+
+    /**
+     * @param kind
+     * @return
+     */
+    private boolean isStatementStartingToken(TokenKind kind) {
+        // TODO Auto-generated method stub
+        return false;
     }
 
     /* ---------- auxiliary methods -------------- */
