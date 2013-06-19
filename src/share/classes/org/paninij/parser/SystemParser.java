@@ -32,6 +32,7 @@ import static com.sun.tools.javac.parser.Tokens.TokenKind.ENUM;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.EOF;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.EQ;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.FINAL;
+import static com.sun.tools.javac.parser.Tokens.TokenKind.GT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.GTGTGTEQ;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.HASH;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.IDENTIFIER;
@@ -126,6 +127,7 @@ import com.sun.tools.javac.tree.JCTree.JCAssert;
 import com.sun.tools.javac.tree.JCTree.JCBinary;
 import com.sun.tools.javac.tree.JCTree.JCBlock;
 import com.sun.tools.javac.tree.JCTree.JCBreak;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleArray;
 import com.sun.tools.javac.tree.JCTree.JCCase;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCContinue;
@@ -171,12 +173,12 @@ public class SystemParser {
     /**
      * The scanner used for lexical analysis.
      */
-    protected Lexer S;
+    private Lexer S;
 
     /**
      * The factory to be used for abstract syntax tree construction.
      */
-    protected TreeMaker F;
+    private TreeMaker F;
 
     /**
      * The log to be used for error diagnostics.
@@ -230,7 +232,7 @@ public class SystemParser {
         this.endPosTable = newEndPosTable(endPosTable);
     }
 
-    protected AbstractEndPosTable newEndPosTable(
+    private AbstractEndPosTable newEndPosTable(
             Map<JCTree, Integer> keepEndPositions) {
         return keepEndPositions != null ? new SimpleEndPosTable(
                 keepEndPositions) : new EmptyEndPosTable();
@@ -240,88 +242,88 @@ public class SystemParser {
      * Switch: Should generics be recognized?
      */
     @Deprecated
-    boolean allowGenerics;
+    private boolean allowGenerics;
 
     /**
      * Switch: Should diamond operator be recognized?
      */
     @Deprecated
-    boolean allowDiamond;
+    private boolean allowDiamond;
 
     /**
      * Switch: Should multicatch clause be accepted?
      */
     @Deprecated
-    boolean allowMulticatch;
+    private boolean allowMulticatch;
 
     /**
      * Switch: Should varargs be recognized?
      */
     @Deprecated
-    boolean allowVarargs;
+    private boolean allowVarargs;
 
     /**
      * Switch: should we recognize assert statements, or just give a warning?
      */
-    boolean allowAsserts;
+    private boolean allowAsserts;
 
     /**
      * Switch: should we recognize enums, or just give a warning?
      */
     @Deprecated
-    boolean allowEnums;
+    private boolean allowEnums;
 
     /**
      * Switch: should we recognize foreach?
      */
     @Deprecated
-    boolean allowForeach;
+    private boolean allowForeach;
 
     /**
      * Switch: should we recognize foreach?
      */
     @Deprecated
-    boolean allowStaticImport;
+    private boolean allowStaticImport;
 
     /**
      * Switch: should we recognize annotations?
      */
     @Deprecated
-    boolean allowAnnotations;
+    private boolean allowAnnotations;
 
     /**
      * Switch: should we recognize try-with-resources?
      */
     @Deprecated
-    boolean allowTWR;
+    private boolean allowTWR;
 
     /**
      * Switch: should we fold strings?
      */
     @Deprecated
-    boolean allowStringFolding;
+    private boolean allowStringFolding;
 
     /**
      * Switch: should we recognize lambda expressions?
      */
     @Deprecated
-    boolean allowLambda;
+    private boolean allowLambda;
 
     /**
      * Switch: should we allow method/constructor references?
      */
     @Deprecated
-    boolean allowMethodReferences;
+    private boolean allowMethodReferences;
 
     /**
      * Switch: should we keep docComments?
      */
-    boolean keepDocComments;
+    private boolean keepDocComments;
 
     /**
      * Switch: should we keep line table?
      */
-    boolean keepLineMap;
+    private boolean keepLineMap;
 
     /**
      * When terms are parsed, the mode determines which is expected: mode = EXPR
@@ -346,27 +348,27 @@ public class SystemParser {
 
     /* ---------- token management -------------- */
 
-    protected Token token;
+    private Token token;
 
-    protected void nextToken() {
+    private void nextToken() {
         S.nextToken();
         token = S.token();
     }
 
-    protected boolean peekToken(TokenKind tk) {
+    private boolean peekToken(TokenKind tk) {
         return S.token(1).kind == tk;
     }
 
-    protected boolean peekToken(TokenKind tk1, TokenKind tk2) {
+    private boolean peekToken(TokenKind tk1, TokenKind tk2) {
         return S.token(1).kind == tk1 && S.token(2).kind == tk2;
     }
 
-    protected boolean peekToken(TokenKind tk1, TokenKind tk2, TokenKind tk3) {
+    private boolean peekToken(TokenKind tk1, TokenKind tk2, TokenKind tk3) {
         return S.token(1).kind == tk1 && S.token(2).kind == tk2
                 && S.token(3).kind == tk3;
     }
 
-    protected boolean peekToken(TokenKind... kinds) {
+    private boolean peekToken(TokenKind... kinds) {
         for (int lookahead = 0; lookahead < kinds.length; lookahead++) {
             if (S.token(lookahead + 1).kind != kinds[lookahead]) {
                 return false;
@@ -428,6 +430,7 @@ public class SystemParser {
                 break;
             case IDENTIFIER:
                 // Panini code
+                // TODO: FIXME: remove these;
                 if (token.name().toString().equals("library")
                         || token.name().toString().equals("system")
                         || token.name().toString().equals("capsule")
@@ -529,7 +532,7 @@ public class SystemParser {
      * If next input token matches given token, skip it, otherwise report an
      * error.
      */
-    public void accept(TokenKind tk) {
+    private void accept(TokenKind tk) {
         if (token.kind == tk) {
             nextToken();
         } else {
@@ -541,7 +544,7 @@ public class SystemParser {
     /**
      * Report an illegal start of expression/type error at given position.
      */
-    JCExpression illegal(int pos) {
+    private JCExpression illegal(int pos) {
         setErrorEndPos(pos);
         if ((mode & EXPR) != 0)
             return syntaxError(pos, "illegal.start.of.expr");
@@ -551,12 +554,12 @@ public class SystemParser {
     /**
      * Report an illegal start of expression/type error at current position.
      */
-    JCExpression illegal() {
+    private JCExpression illegal() {
         return illegal(token.pos);
     }
 
     /** Diagnose a modifier flag from the set, if any. */
-    void checkNoMods(long mods) {
+    private void checkNoMods(long mods) {
         if (mods != 0) {
             long lowestMod = mods & -mods;
             error(token.pos, "mod.not.allowed.here", Flags.asFlagSet(lowestMod));
@@ -580,7 +583,7 @@ public class SystemParser {
      * @param dc
      *            The doc comment to associate with the tree, or null.
      */
-    void attach(JCTree tree, String dc) {
+    private void attach(JCTree tree, String dc) {
         if (keepDocComments && dc != null) {
             // System.out.println("doc comment = ");System.out.println(dc);//DEBUG
             docComments.put(tree, dc);
@@ -635,7 +638,7 @@ public class SystemParser {
     /**
      * Ident = IDENTIFIER
      */
-    Name ident() {
+    private Name ident() {
         if (token.kind == IDENTIFIER) {
             Name name = token.name();
             nextToken();
@@ -667,7 +670,7 @@ public class SystemParser {
      * Literal = INTLITERAL | LONGLITERAL | FLOATLITERAL | DOUBLELITERAL |
      * CHARLITERAL | STRINGLITERAL | TRUE | FALSE | NULL
      */
-    JCExpression literal(Name prefix, int pos) {
+    private JCExpression literal(Name prefix, int pos) {
         JCExpression t = errorTree;
         switch (token.kind) {
         case INTLITERAL:
@@ -751,8 +754,7 @@ public class SystemParser {
         return t;
     }
 
-    // where
-    boolean isZero(String s) {
+    private boolean isZero(String s) {
         char[] cs = s.toCharArray();
         int base = ((cs.length > 1 && Character.toLowerCase(cs[1]) == 'x') ? 16
                 : 10);
@@ -762,16 +764,431 @@ public class SystemParser {
         return !(i < cs.length && (Character.digit(cs[i], base) > 0));
     }
 
-    String strval(Name prefix) {
+    private String strval(Name prefix) {
         String s = token.stringVal();
         return prefix.isEmpty() ? s : prefix + s;
     }
 
-    /**
-     * terms can be either expressions or types.
-     */
     public JCExpression parseExpression() {
-        return literal(names.empty);
+        int prevmode = mode;
+        mode = EXPR;
+        JCExpression result = term();
+        lastmode = mode;
+        mode = prevmode;
+        return result;
+    }
+
+    /**
+     * <pre>
+     *  Expression = Expression1 [ExpressionRest]
+     *  ExpressionRest = [AssignmentOperator Expression1]
+     *  AssignmentOperator = "=" | "+=" | "-=" | "*=" | "/=" |
+     *                       "&=" | "|=" | "^=" |
+     *                       "%=" | "<<=" | ">>=" | ">>>="
+     *  Type = Type1
+     *  TypeNoParams = TypeNoParams1
+     *  StatementExpression = Expression
+     *  ConstantExpression = Expression
+     * </pre>
+     */
+    private JCExpression term() {
+        JCExpression t = term1();
+        if ((mode & EXPR) != 0 && token.kind == EQ
+                || PLUSEQ.compareTo(token.kind) <= 0
+                && token.kind.compareTo(GTGTGTEQ) <= 0)
+            return termRest(t);
+        else
+            return t;
+    }
+
+    private JCExpression termRest(JCExpression t) {
+        switch (token.kind) {
+        case EQ: {
+            int pos = token.pos;
+            nextToken();
+            mode = EXPR;
+            JCExpression t1 = term();
+            return toP(F.at(pos).Assign(t, t1));
+        }
+        case PLUSEQ:
+        case SUBEQ:
+        case STAREQ:
+        case SLASHEQ:
+        case PERCENTEQ:
+        case AMPEQ:
+        case BAREQ:
+        case CARETEQ:
+        case LTLTEQ:
+        case GTGTEQ:
+        case GTGTGTEQ:
+            int pos = token.pos;
+            TokenKind tk = token.kind;
+            nextToken();
+            mode = EXPR;
+            JCExpression t1 = term();
+            return F.at(pos).Assignop(optag(tk), t, t1);
+        default:
+            return t;
+        }
+    }
+
+    /**
+     * <pre>
+     *  Expression1   = Expression2 [Expression1Rest]
+     *  Type1         = Type2
+     *  TypeNoParams1 = TypeNoParams2
+     * </pre>
+     */
+    private JCExpression term1() {
+        JCExpression t = term2();
+        if ((mode & EXPR) != 0 && token.kind == QUES) {
+            mode = EXPR;
+            return term1Rest(t);
+        } else {
+            return t;
+        }
+    }
+
+    /**
+     * Expression1Rest = ["?" Expression ":" Expression1]
+     */
+    private JCExpression term1Rest(JCExpression t) {
+        if (token.kind == QUES) {
+            int pos = token.pos;
+            nextToken();
+            JCExpression t1 = term();
+            accept(COLON);
+            JCExpression t2 = term1();
+            return F.at(pos).Conditional(t, t1, t2);
+        } else {
+            return t;
+        }
+    }
+
+    /**
+     * Expression2 = Expression3 [Expression2Rest] Type2 = Type3 TypeNoParams2 =
+     * TypeNoParams3
+     */
+    private JCExpression term2() {
+        JCExpression t = term3();
+        if ((mode & EXPR) != 0 && prec(token.kind) >= TreeInfo.orPrec) {
+            mode = EXPR;
+            return term2Rest(t, TreeInfo.orPrec);
+        } else {
+            return t;
+        }
+    }
+
+    /**
+     * <pre>
+     *    Expression2Rest = {infixop Expression3}
+     * FIXME:remove this | Expression3 instanceof Type
+     *   infixop         = "||"
+     *                   | "&&"
+     *                   | "|"
+     *                   | "^"
+     *                   | "&"
+     *                   | "==" | "!="
+     *                   | "<" | ">" | "<=" | ">="
+     *                   | "<<" | ">>" | ">>>"
+     *                   | "+" | "-"
+     *                   | "*" | "/" | "%"
+     * </pre>
+     */
+    private JCExpression term2Rest(JCExpression t, int minprec) {
+        List<JCExpression[]> savedOd = odStackSupply.elems;
+        JCExpression[] odStack = newOdStack();
+        List<Token[]> savedOp = opStackSupply.elems;
+        Token[] opStack = newOpStack();
+
+        // optimization, was odStack = new Tree[...]; opStack = new Tree[...];
+        int top = 0;
+        odStack[0] = t;
+        int startPos = token.pos;
+        Token topOp = Tokens.DUMMY;
+        while (prec(token.kind) >= minprec) {
+            opStack[top] = topOp;
+            top++;
+            topOp = token;
+            nextToken();
+            odStack[top] = term3();
+            while (top > 0 && prec(topOp.kind) >= prec(token.kind)) {
+                odStack[top - 1] = makeOp(topOp.pos, topOp.kind,
+                        odStack[top - 1], odStack[top]);
+                top--;
+                topOp = opStack[top];
+            }
+        }
+        Assert.check(top == 0);
+        t = odStack[0];
+
+        if (t.hasTag(JCTree.Tag.PLUS)) {
+            StringBuffer buf = foldStrings(t);
+            if (buf != null) {
+                t = toP(F.at(startPos).Literal(TypeTags.CLASS, buf.toString()));
+            }
+        }
+
+        odStackSupply.elems = savedOd; // optimization
+        opStackSupply.elems = savedOp; // optimization
+        return t;
+    }
+
+    /**
+     * Construct a binary or type test node.
+     */
+    private JCExpression makeOp(int pos, TokenKind topOp, JCExpression od1,
+            JCExpression od2) {
+        if (topOp == INSTANCEOF) {
+            return F.at(pos).TypeTest(od1, od2);
+        } else {
+            return F.at(pos).Binary(optag(topOp), od1, od2);
+        }
+    }
+
+    /**
+     * If tree is a concatenation of string literals, replace it by a single
+     * literal representing the concatenated string.
+     */
+    private StringBuffer foldStrings(JCTree tree) {
+        if (!allowStringFolding)
+            return null;
+        List<String> buf = List.nil();
+        while (true) {
+            if (tree.hasTag(LITERAL)) {
+                JCLiteral lit = (JCLiteral) tree;
+                if (lit.typetag == TypeTags.CLASS) {
+                    StringBuffer sbuf = new StringBuffer((String) lit.value);
+                    while (buf.nonEmpty()) {
+                        sbuf.append(buf.head);
+                        buf = buf.tail;
+                    }
+                    return sbuf;
+                }
+            } else if (tree.hasTag(JCTree.Tag.PLUS)) {
+                JCBinary op = (JCBinary) tree;
+                if (op.rhs.hasTag(LITERAL)) {
+                    JCLiteral lit = (JCLiteral) op.rhs;
+                    if (lit.typetag == TypeTags.CLASS) {
+                        buf = buf.prepend((String) lit.value);
+                        tree = op.lhs;
+                        continue;
+                    }
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * optimization: To save allocating a new operand/operator stack for every
+     * binary operation, we use supplys.
+     */
+    private ListBuffer<JCExpression[]> odStackSupply = new ListBuffer<JCExpression[]>();
+    private ListBuffer<Token[]> opStackSupply = new ListBuffer<Token[]>();
+
+    private JCExpression[] newOdStack() {
+        if (odStackSupply.elems == odStackSupply.last)
+            odStackSupply.append(new JCExpression[infixPrecedenceLevels + 1]);
+        JCExpression[] odStack = odStackSupply.elems.head;
+        odStackSupply.elems = odStackSupply.elems.tail;
+        return odStack;
+    }
+
+    private Token[] newOpStack() {
+        if (opStackSupply.elems == opStackSupply.last)
+            opStackSupply.append(new Token[infixPrecedenceLevels + 1]);
+        Token[] opStack = opStackSupply.elems.head;
+        opStackSupply.elems = opStackSupply.elems.tail;
+        return opStack;
+    }
+
+    /**
+     * <pre>
+     *  Expression3    = PrefixOp Expression3
+     *                 | "(" Expr | TypeNoParams ")" Expression3
+     *                 | Primary {Selector} {PostfixOp}
+     *  Primary        = "(" Expression ")"
+     *                 | Literal
+     *                 | [TypeArguments] THIS [Arguments]
+     *                 | [TypeArguments] SUPER SuperSuffix
+     *                 | NEW [TypeArguments] Creator
+     *                 | "(" Arguments ")" "->" ( Expression | Block )
+     *                 | Ident "->" ( Expression | Block )
+     *                 | Ident { "." Ident }
+     *                 | Expression3 MemberReferenceSuffix
+     *                   [ "[" ( "]" BracketsOpt "." CLASS | Expression "]" )
+     *                   | Arguments
+     *                   | "." ( CLASS | THIS | [TypeArguments] SUPER Arguments | NEW [TypeArguments] InnerCreator )
+     *                   ]
+     *                 | BasicType BracketsOpt "." CLASS
+     *  PrefixOp       = "++" | "--" | "!" | "~" | "+" | "-"
+     *  PostfixOp      = "++" | "--"
+     *  Type3          = Ident { "." Ident } [TypeArguments] {TypeSelector} BracketsOpt
+     *                 | BasicType
+     *  TypeNoParams3  = Ident { "." Ident } BracketsOpt
+     *  Selector       = "." [TypeArguments] Ident [Arguments]
+     *                 | "." THIS
+     *                 | "." [TypeArguments] SUPER SuperSuffix
+     *                 | "." NEW [TypeArguments] InnerCreator
+     *                 | "[" Expression "]"
+     *  TypeSelector   = "." Ident [TypeArguments]
+     *  SuperSuffix    = Arguments | "." Ident [Arguments]
+     * </pre>
+     */
+    private JCExpression term3() {
+        int pos = token.pos;
+        JCExpression t = null;
+
+        switch (token.kind) {
+
+        // Unuary operators
+        case PLUSPLUS:
+        case SUBSUB:
+        case BANG:
+        case TILDE:
+        case PLUS:
+        case SUB: {
+            if ((mode & EXPR) != 0) {
+                TokenKind tk = token.kind;
+                nextToken();
+                mode = EXPR;
+                if (tk == SUB
+                        && (token.kind == INTLITERAL || token.kind == LONGLITERAL)
+                        && token.radix() == 10) {
+                    mode = EXPR;
+                    t = literal(names.hyphen, pos);
+                } else {
+                    t = term3();
+                    return F.at(pos).Unary(unoptag(tk), t);
+                }
+            } else
+                return illegal();
+            break;
+        }
+
+        // literals:
+        case INTLITERAL:
+        case LONGLITERAL:
+        case FLOATLITERAL:
+        case DOUBLELITERAL:
+        case CHARLITERAL:
+        case STRINGLITERAL:
+        case TRUE:
+        case FALSE: {
+            if ((mode & EXPR) != 0) {
+                mode = EXPR;
+                t = literal(names.empty);
+            } else
+                return illegal();
+            break;
+        }
+
+        // identifier:
+        case IDENTIFIER: {
+
+            if ((mode & EXPR) != 0) {
+                t = toP(F.at(token.pos).Ident(ident()));
+                loop: while (true) {
+                    pos = token.pos;
+                    // TODO: consider removing this;
+                    switch (token.kind) {
+                    case LBRACKET:
+                        nextToken();
+                        if (token.kind == RBRACKET) {
+                            nextToken();
+                            t = bracketsOpt(t);
+                            t = toP(F.at(pos).TypeArray(t));
+                            t = bracketsSuffix(t);
+                        } else {
+                            if ((mode & EXPR) != 0) {
+                                mode = EXPR;
+                                JCExpression t1 = term();
+                                t = to(F.at(pos).Indexed(t, t1));
+                            }
+                            accept(RBRACKET);
+                        }
+                        break loop;
+                    default:
+                        break loop;
+                    }
+                }
+            }
+            break;
+        }
+
+        // parentheses for nested operations:
+        case LPAREN: {
+            if ((mode & EXPR) != 0) {
+                nextToken();
+                t = parseExpression();
+                accept(RPAREN);
+                lastmode = mode;
+                mode = EXPR;
+                //TODO: add typecasting
+            } else {
+                return illegal();
+            }
+            t = toP(F.at(pos).Parens(t));
+            break;
+        }
+
+        default:
+            return illegal();
+        }
+
+        return t;
+    }
+
+    /**
+     * BracketsOpt = {"[" "]"}
+     */
+    private JCExpression bracketsOpt(JCExpression t) {
+        if (token.kind == LBRACKET) {
+            int pos = token.pos;
+            nextToken();
+            t = bracketsOptCont(t, pos);
+            F.at(pos);
+        }
+        return t;
+    }
+
+    private JCArrayTypeTree bracketsOptCont(JCExpression t, int pos) {
+        accept(RBRACKET);
+        t = bracketsOpt(t);
+        return toP(F.at(pos).TypeArray(t));
+    }
+
+    /**
+     * BracketsSuffixExpr = "." CLASS BracketsSuffixType =
+     */
+    // TODO: replace this with capsule wiring statement;
+    JCExpression bracketsSuffix(JCExpression t) {
+        if ((mode & EXPR) != 0 && token.kind == DOT) {
+            mode = EXPR;
+            int pos = token.pos;
+            nextToken();
+            accept(CLASS);
+            if (token.pos == endPosTable.errorEndPos) {
+                // error recovery
+                Name name = null;
+                if (token.kind == IDENTIFIER) {
+                    name = token.name();
+                    nextToken();
+                } else {
+                    name = names.error;
+                }
+                t = F.at(pos).Erroneous(
+                        List.<JCTree> of(toP(F.at(pos).Select(t, name))));
+            } else {
+                t = toP(F.at(pos).Select(t, names._class));
+            }
+        } else if ((mode & TYPE) != 0) {
+            mode = TYPE;
+        } else {
+            syntaxError(token.pos, "dot.class.expected");
+        }
+        return t;
     }
 
     public JCExpression parseType() {
@@ -780,7 +1197,7 @@ public class SystemParser {
         if (token.kind == IDENTIFIER) {
             Name typeName = ident();
             vartype = F.at(token.pos).Ident(typeName);
-            if (acceptableTypeForNormalArray(typeName)) {
+            if (isAcceptableTypeForNormalArray(typeName)) {
                 vartype = parseArrayTypeOptional(vartype);
             } else {
                 vartype = parseCapsuleArrayTypeOptional(vartype);
@@ -794,17 +1211,21 @@ public class SystemParser {
 
     /**
      * We have to differentiate capsule arrays and other arrays.
-     * @return
      */
-    private boolean acceptableTypeForNormalArray(Name typeName) {
+    private boolean isAcceptableTypeForNormalArray(Name typeName) {
         ListBuffer<String> acc = new ListBuffer<String>();
         acc.add("String");
         return acc.contains(typeName.toString());
     }
 
     private JCExpression parseCapsuleArrayTypeOptional(JCExpression vartype) {
-        // TODO Auto-generated method stub
-        return null;
+        if (token.kind == LBRACKET) {
+            nextToken();
+            JCExpression sizeExpression = parseExpression();
+            accept(RBRACKET);
+            return toP(F.at(token.pos).CapsuleArray(vartype, sizeExpression));
+        }
+        return vartype;
     }
 
     private JCExpression parseArrayTypeOptional(JCExpression vartype) {
@@ -943,30 +1364,30 @@ public class SystemParser {
 
     /* ---------- auxiliary methods -------------- */
     // TODO: replace all of these
-    void rawError(String msg) {
+    private void rawError(String msg) {
         log.rawError(token.pos, msg);
     }
 
-    void rawError(int pos, String msg) {
+    private void rawError(int pos, String msg) {
         log.rawError(pos, msg);
     }
 
-    void error(int pos, String key, Object... args) {
+    private void error(int pos, String key, Object... args) {
         log.error(DiagnosticFlag.SYNTAX, pos, key, args);
     }
 
-    void error(DiagnosticPosition pos, String key, Object... args) {
+    private void error(DiagnosticPosition pos, String key, Object... args) {
         log.error(DiagnosticFlag.SYNTAX, pos, key, args);
     }
 
-    void warning(int pos, String key, Object... args) {
+    private void warning(int pos, String key, Object... args) {
         log.warning(pos, key, args);
     }
 
     /**
      * Check that given tree is a legal expression statement.
      */
-    protected JCExpression checkExprStat(JCExpression t) {
+    private JCExpression checkExprStat(JCExpression t) {
         switch (t.getTag()) {
         case PREINC:
         case PREDEC:
@@ -1282,7 +1703,7 @@ public class SystemParser {
 
     }
 
-    protected abstract class AbstractEndPosTable implements EndPosTable {
+    private abstract class AbstractEndPosTable implements EndPosTable {
 
         /**
          * Store the last error position.

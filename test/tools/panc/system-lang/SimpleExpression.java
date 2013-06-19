@@ -31,7 +31,17 @@ system SimpleExpression(String[] args){
     int thirtyThree = 33;
     byte by;
     long l;
-    long la;
+    long[] la;
+    boolean test = false;
     String sA;
+    M[42] ms;
+    M[fortyTwo] m42;
+    
+    int incVal = ++fortyTwo;
+    
+    int newLong = la[42];
+    
+    int plus = 42 + (fortyTwo == (2 - 32)) - 11;
+    
 }
 
