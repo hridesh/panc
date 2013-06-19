@@ -227,12 +227,18 @@ public final class Attr extends CapsuleInternal {
 			}
 		}
 		
+		// TODO: Can this be done with a completer?
 		ListBuffer<Type> wiringSig = new ListBuffer<Type>();
-		for(List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail) {
+		List<JCVariableDecl> sps = ((CapsuleSymbol)tree.sym).capsuleParameters;
+		for(List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail, sps = sps.tail) {
 		    Symbol psym = tree.sym.members_field.lookup(l.head.name).sym;
 		    if(psym.kind == VAR) {
 		        l.head.sym = (VarSymbol)psym;
+		        l.head.type = psym.type;
 		        wiringSig.add(psym.type);
+
+		        sps.head.sym = l.head.sym;
+		        sps.head.type = psym.type;
 		    } else {
 		        //FIXME Error message.
 		        log.rawError(l.head.pos, "Could not find a symbol for parameter " + l.head);
