@@ -773,20 +773,29 @@ public class Attr extends JCTree.Visitor {
     @Override
     public void visitCapsuleWiring(JCCapsuleWiring tree) {
         Env<AttrContext> localEnv = env.dup(tree, env.info.dup());
-        List<Type> argTypes = attribArgs(tree.args, localEnv);
-        WiringType wpt = new WiringType(argTypes, null);
-        tree.type = attribExpr(tree.capsule, localEnv, wpt);
+        List<Type> argtypes = attribArgs(tree.args, localEnv);
+        Type owntype = attribExpr(tree.capsule, localEnv);
+        result = checkWiring(owntype, tree.args, argtypes);
+        //tree.type = result;
     }
 
     @Override
     public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
-        Env<AttrContext> localEnv = env.dup(tree, env.info.dup());
-        attribExpr(tree.index, localEnv, syms.intType);
-        List<Type> argTypes = attribArgs(tree.arguments, localEnv);
-        WiringType wpt = new WiringType(argTypes, null);
-        tree.type = attribExpr(tree.indexed, localEnv, wpt);
+        attribExpr(tree.index, env, syms.intType);
+        Type owntype = types.createErrorType(tree.type);
+        Type atype   = attribExpr(tree.indexed, env);
+        if( types.isArray(atype) ) {
+            owntype = types.elemtype(atype);
+        } else {
+            //FIXME!
+            log.error(tree.pos(), "capusle array requiring", atype);
+        }
 
-        checkIndexedWiring(tree.indexed, tree.arguments, env);
+        List<Type> argtypes = attribArgs(tree.arguments, env);
+        result = checkWiring(owntype, tree.arguments, argtypes);
+        tree.type = result;
+
+        System.err.println("Checking the index bounds " + tree.index);
     }
 
     @Override
