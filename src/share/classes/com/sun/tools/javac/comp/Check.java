@@ -2928,6 +2928,29 @@ public class Check {
             return true;
         }
 
+    // Panini code
+    /**
+     * Check a wiring expression/stmt formal types match the actual.
+     * @param owntype the wiringtype
+     * @param argtrees the actual argument expression trees
+     * @param argtypes the actual argument types
+     * @return
+     */
+    public Type checkWiring(Type owntype, List<JCExpression> argtrees, List<Type> argtypes) {
+        List<JCExpression> args = argtrees;
+        List<Type> formals = owntype.getParameterTypes();
+        Type last = formals.last();
+        while ( formals.nonEmpty() ) {
+            JCTree arg = args.head;
+            Warner warn = convertWarner(arg.pos(), arg.type, formals.head);
+            assertConvertible(arg, arg.type, formals.head, warn);
+            args = args.tail;
+            formals = formals.tail;
+        }
+        return owntype;
+    }
+    // end Panini code
+
     private class ConversionWarner extends Warner {
         final String uncheckedKey;
         final Type found;

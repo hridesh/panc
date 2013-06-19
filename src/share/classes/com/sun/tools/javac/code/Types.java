@@ -2202,6 +2202,18 @@ public class Types {
             public Boolean visitErrorType(ErrorType t, Type s) {
                 return false;
             }
+
+            // Panini code
+
+            public Boolean visitWiringType(WiringType t, Type s) {
+                if(s.tag != org.paninij.code.TypeTags.CAPSULE_WIRING) {
+                    return false;
+                }
+                WiringType other = (WiringType) s;
+                return containsType(t.getWiringTypes(), other.getWiringTypes());
+
+            }
+            // end Panini code
         };
 
         TypeRelation hasSameArgs_strict = new HasSameArgs(true);
