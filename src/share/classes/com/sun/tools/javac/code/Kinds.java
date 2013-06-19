@@ -96,6 +96,9 @@ public class Kinds {
     // end Panini code
 
     public enum KindName implements Formattable {
+        // Panini code
+        CAPSULE_WIRING("kindname.panini.capsule_wiring"),
+        // end Panini code
         ANNOTATION("kindname.annotation"),
         CONSTRUCTOR("kindname.constructor"),
         INTERFACE("kindname.interface"),
@@ -231,6 +234,10 @@ public class Kinds {
             return KindName.METHOD;
         case ABSENT_TYP:
             return KindName.CLASS;
+        // Panini code
+        case ABSENT_WIRE:
+            return KindName.CAPSULE_WIRING;
+        // end Panini code
         default:
             throw new AssertionError("Unexpected kind: "+kind);
         }

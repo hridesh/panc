@@ -1710,7 +1710,7 @@ public class Resolve {
             Name name,
             List<Type> argtypes ) {
         Symbol bestSoFar = wiringNotFound;
-
+        Type site = env.enclClass.sym.type;
 
         for (Scope.Entry e = env.info.scope.lookup(name);
                 e.scope != null;
@@ -1722,7 +1722,7 @@ public class Resolve {
                 //If we ever add more wiring expression types,
                 //this will need to be expanded.
                 try {
-                    Type mt = rawInstantiate(env, env.enclClass.sym.type, sym, argtypes, List.<Type>nil(),
+                    Type mt = rawInstantiate(env, site, sym, argtypes, List.<Type>nil(),
                             //FIXME: Pass in allowBoxing from somewhere.
                             true, false, Warner.noWarnings);
                     if (mt.tsym instanceof CapsuleSymbol) {
@@ -1730,12 +1730,13 @@ public class Resolve {
                         bestSoFar = cs.wiringSym;
                     }
                 } catch (InapplicableMethodException ex) {
-                    return bestSoFar;
+                    //Nothing to be done.
                 }
             }
         }
 
-        return bestSoFar;
+        //Make sure we can access the symbol. Will cause an error, if wiring resolution failed.
+        return access(bestSoFar, pos, site, name, false, argtypes, List.<Type>nil());
     }
     // end Panini code
 
