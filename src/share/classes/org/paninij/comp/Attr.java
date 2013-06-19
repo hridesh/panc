@@ -243,9 +243,8 @@ public final class Attr extends CapsuleInternal {
 		        sps.head.sym = l.head.sym;
 		        sps.head.type = psym.type;
 		    } else {
-		        //FIXME Error message.
-		        log.rawError(l.head.pos, "Could not find a symbol for parameter " + l.head);
-		        wiringSig.add(null); //FIXME: Unknown symbol?
+		        log.error(l.head.pos, "symbol.not.found");
+		        wiringSig.add(null);
 		    }
 		}
 

@@ -724,16 +724,23 @@ public class Attr extends JCTree.Visitor {
     }
     
     // Panini code
-    Type checkWiring(Type owntype, List<JCExpression> argtrees, List<Type> argtypes) {
-        //TODO-XXX Instanceof check.
-        if( owntype.tsym instanceof CapsuleSymbol ){
-            CapsuleSymbol ownsym = (CapsuleSymbol)owntype.tsym;
+    Type checkWiring(DiagnosticPosition pos, JCExpression capsule, Type owntype, List<JCExpression> argtrees, List<Type> argtypes) {
+        if(!syms.capsules.containsKey(owntype.tsym.name)) {
+            log.error(capsule.pos(), "only.capsule.types.allowed");
+            return types.createErrorType(owntype);
+        }
 
-            //FIXME: Wrong number of args check.
+        if(owntype.tsym instanceof CapsuleSymbol){
+            CapsuleSymbol ownsym = (CapsuleSymbol)owntype.tsym;
 
             List<Type> wt = ownsym.wiringSym.type.getParameterTypes();
             List<JCExpression> as = argtrees;
             List<Type> ats = argtypes;
+
+            if(wt.size() != as.size()) {
+                log.error(pos, "wiring.args.count.mismatch", wt.size(), as.size());
+            }
+
             while(wt.nonEmpty()){
                 check(as.head, ats.head, VAL, new ResultInfo(VAL, wt.head));
 
@@ -744,6 +751,7 @@ public class Attr extends JCTree.Visitor {
 
             return ownsym.wiringSym.type;
         } else {
+            log.error(capsule.pos(), "invalid.capsule.type1", owntype);
             return types.createErrorType(owntype);
         }
     }
@@ -773,10 +781,10 @@ public class Attr extends JCTree.Visitor {
     @Override
     public void visitCapsuleWiring(JCCapsuleWiring tree) {
         Env<AttrContext> localEnv = env.dup(tree, env.info.dup());
-        List<Type> argtypes = attribArgs(tree.args, localEnv);
         Type owntype = attribExpr(tree.capsule, localEnv);
-        result = checkWiring(owntype, tree.args, argtypes);
-        //tree.type = result;
+        List<Type> argtypes = attribArgs(tree.args, localEnv);
+        result = checkWiring(tree.pos(), tree.capsule, owntype, tree.args, argtypes);
+        tree.type = result;
     }
 
     @Override
@@ -786,13 +794,15 @@ public class Attr extends JCTree.Visitor {
         Type atype   = attribExpr(tree.indexed, env);
         if( types.isArray(atype) ) {
             owntype = types.elemtype(atype);
+            if(!syms.capsules.containsKey(owntype.tsym.name)) {
+                log.error(tree.pos(), "only.capsule.types.allowed");
+            }
         } else {
-            //FIXME!
-            log.error(tree.pos(), "capusle array requiring", atype);
+            log.error(tree.pos(), "array.req.but.found", atype);
         }
 
         List<Type> argtypes = attribArgs(tree.arguments, env);
-        result = checkWiring(owntype, tree.arguments, argtypes);
+        result = checkWiring(tree.pos(), tree.indexed, owntype, tree.arguments, argtypes);
         tree.type = result;
 
         System.err.println("Checking the index bounds " + tree.index);
