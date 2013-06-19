@@ -1638,6 +1638,8 @@ public class JavacParser implements Parser {
     // Panini code
     /** BracketsOpt = {"[" "]"}
      */
+    //TODO: remove
+    @Deprecated
     private JCExpression systemBracketsOpt(JCExpression t) {
         if (token.kind == LBRACKET) {
             int pos = token.pos;
@@ -1660,7 +1662,7 @@ public class JavacParser implements Parser {
                     System.exit(5555);
                 }
                 accept(RBRACKET);
-                return toP(F.at(pos).CapsuleArray(t, ((Integer)((JCLiteral)sizeTree).value).intValue()));
+                return null;//toP(F.at(pos).CapsuleArray(t, ((Integer)((JCLiteral)sizeTree).value).intValue()));
             }
     }
     // end Panini code

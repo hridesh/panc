@@ -558,7 +558,7 @@ public class Pretty extends JCTree.Visitor {
         JCTree elem;
         while (true) {
             elem = tree.elemtype;
-            print("[" + tree.amount + "]");
+            print("[" + tree.sizeExpr.toString() + "]");
             if (!elem.hasTag(CAPSULEARRAY)) break;
             tree = (JCCapsuleArray) elem;
         }

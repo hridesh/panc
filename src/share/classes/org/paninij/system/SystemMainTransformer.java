@@ -465,9 +465,9 @@ public class SystemMainTransformer extends TreeTranslator {
         if(c==null){
             log.error(vdecl.pos(), "capsule.array.type.error", mat.elemtype);
         }
-        systemGraphBuilder.addMultipleNodes(sysGraph, vdecl.name, mat.amount, c);
+        systemGraphBuilder.addMultipleNodes(sysGraph, vdecl.name, mat.size, c);
         JCNewArray s= make.NewArray(make.Ident(c.type.tsym),
-                List.<JCExpression>of(make.Literal(mat.amount)), null);
+                List.<JCExpression>of(make.Literal(mat.size)), null);
         JCVariableDecl newArray =
                 make.VarDef(make.Modifiers(0),
                         vdecl.name, make.TypeArray(make.Ident(c.type.tsym)), s);
@@ -498,7 +498,7 @@ public class SystemMainTransformer extends TreeTranslator {
                         make.Block(0, loopBody.toList()));
         assigns.append(floop);
         if(c.definedRun){
-            for(int j = mat.amount-1; j>=0;j--){
+            for(int j = mat.size-1; j>=0;j--){
                 if(tree.activeCapsuleCount==0)
                     starts.append(make.Exec(make.Apply(List.<JCExpression>nil(),
                             make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("run")),
@@ -514,28 +514,28 @@ public class SystemMainTransformer extends TreeTranslator {
                                             names.fromString("e"), make.Ident(names.fromString("InterruptedException")),
                                             null), make.Block(0, List.<JCStatement>nil()))), null));
                 }
-                tree.activeCapsuleCount += mat.amount;
+                tree.activeCapsuleCount += mat.size;
             }
         }
         else{
-            for(int j = mat.amount-1; j>=0;j--){
+            for(int j = mat.size-1; j>=0;j--){
                 starts.prepend(make.Exec(make.Apply(List.<JCExpression>nil(),
                         make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString(PaniniConstants.PANINI_START)),
                         List.<JCExpression>nil())));
             }
-            for(int j=0; j<mat.amount;j++){
+            for(int j=0; j<mat.size;j++){
                 submits.append(make.Exec(make.Apply(List.<JCExpression>nil(),
                         make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
                                 names.fromString(PaniniConstants.PANINI_SHUTDOWN)), List.<JCExpression>nil())));
             }
         }
-        //                  for(int j = 0; j<mat.amount; j++)
+        //                  for(int j = 0; j<mat.size; j++)
         //                      tree.defs = tree.defs.append(createOwnerInterface(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j));
 
         variables.put(vdecl.name, c.name);
         if(c.capsuleParameters.nonEmpty())
             capsulesToWire.add(vdecl.name);
-        modArrays.put(vdecl.name, mat.amount);
+        modArrays.put(vdecl.name, mat.size);
     }
 
     private void processCapsuleDef(JCSystemDecl tree, JCVariableDecl vdecl) {

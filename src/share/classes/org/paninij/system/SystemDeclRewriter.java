@@ -386,7 +386,7 @@ public class SystemDeclRewriter extends TreeTranslator {
         Name arrayName = getCapsuleArrayName(array);
         JCVariableDecl arrayAST = varDefToAstNodeEnv.lookup(arrayName);
         assert (arrayAST.vartype instanceof JCCapsuleArray) : "wireall expects capsule arrays as the first element";
-        int capsuleArraySize = ((JCCapsuleArray) arrayAST.vartype).amount;
+        int capsuleArraySize = ((JCCapsuleArray) arrayAST.vartype).size;
         assert (capsuleArraySize > 0) : "capsule array sizes should always be > 0; something went wrong";
         return capsuleArraySize;
     }
@@ -395,7 +395,7 @@ public class SystemDeclRewriter extends TreeTranslator {
         Name arrayName = getIdentifierName(array);
         JCVariableDecl arrayAST = varDefToAstNodeEnv.lookup(arrayName);
         assert (arrayAST.vartype instanceof JCCapsuleArray) : "wireall expects capsule arrays as the first element";
-        int capsuleArraySize = ((JCCapsuleArray) arrayAST.vartype).amount;
+        int capsuleArraySize = ((JCCapsuleArray) arrayAST.vartype).size;
         assert (capsuleArraySize > 0) : "capsule array sizes should always be > 0; something went wrong";
         return capsuleArraySize;
     }

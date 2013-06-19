@@ -191,8 +191,8 @@ public class TreeMaker implements JCTree.Factory {
 		return tree;
 	}
 
-	public JCCapsuleArray CapsuleArray(JCExpression elemtype, int amount) {
-		JCCapsuleArray tree = new JCCapsuleArray(elemtype, amount);
+	public JCCapsuleArray CapsuleArray(JCExpression elemtype, JCExpression sizeExpr) {
+		JCCapsuleArray tree = new JCCapsuleArray(elemtype, sizeExpr);
 		tree.pos = pos;
 		return tree;
 	}

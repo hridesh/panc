@@ -836,16 +836,18 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 	public static class JCCapsuleArray extends JCArrayTypeTree implements
 			CapsuleArrayTree {
 
-		public int amount;
+		public int size;
+        public JCExpression sizeExpr;
 
-		public JCCapsuleArray(JCExpression elemtype, int amount) {
+		public JCCapsuleArray(JCExpression elemtype, JCExpression sizeExpr) {
 			super(elemtype);
-			this.amount = amount;
+            this.sizeExpr = sizeExpr;
+			this.size = -1;
 		}
 
 		@Override
 		public int getAmount() {
-			return this.amount;
+			return this.size;
 		}
 
 		@Override

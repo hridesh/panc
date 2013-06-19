@@ -489,7 +489,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 	public JCTree visitCapsuleArray(CapsuleArrayTree node, P p) {
     	JCCapsuleArray t = (JCCapsuleArray) node;
         JCExpression elemtype = copy(t.elemtype, p);
-        return M.at(t.pos).CapsuleArray(elemtype, t.getAmount());
+        return M.at(t.pos).CapsuleArray(elemtype, t.sizeExpr);
 	}
     
 	public JCTree visitSystem(SystemTree node, P p) {
