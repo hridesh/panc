@@ -56,6 +56,7 @@ import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.code.Type.MethodType;
+import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.*;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
@@ -84,11 +85,13 @@ public final class Attr extends CapsuleInternal {
 	Annotate annotate;
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
+	Types types;
 
-    public Attr(TreeMaker make, Names names, Enter enter,
+    public Attr(TreeMaker make, Names names, Types types, Enter enter,
             MemberEnter memberEnter, Symtab syms, Log log,
             Annotate annotate) {
         super(make, names, enter, memberEnter, syms);
+        this.types = types;
         this.log = log;
         this.annotate = annotate;
         this.annotationProcessor = new AnnotationProcessor(names, make, log);
@@ -296,7 +299,7 @@ public final class Attr extends CapsuleInternal {
         SystemDeclRewriter interp = new SystemDeclRewriter(make, log, names);
         tree = interp.rewrite(tree);
 
-        SystemMainTransformer mt = new SystemMainTransformer(syms, names, log,
+        SystemMainTransformer mt = new SystemMainTransformer(syms, names, types, log,
                 rs, env, make, systemGraphBuilder);
         tree = mt.translate(tree);
 

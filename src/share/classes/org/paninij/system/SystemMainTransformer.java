@@ -44,6 +44,7 @@ import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
+import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.Resolve;
@@ -71,6 +72,7 @@ import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
 import com.sun.tools.javac.tree.JCTree.JCUnary;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.Tag;
+import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
@@ -98,6 +100,7 @@ public class SystemMainTransformer extends TreeTranslator {
 
     final Symtab syms;
     final Names names;
+    final Types types;
     final Log log;
     public final SystemGraph sysGraph;
     final HashSet<Name> capsulesToWire = new HashSet<Name>();
@@ -112,11 +115,12 @@ public class SystemMainTransformer extends TreeTranslator {
      */
     JCSystemDecl systemDecl;
 
-    public SystemMainTransformer(Symtab syms, Names names, Log log,
+    public SystemMainTransformer(Symtab syms, Names names, Types types, Log log,
             Resolve rs, Env<AttrContext> env,
             TreeMaker make, SystemGraphBuilder builder) {
         this.syms = syms;
         this.names = names;
+        this.types = types;
         this.log = log;
         this.rs = rs;
         this.env = env;
@@ -372,73 +376,73 @@ public class SystemMainTransformer extends TreeTranslator {
 
     private List<JCStatement> transWiring(final JCCapsuleWiring mi, Env<AttrContext> env, boolean forEachLoop){
         CapsuleSymbol c = null;
+        //A 'fresh' identifier for the translated wiring.
+        //Creating a fresh one ensures the expression will be
+        //typed/attributed correctly.
+        JCIdent capId = null;
         if(mi.capsule.hasTag(Tag.IDENT)) {
             JCIdent mId = (JCIdent)mi.capsule;
             capsulesToWire.remove(mId.name);
-
             Symbol s = rs.findType(env, variables.get(mId.name) );
             
             if (s.kind == Kinds.TYP) {
                 c = (CapsuleSymbol)s;
             } else {
-                //FIXME uknown type error
-                log.error("Unknown type for ", mi.capsule);
-                return List.<JCStatement>nil(); // there's a problem here.
+                Assert.error("Unknown type for " + mi.capsule);
             }
+
+            capId = make.at(mId.pos()).Ident(mId.name);
         } else {
-            //FIXME: Error message.
-            log.error("unknown object to wire", mi.capsule);
-            return List.<JCStatement>nil(); // there's a problem here.
+            Assert.error("unknown object to wire " + mi.capsule);
         }
 
         ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
 
-        for (int j = 0; j < mi.args.length(); j++) {
-            String param = "";
-            if(c.capsuleParameters.get(j).vartype.toString().contains("[")){
-                param = c.capsuleParameters.get(j).vartype.toString().substring(0, c.capsuleParameters.get(j).vartype.toString().indexOf("["));
-            }else
-                param = c.capsuleParameters.get(j).vartype.toString();
-            if(syms.capsules.containsKey(names.fromString(param))){//if its a capsule type
-                if(mi.args.get(j).toString().equals("null")){
-                    log.error(mi.args.get(j).pos(), "capsule.null.declare");
+        List<JCVariableDecl> cparams = c.capsuleParameters;
+        List<JCExpression> args = mi.args;
+        for(; cparams.nonEmpty();
+                cparams = cparams.tail,
+                args = args.tail) {
+            if(syms.capsules.containsKey(cparams.head.type.tsym.name)){//if its a capsule type
+                if(args.head.toString().equals("null")){
+                    log.error(args.head.pos(), "capsule.null.declare");
                 }else{
                     String argument = "";
-                    if(mi.args.get(j).toString().contains("[")){
-                        argument = mi.args.get(j).toString().substring(0, mi.args.get(j).toString().indexOf("["));
+                    if(types.isArray(args.head.type)){
+                        Assert.error("NAME NOT TYPE!");
+                        argument = types.elemtype(args.head.type).toString();
                     }else
-                        argument = mi.args.get(j).toString();
-                    if(mi.args.get(j).getTag()!=Tag.NEWARRAY)
+                        argument = args.head.toString();
+                    if(args.head.getTag()!=Tag.NEWARRAY)
                         if(variables.get(names.fromString(argument))==null){
-                            log.error(mi.args.get(j).pos, "symbol.not.found");
+                            Assert.error(args.head + " symbol not found");
+                            //log.error(args.head.pos, "symbol.not.found");
                         }
                 }
             }
             JCAssign newAssign = make
                     .at(mi.pos())
-                    .Assign(make.Select(make.TypeCast(make.Ident(c), mi.capsule),
-                            c.capsuleParameters.get(j)
-                            .getName()), mi.args.get(j));
+                    .Assign(make.Select(make.TypeCast(make.Ident(c), capId),
+                                        cparams.head.name),
+                            args.head);
             JCExpressionStatement assignAssign = make
                     .Exec(newAssign);
             assigns.append(assignAssign);
             if(!forEachLoop){
-                if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
-                    if(mi.args.get(j).getTag()!=Tag.NEWARRAY)
+                if(cparams.head.vartype.getTag()== Tag.TYPEARRAY){
+                    if(args.head.getTag()!=Tag.NEWARRAY)
                         if(syms.capsules.containsKey(names
-                                .fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
+                                .fromString(((JCArrayTypeTree)cparams.head.vartype).elemtype
                                         .toString())))
                             systemGraphBuilder.addConnectionsOneToMany(sysGraph,
-                                    names.fromString(mi.capsule.toString()), c.capsuleParameters.get(j).getName(),
-                                    names.fromString(mi.args.get(j).toString()));
+                                    names.fromString(mi.capsule.toString()), cparams.head.getName(),
+                                    names.fromString(args.head.toString()));
                 }
-                if (syms.capsules.containsKey(names
-                        .fromString(c.capsuleParameters.get(j).vartype
-                                .toString()))) {
+                if (syms.capsules.containsKey(names.fromString(cparams.head.vartype.toString()))) {
                     systemGraphBuilder.addConnection(sysGraph,
                             names.fromString(mi.capsule.toString()),
-                            c.capsuleParameters.get(j).getName(),
-                            names.fromString(mi.args.get(j).toString()));
+                            cparams.head.getName(),
+                            names.fromString(args.head.toString()));
                 }
             }
         }
