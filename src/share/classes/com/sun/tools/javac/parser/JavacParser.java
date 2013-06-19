@@ -3063,6 +3063,17 @@ public class JavacParser implements Parser {
         this.mode = result.mode;
         this.lastmode = result.lastMode;
     }
+    
+    private JCStatement computeResultWithNewParser(JCModifiers mods, String dc){
+        SystemParser systemParser = new SystemParser(F, log, names, source, S, keepDocComments, keepLineMap, getInitialEndPosTable(), token, mode,this.lastmode);
+        SystemParserResult result = systemParser.parseSystemDecl(mods, dc);
+
+//        System.out.println(result.systemDeclaration);
+//        System.out.println("\n args: " + (result.systemDeclaration.params.head == null ? "" : result.systemDeclaration.params.head.toString()));
+        
+        restoreParserState(result);
+        return result.systemDeclaration;
+    }
     // end Panini code
 
     /** ClassOrInterfaceOrEnumDeclaration = ModifiersOpt
@@ -3078,10 +3089,7 @@ public class JavacParser implements Parser {
         } // Panini code
         else if(token.kind == IDENTIFIER){
         	if(token.name().toString().equals("system")){
-        	    SystemParser systemParser = new SystemParser(F, log, names, source, S, keepDocComments, keepLineMap, getInitialEndPosTable(), token, mode,this.lastmode);
-        	    SystemParserResult result = systemParser.parseSystemBlock(mods, dc);
-        	    restoreParserState(result);
-                return result.systemDeclaration;
+        	    return computeResultWithNewParser(mods, dc);
 //        	    return systemDecl(mods, dc);
         	}
          	else if(token.name().toString().equals("capsule")) 

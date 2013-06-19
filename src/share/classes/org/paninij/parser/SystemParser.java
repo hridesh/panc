@@ -106,6 +106,7 @@ import java.util.Map;
 
 import org.paninij.parser.SystemParser.SystemParserResult;
 
+import com.sun.corba.se.spi.ior.MakeImmutable;
 import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
 import com.sun.source.tree.Tree.Kind;
 import com.sun.tools.javac.code.Flags;
@@ -132,6 +133,7 @@ import com.sun.tools.javac.tree.JCTree.JCDoWhileLoop;
 import com.sun.tools.javac.tree.JCTree.JCErroneous;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
+import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
 import com.sun.tools.javac.tree.JCTree.JCManyToOne;
 import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
@@ -148,6 +150,7 @@ import com.sun.tools.javac.util.Convert;
 import com.sun.tools.javac.util.JCDiagnostic;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
+import com.sun.tools.javac.util.RichDiagnosticFormatter.RichConfiguration.RichFormatterFeature;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
@@ -160,19 +163,23 @@ import com.sun.tools.javac.util.Position;
  * @since panini-0.9.2
  */
 public class SystemParser {
-    /** The number of precedence levels of infix operators.
+    /**
+     * The number of precedence levels of infix operators.
      */
     private static final int infixPrecedenceLevels = 10;
 
-    /** The scanner used for lexical analysis.
+    /**
+     * The scanner used for lexical analysis.
      */
     protected Lexer S;
 
-    /** The factory to be used for abstract syntax tree construction.
+    /**
+     * The factory to be used for abstract syntax tree construction.
      */
     protected TreeMaker F;
 
-    /** The log to be used for error diagnostics.
+    /**
+     * The log to be used for error diagnostics.
      */
     private Log log;
 
@@ -184,17 +191,18 @@ public class SystemParser {
 
     /** End position mappings container */
     private final AbstractEndPosTable endPosTable;
-    
-    /** Construct a parser from a given scanner, tree factory and log.
-     * @param initialToken 
-     * @param lastmode 
-     * @param mode 
+
+    /**
+     * Construct a parser from a given scanner, tree factory and log.
+     * 
+     * @param initialToken
+     * @param lastmode
+     * @param mode
      */
-    public SystemParser(TreeMaker F, Log log, Names names, Source source, 
-                     Lexer S,
-                     boolean keepDocComments,
-                     boolean keepLineMap,
-                     Map<JCTree, Integer> endPosTable, Token initialToken, int mode, int lastmode) {
+    public SystemParser(TreeMaker F, Log log, Names names, Source source,
+            Lexer S, boolean keepDocComments, boolean keepLineMap,
+            Map<JCTree, Integer> endPosTable, Token initialToken, int mode,
+            int lastmode) {
         this.S = S;
         this.F = F;
         this.log = log;
@@ -211,99 +219,114 @@ public class SystemParser {
         this.allowDiamond = source.allowDiamond();
         this.allowMulticatch = source.allowMulticatch();
         this.keepDocComments = keepDocComments;
-        docComments = keepDocComments ? new HashMap<JCTree,String>() : null;
+        docComments = keepDocComments ? new HashMap<JCTree, String>() : null;
         this.keepLineMap = keepLineMap;
         this.errorTree = F.Erroneous();
-        
-        //recreate state:
+
+        // recreate state:
         this.token = initialToken;
         this.mode = mode;
         this.lastmode = lastmode;
         this.endPosTable = newEndPosTable(endPosTable);
     }
 
-    protected AbstractEndPosTable newEndPosTable(Map<JCTree, Integer> keepEndPositions) {
-        return  keepEndPositions != null
-                ? new SimpleEndPosTable(keepEndPositions)
-                : new EmptyEndPosTable();
+    protected AbstractEndPosTable newEndPosTable(
+            Map<JCTree, Integer> keepEndPositions) {
+        return keepEndPositions != null ? new SimpleEndPosTable(
+                keepEndPositions) : new EmptyEndPosTable();
     }
-    /** Switch: Should generics be recognized?
+
+    /**
+     * Switch: Should generics be recognized?
      */
     @Deprecated
     boolean allowGenerics;
 
-    /** Switch: Should diamond operator be recognized?
+    /**
+     * Switch: Should diamond operator be recognized?
      */
     @Deprecated
     boolean allowDiamond;
 
-    /** Switch: Should multicatch clause be accepted?
+    /**
+     * Switch: Should multicatch clause be accepted?
      */
     @Deprecated
     boolean allowMulticatch;
 
-    /** Switch: Should varargs be recognized?
+    /**
+     * Switch: Should varargs be recognized?
      */
     @Deprecated
     boolean allowVarargs;
 
-    /** Switch: should we recognize assert statements, or just give a warning?
+    /**
+     * Switch: should we recognize assert statements, or just give a warning?
      */
     boolean allowAsserts;
 
-    /** Switch: should we recognize enums, or just give a warning?
+    /**
+     * Switch: should we recognize enums, or just give a warning?
      */
     @Deprecated
     boolean allowEnums;
 
-    /** Switch: should we recognize foreach?
+    /**
+     * Switch: should we recognize foreach?
      */
     @Deprecated
     boolean allowForeach;
 
-    /** Switch: should we recognize foreach?
+    /**
+     * Switch: should we recognize foreach?
      */
     @Deprecated
     boolean allowStaticImport;
 
-    /** Switch: should we recognize annotations?
+    /**
+     * Switch: should we recognize annotations?
      */
     @Deprecated
     boolean allowAnnotations;
 
-    /** Switch: should we recognize try-with-resources?
+    /**
+     * Switch: should we recognize try-with-resources?
      */
     @Deprecated
     boolean allowTWR;
 
-    /** Switch: should we fold strings?
+    /**
+     * Switch: should we fold strings?
      */
     @Deprecated
     boolean allowStringFolding;
 
-    /** Switch: should we recognize lambda expressions?
+    /**
+     * Switch: should we recognize lambda expressions?
      */
     @Deprecated
     boolean allowLambda;
 
-    /** Switch: should we allow method/constructor references?
+    /**
+     * Switch: should we allow method/constructor references?
      */
     @Deprecated
     boolean allowMethodReferences;
 
-    /** Switch: should we keep docComments?
+    /**
+     * Switch: should we keep docComments?
      */
     boolean keepDocComments;
 
-    /** Switch: should we keep line table?
+    /**
+     * Switch: should we keep line table?
      */
     boolean keepLineMap;
 
-    /** When terms are parsed, the mode determines which is expected:
-     *     mode = EXPR        : an expression
-     *     mode = TYPE        : a type
-     *     mode = NOPARAMS    : no parameters allowed for type
-     *     mode = TYPEARG     : type argument
+    /**
+     * When terms are parsed, the mode determines which is expected: mode = EXPR
+     * : an expression mode = TYPE : a type mode = NOPARAMS : no parameters
+     * allowed for type mode = TYPEARG : type argument
      */
     static final int EXPR = 0x1;
     static final int TYPE = 0x2;
@@ -311,14 +334,16 @@ public class SystemParser {
     static final int TYPEARG = 0x8;
     static final int DIAMOND = 0x10;
 
-    /** The current mode.
+    /**
+     * The current mode.
      */
     private int mode = 0;
 
-    /** The mode of the term that was parsed last.
+    /**
+     * The mode of the term that was parsed last.
      */
     private int lastmode = 0;
-    
+
     // Panini code
     boolean inCapsule = false;
     // end Panini code
@@ -337,18 +362,16 @@ public class SystemParser {
     }
 
     protected boolean peekToken(TokenKind tk1, TokenKind tk2) {
-        return S.token(1).kind == tk1 &&
-                S.token(2).kind == tk2;
+        return S.token(1).kind == tk1 && S.token(2).kind == tk2;
     }
 
     protected boolean peekToken(TokenKind tk1, TokenKind tk2, TokenKind tk3) {
-        return S.token(1).kind == tk1 &&
-                S.token(2).kind == tk2 &&
-                S.token(3).kind == tk3;
+        return S.token(1).kind == tk1 && S.token(2).kind == tk2
+                && S.token(3).kind == tk3;
     }
 
     protected boolean peekToken(TokenKind... kinds) {
-        for (int lookahead = 0 ; lookahead < kinds.length ; lookahead++) {
+        for (int lookahead = 0; lookahead < kinds.length; lookahead++) {
             if (S.token(lookahead + 1).kind != kinds[lookahead]) {
                 return false;
             }
@@ -360,92 +383,95 @@ public class SystemParser {
 
     private JCErroneous errorTree;
 
-    /** Skip forward until a suitable stop token is found.
+    /**
+     * Skip forward until a suitable stop token is found.
      */
-    private void skip(boolean stopAtImport, boolean stopAtMemberDecl, boolean stopAtIdentifier, boolean stopAtStatement) {
-         while (true) {
-             switch (token.kind) {
-                case SEMI:
-                    nextToken();
+    private void skip(boolean stopAtImport, boolean stopAtMemberDecl,
+            boolean stopAtIdentifier, boolean stopAtStatement) {
+        while (true) {
+            switch (token.kind) {
+            case SEMI:
+                nextToken();
+                return;
+            case PUBLIC:
+            case FINAL:
+            case ABSTRACT:
+            case MONKEYS_AT:
+            case EOF:
+            case CLASS:
+            case INTERFACE:
+            case ENUM:
+                return;
+            case IMPORT:
+                if (stopAtImport)
                     return;
-                case PUBLIC:
-                case FINAL:
-                case ABSTRACT:
-                case MONKEYS_AT:
-                case EOF:
-                case CLASS:
-                case INTERFACE:
-                case ENUM:
+                break;
+            case LBRACE:
+            case RBRACE:
+            case PRIVATE:
+            case PROTECTED:
+            case STATIC:
+            case TRANSIENT:
+            case NATIVE:
+            case VOLATILE:
+            case SYNCHRONIZED:
+            case STRICTFP:
+            case LT:
+            case BYTE:
+            case SHORT:
+            case CHAR:
+            case INT:
+            case LONG:
+            case FLOAT:
+            case DOUBLE:
+            case BOOLEAN:
+            case VOID:
+                if (stopAtMemberDecl)
                     return;
-                case IMPORT:
-                    if (stopAtImport)
-                        return;
-                    break;
-                case LBRACE:
-                case RBRACE:
-                case PRIVATE:
-                case PROTECTED:
-                case STATIC:
-                case TRANSIENT:
-                case NATIVE:
-                case VOLATILE:
-                case SYNCHRONIZED:
-                case STRICTFP:
-                case LT:
-                case BYTE:
-                case SHORT:
-                case CHAR:
-                case INT:
-                case LONG:
-                case FLOAT:
-                case DOUBLE:
-                case BOOLEAN:
-                case VOID:
-                    if (stopAtMemberDecl)
-                        return;
-                    break;
-                case IDENTIFIER:
-                 // Panini code
-                 if(token.name().toString().equals("library")||
-                 token.name().toString().equals("system")|| 
-                 token.name().toString().equals("capsule")|| 
-                token.name().toString().equals("signature"))
-                 return;
-                 // end Panini code
-                   if (stopAtIdentifier)
-                        return;
-                    break;
-                case CASE:
-                case DEFAULT:
-                case IF:
-                case FOR:
-                case WHILE:
-                case DO:
-                case TRY:
-                case SWITCH:
-                case RETURN:
-                case THROW:
-                case BREAK:
-                case CONTINUE:
-                case ELSE:
-                case FINALLY:
-                case CATCH:
-                    if (stopAtStatement)
-                        return;
-                    break;
+                break;
+            case IDENTIFIER:
+                // Panini code
+                if (token.name().toString().equals("library")
+                        || token.name().toString().equals("system")
+                        || token.name().toString().equals("capsule")
+                        || token.name().toString().equals("signature"))
+                    return;
+                // end Panini code
+                if (stopAtIdentifier)
+                    return;
+                break;
+            case CASE:
+            case DEFAULT:
+            case IF:
+            case FOR:
+            case WHILE:
+            case DO:
+            case TRY:
+            case SWITCH:
+            case RETURN:
+            case THROW:
+            case BREAK:
+            case CONTINUE:
+            case ELSE:
+            case FINALLY:
+            case CATCH:
+                if (stopAtStatement)
+                    return;
+                break;
             }
             nextToken();
         }
     }
 
     private JCErroneous syntaxError(int pos, String key, TokenKind... args) {
-        return syntaxError(pos, List.<JCTree>nil(), key, args);
+        return syntaxError(pos, List.<JCTree> nil(), key, args);
     }
 
-    private JCErroneous syntaxError(int pos, List<JCTree> errs, String key, TokenKind... args) {
+    private JCErroneous syntaxError(int pos, List<JCTree> errs, String key,
+            TokenKind... args) {
         setErrorEndPos(pos);
         JCErroneous err = F.at(pos).Erroneous(errs);
-        reportSyntaxError(err, key, (Object[])args);
+        reportSyntaxError(err, key, (Object[]) args);
         if (errs != null) {
             JCTree last = errs.last();
             if (last != null)
@@ -461,7 +487,8 @@ public class SystemParser {
      * unless one was already reported at the same position.
      */
     private void reportSyntaxError(int pos, String key, Object... args) {
-        JCDiagnostic.DiagnosticPosition diag = new JCDiagnostic.SimpleDiagnosticPosition(pos);
+        JCDiagnostic.DiagnosticPosition diag = new JCDiagnostic.SimpleDiagnosticPosition(
+                pos);
         reportSyntaxError(diag, key, args);
     }
 
@@ -469,7 +496,8 @@ public class SystemParser {
      * Report a syntax error using the given DiagnosticPosition object and
      * arguments, unless one was already reported at the same position.
      */
-    private void reportSyntaxError(JCDiagnostic.DiagnosticPosition diagPos, String key, Object... args) {
+    private void reportSyntaxError(JCDiagnostic.DiagnosticPosition diagPos,
+            String key, Object... args) {
         int pos = diagPos.getPreferredPosition();
         if (pos > S.errPos() || pos == Position.NOPOS) {
             if (token.kind == EOF) {
@@ -484,23 +512,25 @@ public class SystemParser {
         errorPos = token.pos;
     }
 
-
-    /** Generate a syntax error at current position unless one was already
-     *  reported at the same position.
+    /**
+     * Generate a syntax error at current position unless one was already
+     * reported at the same position.
      */
     private JCErroneous syntaxError(String key) {
         return syntaxError(token.pos, key);
     }
 
-    /** Generate a syntax error at current position unless one was
-     *  already reported at the same position.
+    /**
+     * Generate a syntax error at current position unless one was already
+     * reported at the same position.
      */
     private JCErroneous syntaxError(String key, TokenKind arg) {
         return syntaxError(token.pos, key, arg);
     }
 
-    /** If next input token matches given token, skip it, otherwise report
-     *  an error.
+    /**
+     * If next input token matches given token, skip it, otherwise report an
+     * error.
      */
     public void accept(TokenKind tk) {
         if (token.kind == tk) {
@@ -511,7 +541,8 @@ public class SystemParser {
         }
     }
 
-    /** Report an illegal start of expression/type error at given position.
+    /**
+     * Report an illegal start of expression/type error at given position.
      */
     JCExpression illegal(int pos) {
         setErrorEndPos(pos);
@@ -520,7 +551,8 @@ public class SystemParser {
         return syntaxError(pos, "illegal.start.of.type");
     }
 
-    /** Report an illegal start of expression/type error at current position.
+    /**
+     * Report an illegal start of expression/type error at current position.
      */
     JCExpression illegal() {
         return illegal(token.pos);
@@ -530,32 +562,35 @@ public class SystemParser {
     void checkNoMods(long mods) {
         if (mods != 0) {
             long lowestMod = mods & -mods;
-            error(token.pos, "mod.not.allowed.here",
-                      Flags.asFlagSet(lowestMod));
+            error(token.pos, "mod.not.allowed.here", Flags.asFlagSet(lowestMod));
         }
     }
 
-/* ---------- doc comments --------- */
+    /* ---------- doc comments --------- */
 
-    /** A hashtable to store all documentation comments
-     *  indexed by the tree nodes they refer to.
-     *  defined only if option flag keepDocComment is set.
+    /**
+     * A hashtable to store all documentation comments indexed by the tree nodes
+     * they refer to. defined only if option flag keepDocComment is set.
      */
     private final Map<JCTree, String> docComments;
 
-    /** Make an entry into docComments hashtable,
-     *  provided flag keepDocComments is set and given doc comment is non-null.
-     *  @param tree   The tree to be used as index in the hashtable
-     *  @param dc     The doc comment to associate with the tree, or null.
+    /**
+     * Make an entry into docComments hashtable, provided flag keepDocComments
+     * is set and given doc comment is non-null.
+     * 
+     * @param tree
+     *            The tree to be used as index in the hashtable
+     * @param dc
+     *            The doc comment to associate with the tree, or null.
      */
     void attach(JCTree tree, String dc) {
         if (keepDocComments && dc != null) {
-//          System.out.println("doc comment = ");System.out.println(dc);//DEBUG
+            // System.out.println("doc comment = ");System.out.println(dc);//DEBUG
             docComments.put(tree, dc);
         }
     }
 
-/* -------- source positions ------- */
+    /* -------- source positions ------- */
 
     private void setErrorEndPos(int errPos) {
         endPosTable.setErrorEndPos(errPos);
@@ -573,30 +608,32 @@ public class SystemParser {
         return endPosTable.toP(t);
     }
 
-    /** Get the start position for a tree node.  The start position is
-     * defined to be the position of the first character of the first
-     * token of the node's source text.
-     * @param tree  The tree node
+    /**
+     * Get the start position for a tree node. The start position is defined to
+     * be the position of the first character of the first token of the node's
+     * source text.
+     * 
+     * @param tree
+     *            The tree node
      */
     public int getStartPos(JCTree tree) {
         return TreeInfo.getStartPos(tree);
     }
 
     /**
-     * Get the end position for a tree node.  The end position is
-     * defined to be the position of the last character of the last
-     * token of the node's source text.  Returns Position.NOPOS if end
-     * positions are not generated or the position is otherwise not
-     * found.
-     * @param tree  The tree node
+     * Get the end position for a tree node. The end position is defined to be
+     * the position of the last character of the last token of the node's source
+     * text. Returns Position.NOPOS if end positions are not generated or the
+     * position is otherwise not found.
+     * 
+     * @param tree
+     *            The tree node
      */
     public int getEndPos(JCTree tree) {
         return endPosTable.getEndPos(tree);
     }
 
-
-
-/* ---------- parsing -------------- */
+    /* ---------- parsing -------------- */
 
     /**
      * Ident = IDENTIFIER
@@ -610,7 +647,7 @@ public class SystemParser {
             accept(IDENTIFIER);
             return names.error;
         }
-}
+    }
 
     /**
      * Qualident = Ident { DOT Ident }
@@ -630,25 +667,16 @@ public class SystemParser {
     }
 
     /**
-     * Literal =
-     *     INTLITERAL
-     *   | LONGLITERAL
-     *   | FLOATLITERAL
-     *   | DOUBLELITERAL
-     *   | CHARLITERAL
-     *   | STRINGLITERAL
-     *   | TRUE
-     *   | FALSE
-     *   | NULL
+     * Literal = INTLITERAL | LONGLITERAL | FLOATLITERAL | DOUBLELITERAL |
+     * CHARLITERAL | STRINGLITERAL | TRUE | FALSE | NULL
      */
     JCExpression literal(Name prefix, int pos) {
         JCExpression t = errorTree;
         switch (token.kind) {
         case INTLITERAL:
             try {
-                t = F.at(pos).Literal(
-                    TypeTags.INT,
-                    Convert.string2int(strval(prefix), token.radix()));
+                t = F.at(pos).Literal(TypeTags.INT,
+                        Convert.string2int(strval(prefix), token.radix()));
             } catch (NumberFormatException ex) {
                 error(token.pos, "int.number.too.large", strval(prefix));
             }
@@ -656,16 +684,16 @@ public class SystemParser {
         case LONGLITERAL:
             try {
                 t = F.at(pos).Literal(
-                    TypeTags.LONG,
-                    new Long(Convert.string2long(strval(prefix), token.radix())));
+                        TypeTags.LONG,
+                        new Long(Convert.string2long(strval(prefix),
+                                token.radix())));
             } catch (NumberFormatException ex) {
                 error(token.pos, "int.number.too.large", strval(prefix));
             }
             break;
         case FLOATLITERAL: {
-            String proper = token.radix() == 16 ?
-                    ("0x"+ token.stringVal()) :
-                    token.stringVal();
+            String proper = token.radix() == 16 ? ("0x" + token.stringVal())
+                    : token.stringVal();
             Float n;
             try {
                 n = Float.valueOf(proper);
@@ -682,9 +710,8 @@ public class SystemParser {
             break;
         }
         case DOUBLELITERAL: {
-            String proper = token.radix() == 16 ?
-                    ("0x"+ token.stringVal()) :
-                    token.stringVal();
+            String proper = token.radix() == 16 ? ("0x" + token.stringVal())
+                    : token.stringVal();
             Double n;
             try {
                 n = Double.valueOf(proper);
@@ -701,25 +728,22 @@ public class SystemParser {
             break;
         }
         case CHARLITERAL:
-            t = F.at(pos).Literal(
-                TypeTags.CHAR,
-                token.stringVal().charAt(0) + 0);
+            t = F.at(pos).Literal(TypeTags.CHAR,
+                    token.stringVal().charAt(0) + 0);
             break;
         case STRINGLITERAL:
-            t = F.at(pos).Literal(
-                TypeTags.CLASS,
-                token.stringVal());
+            t = F.at(pos).Literal(TypeTags.CLASS, token.stringVal());
             break;
-        case TRUE: case FALSE:
-            t = F.at(pos).Literal(
-                TypeTags.BOOLEAN,
-                (token.kind == TRUE ? 1 : 0));
+        case TRUE:
+        case FALSE:
+            t = F.at(pos).Literal(TypeTags.BOOLEAN,
+                    (token.kind == TRUE ? 1 : 0));
             break;
-        case NULL:
-            t = F.at(pos).Literal(
-                TypeTags.BOT,
-                null);
-            break;
+        // case NULL:
+        // t = F.at(pos).Literal(
+        // TypeTags.BOT,
+        // null);
+        // break;
         default:
             Assert.error();
         }
@@ -729,21 +753,25 @@ public class SystemParser {
         nextToken();
         return t;
     }
-//where
-        boolean isZero(String s) {
-            char[] cs = s.toCharArray();
-            int base = ((cs.length > 1 && Character.toLowerCase(cs[1]) == 'x') ? 16 : 10);
-            int i = ((base==16) ? 2 : 0);
-            while (i < cs.length && (cs[i] == '0' || cs[i] == '.')) i++;
-            return !(i < cs.length && (Character.digit(cs[i], base) > 0));
-        }
 
-        String strval(Name prefix) {
-            String s = token.stringVal();
-            return prefix.isEmpty() ? s : prefix + s;
-        }
+    // where
+    boolean isZero(String s) {
+        char[] cs = s.toCharArray();
+        int base = ((cs.length > 1 && Character.toLowerCase(cs[1]) == 'x') ? 16
+                : 10);
+        int i = ((base == 16) ? 2 : 0);
+        while (i < cs.length && (cs[i] == '0' || cs[i] == '.'))
+            i++;
+        return !(i < cs.length && (Character.digit(cs[i], base) > 0));
+    }
 
-    /** terms can be either expressions or types.
+    String strval(Name prefix) {
+        String s = token.stringVal();
+        return prefix.isEmpty() ? s : prefix + s;
+    }
+
+    /**
+     * terms can be either expressions or types.
      */
     public JCExpression parseExpression() {
         return term(EXPR);
@@ -756,62 +784,154 @@ public class SystemParser {
     JCExpression term(int newmode) {
         int prevmode = mode;
         mode = newmode;
-//        JCExpression t = term();
-        
+        // JCExpression t = term();
+
         lastmode = mode;
         mode = prevmode;
         return null;
     }
 
+    /**
+     * @param mods
+     * @param dc
+     * @return
+     */
+    public SystemParserResult parseSystemDecl(JCModifiers mod, String dc) {
+        accept(IDENTIFIER);
+        int pos = token.pos;
+        Name systemName = ident();
 
-/* ---------- auxiliary methods -------------- */
+        List<JCVariableDecl> params = systemParametersOptional();
+        
+        JCBlock body = systemBlock();
+        JCSystemDecl result = toP(F.at(pos).SystemDef(mod, systemName, body, params));
+        attach(result, dc);
+        return new SystemParserResult(result);
+    }
+    
 
-    void error(int pos, String key, Object ... args) {
+    private List<JCVariableDecl> systemParametersOptional() {
+        List<JCVariableDecl> params = List.<JCVariableDecl>nil();
+        
+        if(token.kind == LPAREN){
+            accept(LPAREN);
+            params.head = variableDeclaration(false);
+            accept(RPAREN);
+        }
+        if(params.length() > 1 
+                || (params.length() == 1 && !params.get(0).getType().toString().equals("String[]")) )
+            log.error(token.pos, "system.argument.illegal");
+
+        return params;
+    }
+    
+    
+    /**
+     * 
+     */
+    private JCVariableDecl variableDeclaration(boolean isInitAllowed) {
+        Name typeName = ident();
+        JCExpression vartype = F.at(token.pos).Ident(typeName);
+        if(token.kind == LBRACKET){
+            accept(LBRACKET);
+            accept(RBRACKET);
+            vartype = toP(F.at(token.pos).TypeArray(vartype));
+        }
+        Name variableName = ident();
+        
+        return toP(F.at(token.pos).VarDef(F.at(token.pos).Modifiers(0), variableName, vartype, variableInitializerOptional(isInitAllowed)));
+    }
+
+    /**
+     * @param isInitAllowed
+     * @return
+     */
+    private JCExpression variableInitializerOptional(boolean isInitAllowed) {
+        if(token.kind == EQ){
+            if(!isInitAllowed){
+                rawError("Cannot initialize system args");
+            }
+            return null;
+        }
+        return null;
+    }
+
+    /**
+     * @return
+     */
+    private JCBlock systemBlock() {
+        // TODO Auto-generated method stub
+        return F.at(token.pos).Block(0, List.<JCStatement>nil());
+    }
+
+    /* ---------- auxiliary methods -------------- */
+    //TODO: replace all of these
+    void rawError(String msg) {
+        log.rawError(token.pos, msg);
+    }
+    
+    void rawError(int pos, String msg) {
+        log.rawError(pos, msg);
+    }
+    
+    void error(int pos, String key, Object... args) {
         log.error(DiagnosticFlag.SYNTAX, pos, key, args);
     }
 
-    void error(DiagnosticPosition pos, String key, Object ... args) {
+    void error(DiagnosticPosition pos, String key, Object... args) {
         log.error(DiagnosticFlag.SYNTAX, pos, key, args);
     }
 
-    void warning(int pos, String key, Object ... args) {
+    void warning(int pos, String key, Object... args) {
         log.warning(pos, key, args);
     }
 
-    /** Check that given tree is a legal expression statement.
+    /**
+     * Check that given tree is a legal expression statement.
      */
     protected JCExpression checkExprStat(JCExpression t) {
-        switch(t.getTag()) {
-        case PREINC: case PREDEC:
-        case POSTINC: case POSTDEC:
+        switch (t.getTag()) {
+        case PREINC:
+        case PREDEC:
+        case POSTINC:
+        case POSTDEC:
         case ASSIGN:
-        case BITOR_ASG: case BITXOR_ASG: case BITAND_ASG:
-        case SL_ASG: case SR_ASG: case USR_ASG:
-        case PLUS_ASG: case MINUS_ASG:
-        case MUL_ASG: case DIV_ASG: case MOD_ASG:
-        case APPLY: case NEWCLASS:
+        case BITOR_ASG:
+        case BITXOR_ASG:
+        case BITAND_ASG:
+        case SL_ASG:
+        case SR_ASG:
+        case USR_ASG:
+        case PLUS_ASG:
+        case MINUS_ASG:
+        case MUL_ASG:
+        case DIV_ASG:
+        case MOD_ASG:
+        case APPLY:
+        case NEWCLASS:
         case ERRONEOUS:
             return t;
         default:
-            JCExpression ret = F.at(t.pos).Erroneous(List.<JCTree>of(t));
+            JCExpression ret = F.at(t.pos).Erroneous(List.<JCTree> of(t));
             error(ret, "not.stmt");
             return ret;
         }
     }
 
-    /** Return precedence of operator represented by token,
-     *  -1 if token is not a binary operator. @see TreeInfo.opPrec
+    /**
+     * Return precedence of operator represented by token, -1 if token is not a
+     * binary operator. @see TreeInfo.opPrec
      */
-    static int prec(TokenKind token) {
+    private static int prec(TokenKind token) {
         JCTree.Tag oc = optag(token);
         return (oc != NO_TAG) ? TreeInfo.opPrec(oc) : -1;
     }
 
     /**
-     * Return the lesser of two positions, making allowance for either one
-     * being unset.
+     * Return the lesser of two positions, making allowance for either one being
+     * unset.
      */
-    static int earlier(int pos1, int pos2) {
+    private static int earlier(int pos1, int pos2) {
         if (pos1 == Position.NOPOS)
             return pos2;
         if (pos2 == Position.NOPOS)
@@ -819,10 +939,11 @@ public class SystemParser {
         return (pos1 < pos2 ? pos1 : pos2);
     }
 
-    /** Return operation tag of binary operator represented by token,
-     *  No_TAG if token is not a binary operator.
+    /**
+     * Return operation tag of binary operator represented by token, No_TAG if
+     * token is not a binary operator.
      */
-    static JCTree.Tag optag(TokenKind token) {
+    private static JCTree.Tag optag(TokenKind token) {
         switch (token) {
         case BARBAR:
             return OR;
@@ -891,10 +1012,11 @@ public class SystemParser {
         }
     }
 
-    /** Return operation tag of unary operator represented by token,
-     *  No_TAG if token is not a binary operator.
+    /**
+     * Return operation tag of unary operator represented by token, No_TAG if
+     * token is not a binary operator.
      */
-    static JCTree.Tag unoptag(TokenKind token) {
+    private static JCTree.Tag unoptag(TokenKind token) {
         switch (token) {
         case PLUS:
             return POS;
@@ -913,10 +1035,11 @@ public class SystemParser {
         }
     }
 
-    /** Return type tag of basic type represented by token,
-     *  -1 if token is not a basic type identifier.
+    /**
+     * Return type tag of basic type represented by token, -1 if token is not a
+     * basic type identifier.
      */
-    static int typetag(TokenKind token) {
+    private static int typetag(TokenKind token) {
         switch (token) {
         case BYTE:
             return TypeTags.BYTE;
@@ -939,63 +1062,75 @@ public class SystemParser {
         }
     }
 
-    void checkGenerics() {
+    private void checkGenerics() {
         if (!allowGenerics) {
             error(token.pos, "generics.not.supported.in.source", source.name);
             allowGenerics = true;
         }
     }
-    void checkVarargs() {
+
+    private void checkVarargs() {
         if (!allowVarargs) {
             error(token.pos, "varargs.not.supported.in.source", source.name);
             allowVarargs = true;
         }
     }
-    void checkForeach() {
+
+    private void checkForeach() {
         if (!allowForeach) {
             error(token.pos, "foreach.not.supported.in.source", source.name);
             allowForeach = true;
         }
     }
-    void checkStaticImports() {
+
+    private void checkStaticImports() {
         if (!allowStaticImport) {
-            error(token.pos, "static.import.not.supported.in.source", source.name);
+            error(token.pos, "static.import.not.supported.in.source",
+                    source.name);
             allowStaticImport = true;
         }
     }
-    void checkAnnotations() {
+
+    private void checkAnnotations() {
         if (!allowAnnotations) {
             error(token.pos, "annotations.not.supported.in.source", source.name);
             allowAnnotations = true;
         }
     }
-    void checkDiamond() {
+
+    private void checkDiamond() {
         if (!allowDiamond) {
             error(token.pos, "diamond.not.supported.in.source", source.name);
             allowDiamond = true;
         }
     }
-    void checkMulticatch() {
+
+    private void checkMulticatch() {
         if (!allowMulticatch) {
             error(token.pos, "multicatch.not.supported.in.source", source.name);
             allowMulticatch = true;
         }
     }
-    void checkTryWithResources() {
+
+    private void checkTryWithResources() {
         if (!allowTWR) {
-            error(token.pos, "try.with.resources.not.supported.in.source", source.name);
+            error(token.pos, "try.with.resources.not.supported.in.source",
+                    source.name);
             allowTWR = true;
         }
     }
-    void checkLambda() {
+
+    private void checkLambda() {
         if (!allowLambda) {
             log.error(token.pos, "lambda.not.supported.in.source", source.name);
             allowLambda = true;
         }
     }
-    void checkMethodReferences() {
+
+    private void checkMethodReferences() {
         if (!allowMethodReferences) {
-            log.error(token.pos, "method.references.not.supported.in.source", source.name);
+            log.error(token.pos, "method.references.not.supported.in.source",
+                    source.name);
             allowMethodReferences = true;
         }
     }
@@ -1003,11 +1138,11 @@ public class SystemParser {
     /*
      * a functional source tree and end position mappings
      */
-    protected class SimpleEndPosTable extends AbstractEndPosTable {
+    private class SimpleEndPosTable extends AbstractEndPosTable {
 
         private final Map<JCTree, Integer> endPosMap;
 
-        //FIXME: remember this.
+        // FIXME: remember this.
         SimpleEndPosTable(Map<JCTree, Integer> initialTable) {
             endPosMap = initialTable;
         }
@@ -1039,15 +1174,16 @@ public class SystemParser {
             }
             return Position.NOPOS;
         }
-        
+
     }
 
     /*
      * a default skeletal implementation without any mapping overhead.
      */
-    protected class EmptyEndPosTable extends AbstractEndPosTable {
+    private class EmptyEndPosTable extends AbstractEndPosTable {
 
-        protected void storeEnd(JCTree tree, int endpos) { /* empty */ }
+        protected void storeEnd(JCTree tree, int endpos) { /* empty */
+        }
 
         protected <T extends JCTree> T to(T t) {
             return t;
@@ -1077,8 +1213,11 @@ public class SystemParser {
         /**
          * Store ending position for a tree, the value of which is the greater
          * of last error position and the given ending position.
-         * @param tree   The tree.
-         * @param endpos The ending position to associate with the tree.
+         * 
+         * @param tree
+         *            The tree.
+         * @param endpos
+         *            The ending position to associate with the tree.
          */
         protected abstract void storeEnd(JCTree tree, int endpos);
 
@@ -1086,7 +1225,9 @@ public class SystemParser {
          * Store current token's ending position for a tree, the value of which
          * will be the greater of last error position and the ending position of
          * the current token.
-         * @param t The tree.
+         * 
+         * @param t
+         *            The tree.
          */
         protected abstract <T extends JCTree> T to(T t);
 
@@ -1094,14 +1235,19 @@ public class SystemParser {
          * Store current token's ending position for a tree, the value of which
          * will be the greater of last error position and the ending position of
          * the previous token.
-         * @param t The tree.
+         * 
+         * @param t
+         *            The tree.
          */
         protected abstract <T extends JCTree> T toP(T t);
 
         /**
          * Set the error position during the parsing phases, the value of which
-         * will be set only if it is greater than the last stored error position.
-         * @param errPos The error position
+         * will be set only if it is greater than the last stored error
+         * position.
+         * 
+         * @param errPos
+         *            The error position
          */
         protected void setErrorEndPos(int errPos) {
             if (errPos > errorEndPos) {
@@ -1109,34 +1255,24 @@ public class SystemParser {
             }
         }
     }
-    
+
     // Panini code
-    public class SystemParserResult{
+    public class SystemParserResult {
         public final Token token;
         public final int mode;
         public final int lastMode;
         public final int errorEndPos;
-        public final JCStatement systemDeclaration;
-        
-        protected SystemParserResult(JCStatement systemDeclaration) {
+        public final JCSystemDecl systemDeclaration;
+
+        protected SystemParserResult(JCSystemDecl systemDeclaration) {
             this.token = SystemParser.this.token;
             this.mode = SystemParser.this.mode;
             this.lastMode = SystemParser.this.lastmode;
             this.errorEndPos = endPosTable.errorEndPos;
             this.systemDeclaration = systemDeclaration;
         }
-        
+
     }
     // end Panini code
 
-    
-    /**
-     * @param mods
-     * @param dc
-     * @return
-     */
-    public SystemParserResult parseSystemBlock(JCModifiers mods, String dc) {
-        // TODO Auto-generated method stub
-        return null;
-    }
 }
