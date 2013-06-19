@@ -101,10 +101,34 @@ public class TreeScanner extends Visitor {
     }
     
 	@Override
-	public void visitManyToOne(JCManyToOne tree) {
+	public void visitWireall(JCWireall tree) {
 		scan(tree.many);
 		scan(tree.args);
 	}
+
+	@Override
+	public void visitStar(JCStar tree){
+		scan(tree.center);
+		scan(tree.others);
+		scan(tree.args);
+	}
+
+	@Override
+	public void visitRing(JCRing tree){
+		scan(tree.capsules);
+		scan(tree.args);
+	}
+
+	@Override
+	public void visitAssociate(JCAssociate tree){
+		scan(tree.src);
+		scan(tree.srcPos);
+		scan(tree.dest);
+		scan(tree.destPos);
+		scan(tree.len);
+		scan(tree.args);
+	}
+
     // end Panini code
 
     public void visitTopLevel(JCCompilationUnit tree) {

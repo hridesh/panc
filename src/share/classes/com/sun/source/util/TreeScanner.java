@@ -421,7 +421,7 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
         return r;
     }
 
-    public R visitCapsuleArrayCall(CapsuleArrayCallTree node, P p) {
+    public R visitIndexedCapsuleWiring(CapsuleArrayCallTree node, P p) {
 		R r = scan(node.getArgs(), p);
 		return r;
 	}
@@ -472,8 +472,31 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     	return r;
     }
 
-	public R visitManyToOne(ManyToOneTree node, P p) {
+	public R visitWireall(WireallTree node, P p) {
 	    return null; //FIXME
 	};
+
+	public R visitStar(StarTree node, P p){
+		R r = scan(node.getCenter(), p);
+		r = scanAndReduce(node.getOrbiters(), p, r);
+		r = scanAndReduce(node.getArgs(), p, r);
+		return r;
+	}
+
+	public R visitRing(RingTree node, P p){
+		R r = scan(node.getCapsules(), p);
+		r = scanAndReduce(node.getArgs(), p, r);
+		return r;
+	}
+
+	public R visitAssociate(AssociateTree node, P p){
+		R r = scan(node.getSrc(), p);
+		r = scanAndReduce(node.getSrcPosition(), p, r);
+		r = scanAndReduce(node.getDest(), p, r);
+		r = scanAndReduce(node.getDestPosition(), p, r);
+		r = scanAndReduce(node.getLength(), p, r);
+		r = scanAndReduce(node.getArgs(), p, r);
+		return r;
+	}
 	//end Panini code
 }

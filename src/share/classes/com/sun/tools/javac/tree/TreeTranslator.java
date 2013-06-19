@@ -457,19 +457,45 @@ public class TreeTranslator extends JCTree.Visitor {
     }
     
     @Override
-    public void visitManyToOne(JCManyToOne tree) {
+    public void visitWireall(JCWireall tree) {
     	tree.many = translate(tree.many);
     	tree.args = translate(tree.args);
     	result = tree;
     }
 
+    @Override
+    public void visitStar(JCStar tree){
+    	tree.center = translate(tree.center);
+    	tree.others = translate(tree.others);
+    	tree.args = translate(tree.args);
+    	result = tree;
+    }
+
+    @Override
+    public void visitRing(JCRing tree){
+    	tree.capsules = translate(tree.capsules);
+    	tree.args = translate(tree.args);
+    	result = tree;
+    }
+
+    @Override
+    public void visitAssociate(JCAssociate tree){
+    	tree.src = translate(tree.src);
+    	tree.srcPos = translate(tree.srcPos);
+    	tree.dest = translate(tree.dest);
+    	tree.destPos = translate(tree.destPos);
+    	tree.len = translate(tree.len);
+    	tree.args = translate(tree.args);
+    	result = tree;
+    }
+
+    @Override
     public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
         tree.arguments = translate(tree.arguments);
         tree.index = translate(tree.index);
         tree.indexed = translate(tree.indexed);
         result = tree;
     }
-    
     // end Panini code
     
     

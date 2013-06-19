@@ -70,5 +70,5 @@ system Pi (String[] args) {
     double totalSamples = Math.pow(10,Integer.parseInt(args[0]));
 	Master master; Worker workers[10];
 	master(totalSamples, workers);
-	m2one(w, totalSamples/workers.length);
+	wireall(w, totalSamples/workers.length);
 }

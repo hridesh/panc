@@ -286,7 +286,7 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 	    return defaultAction(node, p);
 	}
 
-	public R visitCapsuleArrayCall(CapsuleArrayCallTree node, P p) {
+	public R visitIndexedCapsuleWiring(CapsuleArrayCallTree node, P p) {
 		return defaultAction(node, p);
 	}
 	
@@ -322,8 +322,20 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 		return defaultAction(node, p);
 	}
 
-	public R visitManyToOne(ManyToOneTree node, P p) {
+	public R visitWireall(WireallTree node, P p) {
 	    return defaultAction(node, p);
+	}
+
+	public R visitStar(StarTree node, P p){
+		return defaultAction(node, p);
+	}
+
+	public R visitRing(RingTree node, P p){
+		return defaultAction(node, p);
+	}
+
+	public R visitAssociate(AssociateTree node, P p){
+		return defaultAction(node, p);
 	};
 	// end Panini code
 }

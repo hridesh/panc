@@ -14,23 +14,18 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  *
- * Contributor(s): Sean L. Mooney
+ * Contributor(s): Sean L. Mooney, Lorand Szakacs, Bryan Shrader
  */
-//panini
-capsule M(O o, int fortyTwo){
-    void run(){
-        System.out.println(fortyTwo);
-    }
-}
+package com.sun.source.tree;
 
-capsule O{
-}
+import java.util.List;
 
-system ManyToOne {
-    M many[5];
-    O one;
-    
-    one();
-	wireall(many, one, 42);
+/**
+ * @author Bryan Shrader
+ *
+ * @since panini-0.9.2
+ */
+public interface RingTree extends Topology {
+	public ExpressionTree getCapsules();
+	public List<? extends ExpressionTree> getArgs();
 }
-

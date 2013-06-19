@@ -2034,6 +2034,21 @@ public class JavacParser implements Parser {
     			System.out.println("starting to parse a many2one expression");
     			return parseManyToOne();
     			}
+    		else if (token.name().toString().equals(PaniniTokens.SYSLANG_STAR)){
+    			//FIXME: remove syso
+    			System.out.println("starting to parse a star expression");
+    			return parseStarTopology();
+    		}
+    		else if (token.name().toString().equals(PaniniTokens.SYSLANG_RING)){
+    			//FIXME: remove syso
+    			System.out.println("starting to parse a ring expression");
+    			return parseRingTopology();
+    		}
+    		else if (token.name().toString().equals(PaniniTokens.SYSLANG_ASSOCIATE)){
+    			//FIXME: remove syso
+    			System.out.println("starting to parse an associate expression");
+    			return parseAssociate();
+    		}
     		
     	}
     	if(token.kind != FOR &&((token.kind.tag != Token.Tag.NAMED && (token.kind != RBRACE))
@@ -2156,10 +2171,64 @@ public class JavacParser implements Parser {
 		List<JCExpression> expressions = arguments();
 		accept(SEMI);
 		if(expressions.size() < 2){
-			log.error(token.pos, "compiler.err.system.topology.m2one.size");
+			log.error(token.pos, "compiler.err.system.topology.wireall.size");
 		}
 		
-		 JCManyToOne expr = toP(F.at(positionAfterMany2One).ManyToOne(expressions));
+		 JCWireall expr = toP(F.at(positionAfterMany2One).ManyToOne(expressions));
+		 JCExpressionStatement statement = to(F.Exec(expr));
+		 return List.<JCStatement>of(statement);
+
+	}
+
+	private List<JCStatement> parseStarTopology() {
+		int positionAfterStat = token.pos;
+		accept(IDENTIFIER);
+		List<JCExpression> expressions = arguments();
+		accept(SEMI);
+		if(expressions.size() < 2){
+			log.error(token.pos, "compiler.err.system.topology.wireall.size");
+		}
+		JCExpression center = expressions.head;
+		JCExpression others = expressions.tail.head;
+		List<JCExpression> args = expressions.tail.tail;
+		 JCStar expr = toP(F.at(positionAfterStat).Star(center, others, args));
+		 JCExpressionStatement statement = to(F.Exec(expr));
+		 return List.<JCStatement>of(statement);
+
+	}
+
+	private List<JCStatement> parseRingTopology() {
+		int positionAfterStat = token.pos;
+		accept(IDENTIFIER);
+		List<JCExpression> expressions = arguments();
+		accept(SEMI);
+		if(expressions.size() < 1){
+			log.error(token.pos, "compiler.err.system.topology.wireall.size");
+		}
+		JCExpression capsules = expressions.head;
+		List<JCExpression> args = expressions.tail;
+		 JCRing expr = toP(F.at(positionAfterStat).Ring(capsules, args));
+		 JCExpressionStatement statement = to(F.Exec(expr));
+		 return List.<JCStatement>of(statement);
+
+	}
+
+	private List<JCStatement> parseAssociate() {
+		int positionAfterStat = token.pos;
+		accept(IDENTIFIER);
+		List<JCExpression> expressions = arguments();
+		accept(SEMI);
+		if(expressions.size() < 5){
+			log.error(token.pos, "compiler.err.system.topology.wireall.size");
+		}
+		JCExpression src = expressions.head;
+		JCExpression srcPos = expressions.tail.head;
+		JCExpression dest = expressions.tail.tail.head;
+		JCExpression destPos = expressions.tail.tail.tail.head;
+		JCExpression len = expressions.tail.tail.tail.tail.head;
+		List<JCExpression> args = expressions.tail.tail.tail.tail.tail;
+		 JCAssociate expr = toP(F.at(positionAfterStat).Associate(src, srcPos,
+				 dest, destPos, len, args));
 		 JCExpressionStatement statement = to(F.Exec(expr));
 		 return List.<JCStatement>of(statement);
 		 
@@ -3691,7 +3760,6 @@ public class JavacParser implements Parser {
         // Panini code
         case PROCCALL:
         case CAPSULE_WIRING:
-        // end Panini code
             return t;
         default:
             JCExpression ret = F.at(t.pos).Erroneous(List.<JCTree>of(t));
