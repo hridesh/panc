@@ -60,6 +60,7 @@ import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.*;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
+import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.util.List;
@@ -69,7 +70,10 @@ import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
 import org.paninij.system.*;
+import org.paninij.system.SystemDeclRewriter;
 import org.paninij.systemgraph.*;
+import com.sun.source.tree.Tree.Kind;
+import java.util.ArrayList;
 
 /***
  * Panini-specific context-dependent analysis. All public functions in 
@@ -295,12 +299,13 @@ public final class Attr extends CapsuleInternal {
 
         SystemGraph sysGraph;
 
-        SystemDeclRewriter interp = new SystemDeclRewriter(make, log, names);
-        tree = interp.rewrite(tree);
+        SystemDeclRewriter interp = new SystemDeclRewriter(make, log);
+        JCSystemDecl rewritenTree = interp.rewrite(tree);
+
 
         SystemMainTransformer mt = new SystemMainTransformer(syms, names, types, log,
                 rs, env, make, systemGraphBuilder);
-        tree = mt.translate(tree);
+        rewritenTree = mt.translate(rewritenTree);
 
         //pull data structures back out for reference here.
         decls = mt.decls;
@@ -311,13 +316,13 @@ public final class Attr extends CapsuleInternal {
         joins = mt.joins;
         sysGraph = mt.sysGraph;
 
-		if(tree.hasTaskCapsule)
-			processSystemAnnotation(tree, inits, env);
+		if(rewritenTree.hasTaskCapsule)
+			processSystemAnnotation(rewritenTree, inits, env);
 
 		List<JCStatement> mainStmts;
 		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
-		JCMethodDecl maindecl = createMainMethod(tree.sym, tree.body, tree.params, mainStmts);
-		tree.defs = tree.defs.append(maindecl);
+		JCMethodDecl maindecl = createMainMethod(rewritenTree.sym, rewritenTree.body, rewritenTree.params, mainStmts);
+		rewritenTree.defs = rewritenTree.defs.append(maindecl);
 
 		systemGraphBuilder.completeEdges(sysGraph, annotationProcessor, env, rs);
 
@@ -326,7 +331,7 @@ public final class Attr extends CapsuleInternal {
 		    ConsistencyUtil.createChecker(seqConstAlg, sysGraph, log);
 		sca.potentialPathCheck();
 
-		tree.switchToClass();
+		rewritenTree.switchToClass();
 
 		memberEnter.memberEnter(maindecl, env);
 		if (doGraphs) {

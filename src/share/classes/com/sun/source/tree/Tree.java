@@ -60,6 +60,13 @@ public interface Tree {
     	FORALLLOOP(ForAllTree.class),
     	FOREACH(ForeachTree.class),
     	INIT(InitMethodTree.class),
+        /**
+         * Used for instances of {@link ManyToOne} topology construction.
+         */
+        WIREALL(WireallTree.class),
+        STAR_TOP(StarTree.class),
+        RING(RingTree.class),
+        ASSOCIATE(AssociateTree.class),
     	// end Panini code
         /**
          * Used for instances of {@link AnnotationTree}.

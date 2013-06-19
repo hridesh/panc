@@ -479,7 +479,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     }
 
     @Override
-	public JCTree visitCapsuleArrayCall(CapsuleArrayCallTree node, P p) {
+	public JCTree visitIndexedCapsuleWiring(CapsuleArrayCallTree node, P p) {
 		JCCapsuleArrayCall t = (JCCapsuleArrayCall) node;
 		List<JCExpression> args = copy(t.arguments, p);
 		return M.at(t.pos).CapsuleArrayCall(t.name, t.index, t.indexed, args);
@@ -530,5 +530,21 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         JCExpression defaultValue = copy(t.defaultValue, p);
         return M.at(t.pos).MethodDef(mods, t.name, restype, typarams, params, thrown, body, defaultValue);
 	}
+
+	public JCTree visitWireall(WireallTree node, P p) {
+	    return null; //FIXME
+	}
+
+	public JCTree visitStar(StarTree node, P p){
+		return null; //FIXME
+	}
+
+	public JCTree visitRing(RingTree node, P p){
+		return null; //FIXME
+	}
+
+	public JCTree visitAssociate(AssociateTree node, P p){
+		return null; //FIXME
+	};
 	// end Panini code
 }

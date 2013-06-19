@@ -41,6 +41,10 @@ import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Flags.ANNOTATION;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
+// Panini code
+import org.paninij.parser.PaniniTokens;
+// end Panini code
+
 /** Prints out a tree as an indented Java source program.
  *
  *  <p><b>This is NOT part of any supported API.
@@ -513,6 +517,43 @@ public class Pretty extends JCTree.Visitor {
         }
     }
     
+    @Override
+    public void visitWireall(JCWireall that) {
+    	try {
+			print(PaniniTokens.SYSLANG_MANY_TO_ONE + "(" + that.many + "," + that.args + ")");
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+    }
+
+    @Override
+    public void visitStar(JCStar that){
+    	try {
+			print("star" + "(" + that.center + "," + that.others + "," + that.args + ")");
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+    }
+
+    @Override
+    public void visitRing(JCRing that){
+    	try {
+			print("ring" + "(" + that.capsules + "," + that.args + ")");
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+    }
+
+    @Override
+    public void visitAssociate(JCAssociate that){
+    	try {
+    		print("associate" + "(" + that.src + "," + that.srcPos + "," + that.dest + ","
+    				+ that.destPos + "," + that.len + "," + that.args + ")");
+    	} catch (IOException e) {
+    		throw new UncheckedIOException(e);
+    	}
+    }
+
     private void printBrackets(JCCapsuleArray tree) throws IOException {
         JCTree elem;
         while (true) {

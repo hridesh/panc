@@ -363,7 +363,19 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         PROCCALL,
         FREE,
         INIT,
-        FORALLLOOP;
+        FORALLLOOP,
+        /** Many-to-one topology.
+         */
+        WIREALL,
+        /** Star topology
+         */
+        STAR_TOP,
+        /** Ring topology
+         */
+        RING,
+        /** one-to-one capsule mapping/association
+         */
+        ASSOCIATE;
         // end Panini code
 
 
@@ -816,7 +828,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 		@Override
 		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			return v.visitCapsuleArrayCall(this, d);
+			return v.visitIndexedCapsuleWiring(this, d);
 		}
 
 	}
@@ -1087,7 +1099,215 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	}
 
-    // end Panini code
+    public static class JCWireall extends JCExpression implements WireallTree {
+
+        public List<JCStatement> unrolled;
+        public List<JCExpression> args;
+
+        /**
+		 * This is the capsule array of which all elements should be wired with the same arguments.
+		 */
+		public JCExpression many;
+
+		/**
+         * @param expr
+         */
+        protected JCWireall(JCExpression capsuleArrayExpr, List<JCExpression> args) {
+        	super();
+			this.many = capsuleArrayExpr;
+        	this.args = args;
+        }
+
+        @Override
+        public Tag getTag() {
+            return Tag.WIREALL;
+        }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visitWireall(this);
+        }
+
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            return v.visitWireall(this, d);
+        }
+
+		/* (non-Javadoc)
+		 * @see com.sun.source.tree.Tree#getKind()
+		 */
+		@Override
+		public Kind getKind() {
+			return Kind.WIREALL;
+		}
+   }
+
+   public static class JCStar extends JCExpression implements StarTree{
+
+	 public List<JCStatement> unrolled;
+	 public JCExpression center;
+	 public JCExpression others;
+	 public List<JCExpression> args;
+
+	 protected JCStar(JCExpression center, JCExpression others, List<JCExpression> args){
+		 this.center = center;
+		 this.others = others;
+		 this.args = args;
+	 }
+
+	@Override
+	public Kind getKind() {
+		return Kind.STAR_TOP;
+	}
+
+	@Override
+	public ExpressionTree getCenter() {
+		return center;
+	}
+
+	@Override
+	public ExpressionTree getOrbiters() {
+		return others;
+	}
+
+	@Override
+	public List<? extends ExpressionTree> getArgs() {
+		return args;
+	}
+
+	@Override
+	public Tag getTag() {
+		return Tag.STAR_TOP;
+	}
+
+	@Override
+	public void accept(Visitor v) {
+		v.visitStar(this);
+	}
+
+	@Override
+	public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+		return v.visitStar(this, d);
+	}
+
+   }
+
+   public static class JCRing extends JCExpression implements RingTree{
+
+	    public List<JCStatement> unrolled;
+	    public JCExpression capsules;
+		public List<JCExpression> args;
+
+		protected JCRing(JCExpression capsules, List<JCExpression> args){
+			this.capsules = capsules;
+			this.args = args;
+		}
+
+		@Override
+		public Kind getKind() {
+			return Kind.RING;
+		}
+
+		@Override
+		public ExpressionTree getCapsules() {
+			return capsules;
+		}
+
+		@Override
+		public List<? extends ExpressionTree> getArgs() {
+			return args;
+		}
+
+		@Override
+		public Tag getTag() {
+			return Tag.RING;
+		}
+
+		@Override
+		public void accept(Visitor v) {
+			v.visitRing(this);
+		}
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitRing(this, d);
+		}
+
+	}
+
+   public static class JCAssociate extends JCExpression implements AssociateTree{
+
+	   public List<JCStatement> unrolled;
+	   public JCExpression src;
+	   public JCExpression srcPos;
+	   public JCExpression dest;
+	   public JCExpression destPos;
+	   public JCExpression len;
+	   public List<JCExpression> args;
+
+	   protected JCAssociate(JCExpression src, JCExpression srcPos, JCExpression dest,
+			   JCExpression destPos, JCExpression len, List<JCExpression> args){
+		   this.src = src;
+		   this.srcPos = srcPos;
+		   this.dest = dest;
+		   this.destPos = destPos;
+		   this.len = len;
+		   this.args = args;
+	   }
+
+	   @Override
+	   public Kind getKind() {
+		   return Kind.ASSOCIATE;
+	   }
+
+	   @Override
+	   public List<? extends ExpressionTree> getArgs() {
+		   return args;
+	   }
+
+	   @Override
+	   public Tag getTag() {
+		   return Tag.ASSOCIATE;
+	   }
+
+	   @Override
+	   public void accept(Visitor v) {
+		   v.visitAssociate(this);
+	   }
+
+	   @Override
+	   public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+		   return v.visitAssociate(this, d);
+	   }
+
+
+	   @Override
+	   public ExpressionTree getSrc() {
+		   return src;
+	   }
+
+	   @Override
+	   public ExpressionTree getSrcPosition() {
+		   return srcPos;
+	   }
+
+	   @Override
+	   public ExpressionTree getDest() {
+		   return dest;
+	   }
+
+	   @Override
+	   public ExpressionTree getDestPosition() {
+		   return destPos;
+	   }
+
+	   @Override
+	   public ExpressionTree getLength() {
+		   return len;
+	   }
+   }
+
+   // end Panini code
 
     /**
      * Everything in one source file is kept in a TopLevel structure.
@@ -3102,6 +3322,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }
         public void visitInitDef(JCInitDecl that) 			 { visitTree(that); }
         public void visitForeach(JCForeach that)	 	     { visitTree(that); }
+        public void visitWireall(JCWireall that)         { visitTree(that); }
+        public void visitStar(JCStar that)					 { visitTree(that); }
+        public void visitRing(JCRing that)					 { visitTree(that); }
+        public void visitAssociate(JCAssociate that)		 { visitTree(that); }
         // end Panini code
         public void visitTree(JCTree that)                   { Assert.error(); }
     }
