@@ -961,7 +961,35 @@ public class Attr extends JCTree.Visitor {
     public void visitWireall(JCWireall tree) {
         Type mType = attribExpr(tree.many, env);
         List<Type> argsTypes = attribArgs(tree.args, env);
-        //check
+        Assert.error("FINISH IMPLEMENTATION");
+    }
+
+    @Override
+    public void visitRing(JCRing tree) {
+        attribExpr(tree.capsules, env);
+        Type ctype = checkCapsuleArray(tree.capsules, env);
+        List<Type> argtypes = attribArgs(tree.args, env);
+
+        //Make up a new list to type check against.
+        //The capusules arg is also an argument.
+        ListBuffer<JCExpression> was = new ListBuffer<JCExpression>();
+        was.add(tree.capsules); was.addAll(tree.args);
+        ListBuffer<Type> wts = new ListBuffer<Type>();
+        wts.add(ctype); wts.addAll(argtypes);
+
+        checkWiring(tree, ctype, was.toList(), wts.toList());
+    }
+
+    @Override
+    public void visitStar(JCStar tree) {
+        // TODO Auto-generated method stub
+        super.visitStar(tree);
+    }
+
+    @Override
+    public void visitAssociate(JCAssociate tree) {
+        // TODO Auto-generated method stub
+        super.visitAssociate(tree);
     }
     // end Panini code
 
