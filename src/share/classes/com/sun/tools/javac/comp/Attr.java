@@ -724,36 +724,91 @@ public class Attr extends JCTree.Visitor {
     }
     
     // Panini code
-    Type checkWiring(DiagnosticPosition pos, JCExpression capsule, Type owntype, List<JCExpression> argtrees, List<Type> argtypes) {
-        if(!syms.capsules.containsKey(owntype.tsym.name)) {
-            log.error(capsule.pos(), "only.capsule.types.allowed");
-            return types.createErrorType(owntype);
+    /**Check the wiring for a capsule instance.
+     * If the check succeeds, store the wiring type in tree and return it.
+     * If the check fails, store errType in tree and return it.
+     *
+     * Based on {@link #check(JCTree, Type, int, ResultInfo)}. This version
+     * behaves a little bit differently because it iterates/checks the wiring
+     * argument types before assigning the final type to tree. In that respect,
+     * this method is more like checking a method invocation, but is much simpler.
+     *
+     * @param tree capsule wiring/topology tree.
+     * @param capsuletype type of the capsule to wire
+     * @param argtrees arguments for wiring
+     * @param argtypes argument types.
+     */
+    Type checkWiring(JCTree tree, Type capsuletype, List<JCExpression> argtrees, List<Type> argtypes) {
+        if(!syms.capsules.containsKey(capsuletype.tsym.name)) {
+            log.error(tree, "only.capsule.types.allowed");
+            return types.createErrorType(capsuletype);
         }
 
-        if(owntype.tsym instanceof CapsuleSymbol){
-            CapsuleSymbol ownsym = (CapsuleSymbol)owntype.tsym;
+
+        Type wiringtype = types.createErrorType(capsuletype);
+
+        if(capsuletype.tsym instanceof CapsuleSymbol){
+            CapsuleSymbol ownsym = (CapsuleSymbol)capsuletype.tsym;
 
             List<Type> wt = ownsym.wiringSym.type.getParameterTypes();
             List<JCExpression> as = argtrees;
             List<Type> ats = argtypes;
 
             if(wt.size() != as.size()) {
-                log.error(pos, "wiring.args.count.mismatch", wt.size(), as.size());
+                log.error(tree, "wiring.args.count.mismatch", wt.size(), as.size());
             }
 
+            boolean wiringOkay = true;
             while(wt.nonEmpty()){
-                check(as.head, ats.head, VAL, new ResultInfo(VAL, wt.head));
+                // redo our check here. The stock version assigns
+                // the type to the tree when it finishes, which we do not want
+                // in this context.
+                Type aType = ats.head;
+                int  aKind = VAL;
+                ResultInfo wireResult = new ResultInfo(VAL, wt.head);
+
+                if (aType.tag != ERROR && wireResult.pt.tag != METHOD && resultInfo.pt.tag != FORALL) {
+                    wireResult.check(as.head, aType);
+                } else {
+                    log.error(as.head.pos(), "unexpected.type",
+                              kindNames(wireResult.pkind),
+                              kindNames(aKind));
+                    wiringOkay = false;
+                }
 
                 wt = wt.tail;
                 as = as.tail;
                 ats = ats.tail;
             }
 
-            return ownsym.wiringSym.type;
+           wiringtype = wiringOkay ? ownsym.wiringSym.type : wiringtype;
         } else {
-            log.error(capsule.pos(), "invalid.capsule.type1", owntype);
-            return types.createErrorType(owntype);
+            log.error(tree, "invalid.capsule.type1", capsuletype);
         }
+
+        tree.type = wiringtype;
+        return wiringtype;
+    }
+
+    /**
+     * Utility method to check a expression is a capsule array
+     * @param pos
+     * @param capArray
+     * @param env
+     * @return the Capsule type for the array, or an error type.
+     */
+    Type checkCapsuleArray(JCExpression tree, Env<AttrContext> env) {
+        Type owntype = types.createErrorType(tree.type);
+        Type atype   = attribExpr(tree, env);
+        if( types.isArray(atype) ) {
+            owntype = types.elemtype(atype);
+            if(!syms.capsules.containsKey(owntype.tsym.name)) {
+                log.error(tree.pos(), "only.capsule.types.allowed");
+            }
+        } else {
+            log.error(tree.pos(), "array.req.but.found", atype);
+        }
+        return owntype;
     }
 
     public final void visitCapsuleDef(final JCCapsuleDecl tree){
@@ -783,30 +838,22 @@ public class Attr extends JCTree.Visitor {
         Env<AttrContext> localEnv = env.dup(tree, env.info.dup());
         Type owntype = attribExpr(tree.capsule, localEnv);
         List<Type> argtypes = attribArgs(tree.args, localEnv);
-        result = checkWiring(tree.pos(), tree.capsule, owntype, tree.args, argtypes);
-        tree.type = result;
+        checkWiring(tree, owntype, tree.args, argtypes);
     }
 
     @Override
     public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
         attribExpr(tree.index, env, syms.intType);
-        Type owntype = types.createErrorType(tree.type);
-        Type atype   = attribExpr(tree.indexed, env);
-        if( types.isArray(atype) ) {
-            owntype = types.elemtype(atype);
-            if(!syms.capsules.containsKey(owntype.tsym.name)) {
-                log.error(tree.pos(), "only.capsule.types.allowed");
-            }
-        } else {
-            log.error(tree.pos(), "array.req.but.found", atype);
-        }
+        Type owntype = checkCapsuleArray(tree.indexed, env);
 
         List<Type> argtypes = attribArgs(tree.arguments, env);
-        result = checkWiring(tree.pos(), tree.indexed, owntype, tree.arguments, argtypes);
-        tree.type = result;
+        checkWiring(tree, owntype, tree.arguments, argtypes);
+
 
         System.err.println("Checking the index bounds " + tree.index);
     }
+
+
 
     @Override
     public void visitCapsuleArray(JCCapsuleArray tree) {
