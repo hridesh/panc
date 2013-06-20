@@ -144,7 +144,7 @@ public class TreeMaker implements JCTree.Factory {
 	}
 
 	public JCWireall ManyToOne(List<JCExpression> args){
-		JCWireall tree = new JCWireall(args.head, args.tail);
+		JCWireall tree = new JCWireall(null, args);
 		tree.pos = pos;
 		return tree;
 	}

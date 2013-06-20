@@ -2188,10 +2188,7 @@ public class JavacParser implements Parser {
 		if(expressions.size() < 2){
 			log.error(token.pos, "compiler.err.system.topology.wireall.size");
 		}
-		JCExpression center = expressions.head;
-		JCExpression others = expressions.tail.head;
-		List<JCExpression> args = expressions.tail.tail;
-		 JCStar expr = toP(F.at(positionAfterStat).Star(center, others, args));
+		 JCStar expr = toP(F.at(positionAfterStat).Star(null, null, expressions));
 		 JCExpressionStatement statement = to(F.Exec(expr));
 		 return List.<JCStatement>of(statement);
 
@@ -2205,9 +2202,7 @@ public class JavacParser implements Parser {
 		if(expressions.size() < 1){
 			log.error(token.pos, "compiler.err.system.topology.wireall.size");
 		}
-		JCExpression capsules = expressions.head;
-		List<JCExpression> args = expressions.tail;
-		 JCRing expr = toP(F.at(positionAfterStat).Ring(capsules, args));
+		 JCRing expr = toP(F.at(positionAfterStat).Ring(null, expressions));
 		 JCExpressionStatement statement = to(F.Exec(expr));
 		 return List.<JCStatement>of(statement);
 
@@ -2221,14 +2216,9 @@ public class JavacParser implements Parser {
 		if(expressions.size() < 5){
 			log.error(token.pos, "compiler.err.system.topology.wireall.size");
 		}
-		JCExpression src = expressions.head;
-		JCExpression srcPos = expressions.tail.head;
-		JCExpression dest = expressions.tail.tail.head;
-		JCExpression destPos = expressions.tail.tail.tail.head;
-		JCExpression len = expressions.tail.tail.tail.tail.head;
-		List<JCExpression> args = expressions.tail.tail.tail.tail.tail;
-		 JCAssociate expr = toP(F.at(positionAfterStat).Associate(src, srcPos,
-				 dest, destPos, len, args));
+
+		 JCAssociate expr = toP(F.at(positionAfterStat).Associate(null, null,
+				 null, null, null, expressions));
 		 JCExpressionStatement statement = to(F.Exec(expr));
 		 return List.<JCStatement>of(statement);
 

@@ -366,16 +366,16 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         FORALLLOOP,
         /** Many-to-one topology.
          */
-        WIREALL,
+        TOP_WIREALL,
         /** Star topology
          */
-        STAR_TOP,
+        TOP_STAR,
         /** Ring topology
          */
-        RING,
+        TOP_RING,
         /** one-to-one capsule mapping/association
          */
-        ASSOCIATE;
+        TOP_ASSOC;
         // end Panini code
 
 
@@ -1099,10 +1099,41 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	}
 
-    public static class JCWireall extends JCExpression implements WireallTree {
-
-        public List<JCStatement> unrolled;
+    public static abstract class JCTopology extends JCExpression {
         public List<JCExpression> args;
+        /**
+         * List of statements which are unrolled from the topology operator.
+         */
+        public List<JCStatement> unrolled;
+
+
+        //Subtypes which support these operations should implement the relevant methods.
+
+        //Wireall and Ring
+        public void setMany(JCExpression many)         { throw new UnsupportedOperationException(); }
+        //Star
+        public void setOrbiters(JCExpression orbiters) { throw new UnsupportedOperationException(); }
+        public void setCenter(JCExpression center)     { throw new UnsupportedOperationException(); }
+        //Associate
+        public void setSrc(JCExpression head)          { throw new UnsupportedOperationException(); }
+        public void setSrcPos(JCExpression head)       { throw new UnsupportedOperationException(); }
+        public void setDestPos(JCExpression head)      { throw new UnsupportedOperationException(); }
+        public void setLength(JCExpression head)       { throw new UnsupportedOperationException(); }
+        public void setDest(JCExpression head)         { throw new UnsupportedOperationException(); }
+
+        /**
+         * Minimumn number of arguments needed for the topology.
+         */
+        public abstract int minArgCount();
+
+        /**
+         * Text description for error messages.
+         * @return
+         */
+        public abstract String desc();
+    }
+
+    public static class JCWireall extends JCTopology implements WireallTree {
 
         /**
 		 * This is the capsule array of which all elements should be wired with the same arguments.
@@ -1119,8 +1150,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         }
 
         @Override
+        public void setMany(JCExpression many) {
+            this.many = many;
+        }
+
+        @Override
         public Tag getTag() {
-            return Tag.WIREALL;
+            return Tag.TOP_WIREALL;
         }
 
         @Override
@@ -1140,14 +1176,22 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		public Kind getKind() {
 			return Kind.WIREALL;
 		}
+
+		@Override
+        public int minArgCount() {
+            return 1;
+        }
+
+        @Override
+        public String desc() {
+            return "wireall";
+        }
    }
 
-   public static class JCStar extends JCExpression implements StarTree{
+   public static class JCStar extends JCTopology implements StarTree{
 
-	 public List<JCStatement> unrolled;
 	 public JCExpression center;
 	 public JCExpression others;
-	 public List<JCExpression> args;
 
 	 protected JCStar(JCExpression center, JCExpression others, List<JCExpression> args){
 		 this.center = center;
@@ -1166,8 +1210,18 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 	}
 
 	@Override
+	public void setCenter(JCExpression center) {
+	    this.center = center;
+	}
+
+	@Override
 	public ExpressionTree getOrbiters() {
 		return others;
+	}
+
+	@Override
+	public void setOrbiters(JCExpression orbiters) {
+	    this.others = orbiters;
 	}
 
 	@Override
@@ -1177,7 +1231,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	@Override
 	public Tag getTag() {
-		return Tag.STAR_TOP;
+		return Tag.TOP_STAR;
 	}
 
 	@Override
@@ -1190,17 +1244,29 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		return v.visitStar(this, d);
 	}
 
+	@Override
+    public int minArgCount() {
+        return 2;
+    }
+
+    @Override
+    public String desc() {
+        return "star";
+    }
    }
 
-   public static class JCRing extends JCExpression implements RingTree{
+   public static class JCRing extends JCTopology implements RingTree{
 
-	    public List<JCStatement> unrolled;
 	    public JCExpression capsules;
-		public List<JCExpression> args;
 
 		protected JCRing(JCExpression capsules, List<JCExpression> args){
 			this.capsules = capsules;
 			this.args = args;
+		}
+
+		@Override
+		public void setMany(JCExpression capsules) {
+		    this.capsules = capsules;
 		}
 
 		@Override
@@ -1220,7 +1286,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 		@Override
 		public Tag getTag() {
-			return Tag.RING;
+			return Tag.TOP_RING;
 		}
 
 		@Override
@@ -1233,17 +1299,24 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 			return v.visitRing(this, d);
 		}
 
+		@Override
+        public int minArgCount() {
+            return 1;
+        }
+
+        @Override
+        public String desc() {
+            return "ring";
+        }
 	}
 
-   public static class JCAssociate extends JCExpression implements AssociateTree{
+   public static class JCAssociate extends JCTopology implements AssociateTree{
 
-	   public List<JCStatement> unrolled;
 	   public JCExpression src;
 	   public JCExpression srcPos;
 	   public JCExpression dest;
 	   public JCExpression destPos;
 	   public JCExpression len;
-	   public List<JCExpression> args;
 
 	   protected JCAssociate(JCExpression src, JCExpression srcPos, JCExpression dest,
 			   JCExpression destPos, JCExpression len, List<JCExpression> args){
@@ -1267,7 +1340,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	   @Override
 	   public Tag getTag() {
-		   return Tag.ASSOCIATE;
+		   return Tag.TOP_ASSOC;
 	   }
 
 	   @Override
@@ -1287,8 +1360,18 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 	   }
 
 	   @Override
+       public void setSrc(JCExpression tree) {
+	       this.src = tree;
+	   }
+
+	   @Override
 	   public ExpressionTree getSrcPosition() {
 		   return srcPos;
+	   }
+
+	   @Override
+	   public void setSrcPos(JCExpression tree){
+	       this.srcPos = tree;
 	   }
 
 	   @Override
@@ -1297,14 +1380,39 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 	   }
 
 	   @Override
+	   public void setDest(JCExpression tree) {
+	       this.dest = tree;
+	   }
+
+	   @Override
 	   public ExpressionTree getDestPosition() {
 		   return destPos;
+	   }
+
+	   @Override
+	   public void setDestPos(JCExpression tree){
+	       this.destPos = tree;
 	   }
 
 	   @Override
 	   public ExpressionTree getLength() {
 		   return len;
 	   }
+
+	   @Override
+       public void setLength(JCExpression tree){
+	       this.len = tree;
+	   }
+
+	   @Override
+       public int minArgCount() {
+           return 5;
+       }
+
+       @Override
+       public String desc() {
+           return "associate";
+       }
    }
 
    // end Panini code

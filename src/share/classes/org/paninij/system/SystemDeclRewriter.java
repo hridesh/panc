@@ -38,6 +38,7 @@ import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
 import com.sun.tools.javac.tree.JCTree.JCForLoop;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
+import com.sun.tools.javac.tree.JCTree.JCTopology;
 import com.sun.tools.javac.tree.JCTree.JCWireall;
 import com.sun.tools.javac.tree.JCTree.JCProcInvocation;
 import com.sun.tools.javac.tree.JCTree.JCRing;
@@ -98,8 +99,13 @@ public class SystemDeclRewriter extends TreeTranslator {
         for (JCStatement statement : stats) {
             if (statement.getKind() == Kind.EXPRESSION_STATEMENT) {
                 JCExpressionStatement exprStatement = ((JCExpressionStatement) statement);
-                if (exprStatement.expr.getKind() == Kind.WIREALL) {
-                    JCWireall wireall = (JCWireall) exprStatement.expr;
+                final Kind exprKind = exprStatement.expr.getKind();
+                //TOPOLOGY OPERATORS
+                if (exprKind == Kind.WIREALL ||
+                        exprKind == Kind.RING ||
+                        exprKind == Kind.STAR_TOP ||
+                        exprKind == Kind.ASSOCIATE) {
+                    JCTopology wireall = (JCTopology) exprStatement.expr;
                     for (JCStatement unrolledStatement : wireall.unrolled) {
                         newStats.add(unrolledStatement);
                     }

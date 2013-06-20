@@ -956,6 +956,7 @@ public class Attr extends JCTree.Visitor {
 
     @Override
     public void visitWireall(JCWireall tree) {
+        arrangeWiringOperatorArgs(tree);
         Type mType = checkCapsuleArray(tree.many, env);
         List<Type> argtypes = attribArgs(tree.args, env);
         checkWiring(tree, mType, tree.args, argtypes);
@@ -963,6 +964,7 @@ public class Attr extends JCTree.Visitor {
 
     @Override
     public void visitRing(JCRing tree) {
+        arrangeWiringOperatorArgs(tree);
         attribExpr(tree.capsules, env);
         Type ctype = checkCapsuleArray(tree.capsules, env);
         List<Type> argtypes = attribArgs(tree.args, env);
@@ -979,6 +981,7 @@ public class Attr extends JCTree.Visitor {
 
     @Override
     public void visitStar(JCStar tree) {
+        arrangeWiringOperatorArgs(tree);
         Type captype = attribExpr(tree.center, env);
         Type otherType = checkCapsuleArray(tree.others, env);
         List<Type> argtypes = attribArgs(tree.args, env);
@@ -989,6 +992,7 @@ public class Attr extends JCTree.Visitor {
 
     @Override
     public void visitAssociate(JCAssociate tree) {
+        arrangeWiringOperatorArgs(tree);
         Type sType = checkCapsuleArray(tree.src, env);
         Type dType = checkCapsuleArray(tree.dest, env);
 
@@ -1003,6 +1007,56 @@ public class Attr extends JCTree.Visitor {
         wts.add(sType); wts.addAll(argtypes);
 
         checkWiring(tree, dType, was.toList(), wts.toList());
+    }
+
+    /**
+     * Rearrange the arguments into the more specific fields of
+     * the topology. Re-solves parsing abiguity for the topology
+     * syntax.
+     * @param tree
+     */
+    void arrangeWiringOperatorArgs(JCTopology tree){
+        boolean argSizeError = false;
+        switch(tree.getTag()) {
+        case TOP_WIREALL:
+        case TOP_RING:
+            if(tree.args.size() >= 1){
+                //first arg is actually the id to be wired
+                tree.setMany(tree.args.head);
+                //remaining args are the wiring args
+                tree.args = tree.args.tail;
+            } else {
+                argSizeError = true;
+            }
+            break;
+        case TOP_STAR:
+            if(tree.args.size() >= 2) {
+               tree.setOrbiters(tree.args.head);
+               tree.setCenter(tree.args.tail.head);
+               tree.args = tree.args.tail.tail;
+            } else {
+               argSizeError = true;
+            }
+            break;
+        case TOP_ASSOC:
+            if(tree.args.size() >= 5) { //walk down the list 5 times.
+                tree.setSrc(tree.args.head);     tree.args = tree.args.tail;
+                tree.setSrcPos(tree.args.head);  tree.args = tree.args.tail;
+                tree.setDest(tree.args.head);    tree.args = tree.args.tail;
+                tree.setDestPos(tree.args.head); tree.args = tree.args.tail;
+                tree.setLength(tree.args.head);
+                tree.args = tree.args.tail;
+            } else {
+                argSizeError = true;
+            }
+            break;
+        default:
+            Assert.error("Unknown topology operator " + tree.desc());
+        }
+
+        if(argSizeError){
+            log.error(tree, "topology.operator.needs.n.args", tree.desc(), tree.minArgCount());
+        }
     }
     // end Panini code
 
