@@ -957,9 +957,9 @@ public class Attr extends JCTree.Visitor {
 
     @Override
     public void visitWireall(JCWireall tree) {
-        Type mType = attribExpr(tree.many, env);
-        List<Type> argsTypes = attribArgs(tree.args, env);
-        Assert.error("FINISH IMPLEMENTATION");
+        Type mType = checkCapsuleArray(tree.many, env);
+        List<Type> argtypes = attribArgs(tree.args, env);
+        checkWiring(tree, mType, tree.args, argtypes);
     }
 
     @Override
