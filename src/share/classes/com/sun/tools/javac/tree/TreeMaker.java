@@ -149,17 +149,31 @@ public class TreeMaker implements JCTree.Factory {
 		return tree;
 	}
 
+	@Deprecated
 	public JCStar Star(JCExpression center, JCExpression others, List<JCExpression> args){
 		JCStar tree = new JCStar(center, others, args);
 		tree.pos = pos;
 		return tree;
 	}
+	
+	public JCStar Star(List<JCExpression> args){
+        JCStar tree = new JCStar(null, null, args);
+        tree.pos = pos;
+        return tree;
+    }
 
+	@Deprecated
 	public JCRing Ring(JCExpression capsules, List<JCExpression> args){
 		JCRing tree = new JCRing(capsules, args);
 		tree.pos = pos;
 		return tree;
 	}
+	
+	public JCRing Ring( List<JCExpression> args){
+        JCRing tree = new JCRing(null, args);
+        tree.pos = pos;
+        return tree;
+    }
 
 	public JCAssociate Associate(JCExpression src, JCExpression srcPos, JCExpression dest,
 			JCExpression destPos, JCExpression len, List<JCExpression> args){

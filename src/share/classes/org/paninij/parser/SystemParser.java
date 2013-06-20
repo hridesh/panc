@@ -1183,12 +1183,24 @@ public class SystemParser {
             nextToken();
             List<JCExpression> args = parseArgumentList();
             returnVal = F.Exec(F.at(pos).ManyToOne(args));
-        }else if(isSameKind(token, SYSLANG_ASSOCIATE)){
+        } else if (isSameKind(token, SYSLANG_ASSOCIATE)) {
             int pos = token.pos;
             nextToken();
             List<JCExpression> args = parseArgumentList();
-            //TODO: Don't forget to verify arguments during type checking;
+            // TODO: Don't forget to verify arguments during type checking;
             returnVal = F.Exec(F.at(pos).Associate(args));
+        } else if (isSameKind(token, SYSLANG_STAR)) {
+            int pos = token.pos;
+            nextToken();
+            List<JCExpression> args = parseArgumentList();
+            // TODO: Don't forget to verify arguments during type checking;
+            returnVal = F.Exec(F.at(pos).Star(args));
+        } else if (isSameKind(token, SYSLANG_RING)) {
+            int pos = token.pos;
+            nextToken();
+            List<JCExpression> args = parseArgumentList();
+            // TODO: Don't forget to verify arguments during type checking;
+            returnVal = F.Exec(F.at(pos).Ring(args));
         }
 
         // we have to return null if there isn't any statement to parse;
@@ -1197,7 +1209,6 @@ public class SystemParser {
         accept(SEMI);
         return returnVal;
     }
-    
 
     /**
      * 
