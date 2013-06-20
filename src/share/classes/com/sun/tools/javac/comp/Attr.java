@@ -862,7 +862,6 @@ public class Attr extends JCTree.Visitor {
      * Adapted from {@link #visitMethodDef(JCMethodDecl)}.
      */
     public final void visitSystemDef(final JCSystemDecl tree){
-        //TODO-XXX checking still needs defined/performed.
         final ClassSymbol treeSym = tree.sym;
 
         //Make the sym look like a method kind.
