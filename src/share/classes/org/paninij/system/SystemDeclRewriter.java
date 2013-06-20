@@ -222,8 +222,8 @@ public class SystemDeclRewriter extends TreeTranslator {
         JCStatement statements[] = new JCStatement[capsuleArraySize];
         for (int i = 0; i < capsuleArraySize; i++) {
             //TODO: refactor the name of make.CapsuleArrayCall -> CapsuleArrayWiring;
-            statements[i] = make.CapsuleArrayCall(capsuleArrayName,
-                    make.Literal(i), tree.many, tree.args);
+            statements[i] = make.at(tree.pos).Exec(make.CapsuleArrayCall(capsuleArrayName,
+                    make.Literal(i), tree.many, tree.args));
         }
 
         System.out.println("Rewritten wireall statement: "

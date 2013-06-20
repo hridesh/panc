@@ -18,49 +18,27 @@
  */
 package org.paninij.parser;
 
-import static com.sun.tools.javac.parser.Tokens.TokenKind.ARROW;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.ASSERT;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.CASE;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.CLASS;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.COLON;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.COMMA;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.DEFAULT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.DOT;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.ELLIPSIS;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.ELSE;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.ENUM;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.EOF;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.EQ;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.FINAL;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.GT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.GTGTGTEQ;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.HASH;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.IDENTIFIER;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.IMPORT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.INSTANCEOF;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.INTERFACE;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.INTLITERAL;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.LBRACE;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.LBRACKET;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.LONGLITERAL;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.LPAREN;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.LT;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.MONKEYS_AT;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.NEW;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.PACKAGE;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.PLUSEQ;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.PLUSPLUS;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.QUES;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.RBRACE;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.RBRACKET;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.RPAREN;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.SEMI;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.STAR;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.STATIC;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.SUB;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.SUBSUB;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.TRUE;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.WHILE;
 import static com.sun.tools.javac.tree.JCTree.Tag.AND;
 import static com.sun.tools.javac.tree.JCTree.Tag.BITAND;
 import static com.sun.tools.javac.tree.JCTree.Tag.BITAND_ASG;
@@ -72,7 +50,6 @@ import static com.sun.tools.javac.tree.JCTree.Tag.COMPL;
 import static com.sun.tools.javac.tree.JCTree.Tag.DIV;
 import static com.sun.tools.javac.tree.JCTree.Tag.DIV_ASG;
 import static com.sun.tools.javac.tree.JCTree.Tag.GE;
-import static com.sun.tools.javac.tree.JCTree.Tag.IDENT;
 import static com.sun.tools.javac.tree.JCTree.Tag.LE;
 import static com.sun.tools.javac.tree.JCTree.Tag.LITERAL;
 import static com.sun.tools.javac.tree.JCTree.Tag.MINUS;
@@ -88,8 +65,6 @@ import static com.sun.tools.javac.tree.JCTree.Tag.NO_TAG;
 import static com.sun.tools.javac.tree.JCTree.Tag.OR;
 import static com.sun.tools.javac.tree.JCTree.Tag.PLUS_ASG;
 import static com.sun.tools.javac.tree.JCTree.Tag.POS;
-import static com.sun.tools.javac.tree.JCTree.Tag.POSTDEC;
-import static com.sun.tools.javac.tree.JCTree.Tag.POSTINC;
 import static com.sun.tools.javac.tree.JCTree.Tag.PREDEC;
 import static com.sun.tools.javac.tree.JCTree.Tag.PREINC;
 import static com.sun.tools.javac.tree.JCTree.Tag.SL;
@@ -99,49 +74,27 @@ import static com.sun.tools.javac.tree.JCTree.Tag.SR_ASG;
 import static com.sun.tools.javac.tree.JCTree.Tag.TYPETEST;
 import static com.sun.tools.javac.tree.JCTree.Tag.USR;
 import static com.sun.tools.javac.tree.JCTree.Tag.USR_ASG;
-import static com.sun.tools.javac.tree.JCTree.Tag.VARDEF;
-import static com.sun.tools.javac.util.ListBuffer.lb;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.paninij.parser.SystemParser.SystemParserResult;
-
-import com.sun.corba.se.spi.ior.MakeImmutable;
-import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
-import com.sun.source.tree.Tree.Kind;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Source;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.parser.EndPosTable;
 import com.sun.tools.javac.parser.Lexer;
 import com.sun.tools.javac.parser.Tokens;
-import com.sun.tools.javac.parser.Tokens.Comment.CommentStyle;
 import com.sun.tools.javac.parser.Tokens.Token;
 import com.sun.tools.javac.parser.Tokens.TokenKind;
 import com.sun.tools.javac.tree.JCTree;
-import com.sun.tools.javac.tree.JCTree.JCAnnotation;
-import com.sun.tools.javac.tree.JCTree.JCArrayAccess;
-import com.sun.tools.javac.tree.JCTree.JCArrayTypeTree;
-import com.sun.tools.javac.tree.JCTree.JCAssert;
 import com.sun.tools.javac.tree.JCTree.JCBinary;
 import com.sun.tools.javac.tree.JCTree.JCBlock;
-import com.sun.tools.javac.tree.JCTree.JCBreak;
-import com.sun.tools.javac.tree.JCTree.JCCapsuleArray;
-import com.sun.tools.javac.tree.JCTree.JCCase;
-import com.sun.tools.javac.tree.JCTree.JCClassDecl;
-import com.sun.tools.javac.tree.JCTree.JCContinue;
-import com.sun.tools.javac.tree.JCTree.JCDoWhileLoop;
 import com.sun.tools.javac.tree.JCTree.JCErroneous;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
-import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
-import com.sun.tools.javac.tree.JCTree.JCWireall;
-import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 import com.sun.tools.javac.tree.JCTree.JCModifiers;
 import com.sun.tools.javac.tree.JCTree.JCPrimitiveTypeTree;
-import com.sun.tools.javac.tree.JCTree.JCProcInvocation;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
@@ -152,7 +105,6 @@ import com.sun.tools.javac.util.Convert;
 import com.sun.tools.javac.util.JCDiagnostic;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
-import com.sun.tools.javac.util.RichDiagnosticFormatter.RichConfiguration.RichFormatterFeature;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
@@ -1091,24 +1043,21 @@ public class SystemParser {
 
             if ((mode & EXPR) != 0) {
                 t = toP(F.at(token.pos).Ident(ident()));
-                loop: while (true) {
-                    pos = token.pos;
-                    // TODO: consider removing this;
-                    switch (token.kind) {
-                    case LBRACKET: {
-                        nextToken();
-                        if ((mode & EXPR) != 0) {
-                            mode = EXPR;
-                            JCExpression t1 = term();
-                            t = to(F.at(pos).Indexed(t, t1));
-                            accept(RBRACKET);
-                             t = suffixCapsuleWiring(t);
-                        }
+                if (token.kind == LBRACKET) {
+                    JCIdent nameOfArray = (JCIdent) t;
+                    nextToken();
+                    if ((mode & EXPR) != 0) {
+                        mode = EXPR;
+                        JCExpression indexExpression = term();
+                        t = to(F.at(pos).Indexed(t, indexExpression));
+                        accept(RBRACKET);
+                        t = suffixIndexedCapsuleWiringOptional(t, nameOfArray,
+                                indexExpression);
                     }
-                        break loop;
-                    default:
-                        break loop;
-                    }
+                }
+
+                if (token.kind == LPAREN) {
+                    t = suffixCapsuleWiringOptional(t);
                 }
             }
             break;
@@ -1137,14 +1086,38 @@ public class SystemParser {
         return t;
     }
 
-    // TODO: replace this with capsule wiring statement;
-    JCExpression suffixCapsuleWiring(JCExpression t) {
-        if ((mode & EXPR) != 0) {
-            if (token.kind == LPAREN) {
-                System.out.println("yup!");
-            }
+    private JCExpression suffixCapsuleWiringOptional(JCExpression t) {
+        List<JCExpression> params = parseWiringParameters();
+        return F.at(token.pos).WiringApply(t, params);
+
+    }
+
+    private JCExpression suffixIndexedCapsuleWiringOptional(JCExpression t,
+            JCIdent nameOfArray, JCExpression indexExpression) {
+        if ((mode & EXPR) != 0 && (token.kind == LPAREN)) {
+            List<JCExpression> params = parseWiringParameters();
+            return F.at(token.pos).CapsuleArrayCall(nameOfArray.getName(),
+                    indexExpression, t, params);
         }
         return t;
+    }
+
+    /**
+     * @return
+     */
+    private List<JCExpression> parseWiringParameters() {
+        ListBuffer<JCExpression> lb = new ListBuffer<JCExpression>();
+        accept(LPAREN);
+        while (true) {
+            JCExpression param = parseExpression();
+            lb.add(param);
+            if ((token.kind == RPAREN))
+                break;
+            else
+                accept(COMMA);
+        }
+        accept(RPAREN);
+        return lb.toList();
     }
 
     public JCExpression parseType() {
@@ -1237,6 +1210,7 @@ public class SystemParser {
 
         if (token.kind == LPAREN) {
             accept(LPAREN);
+            // TODO: parse more and then type check;
             params.head = variableDeclaration(false);
             accept(RPAREN);
         }
@@ -1324,17 +1298,27 @@ public class SystemParser {
             } else {
                 JCExpression expression = parseExpression();
                 accept(SEMI);
-                return to(F.at(token.pos).Exec(checkExprStat(expression)));
+                return to(F.at(token.pos).Exec(
+                        checkExpressionStatement(expression)));
             }
         }
 
     }
 
-    // TODO: repair;
+    // TODO: repair, seriously broken
     private boolean isVariableDeclStart() {
-        return (typetag(token.kind) > 0) || (token.kind == IDENTIFIER)
-                && peekToken(IDENTIFIER) || (token.kind == IDENTIFIER)
-                && peekToken(LBRACKET);
+        boolean isSimpleDeclaration = (token.kind == IDENTIFIER)
+                && peekToken(IDENTIFIER);
+
+        boolean isArrayDeclaration = (token.kind == IDENTIFIER)
+                && peekToken(LBRACKET, TokenKind.INTLITERAL, RBRACKET,
+                        IDENTIFIER);
+
+        boolean isArrayDeclarationWithIdentifier = (token.kind == IDENTIFIER)
+                && peekToken(LBRACKET, IDENTIFIER, RBRACKET, IDENTIFIER);
+
+        return (typetag(token.kind) > 0) || isSimpleDeclaration
+                || isArrayDeclaration || isArrayDeclarationWithIdentifier;
     }
 
     /**
@@ -1371,7 +1355,7 @@ public class SystemParser {
     /**
      * Check that given tree is a legal expression statement.
      */
-    private JCExpression checkExprStat(JCExpression t) {
+    private JCExpression checkExpressionStatement(JCExpression t) {
         switch (t.getTag()) {
         case PREINC:
         case PREDEC:
@@ -1391,6 +1375,9 @@ public class SystemParser {
         case MOD_ASG:
         case APPLY:
         case NEWCLASS:
+            // TODO: rename?
+        case MAAPPLY:
+        case CAPSULE_WIRING:
         case ERRONEOUS:
             return t;
         default:

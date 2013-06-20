@@ -27,27 +27,26 @@ capsule O{
 }
 
 system SimpleExpression(String[] args){
-//    int fortyTwo = 42;
-//    int thirtyThree = 33;
-//    byte by;
-//    long l;
-//    long[] la;
-//    boolean test = false;
-//    String sA;
-//    M[42] ms;
-//    M[fortyTwo] m42;
+    int fortyTwo = 42;
+    int thirtyThree = 33;
+    byte by;
+    long l;
+    long[] la;
+    boolean test = false;
+    String sA;
+    M[42] ms;
+    M[fortyTwo] m42;
     
-//    int incVal = ++fortyTwo;
+    int incVal = ++fortyTwo;
     
-//    int newLong = la[42];
-//    
-//    int plus = 42 + (fortyTwo = (2 - 32)) - 11;
+    int newLong = la[42];
+    int plus = 42 + (fortyTwo = (2 - 32)) - 11;
     
-//    plus = 42;
-//    M m;
-//    O o;
-    o[42];
-    //m(o, 42);
+    plus = 42;
+    M m;
+    O o;
+    o[42](42);
+//    m(o, 42);
     
 }
 

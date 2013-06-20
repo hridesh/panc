@@ -490,7 +490,8 @@ public class Pretty extends JCTree.Visitor {
     
     public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree){
     	try {
-			print(tree.name + "[" + tree.index + "]" + "(" + tree.arguments + ");");
+    	    String args[];
+			print(tree.name + "[" + tree.index + "]" + "(" + tree.arguments + ")");
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}

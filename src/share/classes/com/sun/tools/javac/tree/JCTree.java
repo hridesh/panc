@@ -352,6 +352,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         LETEXPR,                         // ala scheme
         // Panini code
         PROC,
+        /**
+         * This is the tag used for capsule array indexed wiring
+         * TODO: rename
+         */
         MAAPPLY,
         /** Capsule wiring expressions.
          */
@@ -780,7 +784,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	}
 	
-	public static class JCCapsuleArrayCall extends JCStatement implements
+	public static class JCCapsuleArrayCall extends JCExpression implements
 			CapsuleArrayCallTree {
 
 		public Name name;

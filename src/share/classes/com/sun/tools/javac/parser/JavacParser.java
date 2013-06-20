@@ -2136,9 +2136,9 @@ public class JavacParser implements Parser {
         if(token.kind == LPAREN){
         	List<JCExpression> args = arguments();
         	accept(SEMI);
-        	JCStatement stm = F.at(pos).
+        	JCStatement stm = F.Exec((F.at(pos).
         			CapsuleArrayCall(names.fromString(((JCArrayAccess)t).indexed.toString()),
-        					((JCArrayAccess)t).index, ((JCArrayAccess)t).indexed, args);
+        					((JCArrayAccess)t).index, ((JCArrayAccess)t).indexed, args)));
         	return List.<JCStatement>of(stm);
         }else if (token.kind == COLON && t.hasTag(IDENT)) {
         	nextToken();
