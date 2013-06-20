@@ -980,8 +980,12 @@ public class Attr extends JCTree.Visitor {
 
     @Override
     public void visitStar(JCStar tree) {
-        // TODO Auto-generated method stub
-        super.visitStar(tree);
+        Type captype = attribExpr(tree.center, env);
+        Type otherType = checkCapsuleArray(tree.others, env);
+        List<Type> argtypes = attribArgs(tree.args, env);
+
+        //FIXME: CheckWiring for visitStar
+        checkWiring(tree, captype, tree.args, argtypes);
     }
 
     @Override
