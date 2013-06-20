@@ -521,7 +521,7 @@ public class Pretty extends JCTree.Visitor {
     @Override
     public void visitWireall(JCWireall that) {
     	try {
-			print(PaniniTokens.SYSLANG_MANY_TO_ONE + "(" + that.many + "," + that.args + ")");
+			print(PaniniTokens.SYSLANG_WIRE_ALL + "(" + that.many + "," + that.args + ")");
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}

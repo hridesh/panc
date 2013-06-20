@@ -2033,7 +2033,7 @@ public class JavacParser implements Parser {
     			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.SERIAL));
     		else if(token.name().toString().equals(PaniniTokens.MONITOR))
     			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.MONITOR));
-    		else if (token.name().toString().equals(PaniniTokens.SYSLANG_MANY_TO_ONE)){
+    		else if (token.name().toString().equals(PaniniTokens.SYSLANG_WIRE_ALL)){
     			//FIXME: remove syso
     			System.out.println("starting to parse a many2one expression");
     			return parseManyToOne();

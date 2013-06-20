@@ -18,25 +18,52 @@
  */
 package org.paninij.parser;
 
+import com.sun.tools.javac.parser.Tokens.TokenKind;
+
 /**
  * @author lorand
  * @since panini-0.9.2
  */
-public interface PaniniTokens {
-	public static final String SYSLANG_MANY_TO_ONE = "wireall";
-	public static final String SYSLANG_STAR = "star";
-	public static final String SYSLANG_RING = "ring";
-	public static final String SYSLANG_ASSOCIATE = "associate";
-	/**
+final public class PaniniTokens {
+    private PaniniTokens() {
+    };
+
+    public static final String SYSLANG_WIRE_ALL = "wireall";
+    public static final String SYSLANG_STAR = "star";
+    public static final String SYSLANG_RING = "ring";
+    public static final String SYSLANG_ASSOCIATE = "associate";
+
+    private static final String[] wiringTokens = { SYSLANG_WIRE_ALL,
+            SYSLANG_STAR, SYSLANG_RING, SYSLANG_ASSOCIATE };
+
+    /**
 	 *
 	 */
-	public static final String TASK = "task";
-	/**
+    public static final String TASK = "task";
+    /**
 	 *
 	 */
-	public static final String MONITOR = "monitor";
-	/**
+    public static final String MONITOR = "monitor";
+    /**
 	 *
 	 */
-	public static final String SEQUENTIAL = "sequential";
+    public static final String SEQUENTIAL = "sequential";
+
+    public static boolean isWiringToken(TokenKind kind) {
+        if (kind.name == null)
+            return false;
+
+        String tokenName = kind.name.toString();
+        for (String s : wiringTokens) {
+            if (tokenName.equals(s))
+                return true;
+        }
+        return false;
+    }
+
+    public static boolean isSameKind(TokenKind kind, String paniniToken) {
+        if(kind.name == null)
+            return false;
+        return kind.name.toString().equals(paniniToken);
+    }
 }
