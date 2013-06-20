@@ -75,6 +75,8 @@ import static com.sun.tools.javac.tree.JCTree.Tag.TYPETEST;
 import static com.sun.tools.javac.tree.JCTree.Tag.USR;
 import static com.sun.tools.javac.tree.JCTree.Tag.USR_ASG;
 
+import static org.paninij.parser.PaniniTokens.*;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -1038,9 +1040,7 @@ public class SystemParser {
             break;
         }
 
-        // identifier:
         case IDENTIFIER: {
-
             if ((mode & EXPR) != 0) {
                 t = toP(F.at(token.pos).Ident(ident()));
                 if (token.kind == LBRACKET) {
@@ -1087,7 +1087,7 @@ public class SystemParser {
     }
 
     private JCExpression suffixCapsuleWiringOptional(JCExpression t) {
-        List<JCExpression> params = parseWiringParameters();
+        List<JCExpression> params = parseArgumentList();
         return F.at(token.pos).WiringApply(t, params);
 
     }
@@ -1095,9 +1095,9 @@ public class SystemParser {
     private JCExpression suffixIndexedCapsuleWiringOptional(JCExpression t,
             JCIdent nameOfArray, JCExpression indexExpression) {
         if ((mode & EXPR) != 0 && (token.kind == LPAREN)) {
-            List<JCExpression> params = parseWiringParameters();
+            List<JCExpression> args = parseArgumentList();
             return F.at(token.pos).CapsuleArrayCall(nameOfArray.getName(),
-                    indexExpression, t, params);
+                    indexExpression, t, args);
         }
         return t;
     }
@@ -1105,7 +1105,7 @@ public class SystemParser {
     /**
      * @return
      */
-    private List<JCExpression> parseWiringParameters() {
+    private List<JCExpression> parseArgumentList() {
         ListBuffer<JCExpression> lb = new ListBuffer<JCExpression>();
         accept(LPAREN);
         while (true) {
@@ -1177,7 +1177,16 @@ public class SystemParser {
     }
 
     private JCStatement parseStatement() {
-        // TODO: implement parsing of topology expressions, statements and such
+        if (isSameKind(token, SYSLANG_WIRE_ALL)) {
+            int pos = token.pos;
+            nextToken();
+            List<JCExpression> args = parseArgumentList();
+            return F.Exec(F.at(pos).ManyToOne(args));
+        }
+
+        // we have to return null if there isn't any statement to parse;
+        // this is used to determine whether or not we reached the end of
+        // a block during parsing;
         return null;
     }
 
@@ -1287,7 +1296,7 @@ public class SystemParser {
         if (token.kind == RBRACE && peekToken(EOF)) {
             return null;
         }
-        if (isStatementStartingToken(token.kind)) {
+        if (isStatementStartingToken(token)) {
             return parseStatement();
         } else {
             boolean isVariableDeclStart = isVariableDeclStart();
@@ -1321,13 +1330,8 @@ public class SystemParser {
                 || isArrayDeclaration || isArrayDeclarationWithIdentifier;
     }
 
-    /**
-     * @param kind
-     * @return
-     */
-    private boolean isStatementStartingToken(TokenKind kind) {
-        // TODO Auto-generated method stub
-        return false;
+    private boolean isStatementStartingToken(Token kind) {
+        return isWiringToken(kind);
     }
 
     /* ---------- auxiliary methods -------------- */

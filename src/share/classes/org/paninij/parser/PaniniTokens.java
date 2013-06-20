@@ -18,6 +18,7 @@
  */
 package org.paninij.parser;
 
+import com.sun.tools.javac.parser.Tokens.Token;
 import com.sun.tools.javac.parser.Tokens.TokenKind;
 
 /**
@@ -49,11 +50,11 @@ final public class PaniniTokens {
 	 */
     public static final String SEQUENTIAL = "sequential";
 
-    public static boolean isWiringToken(TokenKind kind) {
-        if (kind.name == null)
+    public static boolean isWiringToken(Token kind) {
+        if (kind.kind != TokenKind.IDENTIFIER)
             return false;
 
-        String tokenName = kind.name.toString();
+        String tokenName = kind.name().toString();
         for (String s : wiringTokens) {
             if (tokenName.equals(s))
                 return true;
@@ -61,9 +62,10 @@ final public class PaniniTokens {
         return false;
     }
 
-    public static boolean isSameKind(TokenKind kind, String paniniToken) {
-        if(kind.name == null)
+    public static boolean isSameKind(Token kind, String paniniToken) {
+        if (kind.kind != TokenKind.IDENTIFIER)
             return false;
-        return kind.name.toString().equals(paniniToken);
+
+        return kind.name().toString().equals(paniniToken);
     }
 }
