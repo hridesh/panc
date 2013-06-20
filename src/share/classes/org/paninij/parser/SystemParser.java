@@ -18,27 +18,7 @@
  */
 package org.paninij.parser;
 
-import static com.sun.tools.javac.parser.Tokens.TokenKind.COLON;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.COMMA;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.DOT;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.EOF;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.EQ;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.GTGTGTEQ;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.IDENTIFIER;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.INSTANCEOF;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.INTLITERAL;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.LBRACE;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.LBRACKET;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.LONGLITERAL;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.LPAREN;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.PLUSEQ;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.QUES;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.RBRACE;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.RBRACKET;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.RPAREN;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.SEMI;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.SUB;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.TRUE;
+import static com.sun.tools.javac.parser.Tokens.TokenKind.*;
 import static com.sun.tools.javac.tree.JCTree.Tag.AND;
 import static com.sun.tools.javac.tree.JCTree.Tag.BITAND;
 import static com.sun.tools.javac.tree.JCTree.Tag.BITAND_ASG;
@@ -93,6 +73,7 @@ import com.sun.tools.javac.tree.JCTree.JCBinary;
 import com.sun.tools.javac.tree.JCTree.JCBlock;
 import com.sun.tools.javac.tree.JCTree.JCErroneous;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
+import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
 import com.sun.tools.javac.tree.JCTree.JCModifiers;
@@ -1178,36 +1159,89 @@ public class SystemParser {
 
     private JCStatement parseStatement() {
         JCStatement returnVal = null;
-        if (isSameKind(token, SYSLANG_WIRE_ALL)) {
-            int pos = token.pos;
-            nextToken();
-            List<JCExpression> args = parseArgumentList();
-            returnVal = F.Exec(F.at(pos).ManyToOne(args));
-        } else if (isSameKind(token, SYSLANG_ASSOCIATE)) {
-            int pos = token.pos;
-            nextToken();
-            List<JCExpression> args = parseArgumentList();
-            // TODO: Don't forget to verify arguments during type checking;
-            returnVal = F.Exec(F.at(pos).Associate(args));
-        } else if (isSameKind(token, SYSLANG_STAR)) {
-            int pos = token.pos;
-            nextToken();
-            List<JCExpression> args = parseArgumentList();
-            // TODO: Don't forget to verify arguments during type checking;
-            returnVal = F.Exec(F.at(pos).Star(args));
-        } else if (isSameKind(token, SYSLANG_RING)) {
-            int pos = token.pos;
-            nextToken();
-            List<JCExpression> args = parseArgumentList();
-            // TODO: Don't forget to verify arguments during type checking;
-            returnVal = F.Exec(F.at(pos).Ring(args));
+        switch (token.kind) {
+        case FOR: {
+            returnVal = parseFor();
+            break;
+        }
+        case LBRACE: {
+            // TODO: add block parsing;
+            break;
         }
 
-        // we have to return null if there isn't any statement to parse;
+        default: {
+            if (isSameKind(token, SYSLANG_WIRE_ALL)) {
+                int pos = token.pos;
+                nextToken();
+                List<JCExpression> args = parseArgumentList();
+                returnVal = F.Exec(F.at(pos).ManyToOne(args));
+            } else if (isSameKind(token, SYSLANG_ASSOCIATE)) {
+                int pos = token.pos;
+                nextToken();
+                List<JCExpression> args = parseArgumentList();
+                // TODO: Don't forget to verify arguments during type checking;
+                returnVal = F.Exec(F.at(pos).Associate(args));
+            } else if (isSameKind(token, SYSLANG_STAR)) {
+                int pos = token.pos;
+                nextToken();
+                List<JCExpression> args = parseArgumentList();
+                // TODO: Don't forget to verify arguments during type checking;
+                returnVal = F.Exec(F.at(pos).Star(args));
+            } else if (isSameKind(token, SYSLANG_RING)) {
+                int pos = token.pos;
+                nextToken();
+                List<JCExpression> args = parseArgumentList();
+                // TODO: Don't forget to verify arguments during type checking;
+                returnVal = F.Exec(F.at(pos).Ring(args));
+            }
+            accept(SEMI);
+        }
+        }
+
+        // we return null if there isn't any statement to parse;
         // this is used to determine whether or not we reached the end of
         // a block during parsing;
-        accept(SEMI);
         return returnVal;
+    }
+
+    private JCStatement parseFor() {
+        int pot = token.pos;
+        accept(FOR);
+        accept(LPAREN);
+        List<JCStatement> forInit = parseForInit();
+        accept(SEMI);
+        JCExpression cond = parseExpression();
+        accept(SEMI);
+        List<JCExpressionStatement> forUpdate = parseForUpdate();
+        accept(RPAREN);
+        JCStatement body = parseForBody();
+        return F.at(pot).ForLoop(forInit, cond, forUpdate, body);
+    }
+
+    // TODO: repair this so that a system block is a statement;
+    private JCStatement parseForBody() {
+        if (token.kind == LBRACE) {
+            JCBlock systemBlock = systemBlock();
+            return systemBlock;
+        } else {
+            JCExpression checkExpressionStatement = checkExpressionStatement(parseExpression());
+            JCExpressionStatement forBody = F.at(token.pos).Exec(
+                    checkExpressionStatement);
+            accept(SEMI);
+            return forBody;
+        }
+    }
+
+    private List<JCExpressionStatement> parseForUpdate() {
+        JCExpression checkExpressionStatement = checkExpressionStatement(parseExpression());
+        JCExpressionStatement forUpdate = F.at(token.pos).Exec(
+                checkExpressionStatement);
+        return List.<JCExpressionStatement> of(forUpdate);
+    }
+
+    private List<JCStatement> parseForInit() {
+        JCVariableDecl initVarDecl = variableDeclaration(true);
+        return List.<JCStatement> of(initVarDecl);
     }
 
     /**
@@ -1261,7 +1295,6 @@ public class SystemParser {
     private JCVariableDecl variableDeclaration(boolean isInitAllowed) {
         JCExpression vartype = parseType();
         Name variableName = ident();
-
         return toP(F.at(token.pos).VarDef(F.at(token.pos).Modifiers(0),
                 variableName, vartype,
                 variableInitializerOptional(isInitAllowed)));
@@ -1313,7 +1346,11 @@ public class SystemParser {
      * @return
      */
     private JCStatement systemStatement() {
-        if (token.kind == RBRACE && peekToken(EOF)) {
+        if (token.kind == EOF) {
+            error(token.pos, "premature.eof");
+        }
+        if (token.kind == RBRACE) {
+            
             return null;
         }
         if (isStatementStartingToken(token)) {
@@ -1340,8 +1377,7 @@ public class SystemParser {
                 && peekToken(IDENTIFIER);
 
         boolean isArrayDeclaration = (token.kind == IDENTIFIER)
-                && peekToken(LBRACKET, TokenKind.INTLITERAL, RBRACKET,
-                        IDENTIFIER);
+                && peekToken(LBRACKET, INTLITERAL, RBRACKET, IDENTIFIER);
 
         boolean isArrayDeclarationWithIdentifier = (token.kind == IDENTIFIER)
                 && peekToken(LBRACKET, IDENTIFIER, RBRACKET, IDENTIFIER);
@@ -1351,7 +1387,7 @@ public class SystemParser {
     }
 
     private boolean isStatementStartingToken(Token kind) {
-        return isWiringToken(kind);
+        return isWiringToken(kind) || (kind.kind == FOR);
     }
 
     /* ---------- auxiliary methods -------------- */
