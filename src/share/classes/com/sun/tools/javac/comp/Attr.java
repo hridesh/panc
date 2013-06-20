@@ -766,7 +766,8 @@ public class Attr extends JCTree.Visitor {
                 ResultInfo wireResult = new ResultInfo(VAL, wt.head);
 
                 if (aType.tag != ERROR && wireResult.pt.tag != METHOD && resultInfo.pt.tag != FORALL) {
-                    wireResult.check(as.head, aType);
+                    Type res = wireResult.check(as.head, aType);
+                    wiringOkay &= res.tag != ERROR; //check for a mismatch in arg wiring
                 } else {
                     log.error(as.head.pos(), "unexpected.type",
                               kindNames(wireResult.pkind),
@@ -828,15 +829,14 @@ public class Attr extends JCTree.Visitor {
     	}*/
     }
 
-    /**
-     * Adapted from {@link #visitApply(JCMethodInvocation)}.
-     */
     @Override
     public void visitCapsuleWiring(JCCapsuleWiring tree) {
         Env<AttrContext> localEnv = env.dup(tree, env.info.dup());
         Type owntype = attribExpr(tree.capsule, localEnv);
         List<Type> argtypes = attribArgs(tree.args, localEnv);
-        checkWiring(tree, owntype, tree.args, argtypes);
+        if( owntype.tag != ERROR) {
+            checkWiring(tree, owntype, tree.args, argtypes);
+        }
     }
 
     @Override
