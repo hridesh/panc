@@ -986,8 +986,20 @@ public class Attr extends JCTree.Visitor {
 
     @Override
     public void visitAssociate(JCAssociate tree) {
-        // TODO Auto-generated method stub
-        super.visitAssociate(tree);
+        Type sType = checkCapsuleArray(tree.src, env);
+        Type dType = checkCapsuleArray(tree.dest, env);
+
+        attribExpr(tree.srcPos, env, syms.intType);
+        attribExpr(tree.destPos, env, syms.intType);
+        attribExpr(tree.len, env, syms.intType);
+        List<Type> argtypes = attribArgs(tree.args, env);
+
+        ListBuffer<JCExpression> was = new ListBuffer<JCExpression>();
+        was.add(tree.src); was.addAll(tree.args);
+        ListBuffer<Type> wts = new ListBuffer<Type>();
+        wts.add(sType); wts.addAll(argtypes);
+
+        checkWiring(tree, dType, was.toList(), wts.toList());
     }
     // end Panini code
 
