@@ -167,6 +167,12 @@ public class TreeMaker implements JCTree.Factory {
 		tree.pos = pos;
 		return tree;
 	}
+	
+	public JCAssociate Associate(List<JCExpression> args){
+        JCAssociate tree = new JCAssociate(null, null, null, null, null, args);
+        tree.pos = pos;
+        return tree;
+    }
 
 	public JCStateDecl StateDef(JCModifiers mods, Name name,
 			JCExpression vartype, JCExpression init) {

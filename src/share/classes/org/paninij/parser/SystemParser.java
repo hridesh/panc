@@ -1177,18 +1177,27 @@ public class SystemParser {
     }
 
     private JCStatement parseStatement() {
+        JCStatement returnVal = null;
         if (isSameKind(token, SYSLANG_WIRE_ALL)) {
             int pos = token.pos;
             nextToken();
             List<JCExpression> args = parseArgumentList();
-            return F.Exec(F.at(pos).ManyToOne(args));
+            returnVal = F.Exec(F.at(pos).ManyToOne(args));
+        }else if(isSameKind(token, SYSLANG_ASSOCIATE)){
+            int pos = token.pos;
+            nextToken();
+            List<JCExpression> args = parseArgumentList();
+            //TODO: Don't forget to verify arguments during type checking;
+            returnVal = F.Exec(F.at(pos).Associate(args));
         }
 
         // we have to return null if there isn't any statement to parse;
         // this is used to determine whether or not we reached the end of
         // a block during parsing;
-        return null;
+        accept(SEMI);
+        return returnVal;
     }
+    
 
     /**
      * 
