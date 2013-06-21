@@ -31,7 +31,7 @@ capsule C2() {
 }
 
 
-system S(String[] args) {
+system S {
     C1[2] c1s;
     C2[4] c2s;
 
