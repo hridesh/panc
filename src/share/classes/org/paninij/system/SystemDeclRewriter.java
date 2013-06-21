@@ -97,7 +97,6 @@ public class SystemDeclRewriter extends TreeTranslator {
         ArrayList<JCStatement> newStats = new ArrayList<JCStatement>(
                 stats.size());
 
-        //FIXME: refactor wireall to use JCUnrolledCrap
         for (JCStatement statement : stats) {
             if (statement.getKind() == Kind.EXPRESSION_STATEMENT) {
                 JCExpressionStatement exprStatement = ((JCExpressionStatement) statement);
@@ -114,8 +113,8 @@ public class SystemDeclRewriter extends TreeTranslator {
                 }  else
                     newStats.add(statement);
             } else if (statement.getKind() == null) {
-                JCUnrolledStatement unrolledCrap = (JCUnrolledStatement)(JCTree)statement;
-                for (JCStatement unrolledStatement : unrolledCrap.unrolled) {
+                JCUnrolledStatement unrolledStmts = (JCUnrolledStatement)(JCTree)statement;
+                for (JCStatement unrolledStatement : unrolledStmts.unrolled) {
                     newStats.add(unrolledStatement);
                 }
 
@@ -135,10 +134,7 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitIdent(JCIdent tree) {
-        // FIXME: remove syso
-        System.out.println("Visiting identifier: " + tree.name.toString());
         JCTree bound = valueEnv.lookup(tree.name);
-
         // Don't lose the identifier if we don't know about it!
         if (bound != null) {
             result = bound;
@@ -151,11 +147,8 @@ public class SystemDeclRewriter extends TreeTranslator {
     public void visitVarDef(JCVariableDecl tree) {
         super.visitVarDef(tree);
 
-        // FIXME: remove syso
-        System.out.println("Visiting var definition: " + tree.toString());
-
         valueEnv.bind(tree.name, tree.init);
-        //FIXME
+        //TODO-XX For Sean
         varDefToAstNodeEnv.bind(tree.name, tree);
     }
 
@@ -189,8 +182,6 @@ public class SystemDeclRewriter extends TreeTranslator {
                     + " does not have an identifier on the left hand side!");
         }
 
-        // FIXME: remove syso
-        System.out.println("New assn: " + tree);
         //TODO return translatedRHS instead of tree;
         result = tree;
     }
@@ -214,8 +205,6 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitWireall(JCWireall tree) {
-        // FIXME: remove syso
-        System.out.println("Visiting wireall: " + tree.toString());
         super.visitWireall(tree);
         int capsuleArraySize = getCapsuleArraySize(tree.many);
 
@@ -396,8 +385,6 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitSystemDef(JCSystemDecl tree) {
-        // FIXME: remove syso
-        System.out.println("Visiting a system decl " + tree.name.toString());
         valueEnv = new InterpEnv<Name, JCTree>();
         varDefToAstNodeEnv = new InterpEnv<Name, JCVariableDecl>();
 
