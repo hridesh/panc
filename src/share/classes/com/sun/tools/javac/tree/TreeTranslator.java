@@ -446,6 +446,7 @@ public class TreeTranslator extends JCTree.Visitor {
 
     public void visitCapsuleArray(JCCapsuleArray tree) {
         tree.elemtype = translate(tree.elemtype);
+        tree.sizeExpr = translate(tree.sizeExpr);
         result = tree;
     }
 
