@@ -120,9 +120,6 @@ public class SystemParser {
      */
     private Log log;
 
-    /** The Source language setting. */
-    private Source source;
-
     /** The name table. */
     private Names names;
 
@@ -136,28 +133,13 @@ public class SystemParser {
      * @param lastmode
      * @param mode
      */
-    public SystemParser(TreeMaker F, Log log, Names names, Source source,
-            Lexer S, boolean keepDocComments, boolean keepLineMap,
+    public SystemParser(TreeMaker F, Log log, Names names, Lexer S,
             Map<JCTree, Integer> endPosTable, Token initialToken, int mode,
             int lastmode) {
         this.S = S;
         this.F = F;
         this.log = log;
         this.names = names;
-        this.source = source;
-        this.allowGenerics = source.allowGenerics();
-        this.allowVarargs = source.allowVarargs();
-        this.allowAsserts = source.allowAsserts();
-        this.allowEnums = source.allowEnums();
-        this.allowForeach = source.allowForeach();
-        this.allowStaticImport = source.allowStaticImport();
-        this.allowAnnotations = source.allowAnnotations();
-        this.allowTWR = source.allowTryWithResources();
-        this.allowDiamond = source.allowDiamond();
-        this.allowMulticatch = source.allowMulticatch();
-        this.keepDocComments = keepDocComments;
-        docComments = keepDocComments ? new HashMap<JCTree, String>() : null;
-        this.keepLineMap = keepLineMap;
         this.errorTree = F.Erroneous();
 
         // recreate state:
@@ -172,93 +154,6 @@ public class SystemParser {
         return keepEndPositions != null ? new SimpleEndPosTable(
                 keepEndPositions) : new EmptyEndPosTable();
     }
-
-    /**
-     * Switch: Should generics be recognized?
-     */
-    @Deprecated
-    private boolean allowGenerics;
-
-    /**
-     * Switch: Should diamond operator be recognized?
-     */
-    @Deprecated
-    private boolean allowDiamond;
-
-    /**
-     * Switch: Should multicatch clause be accepted?
-     */
-    @Deprecated
-    private boolean allowMulticatch;
-
-    /**
-     * Switch: Should varargs be recognized?
-     */
-    @Deprecated
-    private boolean allowVarargs;
-
-    /**
-     * Switch: should we recognize assert statements, or just give a warning?
-     */
-    private boolean allowAsserts;
-
-    /**
-     * Switch: should we recognize enums, or just give a warning?
-     */
-    @Deprecated
-    private boolean allowEnums;
-
-    /**
-     * Switch: should we recognize foreach?
-     */
-    @Deprecated
-    private boolean allowForeach;
-
-    /**
-     * Switch: should we recognize foreach?
-     */
-    @Deprecated
-    private boolean allowStaticImport;
-
-    /**
-     * Switch: should we recognize annotations?
-     */
-    @Deprecated
-    private boolean allowAnnotations;
-
-    /**
-     * Switch: should we recognize try-with-resources?
-     */
-    @Deprecated
-    private boolean allowTWR;
-
-    /**
-     * Switch: should we fold strings?
-     */
-    @Deprecated
-    private boolean allowStringFolding;
-
-    /**
-     * Switch: should we recognize lambda expressions?
-     */
-    @Deprecated
-    private boolean allowLambda;
-
-    /**
-     * Switch: should we allow method/constructor references?
-     */
-    @Deprecated
-    private boolean allowMethodReferences;
-
-    /**
-     * Switch: should we keep docComments?
-     */
-    private boolean keepDocComments;
-
-    /**
-     * Switch: should we keep line table?
-     */
-    private boolean keepLineMap;
 
     /**
      * When terms are parsed, the mode determines which is expected: mode = EXPR
@@ -500,30 +395,6 @@ public class SystemParser {
         if (mods != 0) {
             long lowestMod = mods & -mods;
             error(token.pos, "mod.not.allowed.here", Flags.asFlagSet(lowestMod));
-        }
-    }
-
-    /* ---------- doc comments --------- */
-
-    /**
-     * A hashtable to store all documentation comments indexed by the tree nodes
-     * they refer to. defined only if option flag keepDocComment is set.
-     */
-    private final Map<JCTree, String> docComments;
-
-    /**
-     * Make an entry into docComments hashtable, provided flag keepDocComments
-     * is set and given doc comment is non-null.
-     * 
-     * @param tree
-     *            The tree to be used as index in the hashtable
-     * @param dc
-     *            The doc comment to associate with the tree, or null.
-     */
-    private void attach(JCTree tree, String dc) {
-        if (keepDocComments && dc != null) {
-            // System.out.println("doc comment = ");System.out.println(dc);//DEBUG
-            docComments.put(tree, dc);
         }
     }
 
@@ -888,8 +759,6 @@ public class SystemParser {
      * literal representing the concatenated string.
      */
     private StringBuffer foldStrings(JCTree tree) {
-        if (!allowStringFolding)
-            return null;
         List<String> buf = List.nil();
         while (true) {
             if (tree.hasTag(LITERAL)) {
@@ -1089,6 +958,12 @@ public class SystemParser {
     private List<JCExpression> parseArgumentList() {
         ListBuffer<JCExpression> lb = new ListBuffer<JCExpression>();
         accept(LPAREN);
+
+        if (token.kind == RPAREN) {
+            accept(RPAREN);
+            return List.<JCExpression> nil();
+        }
+
         while (true) {
             JCExpression param = parseExpression();
             lb.add(param);
@@ -1139,10 +1014,11 @@ public class SystemParser {
     }
 
     private JCExpression parseArrayTypeOptional(JCExpression vartype) {
+
         if (token.kind == LBRACKET) {
             nextToken();
             accept(RBRACKET);
-            vartype = toP(F.at(token.pos).TypeArray(vartype));
+            return toP(F.at(token.pos).TypeArray(vartype));
         }
         return vartype;
     }
@@ -1264,7 +1140,6 @@ public class SystemParser {
         JCBlock body = systemBlock();
         JCSystemDecl result = toP(F.at(pos).SystemDef(mod, systemName, body,
                 params));
-        attach(result, dc);
         return new SystemParserResult(result);
     }
 
@@ -1350,7 +1225,7 @@ public class SystemParser {
             error(token.pos, "premature.eof");
         }
         if (token.kind == RBRACE) {
-            
+
             return null;
         }
         if (isStatementStartingToken(token)) {
@@ -1454,18 +1329,6 @@ public class SystemParser {
     private static int prec(TokenKind token) {
         JCTree.Tag oc = optag(token);
         return (oc != NO_TAG) ? TreeInfo.opPrec(oc) : -1;
-    }
-
-    /**
-     * Return the lesser of two positions, making allowance for either one being
-     * unset.
-     */
-    private static int earlier(int pos1, int pos2) {
-        if (pos1 == Position.NOPOS)
-            return pos2;
-        if (pos2 == Position.NOPOS)
-            return pos1;
-        return (pos1 < pos2 ? pos1 : pos2);
     }
 
     /**
@@ -1588,79 +1451,6 @@ public class SystemParser {
             return TypeTags.BOOLEAN;
         default:
             return -1;
-        }
-    }
-
-    private void checkGenerics() {
-        if (!allowGenerics) {
-            error(token.pos, "generics.not.supported.in.source", source.name);
-            allowGenerics = true;
-        }
-    }
-
-    private void checkVarargs() {
-        if (!allowVarargs) {
-            error(token.pos, "varargs.not.supported.in.source", source.name);
-            allowVarargs = true;
-        }
-    }
-
-    private void checkForeach() {
-        if (!allowForeach) {
-            error(token.pos, "foreach.not.supported.in.source", source.name);
-            allowForeach = true;
-        }
-    }
-
-    private void checkStaticImports() {
-        if (!allowStaticImport) {
-            error(token.pos, "static.import.not.supported.in.source",
-                    source.name);
-            allowStaticImport = true;
-        }
-    }
-
-    private void checkAnnotations() {
-        if (!allowAnnotations) {
-            error(token.pos, "annotations.not.supported.in.source", source.name);
-            allowAnnotations = true;
-        }
-    }
-
-    private void checkDiamond() {
-        if (!allowDiamond) {
-            error(token.pos, "diamond.not.supported.in.source", source.name);
-            allowDiamond = true;
-        }
-    }
-
-    private void checkMulticatch() {
-        if (!allowMulticatch) {
-            error(token.pos, "multicatch.not.supported.in.source", source.name);
-            allowMulticatch = true;
-        }
-    }
-
-    private void checkTryWithResources() {
-        if (!allowTWR) {
-            error(token.pos, "try.with.resources.not.supported.in.source",
-                    source.name);
-            allowTWR = true;
-        }
-    }
-
-    private void checkLambda() {
-        if (!allowLambda) {
-            log.error(token.pos, "lambda.not.supported.in.source", source.name);
-            allowLambda = true;
-        }
-    }
-
-    private void checkMethodReferences() {
-        if (!allowMethodReferences) {
-            log.error(token.pos, "method.references.not.supported.in.source",
-                    source.name);
-            allowMethodReferences = true;
         }
     }
 
