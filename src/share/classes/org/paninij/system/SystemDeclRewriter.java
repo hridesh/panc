@@ -149,17 +149,14 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitVarDef(JCVariableDecl tree) {
+        super.visitVarDef(tree);
 
         // FIXME: remove syso
         System.out.println("Visiting var definition: " + tree.toString());
-        if (tree.init != null) {
-            tree.init = translate(tree.init);
-        }
+
         valueEnv.bind(tree.name, tree.init);
         //FIXME
         varDefToAstNodeEnv.bind(tree.name, tree);
-
-        result = tree;
     }
 
     @Override
@@ -237,8 +234,6 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitStar(JCStar tree){
-    	// FIXME: remove syso
-    	System.out.println("visiting star: " + tree.toString());
     	super.visitStar(tree);
     	JCExpression center = tree.center;
     	JCExpression others = tree.others;
@@ -280,8 +275,6 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitRing(JCRing tree){
-    	// FIXME: remove syso
-    	System.out.println("visiting ring: " + tree.toString());
     	super.visitRing(tree);
     	JCExpression capsules = tree.capsules;
     	List<JCExpression> args = tree.args;
@@ -302,8 +295,6 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitAssociate(JCAssociate tree) {
-    	// FIXME: remove syso
-    	System.out.println("visiting associate: "+ tree.toString());
         super.visitAssociate(tree);
         JCExpression src = tree.src;
         JCExpression dest = tree.dest;
@@ -331,19 +322,6 @@ public class SystemDeclRewriter extends TreeTranslator {
         result = tree;
     }
 
-    // /* (non-Javadoc)
-    // * @see
-    // com.sun.tools.javac.tree.TreeTranslator#visitBlock(com.sun.tools.javac.tree.JCTree.JCBlock)
-    // */
-    // @Override
-    // public void visitBlock(JCBlock tree) {
-    // assert(tree.stats.size() == 1) :
-    // "blocks are supposed to be returned only from one-liner fors";
-    // assert(tree.stats.head instanceof JCCapsuleArrayCall) :
-    // "one liner fors should onyl contain capsule array calls";
-    //
-    // result = tree;
-    // }
     @Override
     public void visitForLoop(JCForLoop tree) {
         List<JCStatement> unrolledLoop = executeForLoop(tree);
@@ -389,19 +367,6 @@ public class SystemDeclRewriter extends TreeTranslator {
         return buffer.toList();
     }
 
-    /**
-     * @param arrayName
-     * @return
-     */
-    private int getCapsuleArraySize(JCWireall array) {
-        Name arrayName = getCapsuleArrayName(array);
-        JCVariableDecl arrayAST = varDefToAstNodeEnv.lookup(arrayName);
-        assert (arrayAST.vartype instanceof JCCapsuleArray) : "wireall expects capsule arrays as the first element";
-        int capsuleArraySize = ((JCCapsuleArray) arrayAST.vartype).size;
-        assert (capsuleArraySize > 0) : "capsule array sizes should always be > 0; something went wrong";
-        return capsuleArraySize;
-    }
-
     private int getCapsuleArraySize(JCExpression array) {
         Name arrayName = getIdentifierName(array);
         JCVariableDecl arrayAST = varDefToAstNodeEnv.lookup(arrayName);
@@ -409,16 +374,6 @@ public class SystemDeclRewriter extends TreeTranslator {
         int capsuleArraySize = ((JCCapsuleArray) arrayAST.vartype).size;
         assert (capsuleArraySize > 0) : "capsule array sizes should always be > 0; something went wrong";
         return capsuleArraySize;
-    }
-
-    /**
-     * @param tree
-     * @return
-     */
-    private Name getCapsuleArrayName(JCWireall tree) {
-        assert (tree.many instanceof JCIdent) : "Many2One arrays should always be referenced through identifiers";
-        Name arrayName = ((JCIdent) tree.many).name;
-        return arrayName;
     }
 
     /**
@@ -438,14 +393,6 @@ public class SystemDeclRewriter extends TreeTranslator {
         }
     }
 
-    // TODO: probably redundant method.
-    @Override
-    public void visitCapsuleDef(JCCapsuleDecl tree) {
-        // FIXME: remove syso
-        System.out.println("Visiting capsule def " + tree);
-        super.visitCapsuleDef(tree);
-        result = tree;
-    }
 
     @Override
     public void visitSystemDef(JCSystemDecl tree) {
