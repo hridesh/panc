@@ -17,20 +17,13 @@
  * Contributor(s): Sean L. Mooney
  */
 
-import java.io.File;
-
-
-/* 
- * @test
- * @summary Complie the Pi example.
- * @run/timeout=5
+/* @test
+ * @summary Make sure CapType name(, name)+ type decls parse.
+ * @compile TCapIdentList.java
  */
-public class CompilePi extends CompileKnownExample {
-    public static void main(String[] args) throws Exception {
-        new CompilePi().run();
-    }
+capsule Indirection () { void run() {} }
 
-    void run() throws Exception {
-       run(new File[]{new File(examples, "Pi.java")});
-    }
+system SequentialConsistency {
+	Indirection i1, i2;
+    i1(); i2();
 }

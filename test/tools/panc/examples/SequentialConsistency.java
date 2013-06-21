@@ -52,6 +52,6 @@ capsule Indirection (Store s) {
 }
 
 system SequentialConsistency {
-	Main m; Store s; Indirection i1, i2;
+	Main m; Store s; Indirection i1; Indirection i2;
 	i1(s); i2(s); m(i1, i2);    
 }

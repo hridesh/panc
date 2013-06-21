@@ -60,7 +60,7 @@ capsule Printer() {
 
 system Histogram (String[] args){
 	Reader r; 
-	task Bucket buckets[128];
+	task Bucket[128] buckets;
 	sequential Printer p;
 	
 	r(args, buckets);

@@ -32,7 +32,7 @@ capsule O{
 }
 
 system ManyToOne {
-    M many[5];
+    M[5] many;
     O one;
 
     one();

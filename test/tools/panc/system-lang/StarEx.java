@@ -29,9 +29,9 @@ capsule C2(C c, int i) {
     void bar() {}
 }
 
-system S() {
+system S {
     C c;
-    C2 c2s[3];
+    C2[3] c2s;
 
     star(c2s, c, 1);
 }

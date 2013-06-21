@@ -81,7 +81,7 @@ capsule Customers(Barber b, WaitingRoom r, String[] customerNames) {
 system Barbershop {
 	Barber b;
 	WaitingRoom w;
-	Customers gs[2];
+	Customers[2] gs;
 
 	b(w, true, 8);
 	w(10);       

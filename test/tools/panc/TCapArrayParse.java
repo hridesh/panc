@@ -17,20 +17,14 @@
  * Contributor(s): Sean L. Mooney
  */
 
-import java.io.File;
-
-
-/* 
+/*
  * @test
- * @summary Complie the Pi example.
- * @run/timeout=5
+ * @summary Ensure the system parser can handle the brackets after the name.
+ * @compile TCapArrayParse.java
  */
-public class CompilePi extends CompileKnownExample {
-    public static void main(String[] args) throws Exception {
-        new CompilePi().run();
-    }
 
-    void run() throws Exception {
-       run(new File[]{new File(examples, "Pi.java")});
-    }
+capsule C1() { void run() {} }
+
+system S(String[] args) {
+    C1 c1s[2];
 }

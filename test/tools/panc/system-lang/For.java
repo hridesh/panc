@@ -33,7 +33,7 @@ capsule O{
 
 system ForSys {
    // int size = 5;
-    M many[5];
+    M[5] many;
     O one;
 
     one();

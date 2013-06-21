@@ -26,7 +26,7 @@ capsule C2(int i) {
     void foo() {}
 }
 
-system Sys() {
+system Sys {
     //Should not find a capsule type.
     C c;
     C2 c2;

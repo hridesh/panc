@@ -26,7 +26,7 @@ capsule C(C next, int i) {
     void foo() {}
 }
 
-system S() {
-    C cs[3];
+system S {
+    C[3] cs;
     ring(cs, 3);
 }
