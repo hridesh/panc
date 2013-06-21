@@ -906,11 +906,12 @@ public class Attr extends JCTree.Visitor {
                 attribStat(l.head, localEnv);
             }
 
-            localEnv.info.scope.leave();
+
 
             // visit the system def for rewriting and analysis.
-            pAttr.visitSystemDef(tree, rs, env, doGraphs, seqConstAlg);
+            pAttr.visitSystemDef(tree, rs, localEnv, doGraphs, seqConstAlg);
 
+            localEnv.info.scope.leave();
 
         } finally {
             treeSym.kind = oldKind;
