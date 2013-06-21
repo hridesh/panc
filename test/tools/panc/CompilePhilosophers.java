@@ -23,7 +23,7 @@ import java.io.File;
 /* 
  * @test
  * @summary Complie the Philosophers example.
- * @run/timeout=5
+ * @run main/timeout=5 CompilePhilosophers
  */
 public class CompilePhilosophers extends CompileKnownExample {
     public static void main(String[] args) throws Exception {

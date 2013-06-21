@@ -23,7 +23,7 @@ import java.io.File;
 /* 
  * @test
  * @summary Complie the Pi example.
- * @run/timeout=5
+ * @run main/timeout=5 CompilePi
  */
 public class CompilePi extends CompileKnownExample {
     public static void main(String[] args) throws Exception {
