@@ -982,12 +982,31 @@ public class Attr extends JCTree.Visitor {
     @Override
     public void visitStar(JCStar tree) {
         arrangeWiringOperatorArgs(tree);
-        Type captype = attribExpr(tree.center, env);
-        Type otherType = checkCapsuleArray(tree.others, env);
+        Type centerT = attribExpr(tree.center, env);
+        Type spokeT = checkCapsuleArray(tree.others, env);
         List<Type> argtypes = attribArgs(tree.args, env);
 
-        //FIXME: CheckWiring for visitStar
-        checkWiring(tree, captype, tree.args, argtypes);
+        ListBuffer<JCExpression> was = new ListBuffer<JCExpression>();
+        ListBuffer<Type> wts = new ListBuffer<Type>();
+
+        //Center needs be wired to a caparray of othertype, with args.
+
+        was.add(tree.others);
+        was.addAll(tree.args);
+        wts.add(tree.others.type);
+        wts.addAll(argtypes);
+        checkWiring(tree, centerT, was.toList(), wts.toList());
+
+        //Other type wires to the center, with args.
+        //Reset the args lists.
+        was = new ListBuffer<JCExpression>();
+        wts = new ListBuffer<Type>();
+        was.add(tree.center);
+        was.addAll(tree.args);
+        wts.add(centerT);
+        wts.addAll(argtypes);
+
+        result = tree.type = checkWiring(tree, spokeT, was.toList(), wts.toList());
     }
 
     @Override
