@@ -14,7 +14,7 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  *
- * Contributor(s):
+ * Contributor(s): Hridesh Rajan, Eric Lin, Sean L. Mooney
  */
 package org.paninij.system;
 
