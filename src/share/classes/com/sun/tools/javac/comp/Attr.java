@@ -1012,6 +1012,7 @@ public class Attr extends JCTree.Visitor {
     @Override
     public void visitAssociate(JCAssociate tree) {
         arrangeWiringOperatorArgs(tree);
+        //capture types without the arrays.
         Type sType = checkCapsuleArray(tree.src, env);
         Type dType = checkCapsuleArray(tree.dest, env);
 
@@ -1021,11 +1022,13 @@ public class Attr extends JCTree.Visitor {
         List<Type> argtypes = attribArgs(tree.args, env);
 
         ListBuffer<JCExpression> was = new ListBuffer<JCExpression>();
-        was.add(tree.src); was.addAll(tree.args);
+        was.add(tree.dest);
+        was.addAll(tree.args);
         ListBuffer<Type> wts = new ListBuffer<Type>();
-        wts.add(sType); wts.addAll(argtypes);
+        wts.add(dType);
+        wts.addAll(argtypes);
 
-        checkWiring(tree, dType, was.toList(), wts.toList());
+        tree.type = checkWiring(tree, sType, was.toList(), wts.toList());
     }
 
     /**
