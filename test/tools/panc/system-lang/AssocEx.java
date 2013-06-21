@@ -16,6 +16,12 @@
  *
  * Contributor(s): Sean L. Mooney
  */
+
+/*
+ * @test
+ * @summary Simple test of the associate operator
+ * @compile AssocEx.java
+ */
 capsule C1(C2 other, String s) {
     void foo() {}
 }
@@ -26,8 +32,8 @@ capsule C2() {
 
 
 system S() {
-    C1 c1s[4];
-    C2 c2s[2];
+    C1 c1s[2];
+    C2 c2s[4];
 
-    associate(c2s, 0, c1s, 2, 2, "foobar");
+    associate(c1s, 0, c2s, 2, 2, "foobar");
 }

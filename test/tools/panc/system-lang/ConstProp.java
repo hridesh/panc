@@ -18,6 +18,11 @@
  */
 //panini
 
+/*
+ * @test
+ * @summary Simple test of constent propagataion
+ * @compile ConstProp.java
+ */
 system ConstProp {
     int i1 = 3;
     int i2 = 1;

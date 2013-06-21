@@ -16,6 +16,12 @@
  *
  * Contributor(s): Sean L. Mooney
  */
+
+/*
+ * @test
+ * @summary Simple test of the ring topology
+ * @compile RingEx.java
+ */
 capsule C(C next, int i) {
     void foo() {}
 }

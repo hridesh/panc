@@ -17,6 +17,11 @@
  * Contributor(s): Sean L. Mooney
  */
 //panini
+/*
+ * @test
+ * @summary Simple test of wireall operator
+ * @compile ManyToOne.java
+ */
 capsule M(O o, int fortyTwo){
     void run(){
         System.out.println(fortyTwo);
@@ -31,6 +36,6 @@ system ManyToOne {
     O one;
 
     one();
-	wireall(many, one, 42);
+    wireall(many, one, 42);
 }
 

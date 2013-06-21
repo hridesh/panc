@@ -17,6 +17,11 @@
  * Contributor(s): Sean L. Mooney
  */
 //panini
+/*
+ * @test
+ * @summary Test unrolling for loops
+ * @compile For.java
+ */
 capsule M(O o, int fortyTwo){
     void run(){
         System.out.println(fortyTwo);

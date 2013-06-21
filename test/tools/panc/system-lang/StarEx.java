@@ -16,11 +16,16 @@
  *
  * Contributor(s): Sean L. Mooney
  */
-capsule C(int i) {
+
+/* @test
+ * @summary Star topology.
+ * @compile StarEx.java
+ */
+capsule C(C2[] cs, int i) {
     void foo() {}
 }
 
-capsule C2(C c) {
+capsule C2(C c, int i) {
     void bar() {}
 }
 
