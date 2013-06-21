@@ -46,9 +46,11 @@ import com.sun.tools.javac.tree.JCTree.JCStar;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
+import com.sun.tools.javac.tree.JCTree.Tag;
 import com.sun.tools.javac.tree.TreeCopier;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.TreeTranslator;
+import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
@@ -161,6 +163,16 @@ public class SystemDeclRewriter extends TreeTranslator {
     }
 
     @Override
+    public void visitCapsuleArray(JCCapsuleArray tree) {
+        super.visitCapsuleArray(tree);
+        if(tree.sizeExpr.hasTag(Tag.LITERAL)) {
+            tree.size = atInterp.asInt(((JCLiteral)tree.sizeExpr).value);
+        } else {
+            Assert.error(tree.sizeExpr + " should evaluate to an integer literal during system interpretation.");
+        }
+    }
+
+    @Override
     public void visitAssign(JCAssign tree) {
 
         final JCExpression translatedRHS = this.translate(tree.rhs);
@@ -203,32 +215,23 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     }
 
-    /**
-     * This function will replace the JCManyToOne node with a
-     * JCManyToOneUnrolled
-     */
-    //capsule C(A a, B b, int fortyTwo);
-    //A capsuleArray[4];
-    //wireall(capsuleArray, a, b, 42);
-    //TODO: name suggestions: wireall
     @Override
     public void visitWireall(JCWireall tree) {
         // FIXME: remove syso
         System.out.println("Visiting wireall: " + tree.toString());
         super.visitWireall(tree);
-        int capsuleArraySize = getCapsuleArraySize(tree);
+        int capsuleArraySize = getCapsuleArraySize(tree.many);
 
-        Name capsuleArrayName = getCapsuleArrayName(tree);
-        JCStatement statements[] = new JCStatement[capsuleArraySize];
-        for (int i = 0; i < capsuleArraySize; i++) {
-            //TODO: refactor the name of make.CapsuleArrayCall -> CapsuleArrayWiring;
-            statements[i] = make.at(tree.pos).Exec(make.CapsuleArrayCall(capsuleArrayName,
-                    make.Literal(i), tree.many, tree.args));
+        ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
+
+        for(int i = 0; i < capsuleArraySize; i++){
+            unrolledStats.add(make.Exec( //others -> center
+                    createIndexedCapsuleWiring(tree.many, i, tree.args)
+                    )
+            );
         }
 
-        System.out.println("Rewritten wireall statement: "
-                + List.from(statements).toString());
-        tree.unrolled = List.from(statements);
+        tree.unrolled = unrolledStats.toList();
         result = tree;
     }
 
@@ -245,7 +248,7 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     	for(int i = 0; i < capsuleArraySize; i++){
     		unrolledStats.add(make.Exec( //others -> center
-    				make.WiringApply(make.Indexed(others, make.Literal(i)), args.prepend(center))
+                   createIndexedCapsuleWiring(others, i, args.prepend(center))
     				)
     		);
     	}
@@ -258,6 +261,23 @@ public class SystemDeclRewriter extends TreeTranslator {
     	result = tree;
     }
 
+    private JCExpression createIndexedCapsuleWiring(JCExpression indexed, int index, List<JCExpression> args) {
+        return make.CapsuleArrayCall(getIdentName(indexed), make.Literal(index), indexed, args);
+    }
+
+    /**
+     * @param others
+     * @return
+     */
+    private Name getIdentName(JCExpression others) {
+        if (others.hasTag(Tag.IDENT)) {
+            return ((JCIdent)others).getName();
+        } else {
+            Assert.error(others + " should be an Identifier.");
+            return null; //this will die on the above unchecked exception.
+        }
+    }
+
     @Override
     public void visitRing(JCRing tree){
     	// FIXME: remove syso
@@ -268,56 +288,47 @@ public class SystemDeclRewriter extends TreeTranslator {
     	int capsuleArraySize = getCapsuleArraySize(capsules);
     	ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
     	for(int i = 0; i < capsuleArraySize-1; i++){
-    	    JCCapsuleWiring wiring = make.WiringApply(make.Indexed(capsules, make.Literal(i)),
-    							args.prepend(make.Indexed(capsules, make.Literal(i+1))));
-
-    	    wiring.type = tree.type;
-    		unrolledStats.add(make.Exec(wiring));
+    	    unrolledStats.add(make.Exec(
+    	            createIndexedCapsuleWiring(capsules, i, args.prepend(make.Indexed(capsules, make.Literal(i+1))))
+    	    ));
     	}
     	unrolledStats.add(make.Exec(
-    				make.WiringApply(make.Indexed(capsules, make.Literal(capsuleArraySize-1)),
-    						args.prepend(make.Indexed(capsules, make.Literal(0))))
-    			)
-    	);
+    	        createIndexedCapsuleWiring(capsules, capsuleArraySize-1,args.prepend(make.Indexed(capsules, make.Literal(0))))
+    			));
     	System.out.println("Rewritten ring statement: "+ unrolledStats.toList().toString());
     	tree.unrolled = unrolledStats.toList();
     	result = tree;
     }
 
     @Override
-    public void visitAssociate(JCAssociate tree){
+    public void visitAssociate(JCAssociate tree) {
     	// FIXME: remove syso
     	System.out.println("visiting associate: "+ tree.toString());
-    	super.visitAssociate(tree);
-    	JCExpression src = tree.src;
-    	JCExpression dest = tree.dest;
-    	List<JCExpression> args = tree.args;
-    	if(tree.srcPos instanceof JCLiteral && tree.destPos instanceof JCLiteral
-    			&& tree.len instanceof JCLiteral){
-    		try{
-    		int srcPos = ((Integer)((JCLiteral)tree.srcPos).value).intValue();
-    		int destPos = ((Integer)((JCLiteral)tree.destPos).value).intValue();
-    		int len = ((Integer)((JCLiteral)tree.len).value).intValue();
-    		ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
-    		for(int i = 0; i < len; i++){
-    			unrolledStats.add(make.Exec(
-    					make.WiringApply(make.Indexed(src, make.Literal(srcPos+i)),
-    							args.prepend(make.Indexed(dest, make.Literal(destPos+i))))
-    					)
-    			);
-    		}
-    		System.out.println("Rewritten associate statement: "+ unrolledStats.toList().toString());
-    		tree.unrolled = unrolledStats.toList();
-    		}
-    		catch(ClassCastException e){
-    			log.rawError(tree.pos, "only Integer types are allowed as indeces/sizes: "
-    					+ tree);
-    		}
-    	}
-    	else{
-    		log.rawError(tree.pos, "index/size is not a literal: " + tree);
-    	}
-    	result = tree;
+        super.visitAssociate(tree);
+        JCExpression src = tree.src;
+        JCExpression dest = tree.dest;
+        List<JCExpression> args = tree.args;
+
+        // Don't worry about the casts. Typing checking assures the
+        // index/len elems are integer types. Interpretation of the system
+        // will make sure they are literals
+        int srcPos = atInterp.asInt(((JCLiteral) tree.srcPos).value);
+        int destPos = atInterp.asInt(((JCLiteral) tree.destPos).value);
+        int len = atInterp.asInt(((JCLiteral) tree.len).value);
+        ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
+        for (int i = 0; i < len; i++) {
+            unrolledStats
+                    .add(make.Exec(createIndexedCapsuleWiring(
+                            src,
+                            srcPos + i,
+                            args.prepend(make.Indexed(dest,
+                                    make.Literal(destPos + i))))));
+        }
+        System.out.println("Rewritten associate statement: "
+                + unrolledStats.toList().toString());
+        tree.unrolled = unrolledStats.toList();
+
+        result = tree;
     }
 
     // /* (non-Javadoc)
