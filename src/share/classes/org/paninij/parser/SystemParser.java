@@ -947,7 +947,7 @@ public class SystemParser {
         if ((mode & EXPR) != 0 && (token.kind == LPAREN)) {
             List<JCExpression> args = parseArgumentList();
             return F.at(token.pos).CapsuleArrayCall(nameOfArray.getName(),
-                    indexExpression, t, args);
+                    indexExpression, nameOfArray, args);
         }
         return t;
     }
