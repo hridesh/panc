@@ -1,7 +1,6 @@
 /*
  * This file is part of the Panini project at Iowa State University.
- *
- * The contents of this file are subject to the Mozilla Public License
+ * * The contents of this file are subject to the Mozilla Public License
  * Version 1.1 (the "License"); you may not use this file except in
  * compliance with the License. You may obtain a copy of the License at
  * http://www.mozilla.org/MPL/.
@@ -81,7 +80,7 @@ capsule Customers(Barber b, WaitingRoom r, String[] customerNames) {
 system Barbershop {
 	Barber b;
 	WaitingRoom w;
-	Customers[2] gs;
+	Customers gs[2];
 
 	b(w, true, 8);
 	w(10);       
