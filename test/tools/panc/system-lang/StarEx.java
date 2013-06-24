@@ -31,7 +31,7 @@ capsule C2(C c, int i) {
 
 system S {
     C c;
-    C2[3] c2s;
+    C2 c2s[3];
 
     star(c2s, c, 1);
 }

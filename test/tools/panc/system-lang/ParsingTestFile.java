@@ -34,11 +34,12 @@ system SimpleExpression(String[] args){
 //      i = new String[]{"adaf"};
 //      i = Interger.parseInt("adfasf");
 //      Interger.parseInt("adfasf");
-        CapArrayType arr[42] = 42;
-        CapArrayType[] arr;
+        CapArrayType arr[42];
+//        CapArrayType[] arr;
 //        int[] a;
 //        int a[];
     
+//        int i = arr.length;
 //    for(int i = 1; i < 10; ++i){
 //      int fortyTwo = 42;
 //      int thirtyThree = 33;

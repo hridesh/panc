@@ -32,8 +32,8 @@ capsule C2() {
 
 
 system S {
-    C1[2] c1s;
-    C2[4] c2s;
+    C1 c1s[2];
+    C2 c2s[4];
 
     associate(c1s, 0, c2s, 2, 2, "foobar");
 }

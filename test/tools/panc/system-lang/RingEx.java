@@ -27,6 +27,6 @@ capsule C(C next, int i) {
 }
 
 system S {
-    C[3] cs;
+    C cs[3];
     ring(cs, 3);
 }
