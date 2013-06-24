@@ -237,8 +237,6 @@ public class SystemDeclRewriter extends TreeTranslator {
         }
         unrolledStats.add(make.Exec(make.WiringApply(center,
                 args.prepend(others))));
-        System.out.println("Rewritten star statement: "
-                + unrolledStats.toList().toString());
         tree.unrolled = unrolledStats.toList();
         result = tree;
     }
@@ -280,8 +278,6 @@ public class SystemDeclRewriter extends TreeTranslator {
         unrolledStats.add(make.Exec(createIndexedCapsuleWiring(capsules,
                 capsuleArraySize - 1,
                 args.prepend(make.Indexed(capsules, make.Literal(0))))));
-        System.out.println("Rewritten ring statement: "
-                + unrolledStats.toList().toString());
         tree.unrolled = unrolledStats.toList();
         result = tree;
     }
