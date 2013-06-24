@@ -1177,11 +1177,23 @@ public class SystemParser {
      * 
      */
     private JCVariableDecl variableDeclaration(boolean isInitAllowed) {
+        JCModifiers mods = parseOptModifiers();
         JCExpression vartype = parseType();
         Name variableName = ident();
-        return toP(F.at(token.pos).VarDef(F.at(token.pos).Modifiers(0),
+        return toP(F.at(token.pos).VarDef(mods,
                 variableName, vartype,
                 variableInitializerOptional(isInitAllowed)));
+    }
+
+    private JCModifiers parseOptModifiers() {
+        if ( PaniniTokens.isConcurrencyModifier(token) ) {
+            JCModifiers mod = F.at(Position.NOPOS).Modifiers(PaniniTokens.toModfier(token));
+            nextToken();
+            return mod;
+        }
+        else {
+            return F.at(Position.NOPOS).Modifiers(0);
+        }
     }
 
     /**
@@ -1266,8 +1278,13 @@ public class SystemParser {
         boolean isArrayDeclarationWithIdentifier = (token.kind == IDENTIFIER)
                 && peekToken(LBRACKET, IDENTIFIER, RBRACKET, IDENTIFIER);
 
+        final String tokenName = token.name().toString();
+        boolean isConcurrencyTypeModifier = (token.kind == IDENTIFIER)
+                && (tokenName.equals(MONITOR) || tokenName.equals(SEQUENTIAL) || tokenName.equals(TASK));
+
         return (typetag(token.kind) > 0) || isSimpleDeclaration
-                || isArrayDeclaration || isArrayDeclarationWithIdentifier;
+                || isArrayDeclaration || isArrayDeclarationWithIdentifier
+                || isConcurrencyTypeModifier;
     }
 
     private boolean isStatementStartingToken(Token kind) {
