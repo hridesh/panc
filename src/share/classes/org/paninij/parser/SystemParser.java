@@ -1018,7 +1018,8 @@ public class SystemParser {
     }
 
     /**
-     * We have to differentiate capsule arrays and other arrays.
+     * We have to differentiate capsule arrays and other arrays. TODO: create a
+     * final static set that contains these names;
      */
     private boolean isAcceptableTypeForNormalArray(Name typeName) {
         ListBuffer<String> acc = new ListBuffer<String>();
@@ -1078,19 +1079,16 @@ public class SystemParser {
                 int pos = token.pos;
                 nextToken();
                 List<JCExpression> args = parseArgumentList();
-                // TODO: Don't forget to verify arguments during type checking;
                 returnVal = F.Exec(F.at(pos).Associate(args));
             } else if (isSameKind(token, SYSLANG_STAR)) {
                 int pos = token.pos;
                 nextToken();
                 List<JCExpression> args = parseArgumentList();
-                // TODO: Don't forget to verify arguments during type checking;
                 returnVal = F.Exec(F.at(pos).Star(args));
             } else if (isSameKind(token, SYSLANG_RING)) {
                 int pos = token.pos;
                 nextToken();
                 List<JCExpression> args = parseArgumentList();
-                // TODO: Don't forget to verify arguments during type checking;
                 returnVal = F.Exec(F.at(pos).Ring(args));
             }
             accept(SEMI);
@@ -1171,16 +1169,9 @@ public class SystemParser {
 
         if (token.kind == LPAREN) {
             accept(LPAREN);
-            // TODO: parse more and then type check;
             params.head = variableDeclaration(false);
             accept(RPAREN);
         }
-        // TODO: remove this, it should be done during type checking;
-        if (params.length() > 1
-                || (params.length() == 1 && !params.get(0).getType().toString()
-                        .equals("String[]")))
-            log.error(token.pos, "system.argument.illegal");
-
         return params;
     }
 
@@ -1265,6 +1256,8 @@ public class SystemParser {
         if (isStatementStartingToken(token)) {
             return parseStatement();
         } else {
+            //FIXME: this picks up capsule decls and then parses an initializer for them.
+            //make more restrictive;
             boolean isVariableDeclStart = isVariableDeclStart();
             if (isVariableDeclStart) {
                 JCVariableDecl variableDeclaration = variableDeclaration(true);
@@ -1280,20 +1273,19 @@ public class SystemParser {
 
     }
 
+    //TODO: optimize;
     private boolean isVariableDeclStart() {
+        boolean isPrimitiveDeclaration = (typetag(token.kind) > 0); 
+        
         boolean isSimpleDeclaration = (token.kind == IDENTIFIER)
                 && peekToken(IDENTIFIER);
 
         boolean isArrayDeclaration = (token.kind == IDENTIFIER)
                 && peekToken(LBRACKET) && (findAfter(RBRACKET) == IDENTIFIER);
 
-        final String tokenName = token.name().toString();
-        boolean isConcurrencyTypeModifier = (token.kind == IDENTIFIER)
-                && (tokenName.equals(MONITOR) || tokenName.equals(SEQUENTIAL) || tokenName
-                        .equals(TASK));
+        boolean isConcurrencyTypeModifier = isConcurrencyModifier(token);
 
-        return (typetag(token.kind) > 0) || isSimpleDeclaration
-                || isArrayDeclaration || isConcurrencyTypeModifier;
+        return isPrimitiveDeclaration || isSimpleDeclaration || isConcurrencyTypeModifier ||  isArrayDeclaration;
     }
 
     private boolean isStatementStartingToken(Token kind) {
@@ -1612,7 +1604,6 @@ public class SystemParser {
         }
     }
 
-    // Panini code
     public class SystemParserResult {
         public final Token token;
         public final int mode;
@@ -1629,6 +1620,5 @@ public class SystemParser {
         }
 
     }
-    // end Panini code
 
 }
