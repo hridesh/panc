@@ -21,6 +21,8 @@ package org.paninij.system;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import sun.org.mozilla.javascript.internal.ast.ExpressionStatement;
+
 import com.sun.source.tree.Tree.Kind;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.tools.javac.code.TypeTags;
@@ -84,44 +86,42 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     /**
      * TODO: Refactor to removethis at some points in the future.
-     *
+     * 
      * This method flattens the statements. Unrolled topology statements are
      * implemented as JCStatements nodes that contain a list of statements.
-     *
+     * 
      * @param stats
      * @return
      */
     private List<JCStatement> unrollStatementsFromBodyStats(
             List<JCStatement> stats) {
 
-        ArrayList<JCStatement> newStats = new ArrayList<JCStatement>(
-                stats.size());
+        ListBuffer<JCStatement> newStats = new ListBuffer<JCStatement>();
 
         for (JCStatement statement : stats) {
             if (statement.getKind() == Kind.EXPRESSION_STATEMENT) {
                 JCExpressionStatement exprStatement = ((JCExpressionStatement) statement);
                 final Kind exprKind = exprStatement.expr.getKind();
-                //TOPOLOGY OPERATORS
-                if (exprKind == Kind.WIREALL ||
-                        exprKind == Kind.RING ||
-                        exprKind == Kind.STAR_TOP ||
-                        exprKind == Kind.ASSOCIATE) {
+                // TOPOLOGY OPERATORS
+                if (exprKind == Kind.WIREALL || exprKind == Kind.RING
+                        || exprKind == Kind.STAR_TOP
+                        || exprKind == Kind.ASSOCIATE) {
                     JCTopology wireall = (JCTopology) exprStatement.expr;
                     for (JCStatement unrolledStatement : wireall.unrolled) {
                         newStats.add(unrolledStatement);
                     }
-                }  else
+                } else
                     newStats.add(statement);
             } else if (statement.getKind() == null) {
-                JCUnrolledStatement unrolledStmts = (JCUnrolledStatement)(JCTree)statement;
+                JCUnrolledStatement unrolledStmts = (JCUnrolledStatement) (JCTree) statement;
                 for (JCStatement unrolledStatement : unrolledStmts.unrolled) {
                     newStats.add(unrolledStatement);
                 }
 
-            }else newStats.add(statement);
+            } else
+                newStats.add(statement);
         }
-        List<JCStatement> result = List.<JCStatement> from(newStats
-                .toArray(new JCStatement[1]));
+        List<JCStatement> result = newStats.toList();
         return result;
     }
 
@@ -148,17 +148,18 @@ public class SystemDeclRewriter extends TreeTranslator {
         super.visitVarDef(tree);
 
         valueEnv.bind(tree.name, tree.init);
-        //TODO-XX For Sean
+        // TODO-XX For Sean
         varDefToAstNodeEnv.bind(tree.name, tree);
     }
 
     @Override
     public void visitCapsuleArray(JCCapsuleArray tree) {
         super.visitCapsuleArray(tree);
-        if(tree.sizeExpr.hasTag(Tag.LITERAL)) {
-            tree.size = atInterp.asInt(((JCLiteral)tree.sizeExpr).value);
+        if (tree.sizeExpr.hasTag(Tag.LITERAL)) {
+            tree.size = atInterp.asInt(((JCLiteral) tree.sizeExpr).value);
         } else {
-            Assert.error(tree.sizeExpr + " should evaluate to an integer literal during system interpretation.");
+            Assert.error(tree.sizeExpr
+                    + " should evaluate to an integer literal during system interpretation.");
         }
     }
 
@@ -166,13 +167,14 @@ public class SystemDeclRewriter extends TreeTranslator {
     public void visitAssign(JCAssign tree) {
 
         final JCExpression translatedRHS = this.translate(tree.rhs);
-       //in case of uninitialized variables
-       //FIXME: might want to consider failing; artifact of not having attribution
+        // in case of uninitialized variables
+        // FIXME: might want to consider failing; artifact of not having
+        // attribution
         if (translatedRHS != null) {
             tree.rhs = translatedRHS;
         }
 
-        //TODO: explore cases like x = y = 42;
+        // TODO: explore cases like x = y = 42;
         if (tree.lhs instanceof JCIdent) {
             Name assignTo = ((JCIdent) tree.lhs).name;
             valueEnv.bind(assignTo, tree.rhs);
@@ -182,7 +184,7 @@ public class SystemDeclRewriter extends TreeTranslator {
                     + " does not have an identifier on the left hand side!");
         }
 
-        //TODO return translatedRHS instead of tree;
+        // TODO return translatedRHS instead of tree;
         result = tree;
     }
 
@@ -210,11 +212,9 @@ public class SystemDeclRewriter extends TreeTranslator {
 
         ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
 
-        for(int i = 0; i < capsuleArraySize; i++){
-            unrolledStats.add(make.Exec( //others -> center
-                    createIndexedCapsuleWiring(tree.many, i, tree.args)
-                    )
-            );
+        for (int i = 0; i < capsuleArraySize; i++) {
+            unrolledStats.add(make.Exec( // others -> center
+                    createIndexedCapsuleWiring(tree.many, i, tree.args)));
         }
 
         tree.unrolled = unrolledStats.toList();
@@ -222,31 +222,32 @@ public class SystemDeclRewriter extends TreeTranslator {
     }
 
     @Override
-    public void visitStar(JCStar tree){
-    	super.visitStar(tree);
-    	JCExpression center = tree.center;
-    	JCExpression others = tree.others;
-    	List<JCExpression> args = tree.args;
-    	int capsuleArraySize = getCapsuleArraySize(others);
-    	ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
+    public void visitStar(JCStar tree) {
+        super.visitStar(tree);
+        JCExpression center = tree.center;
+        JCExpression others = tree.others;
+        List<JCExpression> args = tree.args;
+        int capsuleArraySize = getCapsuleArraySize(others);
+        ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
 
-    	for(int i = 0; i < capsuleArraySize; i++){
-    		unrolledStats.add(make.Exec( //others -> center
-                   createIndexedCapsuleWiring(others, i, args.prepend(center))
-    				)
-    		);
-    	}
-    	unrolledStats.add(make.Exec(
-				make.WiringApply(center, args.prepend(others))
-			)
-	    );
-    	System.out.println("Rewritten star statement: " + unrolledStats.toList().toString());
-    	tree.unrolled = unrolledStats.toList();
-    	result = tree;
+        for (int i = 0; i < capsuleArraySize; i++) {
+            unrolledStats
+                    .add(make.Exec( // others -> center
+                            createIndexedCapsuleWiring(others, i,
+                                    args.prepend(center))));
+        }
+        unrolledStats.add(make.Exec(make.WiringApply(center,
+                args.prepend(others))));
+        System.out.println("Rewritten star statement: "
+                + unrolledStats.toList().toString());
+        tree.unrolled = unrolledStats.toList();
+        result = tree;
     }
 
-    private JCExpression createIndexedCapsuleWiring(JCExpression indexed, int index, List<JCExpression> args) {
-        return make.CapsuleArrayCall(getIdentName(indexed), make.Literal(index), indexed, args);
+    private JCExpression createIndexedCapsuleWiring(JCExpression indexed,
+            int index, List<JCExpression> args) {
+        return make.CapsuleArrayCall(getIdentName(indexed),
+                make.Literal(index), indexed, args);
     }
 
     /**
@@ -255,31 +256,35 @@ public class SystemDeclRewriter extends TreeTranslator {
      */
     private Name getIdentName(JCExpression others) {
         if (others.hasTag(Tag.IDENT)) {
-            return ((JCIdent)others).getName();
+            return ((JCIdent) others).getName();
         } else {
             Assert.error(others + " should be an Identifier.");
-            return null; //this will die on the above unchecked exception.
+            return null; // this will die on the above unchecked exception.
         }
     }
 
     @Override
-    public void visitRing(JCRing tree){
-    	super.visitRing(tree);
-    	JCExpression capsules = tree.capsules;
-    	List<JCExpression> args = tree.args;
-    	int capsuleArraySize = getCapsuleArraySize(capsules);
-    	ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
-    	for(int i = 0; i < capsuleArraySize-1; i++){
-    	    unrolledStats.add(make.Exec(
-    	            createIndexedCapsuleWiring(capsules, i, args.prepend(make.Indexed(capsules, make.Literal(i+1))))
-    	    ));
-    	}
-    	unrolledStats.add(make.Exec(
-    	        createIndexedCapsuleWiring(capsules, capsuleArraySize-1,args.prepend(make.Indexed(capsules, make.Literal(0))))
-    			));
-    	System.out.println("Rewritten ring statement: "+ unrolledStats.toList().toString());
-    	tree.unrolled = unrolledStats.toList();
-    	result = tree;
+    public void visitRing(JCRing tree) {
+        super.visitRing(tree);
+        JCExpression capsules = tree.capsules;
+        List<JCExpression> args = tree.args;
+        int capsuleArraySize = getCapsuleArraySize(capsules);
+        ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
+        for (int i = 0; i < capsuleArraySize - 1; i++) {
+            unrolledStats
+                    .add(make.Exec(createIndexedCapsuleWiring(
+                            capsules,
+                            i,
+                            args.prepend(make.Indexed(capsules,
+                                    make.Literal(i + 1))))));
+        }
+        unrolledStats.add(make.Exec(createIndexedCapsuleWiring(capsules,
+                capsuleArraySize - 1,
+                args.prepend(make.Indexed(capsules, make.Literal(0))))));
+        System.out.println("Rewritten ring statement: "
+                + unrolledStats.toList().toString());
+        tree.unrolled = unrolledStats.toList();
+        result = tree;
     }
 
     @Override
@@ -329,31 +334,44 @@ public class SystemDeclRewriter extends TreeTranslator {
             translate(c);
 
         ListBuffer<JCStatement> buffer = new ListBuffer<JCStatement>();
-        boolean cond = atInterp.asBoolean(((JCLiteral)translate(copy.copy(tree.cond))).value);
+        boolean cond = atInterp.asBoolean(((JCLiteral) translate(copy
+                .copy(tree.cond))).value);
         while (cond) {
             if (tree.body.getKind() == Kind.BLOCK) {
                 JCBlock b = (JCBlock) tree.body;
                 for (JCStatement s : b.stats) {
-                    JCStatement copyOfS = translate(copy.copy(s));
-                    //int b = 4 * 2
-                    //a[i](b)
-                    //TODO: treat case of wiring regular capsules.
-                    if (copyOfS.getKind() == Kind.CAPSULE_ARRAY_CALL) {
-                        buffer.add(copyOfS);
-                    }
+                    executeForStatement(s, buffer);
                 }
             } else {
-                throw new AssertionError(
-                        "Don't forget to implement proper for unrolling for syslang");
-
+                executeForStatement(tree.body, buffer);
             }
 
             translate(copy.copy(tree.step));
-            cond = atInterp.asBoolean(((JCLiteral)translate(copy.copy(tree.cond))).value);
+            cond = atInterp.asBoolean(((JCLiteral) translate(copy
+                    .copy(tree.cond))).value);
         }
 
         valueEnv = valueEnv.pop();
         return buffer.toList();
+    }
+
+    private void executeForStatement(JCStatement statement,
+            ListBuffer<JCStatement> unrolledLoopBuffer) {
+        JCStatement copyOfS = translate(copy.copy(statement));
+        // int b = 4 * 2
+        // a[i](b)
+        // TODO: treat case of wiring regular capsules.
+        Kind kindOfS = unboxKindOfExpressionStatement(copyOfS);
+        if (kindOfS == Kind.CAPSULE_ARRAY_CALL) {
+            unrolledLoopBuffer.add(copyOfS);
+        }
+    }
+
+    private Kind unboxKindOfExpressionStatement(JCStatement statement) {
+        if (statement.getKind() == Kind.EXPRESSION_STATEMENT) {
+            return ((JCExpressionStatement) statement).expr.getKind();
+        } else
+            return statement.getKind();
     }
 
     private int getCapsuleArraySize(JCExpression array) {
@@ -370,18 +388,17 @@ public class SystemDeclRewriter extends TreeTranslator {
      * @return
      */
     private Name getIdentifierName(JCExpression tree) {
-        if(tree instanceof JCIdent){
-        	Name arrayName = ((JCIdent) tree).name;
-        	return arrayName;
-        }
-        else{
-        	//TODO log the error properly:
-        	//we expected an identifier, but got something else
-        	log.error("unexpected.type", "identifier", tree.getKind().toString());
-        	return null;
+        if (tree instanceof JCIdent) {
+            Name arrayName = ((JCIdent) tree).name;
+            return arrayName;
+        } else {
+            // TODO log the error properly:
+            // we expected an identifier, but got something else
+            log.error("unexpected.type", "identifier", tree.getKind()
+                    .toString());
+            return null;
         }
     }
-
 
     @Override
     public void visitSystemDef(JCSystemDecl tree) {
@@ -399,14 +416,14 @@ public class SystemDeclRewriter extends TreeTranslator {
         result = tree;
     }
 
-
     /**
      * Helper to interpret arithmetic expression trees.
-     *
-     * TODO: Deal with something besides ints. rename because now it supports booleans
-     *
+     * 
+     * TODO: Deal with something besides ints. rename because now it supports
+     * booleans
+     * 
      * @author sean
-     *
+     * 
      */
     private class ArithTreeInterp {
 
@@ -471,7 +488,8 @@ public class SystemDeclRewriter extends TreeTranslator {
             this.tree = null;
             return result;
         }
-/**
+
+        /**
          * @param lhs
          * @param rhs
          * @return
@@ -495,7 +513,8 @@ public class SystemDeclRewriter extends TreeTranslator {
                 }
             }
         }
-/**
+
+        /**
          * @param lhs
          * @param rhs
          * @return
@@ -519,7 +538,8 @@ public class SystemDeclRewriter extends TreeTranslator {
                 }
             }
         }
-/**
+
+        /**
          * @param lhs
          * @param rhs
          * @return
@@ -543,7 +563,8 @@ public class SystemDeclRewriter extends TreeTranslator {
                 }
             }
         }
-/**
+
+        /**
          * @param lhs
          * @param rhs
          * @return
@@ -567,7 +588,8 @@ public class SystemDeclRewriter extends TreeTranslator {
                 }
             }
         }
-/**
+
+        /**
          * @param lhs
          * @param rhs
          * @return
@@ -591,7 +613,8 @@ public class SystemDeclRewriter extends TreeTranslator {
                 }
             }
         }
-/**
+
+        /**
          * @param lhs
          * @param rhs
          * @return
@@ -615,7 +638,8 @@ public class SystemDeclRewriter extends TreeTranslator {
                 }
             }
         }
-/**
+
+        /**
          * @param lhs
          * @param rhs
          * @return
@@ -639,7 +663,8 @@ public class SystemDeclRewriter extends TreeTranslator {
                 }
             }
         }
-/**
+
+        /**
          * @return
          */
         private JCTree interpretLT(JCLiteral lhs, JCLiteral rhs) {
@@ -661,7 +686,6 @@ public class SystemDeclRewriter extends TreeTranslator {
                 }
             }
         }
-
 
         final JCTree interpPlus(JCLiteral lhs, JCLiteral rhs) {
             if (lhs.typetag != rhs.typetag) {
@@ -775,9 +799,9 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     /**
      * Standard linked environment for the interpretor
-     *
+     * 
      * @author sean
-     *
+     * 
      */
     private static class InterpEnv<K, V> {
         private final HashMap<K, V> table;
@@ -831,7 +855,9 @@ public class SystemDeclRewriter extends TreeTranslator {
             return null;
         }
 
-        /* (non-Javadoc)
+        /*
+         * (non-Javadoc)
+         * 
          * @see com.sun.tools.javac.tree.JCTree#getTag()
          */
         @Override
@@ -840,8 +866,12 @@ public class SystemDeclRewriter extends TreeTranslator {
             return null;
         }
 
-        /* (non-Javadoc)
-         * @see com.sun.tools.javac.tree.JCTree#accept(com.sun.tools.javac.tree.JCTree.Visitor)
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * com.sun.tools.javac.tree.JCTree#accept(com.sun.tools.javac.tree.JCTree
+         * .Visitor)
          */
         @Override
         public void accept(Visitor v) {
@@ -849,8 +879,12 @@ public class SystemDeclRewriter extends TreeTranslator {
 
         }
 
-        /* (non-Javadoc)
-         * @see com.sun.tools.javac.tree.JCTree#accept(com.sun.source.tree.TreeVisitor, java.lang.Object)
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * com.sun.tools.javac.tree.JCTree#accept(com.sun.source.tree.TreeVisitor
+         * , java.lang.Object)
          */
         @Override
         public <R, D> R accept(TreeVisitor<R, D> v, D d) {
@@ -858,6 +892,5 @@ public class SystemDeclRewriter extends TreeTranslator {
             return null;
         }
     }
-
 
 }
