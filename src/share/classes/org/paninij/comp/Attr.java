@@ -262,34 +262,8 @@ public final class Attr extends CapsuleInternal {
 	}
 
 	public final void visitSystemDef(JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
-
 	    attribSystemDecl(tree, rs, env);
 
-	    /*if (doGraphs) {
-          ((Symbol.SystemSymbol)tree.sym).graphs = graphsBuilder.buildGraphs(tree);
-            effects.substituteProcEffects(tree);
-            ConsistencyCheck cc = 
-                new ConsistencyCheck();
-            for (SystemGraphs.Node n :
-            	((Symbol.SystemSymbol)tree.sym).graphs.forwardConnectionEdges.keySet()) {
-                Iterator<Symbol> iter = n.sym.members().getElements().iterator();
-                while(iter.hasNext()){
-                	Symbol s = iter.next();
-                	if(s instanceof MethodSymbol){
-                		MethodSymbol ms = (MethodSymbol)s;
-                		if(ms.attributes_field.size()!=0){
-                			for(Attribute.Compound compound : ms.attributes_field){
-                				if(compound.type.tsym.getQualifiedName().toString().contains("Effects")){
-                					ms.effects = annotationProcessor.translateEffectAnnotations(ms, compound, env, rs);
-                				}
-                			}
-                		}
-                	}
-                }
-                cc.checkConsistency(((Symbol.SystemSymbol)tree.sym).graphs, n);
-                }
-        }*/
-		//    	tree.sym.graphs = graphsBuilder.buildGraphs(tree);
 	    ListBuffer<JCStatement> decls;
         ListBuffer<JCStatement> inits;
         ListBuffer<JCStatement> assigns;
