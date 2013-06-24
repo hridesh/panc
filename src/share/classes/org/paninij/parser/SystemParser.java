@@ -64,6 +64,7 @@ import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Source;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.parser.EndPosTable;
+import com.sun.tools.javac.parser.JavacParser;
 import com.sun.tools.javac.parser.Lexer;
 import com.sun.tools.javac.parser.Tokens;
 import com.sun.tools.javac.parser.Tokens.Token;
@@ -72,6 +73,8 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCArrayAccess;
 import com.sun.tools.javac.tree.JCTree.JCBinary;
 import com.sun.tools.javac.tree.JCTree.JCBlock;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleArrayCall;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleWiring;
 import com.sun.tools.javac.tree.JCTree.JCErroneous;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
@@ -128,6 +131,8 @@ public class SystemParser {
     /** End position mappings container */
     private final AbstractEndPosTable endPosTable;
 
+    private final JavacParser javaParser;
+
     /**
      * Construct a parser from a given scanner, tree factory and log.
      * 
@@ -137,16 +142,16 @@ public class SystemParser {
      */
     public SystemParser(TreeMaker F, Log log, Names names, Lexer S,
             Map<JCTree, Integer> endPosTable, Token initialToken, int mode,
-            int lastmode) {
+            int lastmode, JavacParser javaParser) {
         this.S = S;
         this.F = F;
         this.log = log;
         this.names = names;
+        this.javaParser = javaParser;
         this.errorTree = F.Erroneous();
 
         // recreate state:
         this.token = initialToken;
-        this.mode = mode;
         this.lastmode = lastmode;
         this.endPosTable = newEndPosTable(endPosTable);
     }
@@ -162,11 +167,11 @@ public class SystemParser {
      * : an expression mode = TYPE : a type mode = NOPARAMS : no parameters
      * allowed for type mode = TYPEARG : type argument
      */
-    static final int EXPR = 0x1;
-    static final int TYPE = 0x2;
-    static final int NOPARAMS = 0x4;
-    static final int TYPEARG = 0x8;
-    static final int DIAMOND = 0x10;
+    private static final int EXPR = 0x1;
+    private static final int TYPE = 0x2;
+    private static final int NOPARAMS = 0x4;
+    private static final int TYPEARG = 0x8;
+    private static final int DIAMOND = 0x10;
 
     /**
      * The current mode.
@@ -472,17 +477,8 @@ public class SystemParser {
         }
     }
 
-    /**
-     * Qualident = Ident { DOT Ident }
-     */
-    private JCExpression qualident() {
-        JCExpression t = toP(F.at(token.pos).Ident(ident()));
-        while (token.kind == DOT) {
-            int pos = token.pos;
-            nextToken();
-            t = toP(F.at(pos).Select(t, ident()));
-        }
-        return t;
+    private JCIdent identExpression() {
+        return toP(F.at(token.pos).Ident(ident()));
     }
 
     private JCExpression literal(Name prefix) {
@@ -592,389 +588,6 @@ public class SystemParser {
         return prefix.isEmpty() ? s : prefix + s;
     }
 
-    public JCExpression parseExpression() {
-        int prevmode = mode;
-        mode = EXPR;
-        JCExpression result = term();
-        lastmode = mode;
-        mode = prevmode;
-        return result;
-    }
-
-    /**
-     * <pre>
-     *  Expression = Expression1 [ExpressionRest]
-     *  ExpressionRest = [AssignmentOperator Expression1]
-     *  AssignmentOperator = "=" | "+=" | "-=" | "*=" | "/=" |
-     *                       "&=" | "|=" | "^=" |
-     *                       "%=" | "<<=" | ">>=" | ">>>="
-     *  Type = Type1
-     *  TypeNoParams = TypeNoParams1
-     *  StatementExpression = Expression
-     *  ConstantExpression = Expression
-     * </pre>
-     */
-    private JCExpression term() {
-        JCExpression t = term1();
-        if ((mode & EXPR) != 0 && token.kind == EQ
-                || PLUSEQ.compareTo(token.kind) <= 0
-                && token.kind.compareTo(GTGTGTEQ) <= 0)
-            return termRest(t);
-        else
-            return t;
-    }
-
-    private JCExpression termRest(JCExpression t) {
-        switch (token.kind) {
-        case EQ: {
-            int pos = token.pos;
-            nextToken();
-            mode = EXPR;
-            JCExpression t1 = term();
-            return toP(F.at(pos).Assign(t, t1));
-        }
-        case PLUSEQ:
-        case SUBEQ:
-        case STAREQ:
-        case SLASHEQ:
-        case PERCENTEQ:
-        case AMPEQ:
-        case BAREQ:
-        case CARETEQ:
-        case LTLTEQ:
-        case GTGTEQ:
-        case GTGTGTEQ:
-            int pos = token.pos;
-            TokenKind tk = token.kind;
-            nextToken();
-            mode = EXPR;
-            JCExpression t1 = term();
-            return F.at(pos).Assignop(optag(tk), t, t1);
-        default:
-            return t;
-        }
-    }
-
-    /**
-     * <pre>
-     *  Expression1   = Expression2 [Expression1Rest]
-     *  Type1         = Type2
-     *  TypeNoParams1 = TypeNoParams2
-     * </pre>
-     */
-    private JCExpression term1() {
-        JCExpression t = term2();
-        if ((mode & EXPR) != 0 && token.kind == QUES) {
-            mode = EXPR;
-            return term1Rest(t);
-        } else {
-            return t;
-        }
-    }
-
-    /**
-     * Expression1Rest = ["?" Expression ":" Expression1]
-     */
-    private JCExpression term1Rest(JCExpression t) {
-        if (token.kind == QUES) {
-            int pos = token.pos;
-            nextToken();
-            JCExpression t1 = term();
-            accept(COLON);
-            JCExpression t2 = term1();
-            return F.at(pos).Conditional(t, t1, t2);
-        } else {
-            return t;
-        }
-    }
-
-    /**
-     * Expression2 = Expression3 [Expression2Rest] Type2 = Type3 TypeNoParams2 =
-     * TypeNoParams3
-     */
-    private JCExpression term2() {
-        JCExpression t = term3();
-        if ((mode & EXPR) != 0 && prec(token.kind) >= TreeInfo.orPrec) {
-            mode = EXPR;
-            return term2Rest(t, TreeInfo.orPrec);
-        } else {
-            return t;
-        }
-    }
-
-    /**
-     * <pre>
-     *    Expression2Rest = {infixop Expression3}
-     * FIXME:remove this | Expression3 instanceof Type
-     *   infixop         = "||"
-     *                   | "&&"
-     *                   | "|"
-     *                   | "^"
-     *                   | "&"
-     *                   | "==" | "!="
-     *                   | "<" | ">" | "<=" | ">="
-     *                   | "<<" | ">>" | ">>>"
-     *                   | "+" | "-"
-     *                   | "*" | "/" | "%"
-     * </pre>
-     */
-    private JCExpression term2Rest(JCExpression t, int minprec) {
-        List<JCExpression[]> savedOd = odStackSupply.elems;
-        JCExpression[] odStack = newOdStack();
-        List<Token[]> savedOp = opStackSupply.elems;
-        Token[] opStack = newOpStack();
-
-        // optimization, was odStack = new Tree[...]; opStack = new Tree[...];
-        int top = 0;
-        odStack[0] = t;
-        int startPos = token.pos;
-        Token topOp = Tokens.DUMMY;
-        while (prec(token.kind) >= minprec) {
-            opStack[top] = topOp;
-            top++;
-            topOp = token;
-            nextToken();
-            odStack[top] = term3();
-            while (top > 0 && prec(topOp.kind) >= prec(token.kind)) {
-                odStack[top - 1] = makeOp(topOp.pos, topOp.kind,
-                        odStack[top - 1], odStack[top]);
-                top--;
-                topOp = opStack[top];
-            }
-        }
-        Assert.check(top == 0);
-        t = odStack[0];
-
-        if (t.hasTag(JCTree.Tag.PLUS)) {
-            StringBuffer buf = foldStrings(t);
-            if (buf != null) {
-                t = toP(F.at(startPos).Literal(TypeTags.CLASS, buf.toString()));
-            }
-        }
-
-        odStackSupply.elems = savedOd; // optimization
-        opStackSupply.elems = savedOp; // optimization
-        return t;
-    }
-
-    /**
-     * Construct a binary or type test node.
-     */
-    private JCExpression makeOp(int pos, TokenKind topOp, JCExpression od1,
-            JCExpression od2) {
-        if (topOp == INSTANCEOF) {
-            return F.at(pos).TypeTest(od1, od2);
-        } else {
-            return F.at(pos).Binary(optag(topOp), od1, od2);
-        }
-    }
-
-    /**
-     * If tree is a concatenation of string literals, replace it by a single
-     * literal representing the concatenated string.
-     */
-    private StringBuffer foldStrings(JCTree tree) {
-        List<String> buf = List.nil();
-        while (true) {
-            if (tree.hasTag(LITERAL)) {
-                JCLiteral lit = (JCLiteral) tree;
-                if (lit.typetag == TypeTags.CLASS) {
-                    StringBuffer sbuf = new StringBuffer((String) lit.value);
-                    while (buf.nonEmpty()) {
-                        sbuf.append(buf.head);
-                        buf = buf.tail;
-                    }
-                    return sbuf;
-                }
-            } else if (tree.hasTag(JCTree.Tag.PLUS)) {
-                JCBinary op = (JCBinary) tree;
-                if (op.rhs.hasTag(LITERAL)) {
-                    JCLiteral lit = (JCLiteral) op.rhs;
-                    if (lit.typetag == TypeTags.CLASS) {
-                        buf = buf.prepend((String) lit.value);
-                        tree = op.lhs;
-                        continue;
-                    }
-                }
-            }
-            return null;
-        }
-    }
-
-    /**
-     * optimization: To save allocating a new operand/operator stack for every
-     * binary operation, we use supplys.
-     */
-    private ListBuffer<JCExpression[]> odStackSupply = new ListBuffer<JCExpression[]>();
-    private ListBuffer<Token[]> opStackSupply = new ListBuffer<Token[]>();
-
-    private JCExpression[] newOdStack() {
-        if (odStackSupply.elems == odStackSupply.last)
-            odStackSupply.append(new JCExpression[infixPrecedenceLevels + 1]);
-        JCExpression[] odStack = odStackSupply.elems.head;
-        odStackSupply.elems = odStackSupply.elems.tail;
-        return odStack;
-    }
-
-    private Token[] newOpStack() {
-        if (opStackSupply.elems == opStackSupply.last)
-            opStackSupply.append(new Token[infixPrecedenceLevels + 1]);
-        Token[] opStack = opStackSupply.elems.head;
-        opStackSupply.elems = opStackSupply.elems.tail;
-        return opStack;
-    }
-
-    /**
-     * <pre>
-     *  Expression3    = PrefixOp Expression3
-     *                 | "(" Expr | TypeNoParams ")" Expression3
-     *                 | Primary {Selector} {PostfixOp}
-     *  Primary        = "(" Expression ")"
-     *                 | Literal
-     *                 | [TypeArguments] THIS [Arguments]
-     *                 | [TypeArguments] SUPER SuperSuffix
-     *                 | NEW [TypeArguments] Creator
-     *                 | "(" Arguments ")" "->" ( Expression | Block )
-     *                 | Ident "->" ( Expression | Block )
-     *                 | Ident { "." Ident }
-     *                 | Expression3 MemberReferenceSuffix
-     *                   [ "[" ( "]" BracketsOpt "." CLASS | Expression "]" )
-     *                   | Arguments
-     *                   | "." ( CLASS | THIS | [TypeArguments] SUPER Arguments | NEW [TypeArguments] InnerCreator )
-     *                   ]
-     *                 | BasicType BracketsOpt "." CLASS
-     *  PrefixOp       = "++" | "--" | "!" | "~" | "+" | "-"
-     *  PostfixOp      = "++" | "--"
-     *  Type3          = Ident { "." Ident } [TypeArguments] {TypeSelector} BracketsOpt
-     *                 | BasicType
-     *  TypeNoParams3  = Ident { "." Ident } BracketsOpt
-     *  Selector       = "." [TypeArguments] Ident [Arguments]
-     *                 | "." THIS
-     *                 | "." [TypeArguments] SUPER SuperSuffix
-     *                 | "." NEW [TypeArguments] InnerCreator
-     *                 | "[" Expression "]"
-     *  TypeSelector   = "." Ident [TypeArguments]
-     *  SuperSuffix    = Arguments | "." Ident [Arguments]
-     * </pre>
-     */
-    private JCExpression term3() {
-        int pos = token.pos;
-        JCExpression t = null;
-
-        switch (token.kind) {
-
-        // Unuary operators
-        case PLUSPLUS:
-        case SUBSUB:
-        case BANG:
-        case TILDE:
-        case PLUS:
-        case SUB: {
-            if ((mode & EXPR) != 0) {
-                TokenKind tk = token.kind;
-                nextToken();
-                mode = EXPR;
-                if (tk == SUB
-                        && (token.kind == INTLITERAL || token.kind == LONGLITERAL)
-                        && token.radix() == 10) {
-                    mode = EXPR;
-                    t = literal(names.hyphen, pos);
-                } else {
-                    t = term3();
-                    return F.at(pos).Unary(unoptag(tk), t);
-                }
-            } else
-                return illegal();
-            break;
-        }
-
-        // literals:
-        case INTLITERAL:
-        case LONGLITERAL:
-        case FLOATLITERAL:
-        case DOUBLELITERAL:
-        case CHARLITERAL:
-        case STRINGLITERAL:
-        case TRUE:
-        case FALSE: {
-            if ((mode & EXPR) != 0) {
-                mode = EXPR;
-                t = literal(names.empty);
-            } else
-                return illegal();
-            break;
-        }
-
-        case IDENTIFIER: {
-            if ((mode & EXPR) != 0) {
-                t = toP(F.at(token.pos).Ident(ident()));
-                if (token.kind == LBRACKET) {
-                    JCIdent nameOfArray = (JCIdent) t;
-                    nextToken();
-                    if ((mode & EXPR) != 0) {
-                        mode = EXPR;
-                        JCExpression indexExpression = term();
-                        t = to(F.at(pos).Indexed(t, indexExpression));
-                        accept(RBRACKET);
-                        t = suffixIndexedCapsuleWiringOptional(t, nameOfArray,
-                                indexExpression);
-                    }
-                }
-
-                if (token.kind == LPAREN) {
-                    t = suffixCapsuleWiringOptional(t);
-                }
-            }
-            break;
-        }
-
-        // parentheses for nested operations:
-        case LPAREN: {
-            if ((mode & EXPR) != 0) {
-                nextToken();
-                t = parseExpression();
-                accept(RPAREN);
-                lastmode = mode;
-                mode = EXPR;
-                // TODO: add typecasting
-            } else {
-                return illegal();
-            }
-            t = toP(F.at(pos).Parens(t));
-            break;
-        }
-
-        default:
-            return illegal();
-        }
-
-        return t;
-    }
-
-    private JCExpression suffixCapsuleWiringOptional(JCExpression t) {
-        List<JCExpression> params = parseArgumentList();
-        return F.at(token.pos).WiringApply(t, params);
-
-    }
-
-    private JCExpression suffixIndexedCapsuleWiringOptional(JCExpression t,
-            JCIdent nameOfArray, JCExpression indexExpression) {
-        if ((mode & EXPR) != 0 && (token.kind == LPAREN)) {
-            List<JCExpression> args = parseArgumentList();
-            // TODO: Remove when the parser is fixed.
-            // unwrap the inner indexed if there is one.
-            if (t.getTag() == Tag.INDEXED) {
-                System.err
-                        .println("Warning found an ArrayAcces expression inside a capsule array wiring expression."
-                                + "\nUnwrapping the inner expression -- FIX THE PARSER");
-                t = ((JCArrayAccess) t).indexed;
-            }
-            return F.at(token.pos).CapsuleArrayCall(nameOfArray.getName(),
-                    indexExpression, nameOfArray, args);
-        }
-        return t;
-    }
-
     /**
      * @return
      */
@@ -988,7 +601,7 @@ public class SystemParser {
         }
 
         while (true) {
-            JCExpression param = parseExpression();
+            JCExpression param = parseExpressionWithJavac();
             lb.add(param);
             if ((token.kind == RPAREN))
                 break;
@@ -999,7 +612,8 @@ public class SystemParser {
         return lb.toList();
     }
 
-    public JCExpression parseType() {
+    @Deprecated
+    public JCExpression parseTypeOld() {
         JCExpression vartype;
 
         if (token.kind == IDENTIFIER) {
@@ -1030,7 +644,7 @@ public class SystemParser {
     private JCExpression parseCapsuleArrayTypeOptional(JCExpression vartype) {
         if (token.kind == LBRACKET) {
             nextToken();
-            JCExpression sizeExpression = parseExpression();
+            JCExpression sizeExpression = parseExpressionWithJavac();
             accept(RBRACKET);
             return toP(F.at(token.pos).CapsuleArray(vartype, sizeExpression));
         }
@@ -1107,7 +721,7 @@ public class SystemParser {
         accept(LPAREN);
         List<JCStatement> forInit = parseForInit();
         accept(SEMI);
-        JCExpression cond = parseExpression();
+        JCExpression cond = parseExpressionWithJavac();
         accept(SEMI);
         List<JCExpressionStatement> forUpdate = parseForUpdate();
         accept(RPAREN);
@@ -1121,7 +735,7 @@ public class SystemParser {
             JCBlock systemBlock = systemBlock();
             return systemBlock;
         } else {
-            JCExpression checkExpressionStatement = checkExpressionStatement(parseExpression());
+            JCExpression checkExpressionStatement = checkExpressionStatement(parseExpressionWithJavac());
             JCExpressionStatement forBody = F.at(token.pos).Exec(
                     checkExpressionStatement);
             accept(SEMI);
@@ -1130,7 +744,7 @@ public class SystemParser {
     }
 
     private List<JCExpressionStatement> parseForUpdate() {
-        JCExpression checkExpressionStatement = checkExpressionStatement(parseExpression());
+        JCExpression checkExpressionStatement = checkExpressionStatement(parseExpressionWithJavac());
         JCExpressionStatement forUpdate = F.at(token.pos).Exec(
                 checkExpressionStatement);
         return List.<JCExpressionStatement> of(forUpdate);
@@ -1183,10 +797,17 @@ public class SystemParser {
      */
     private JCVariableDecl variableDeclaration(boolean isInitAllowed) {
         JCModifiers mods = parseOptModifiers();
-        JCExpression vartype = parseType();
+        JCExpression varType = parseTypeWithJavac();
         Name variableName = ident();
-        return toP(F.at(token.pos).VarDef(mods, variableName, vartype,
-                variableInitializerOptional(isInitAllowed)));
+        JCExpression previousVarType = varType;
+        //FIXME-XXX: do better disambiguation between capsule arrays and normal arrays;
+        varType = parseCapsuleArrayTypeOptional(varType);
+        //if the variable type didn't changed after we've parsed the optional capsule arrayType then
+        //we can't initialize
+        JCExpression varInit = variableInitializerOptional(isInitAllowed && (previousVarType == varType));
+        JCVariableDecl varDef = F.at(token.pos).VarDef(mods, variableName,
+                varType, varInit);
+        return toP(varDef);
     }
 
     private JCModifiers parseOptModifiers() {
@@ -1210,7 +831,7 @@ public class SystemParser {
                 rawError("Cannot initialize this variable");
             }
             nextToken();
-            return parseExpression();
+            return parseVariableInitWithJavac();
         }
         return null;
     }
@@ -1250,33 +871,70 @@ public class SystemParser {
             error(token.pos, "premature.eof");
         }
         if (token.kind == RBRACE) {
-
             return null;
         }
         if (isStatementStartingToken(token)) {
             return parseStatement();
+        } else if (isCapsuleWiringStart()) {
+            return parseCapsuleWiringStatement();
+        } else if (isIndexedCapsuleWiringStart()) {
+            return parseIndexedCapsuleWiringStatement();
+        } else if (isVariableDeclStart()) {
+            JCVariableDecl variableDeclaration = variableDeclaration(true);
+            accept(SEMI);
+            return variableDeclaration;
         } else {
-            //FIXME: this picks up capsule decls and then parses an initializer for them.
-            //make more restrictive;
-            boolean isVariableDeclStart = isVariableDeclStart();
-            if (isVariableDeclStart) {
-                JCVariableDecl variableDeclaration = variableDeclaration(true);
-                accept(SEMI);
-                return variableDeclaration;
-            } else {
-                JCExpression expression = parseExpression();
-                accept(SEMI);
-                return to(F.at(token.pos).Exec(
-                        checkExpressionStatement(expression)));
-            }
+            JCExpression expression = parseExpressionWithJavac();
+            accept(SEMI);
+            return to(F.at(token.pos)
+                    .Exec(checkExpressionStatement(expression)));
         }
 
     }
 
-    //TODO: optimize;
+    /**
+     * Identifier"["Expression"]" "(" {arguments} ")"
+     */
+    private JCStatement parseIndexedCapsuleWiringStatement() {
+        JCIdent nameOfArray = identExpression();
+        accept(LBRACKET);
+        JCExpression indexExpression = parseExpressionWithJavac();
+        accept(RBRACKET);
+        List<JCExpression> args = parseArgumentList();
+        accept(SEMI);
+
+        JCCapsuleArrayCall indexedWiringExpression = F.at(token.pos)
+                .CapsuleArrayCall(nameOfArray.getName(), indexExpression,
+                        nameOfArray, args);
+        return F.at(token.pos).Exec(indexedWiringExpression);
+    }
+
+    private JCStatement parseCapsuleWiringStatement() {
+        JCExpression capsuleName = identExpression();
+        List<JCExpression> params = parseArgumentList();
+        accept(SEMI);
+        JCCapsuleWiring wiringExpression = F.at(token.pos).WiringApply(
+                capsuleName, params);
+        return F.Exec(wiringExpression);
+    }
+
+    private boolean isCapsuleWiringStart() {
+        // Identifier(...
+        boolean result = (token.kind == IDENTIFIER) && peekToken(LPAREN);
+        return result;
+    };
+
+    private boolean isIndexedCapsuleWiringStart() {
+        // Identifier[...](..
+        boolean result = (token.kind == IDENTIFIER)
+                && (peekToken(LBRACKET) && (findAfter(RBRACKET) == LPAREN));
+        return result;
+    };
+
+    // TODO: optimize;
     private boolean isVariableDeclStart() {
-        boolean isPrimitiveDeclaration = (typetag(token.kind) > 0); 
-        
+        boolean isPrimitiveDeclaration = (typetag(token.kind) > 0);
+
         boolean isSimpleDeclaration = (token.kind == IDENTIFIER)
                 && peekToken(IDENTIFIER);
 
@@ -1285,7 +943,8 @@ public class SystemParser {
 
         boolean isConcurrencyTypeModifier = isConcurrencyModifier(token);
 
-        return isPrimitiveDeclaration || isSimpleDeclaration || isConcurrencyTypeModifier ||  isArrayDeclaration;
+        return isPrimitiveDeclaration || isSimpleDeclaration
+                || isConcurrencyTypeModifier || isArrayDeclaration;
     }
 
     private boolean isStatementStartingToken(Token kind) {
@@ -1346,111 +1005,6 @@ public class SystemParser {
             JCExpression ret = F.at(t.pos).Erroneous(List.<JCTree> of(t));
             error(ret, "not.stmt");
             return ret;
-        }
-    }
-
-    /**
-     * Return precedence of operator represented by token, -1 if token is not a
-     * binary operator. @see TreeInfo.opPrec
-     */
-    private static int prec(TokenKind token) {
-        JCTree.Tag oc = optag(token);
-        return (oc != NO_TAG) ? TreeInfo.opPrec(oc) : -1;
-    }
-
-    /**
-     * Return operation tag of binary operator represented by token, No_TAG if
-     * token is not a binary operator.
-     */
-    private static JCTree.Tag optag(TokenKind token) {
-        switch (token) {
-        case BARBAR:
-            return OR;
-        case AMPAMP:
-            return AND;
-        case BAR:
-            return BITOR;
-        case BAREQ:
-            return BITOR_ASG;
-        case CARET:
-            return BITXOR;
-        case CARETEQ:
-            return BITXOR_ASG;
-        case AMP:
-            return BITAND;
-        case AMPEQ:
-            return BITAND_ASG;
-        case EQEQ:
-            return JCTree.Tag.EQ;
-        case BANGEQ:
-            return NE;
-        case LT:
-            return JCTree.Tag.LT;
-        case GT:
-            return JCTree.Tag.GT;
-        case LTEQ:
-            return LE;
-        case GTEQ:
-            return GE;
-        case LTLT:
-            return SL;
-        case LTLTEQ:
-            return SL_ASG;
-        case GTGT:
-            return SR;
-        case GTGTEQ:
-            return SR_ASG;
-        case GTGTGT:
-            return USR;
-        case GTGTGTEQ:
-            return USR_ASG;
-        case PLUS:
-            return JCTree.Tag.PLUS;
-        case PLUSEQ:
-            return PLUS_ASG;
-        case SUB:
-            return MINUS;
-        case SUBEQ:
-            return MINUS_ASG;
-        case STAR:
-            return MUL;
-        case STAREQ:
-            return MUL_ASG;
-        case SLASH:
-            return DIV;
-        case SLASHEQ:
-            return DIV_ASG;
-        case PERCENT:
-            return MOD;
-        case PERCENTEQ:
-            return MOD_ASG;
-        case INSTANCEOF:
-            return TYPETEST;
-        default:
-            return NO_TAG;
-        }
-    }
-
-    /**
-     * Return operation tag of unary operator represented by token, No_TAG if
-     * token is not a binary operator.
-     */
-    private static JCTree.Tag unoptag(TokenKind token) {
-        switch (token) {
-        case PLUS:
-            return POS;
-        case SUB:
-            return NEG;
-        case BANG:
-            return NOT;
-        case TILDE:
-            return COMPL;
-        case PLUSPLUS:
-            return PREINC;
-        case SUBSUB:
-            return PREDEC;
-        default:
-            return NO_TAG;
         }
     }
 
@@ -1620,5 +1174,343 @@ public class SystemParser {
         }
 
     }
+
+    // TODO: add proper state init and reconstruction;
+    private JCExpression parseExpressionWithJavac() {
+        initJavaParserState();
+        JCExpression result = javaParser.parseExpression();
+        restoreSystemParserState();
+        return result;
+    }
+
+    private JCExpression parseTypeWithJavac() {
+        initJavaParserState();
+        JCExpression result = javaParser.parseType();
+        restoreSystemParserState();
+        return result;
+    }
+
+    private JCExpression parseVariableInitWithJavac() {
+        initJavaParserState();
+        JCExpression result = javaParser.variableInitializer();
+        restoreSystemParserState();
+        return result;
+    }
+
+    private void initJavaParserState() {
+        javaParser.setToken(token);
+    }
+
+    private void restoreSystemParserState() {
+        this.token = javaParser.getToken();
+    }
+
+    /*
+     * --------------------------------------------------------------------------
+     * --------------
+     * ------------------------------------------------------------
+     * ----------------------------
+     * ----------------------------------------------
+     * ------------------------------------------
+     */
+    //
+    // public JCExpression parseExpressionOld() {
+    // int prevmode = mode;
+    // mode = EXPR;
+    // JCExpression result = term();
+    // lastmode = mode;
+    // mode = prevmode;
+    // return result;
+    // }
+    //
+    // private JCExpression term() {
+    // JCExpression t = term1();
+    // if ((mode & EXPR) != 0 && token.kind == EQ
+    // || PLUSEQ.compareTo(token.kind) <= 0
+    // && token.kind.compareTo(GTGTGTEQ) <= 0)
+    // return termRest(t);
+    // else
+    // return t;
+    // }
+    //
+    // private JCExpression termRest(JCExpression t) {
+    // switch (token.kind) {
+    // case EQ: {
+    // int pos = token.pos;
+    // nextToken();
+    // mode = EXPR;
+    // JCExpression t1 = term();
+    // return toP(F.at(pos).Assign(t, t1));
+    // }
+    // case PLUSEQ:
+    // case SUBEQ:
+    // case STAREQ:
+    // case SLASHEQ:
+    // case PERCENTEQ:
+    // case AMPEQ:
+    // case BAREQ:
+    // case CARETEQ:
+    // case LTLTEQ:
+    // case GTGTEQ:
+    // case GTGTGTEQ:
+    // int pos = token.pos;
+    // TokenKind tk = token.kind;
+    // nextToken();
+    // mode = EXPR;
+    // JCExpression t1 = term();
+    // return F.at(pos).Assignop(optag(tk), t, t1);
+    // default:
+    // return t;
+    // }
+    // }
+    //
+    // private JCExpression term1() {
+    // JCExpression t = term2();
+    // if ((mode & EXPR) != 0 && token.kind == QUES) {
+    // mode = EXPR;
+    // return term1Rest(t);
+    // } else {
+    // return t;
+    // }
+    // }
+    //
+    // private JCExpression term1Rest(JCExpression t) {
+    // if (token.kind == QUES) {
+    // int pos = token.pos;
+    // nextToken();
+    // JCExpression t1 = term();
+    // accept(COLON);
+    // JCExpression t2 = term1();
+    // return F.at(pos).Conditional(t, t1, t2);
+    // } else {
+    // return t;
+    // }
+    // }
+    //
+    // private JCExpression term2() {
+    // JCExpression t = term3();
+    // if ((mode & EXPR) != 0 && prec(token.kind) >= TreeInfo.orPrec) {
+    // mode = EXPR;
+    // return term2Rest(t, TreeInfo.orPrec);
+    // } else {
+    // return t;
+    // }
+    // }
+    //
+    // private JCExpression term2Rest(JCExpression t, int minprec) {
+    // List<JCExpression[]> savedOd = odStackSupply.elems;
+    // JCExpression[] odStack = newOdStack();
+    // List<Token[]> savedOp = opStackSupply.elems;
+    // Token[] opStack = newOpStack();
+    //
+    // // optimization, was odStack = new Tree[...]; opStack = new Tree[...];
+    // int top = 0;
+    // odStack[0] = t;
+    // int startPos = token.pos;
+    // Token topOp = Tokens.DUMMY;
+    // while (prec(token.kind) >= minprec) {
+    // opStack[top] = topOp;
+    // top++;
+    // topOp = token;
+    // nextToken();
+    // odStack[top] = term3();
+    // while (top > 0 && prec(topOp.kind) >= prec(token.kind)) {
+    // odStack[top - 1] = makeOp(topOp.pos, topOp.kind,
+    // odStack[top - 1], odStack[top]);
+    // top--;
+    // topOp = opStack[top];
+    // }
+    // }
+    // Assert.check(top == 0);
+    // t = odStack[0];
+    //
+    // if (t.hasTag(JCTree.Tag.PLUS)) {
+    // StringBuffer buf = foldStrings(t);
+    // if (buf != null) {
+    // t = toP(F.at(startPos).Literal(TypeTags.CLASS, buf.toString()));
+    // }
+    // }
+    //
+    // odStackSupply.elems = savedOd; // optimization
+    // opStackSupply.elems = savedOp; // optimization
+    // return t;
+    // }
+    //
+    // private JCExpression makeOp(int pos, TokenKind topOp, JCExpression od1,
+    // JCExpression od2) {
+    // if (topOp == INSTANCEOF) {
+    // return F.at(pos).TypeTest(od1, od2);
+    // } else {
+    // return F.at(pos).Binary(optag(topOp), od1, od2);
+    // }
+    // }
+    //
+    // private StringBuffer foldStrings(JCTree tree) {
+    // List<String> buf = List.nil();
+    // while (true) {
+    // if (tree.hasTag(LITERAL)) {
+    // JCLiteral lit = (JCLiteral) tree;
+    // if (lit.typetag == TypeTags.CLASS) {
+    // StringBuffer sbuf = new StringBuffer((String) lit.value);
+    // while (buf.nonEmpty()) {
+    // sbuf.append(buf.head);
+    // buf = buf.tail;
+    // }
+    // return sbuf;
+    // }
+    // } else if (tree.hasTag(JCTree.Tag.PLUS)) {
+    // JCBinary op = (JCBinary) tree;
+    // if (op.rhs.hasTag(LITERAL)) {
+    // JCLiteral lit = (JCLiteral) op.rhs;
+    // if (lit.typetag == TypeTags.CLASS) {
+    // buf = buf.prepend((String) lit.value);
+    // tree = op.lhs;
+    // continue;
+    // }
+    // }
+    // }
+    // return null;
+    // }
+    // }
+    //
+    // private ListBuffer<JCExpression[]> odStackSupply = new
+    // ListBuffer<JCExpression[]>();
+    // private ListBuffer<Token[]> opStackSupply = new ListBuffer<Token[]>();
+    //
+    // private JCExpression[] newOdStack() {
+    // if (odStackSupply.elems == odStackSupply.last)
+    // odStackSupply.append(new JCExpression[infixPrecedenceLevels + 1]);
+    // JCExpression[] odStack = odStackSupply.elems.head;
+    // odStackSupply.elems = odStackSupply.elems.tail;
+    // return odStack;
+    // }
+    //
+    // private Token[] newOpStack() {
+    // if (opStackSupply.elems == opStackSupply.last)
+    // opStackSupply.append(new Token[infixPrecedenceLevels + 1]);
+    // Token[] opStack = opStackSupply.elems.head;
+    // opStackSupply.elems = opStackSupply.elems.tail;
+    // return opStack;
+    // }
+    //
+    // private JCExpression term3() {
+    // int pos = token.pos;
+    // JCExpression t = null;
+    //
+    // switch (token.kind) {
+    //
+    // // Unuary operators
+    // case PLUSPLUS:
+    // case SUBSUB:
+    // case BANG:
+    // case TILDE:
+    // case PLUS:
+    // case SUB: {
+    // if ((mode & EXPR) != 0) {
+    // TokenKind tk = token.kind;
+    // nextToken();
+    // mode = EXPR;
+    // if (tk == SUB
+    // && (token.kind == INTLITERAL || token.kind == LONGLITERAL)
+    // && token.radix() == 10) {
+    // mode = EXPR;
+    // t = literal(names.hyphen, pos);
+    // } else {
+    // t = term3();
+    // return F.at(pos).Unary(unoptag(tk), t);
+    // }
+    // } else
+    // return illegal();
+    // break;
+    // }
+    //
+    // // literals:
+    // case INTLITERAL:
+    // case LONGLITERAL:
+    // case FLOATLITERAL:
+    // case DOUBLELITERAL:
+    // case CHARLITERAL:
+    // case STRINGLITERAL:
+    // case TRUE:
+    // case FALSE: {
+    // if ((mode & EXPR) != 0) {
+    // mode = EXPR;
+    // t = literal(names.empty);
+    // } else
+    // return illegal();
+    // break;
+    // }
+    //
+    // case IDENTIFIER: {
+    // if ((mode & EXPR) != 0) {
+    // t = toP(F.at(token.pos).Ident(ident()));
+    // if (token.kind == LBRACKET) {
+    // JCIdent nameOfArray = (JCIdent) t;
+    // nextToken();
+    // if ((mode & EXPR) != 0) {
+    // mode = EXPR;
+    // JCExpression indexExpression = term();
+    // t = to(F.at(pos).Indexed(t, indexExpression));
+    // accept(RBRACKET);
+    // t = suffixIndexedCapsuleWiringOptional(t, nameOfArray,
+    // indexExpression);
+    // }
+    // }
+    //
+    // if (token.kind == LPAREN) {
+    // t = suffixCapsuleWiringOptional(t);
+    // }
+    // }
+    // break;
+    // }
+    //
+    // // parentheses for nested operations:
+    // case LPAREN: {
+    // if ((mode & EXPR) != 0) {
+    // nextToken();
+    // t = parseExpressionOld();
+    // accept(RPAREN);
+    // lastmode = mode;
+    // mode = EXPR;
+    // // TODO: add typecasting
+    // } else {
+    // return illegal();
+    // }
+    // t = toP(F.at(pos).Parens(t));
+    // break;
+    // }
+    //
+    // default:
+    // return illegal();
+    // }
+    //
+    // return t;
+    // }
+    //
+    // @Deprecated
+    // private JCExpression suffixCapsuleWiringOptional(JCExpression t) {
+    // List<JCExpression> params = parseArgumentList();
+    // return F.at(token.pos).WiringApply(t, params);
+    //
+    // }
+    //
+    // @Deprecated
+    // private JCExpression suffixIndexedCapsuleWiringOptional(JCExpression t,
+    // JCIdent nameOfArray, JCExpression indexExpression) {
+    // if ((mode & EXPR) != 0 && (token.kind == LPAREN)) {
+    // List<JCExpression> args = parseArgumentList();
+    // // TODO: Remove when the parser is fixed.
+    // // unwrap the inner indexed if there is one.
+    // if (t.getTag() == Tag.INDEXED) {
+    // System.err
+    // .println("Warning found an ArrayAcces expression inside a capsule array wiring expression."
+    // + "\nUnwrapping the inner expression -- FIX THE PARSER");
+    // t = ((JCArrayAccess) t).indexed;
+    // }
+    // return F.at(token.pos).CapsuleArrayCall(nameOfArray.getName(),
+    // indexExpression, nameOfArray, args);
+    // }
+    // return t;
+    // }
 
 }

@@ -3067,11 +3067,12 @@ public class JavacParser implements Parser {
     }
     
     private JCStatement computeResultWithNewParser(JCModifiers mods, String dc){
-        SystemParser systemParser = new SystemParser(F, log, names, S, getInitialEndPosTable(), token, mode,this.lastmode);
+        SystemParser systemParser = new SystemParser(F, log, names, S, getInitialEndPosTable(), token, mode,this.lastmode, this);
         SystemParserResult result = systemParser.parseSystemDecl(mods, dc);
 
-//        System.out.println(result.systemDeclaration);
-//        System.out.println("\n args: " + (result.systemDeclaration.params.head == null ? "" : result.systemDeclaration.params.head.toString()));
+        System.out.println(result.systemDeclaration);
+        System.out.println("\n args: " + (result.systemDeclaration.params.head == null ? "" : result.systemDeclaration.params.head.toString()));
+        System.exit(0);
         
         restoreParserState(result);
         return result.systemDeclaration;
@@ -4105,4 +4106,50 @@ public class JavacParser implements Parser {
             }
         }
     }
+    
+    // Panini code
+    public Token getToken() {
+        return token;
+    }
+
+    public void setToken(Token token) {
+        this.token = token;
+    }
+    
+    /**
+     * This is a duplications of the code for parsing for loops from the parseStatement() 
+     * method. It was not extracted as a separate method and reused because we wanted
+     * to minimize the amount of modifications in the original JavacParser;
+     */
+    public List<JCStatement> parseForLoopInit(){
+        int pos = token.pos;
+        accept(LPAREN);
+        List<JCStatement> inits = token.kind == SEMI ? List.<JCStatement>nil() : forInit();
+        accept(SEMI);
+        return inits;
+    }
+    
+    /**
+     * This is a duplications of the code for parsing for loops from the parseStatement() 
+     * method. It was not extracted as a separate method and reused because we wanted
+     * to minimize the amount of modifications in the original JavacParser;
+     */
+    public JCExpression parseLoopCond(){
+        JCExpression cond = token.kind == SEMI ? null : parseExpression();
+        accept(SEMI);
+        return cond;
+    }
+    
+    /**
+     * This is a duplications of the code for parsing for loops from the parseStatement() 
+     * method. It was not extracted as a separate method and reused because we wanted
+     * to minimize the amount of modifications in the original JavacParser;
+     */
+    public List<JCExpressionStatement> parseForLoopUpdate(){
+        List<JCExpressionStatement> steps = token.kind == RPAREN ? List.<JCExpressionStatement>nil() : forUpdate();
+        accept(RPAREN);
+        return steps;
+    }
+    
+    // end Panini code;
 }

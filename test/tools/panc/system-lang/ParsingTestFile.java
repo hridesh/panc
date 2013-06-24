@@ -17,43 +17,54 @@
  * Contributor(s): Sean L. Mooney
  */
 //panini
-capsule M(O o, int fortyTwo){
-    void run(){
-        System.out.println(fortyTwo);
-    }
-}
+//capsule M(O o, int fortyTwo){
+//}
 
-capsule O{
-}
+//capsule O{
+//}
 
 system SimpleExpression(String[] args){
-
-    for(int i = 1; i < 10; ++i){
-      int fortyTwo = 42;
-      int thirtyThree = 33;
-      byte by;
-      long l;
-      long[] la;
-      boolean test = false;
-      String sA;
-      M[42] ms;
-      M[fortyTwo] m42;
-      int incVal = ++fortyTwo;
-      int newLong = la[42];
-      int plus = 42 + (fortyTwo = (2 - 32)) - 11;
-      plus = 42;
-      M m;
-      O o;
-      o[42](42,42);
-      m(o, 42);
-      wireall(m, 3, 24);
-      assoc(test, test2);
-      star(center, more);
-      ring(all);
-    }
+//    int i = 0;
+//    i();
+//    i[42](0,1);
+//      M m;
+//      CapArrayType capArray[];
+//      CapArrayType[] capArray;
+//      sequential int i = new String[42];
+//      i = new String[]{"adaf"};
+//      i = Interger.parseInt("adfasf");
+//      Interger.parseInt("adfasf");
+        CapArrayType arr[42] = 42;
+        CapArrayType[] arr;
+//        int[] a;
+//        int a[];
     
-    for(int i = 1; i < 10; ++i)
-        i = 42;
+//    for(int i = 1; i < 10; ++i){
+//      int fortyTwo = 42;
+//      int thirtyThree = 33;
+//      byte by;
+//      long l;
+//      long[] la;
+//      boolean test = false;
+//      String sA;
+//      M[42] ms;
+//      M[fortyTwo] m42;
+//      int incVal = ++fortyTwo;
+//      int newLong = la[42];
+//      int plus = 42 + (fortyTwo = (2 - 32)) - 11;
+//      plus = 42;
+//      M m;
+//      O o;
+//      o[42](42,42);
+//      m(o, 42);
+//      wireall(m, 3, 24);
+//      assoc(test, test2);
+//      star(center, more);
+//      ring(all);
+//    }
+//    
+//    for(int i = 1; i < 10; ++i)
+//        i = 42;
         
 }
 
