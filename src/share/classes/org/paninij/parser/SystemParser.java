@@ -1156,7 +1156,12 @@ public class SystemParser {
         int pos = token.pos;
         Name systemName = ident();
 
-        List<JCVariableDecl> params = systemParametersOptional();
+        final List<JCVariableDecl> params;
+        if( token.kind == LPAREN) {
+             params = formalParameters();
+        } else {
+            params = List.<JCVariableDecl>nil();
+        }
 
         JCBlock body = systemBlock();
         JCSystemDecl result = toP(F.at(pos).SystemDef(mod, systemName, body,
@@ -1164,15 +1169,24 @@ public class SystemParser {
         return new SystemParserResult(result);
     }
 
-    private List<JCVariableDecl> systemParametersOptional() {
-        List<JCVariableDecl> params = List.<JCVariableDecl> nil();
+    /** FormalParameters = "(" [ FormalParameterList ] ")"
+     *  FormalParameterList = [ FormalParameterListNovarargs , ] LastFormalParameter
+     *  FormalParameterListNovarargs = [ FormalParameterListNovarargs , ] FormalParameter
+     */
+    List<JCVariableDecl> formalParameters() {
+        ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
 
-        if (token.kind == LPAREN) {
-            accept(LPAREN);
-            params.head = variableDeclaration(false);
-            accept(RPAREN);
+        JCVariableDecl lastParam = null;
+        accept(LPAREN);
+        if (token.kind != RPAREN) {
+            params.append(lastParam = variableDeclaration(false));
+            while ((lastParam.mods.flags & Flags.VARARGS) == 0 && token.kind == COMMA) {
+                nextToken();
+                params.append(lastParam = variableDeclaration(false));
+            }
         }
-        return params;
+        accept(RPAREN);
+        return params.toList();
     }
 
     /**
