@@ -3070,7 +3070,7 @@ public class JavacParser implements Parser {
 
         System.out.println(result.systemDeclaration);
         System.out.println("\n args: " + (result.systemDeclaration.params.head == null ? "" : result.systemDeclaration.params.head.toString()));
-        System.exit(0);
+//        System.exit(0);
         
         restoreParserState(result);
         return result.systemDeclaration;

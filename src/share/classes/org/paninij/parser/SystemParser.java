@@ -93,10 +93,6 @@ import com.sun.tools.javac.util.Position;
  * @since panini-0.9.2
  */
 public class SystemParser {
-    /**
-     * The number of precedence levels of infix operators.
-     */
-    private static final int infixPrecedenceLevels = 10;
 
     /**
      * The scanner used for lexical analysis.
@@ -488,18 +484,13 @@ public class SystemParser {
     private JCStatement parseFor() {
         int pot = token.pos;
         accept(FOR);
-        accept(LPAREN);
-        List<JCStatement> forInit = parseForInit();
-        accept(SEMI);
-        JCExpression cond = parseExpressionWithJavac();
-        accept(SEMI);
-        List<JCExpressionStatement> forUpdate = parseForUpdate();
-        accept(RPAREN);
+        List<JCStatement> forInit = parseForInitWithJavaC();
+        JCExpression cond = parseForCondWithJavaC();
+        List<JCExpressionStatement> forUpdate = parseForUpdateWithJavac();
         JCStatement body = parseForBody();
         return F.at(pot).ForLoop(forInit, cond, forUpdate, body);
     }
 
-    // TODO: repair this so that a system block is a statement;
     private JCStatement parseForBody() {
         if (token.kind == LBRACE) {
             JCBlock systemBlock = systemBlock();
@@ -511,18 +502,6 @@ public class SystemParser {
             accept(SEMI);
             return forBody;
         }
-    }
-
-    private List<JCExpressionStatement> parseForUpdate() {
-        JCExpression checkExpressionStatement = checkExpressionStatement(parseExpressionWithJavac());
-        JCExpressionStatement forUpdate = F.at(token.pos).Exec(
-                checkExpressionStatement);
-        return List.<JCExpressionStatement> of(forUpdate);
-    }
-
-    private List<JCStatement> parseForInit() {
-        JCVariableDecl initVarDecl = variableDeclaration(true);
-        return List.<JCStatement> of(initVarDecl);
     }
 
     /**
@@ -959,6 +938,31 @@ public class SystemParser {
         restoreSystemParserState();
         return result;
     }
+
+    /*-------- FOR loop helpers -------------*/
+
+    private List<JCStatement> parseForInitWithJavaC() {
+        initJavaParserState();
+        List<JCStatement> init = javaParser.parseForLoopInit();
+        restoreSystemParserState();
+        return init;
+    }
+
+    private JCExpression parseForCondWithJavaC() {
+        initJavaParserState();
+        JCExpression forCond = javaParser.parseLoopCond();
+        restoreSystemParserState();
+        return forCond;
+    }
+
+    private List<JCExpressionStatement> parseForUpdateWithJavac() {
+        initJavaParserState();
+        List<JCExpressionStatement> update = javaParser.parseForLoopUpdate();
+        restoreSystemParserState();
+        return update;
+    }
+
+    /*-------- end FOR loop helpers -------------*/
 
     private void initJavaParserState() {
         javaParser.setToken(token);
