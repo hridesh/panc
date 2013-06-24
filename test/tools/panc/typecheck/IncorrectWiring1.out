@@ -1,0 +1,6 @@
+typecheck/IncorrectWiring1.java:16: error: incompatible types
+    c2("Wrong");
+       ^
+  required: int
+  found: String
+1 error
