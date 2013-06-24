@@ -185,6 +185,19 @@ public class SystemParser {
         token = S.token();
     }
 
+    private TokenKind findAfter(TokenKind tk) {
+        int i = 0;
+        while (true) {
+            if (S.token(i).kind == EOF)
+                return EOF;
+
+            if (S.token(i).kind == tk) {
+                return S.token(i + 1).kind;
+            } else
+                i++;
+        }
+    }
+
     private boolean peekToken(TokenKind tk) {
         return S.token(1).kind == tk;
     }
@@ -1246,19 +1259,15 @@ public class SystemParser {
 
     }
 
-    // TODO: repair, seriously broken
     private boolean isVariableDeclStart() {
         boolean isSimpleDeclaration = (token.kind == IDENTIFIER)
                 && peekToken(IDENTIFIER);
 
         boolean isArrayDeclaration = (token.kind == IDENTIFIER)
-                && peekToken(LBRACKET, INTLITERAL, RBRACKET, IDENTIFIER);
-
-        boolean isArrayDeclarationWithIdentifier = (token.kind == IDENTIFIER)
-                && peekToken(LBRACKET, IDENTIFIER, RBRACKET, IDENTIFIER);
+                && peekToken(LBRACKET) && (findAfter(RBRACKET) == IDENTIFIER);
 
         return (typetag(token.kind) > 0) || isSimpleDeclaration
-                || isArrayDeclaration || isArrayDeclarationWithIdentifier;
+                || isArrayDeclaration;
     }
 
     private boolean isStatementStartingToken(Token kind) {
