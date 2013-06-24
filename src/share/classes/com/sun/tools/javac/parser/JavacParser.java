@@ -34,6 +34,7 @@ import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.parser.Tokens.*;
 import com.sun.tools.javac.parser.Tokens.Comment.CommentStyle;
 import com.sun.tools.javac.tree.*;
+import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag;
@@ -4147,6 +4148,10 @@ public class JavacParser implements Parser {
         List<JCExpressionStatement> steps = token.kind == RPAREN ? List.<JCExpressionStatement>nil() : forUpdate();
         accept(RPAREN);
         return steps;
+    }
+    
+    public List<JCVariableDecl> parseFormalParameters(){
+        return formalParameters();
     }
     
     // end Panini code;

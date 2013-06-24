@@ -519,7 +519,7 @@ public class SystemParser {
         int pos = token.pos;
         Name systemName = ident();
 
-        List<JCVariableDecl> params = systemParametersOptional();
+        List<JCVariableDecl> params = parseFormalParametersWithJavaC();
 
         JCBlock body = systemBlock();
         JCSystemDecl result = toP(F.at(pos).SystemDef(mod, systemName, body,
@@ -527,15 +527,20 @@ public class SystemParser {
         return new SystemParserResult(result);
     }
 
-    private List<JCVariableDecl> systemParametersOptional() {
-        List<JCVariableDecl> params = List.<JCVariableDecl> nil();
-
+    private List<JCVariableDecl> parseFormalParametersWithJavaC() {
         if (token.kind == LPAREN) {
-            accept(LPAREN);
-            params.head = variableDeclaration(false);
-            accept(RPAREN);
+            initJavaParserState();
+            List<JCVariableDecl> formalParams = javaParser
+                    .parseFormalParameters();
+            restoreSystemParserState();
+            return formalParams;
+        } else if (token.kind == LBRACE)
+            return List.<JCVariableDecl> nil();
+        else {
+            // TODO: better error message
+            com.sun.tools.javac.util.Assert.error("illegal system decl");
+            return null;
         }
-        return params;
     }
 
     /**
