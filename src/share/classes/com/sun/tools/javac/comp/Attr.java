@@ -800,6 +800,7 @@ public class Attr extends JCTree.Visitor {
         Type owntype = types.createErrorType(tree.type);
         Type atype   = attribExpr(tree, env);
         if( types.isArray(atype) ) {
+            //Will need to handle nested arrays eventually.
             owntype = types.elemtype(atype);
             if(!syms.capsules.containsKey(owntype.tsym.name)) {
                 log.error(tree.pos(), "only.capsule.types.allowed");
