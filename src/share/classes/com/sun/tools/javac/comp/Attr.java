@@ -800,6 +800,7 @@ public class Attr extends JCTree.Visitor {
         Type owntype = types.createErrorType(tree.type);
         Type atype   = attribExpr(tree, env);
         if( types.isArray(atype) ) {
+            //Will need to handle nested arrays eventually.
             owntype = types.elemtype(atype);
             if(!syms.capsules.containsKey(owntype.tsym.name)) {
                 log.error(tree.pos(), "only.capsule.types.allowed");
@@ -812,21 +813,6 @@ public class Attr extends JCTree.Visitor {
 
     public final void visitCapsuleDef(final JCCapsuleDecl tree){
     	pAttr.visitCapsuleDef(tree, this, env, rs);
-
-    	// print out the effect
-    	/*for (JCTree def : tree.defs) {
-    		if (def instanceof JCMethodDecl) {
-    			JCMethodDecl jcmd = (JCMethodDecl)def;
-    			org.paninij.effects.EffectSet ars = jcmd.sym.effect;
-    			if (ars != null) {
-    				System.out.println(jcmd.sym + "\t" + tree.sym);
-    				ars.printEffect();
-    				for (String s: ars.effectsToStrings()) {
-    					System.out.println(s);
-    				}
-    			}
-    		}
-    	}*/
     }
 
     @Override

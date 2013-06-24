@@ -36,22 +36,22 @@ public abstract class Type  {
 
     public static class WiringType extends com.sun.tools.javac.code.Type {
 
-        List<com.sun.tools.javac.code.Type> wiringTypes;
+        List<com.sun.tools.javac.code.Type> wiringParamTypes;
 
         public WiringType(List<com.sun.tools.javac.code.Type> wiringTypes, CapsuleSymbol tsym) {
             super(CAPSULE_WIRING, tsym);
-            this.wiringTypes = wiringTypes;
+            this.wiringParamTypes = wiringTypes;
         }
 
         public List<com.sun.tools.javac.code.Type> getWiringTypes () {
-            return wiringTypes;
+            return wiringParamTypes;
         }
 
         @Override
-        public List<com.sun.tools.javac.code.Type>        getParameterTypes() { return wiringTypes; }
+        public List<com.sun.tools.javac.code.Type>        getParameterTypes() { return wiringParamTypes; }
 
         public String toString() {
-            return "(" + wiringTypes + ")";
+            return "(" + wiringParamTypes + ")";
         }
     }
 

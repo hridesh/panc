@@ -21,7 +21,6 @@ package org.paninij.system;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import sun.org.mozilla.javascript.internal.ast.ExpressionStatement;
 
 import com.sun.source.tree.Tree.Kind;
 import com.sun.source.tree.TreeVisitor;
