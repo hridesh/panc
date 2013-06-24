@@ -57,21 +57,15 @@ import static com.sun.tools.javac.tree.JCTree.Tag.USR_ASG;
 
 import static org.paninij.parser.PaniniTokens.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
-import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.code.Source;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.parser.EndPosTable;
 import com.sun.tools.javac.parser.JavacParser;
 import com.sun.tools.javac.parser.Lexer;
-import com.sun.tools.javac.parser.Tokens;
 import com.sun.tools.javac.parser.Tokens.Token;
 import com.sun.tools.javac.parser.Tokens.TokenKind;
 import com.sun.tools.javac.tree.JCTree;
-import com.sun.tools.javac.tree.JCTree.JCArrayAccess;
-import com.sun.tools.javac.tree.JCTree.JCBinary;
 import com.sun.tools.javac.tree.JCTree.JCBlock;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleArrayCall;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleWiring;
@@ -79,17 +73,11 @@ import com.sun.tools.javac.tree.JCTree.JCErroneous;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
-import com.sun.tools.javac.tree.JCTree.JCLiteral;
 import com.sun.tools.javac.tree.JCTree.JCModifiers;
-import com.sun.tools.javac.tree.JCTree.JCPrimitiveTypeTree;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
-import com.sun.tools.javac.tree.JCTree.Tag;
-import com.sun.tools.javac.tree.TreeInfo;
 import com.sun.tools.javac.tree.TreeMaker;
-import com.sun.tools.javac.util.Assert;
-import com.sun.tools.javac.util.Convert;
 import com.sun.tools.javac.util.JCDiagnostic;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
@@ -148,11 +136,9 @@ public class SystemParser {
         this.log = log;
         this.names = names;
         this.javaParser = javaParser;
-        this.errorTree = F.Erroneous();
 
         // recreate state:
         this.token = initialToken;
-        this.lastmode = lastmode;
         this.endPosTable = newEndPosTable(endPosTable);
     }
 
@@ -161,27 +147,6 @@ public class SystemParser {
         return keepEndPositions != null ? new SimpleEndPosTable(
                 keepEndPositions) : new EmptyEndPosTable();
     }
-
-    /**
-     * When terms are parsed, the mode determines which is expected: mode = EXPR
-     * : an expression mode = TYPE : a type mode = NOPARAMS : no parameters
-     * allowed for type mode = TYPEARG : type argument
-     */
-    private static final int EXPR = 0x1;
-    private static final int TYPE = 0x2;
-    private static final int NOPARAMS = 0x4;
-    private static final int TYPEARG = 0x8;
-    private static final int DIAMOND = 0x10;
-
-    /**
-     * The current mode.
-     */
-    private int mode = 0;
-
-    /**
-     * The mode of the term that was parsed last.
-     */
-    private int lastmode = 0;
 
     /* ---------- token management -------------- */
 
@@ -230,8 +195,6 @@ public class SystemParser {
     }
 
     /* ---------- error recovery -------------- */
-
-    private JCErroneous errorTree;
 
     /**
      * Skip forward until a suitable stop token is found.
@@ -398,9 +361,7 @@ public class SystemParser {
      */
     private JCExpression illegal(int pos) {
         setErrorEndPos(pos);
-        if ((mode & EXPR) != 0)
-            return syntaxError(pos, "illegal.start.of.expr");
-        return syntaxError(pos, "illegal.start.of.type");
+        return syntaxError(pos, "illegal.start.of.expr");
     }
 
     /**
@@ -408,14 +369,6 @@ public class SystemParser {
      */
     private JCExpression illegal() {
         return illegal(token.pos);
-    }
-
-    /** Diagnose a modifier flag from the set, if any. */
-    private void checkNoMods(long mods) {
-        if (mods != 0) {
-            long lowestMod = mods & -mods;
-            error(token.pos, "mod.not.allowed.here", Flags.asFlagSet(lowestMod));
-        }
     }
 
     /* -------- source positions ------- */
@@ -434,31 +387,6 @@ public class SystemParser {
 
     private <T extends JCTree> T toP(T t) {
         return endPosTable.toP(t);
-    }
-
-    /**
-     * Get the start position for a tree node. The start position is defined to
-     * be the position of the first character of the first token of the node's
-     * source text.
-     * 
-     * @param tree
-     *            The tree node
-     */
-    public int getStartPos(JCTree tree) {
-        return TreeInfo.getStartPos(tree);
-    }
-
-    /**
-     * Get the end position for a tree node. The end position is defined to be
-     * the position of the last character of the last token of the node's source
-     * text. Returns Position.NOPOS if end positions are not generated or the
-     * position is otherwise not found.
-     * 
-     * @param tree
-     *            The tree node
-     */
-    public int getEndPos(JCTree tree) {
-        return endPosTable.getEndPos(tree);
     }
 
     /* ---------- parsing -------------- */
@@ -481,116 +409,7 @@ public class SystemParser {
         return toP(F.at(token.pos).Ident(ident()));
     }
 
-    private JCExpression literal(Name prefix) {
-        return literal(prefix, token.pos);
-    }
-
-    /**
-     * Literal = INTLITERAL | LONGLITERAL | FLOATLITERAL | DOUBLELITERAL |
-     * CHARLITERAL | STRINGLITERAL | TRUE | FALSE | NULL
-     */
-    private JCExpression literal(Name prefix, int pos) {
-        JCExpression t = errorTree;
-        switch (token.kind) {
-        case INTLITERAL:
-            try {
-                t = F.at(pos).Literal(TypeTags.INT,
-                        Convert.string2int(strval(prefix), token.radix()));
-            } catch (NumberFormatException ex) {
-                error(token.pos, "int.number.too.large", strval(prefix));
-            }
-            break;
-        case LONGLITERAL:
-            try {
-                t = F.at(pos).Literal(
-                        TypeTags.LONG,
-                        new Long(Convert.string2long(strval(prefix),
-                                token.radix())));
-            } catch (NumberFormatException ex) {
-                error(token.pos, "int.number.too.large", strval(prefix));
-            }
-            break;
-        case FLOATLITERAL: {
-            String proper = token.radix() == 16 ? ("0x" + token.stringVal())
-                    : token.stringVal();
-            Float n;
-            try {
-                n = Float.valueOf(proper);
-            } catch (NumberFormatException ex) {
-                // error already reported in scanner
-                n = Float.NaN;
-            }
-            if (n.floatValue() == 0.0f && !isZero(proper))
-                error(token.pos, "fp.number.too.small");
-            else if (n.floatValue() == Float.POSITIVE_INFINITY)
-                error(token.pos, "fp.number.too.large");
-            else
-                t = F.at(pos).Literal(TypeTags.FLOAT, n);
-            break;
-        }
-        case DOUBLELITERAL: {
-            String proper = token.radix() == 16 ? ("0x" + token.stringVal())
-                    : token.stringVal();
-            Double n;
-            try {
-                n = Double.valueOf(proper);
-            } catch (NumberFormatException ex) {
-                // error already reported in scanner
-                n = Double.NaN;
-            }
-            if (n.doubleValue() == 0.0d && !isZero(proper))
-                error(token.pos, "fp.number.too.small");
-            else if (n.doubleValue() == Double.POSITIVE_INFINITY)
-                error(token.pos, "fp.number.too.large");
-            else
-                t = F.at(pos).Literal(TypeTags.DOUBLE, n);
-            break;
-        }
-        case CHARLITERAL:
-            t = F.at(pos).Literal(TypeTags.CHAR,
-                    token.stringVal().charAt(0) + 0);
-            break;
-        case STRINGLITERAL:
-            t = F.at(pos).Literal(TypeTags.CLASS, token.stringVal());
-            break;
-        case TRUE:
-        case FALSE:
-            t = F.at(pos).Literal(TypeTags.BOOLEAN,
-                    (token.kind == TRUE ? 1 : 0));
-            break;
-        // case NULL:
-        // t = F.at(pos).Literal(
-        // TypeTags.BOT,
-        // null);
-        // break;
-        default:
-            Assert.error();
-        }
-        if (t == errorTree)
-            t = F.at(pos).Erroneous();
-        storeEnd(t, token.endPos);
-        nextToken();
-        return t;
-    }
-
-    private boolean isZero(String s) {
-        char[] cs = s.toCharArray();
-        int base = ((cs.length > 1 && Character.toLowerCase(cs[1]) == 'x') ? 16
-                : 10);
-        int i = ((base == 16) ? 2 : 0);
-        while (i < cs.length && (cs[i] == '0' || cs[i] == '.'))
-            i++;
-        return !(i < cs.length && (Character.digit(cs[i], base) > 0));
-    }
-
-    private String strval(Name prefix) {
-        String s = token.stringVal();
-        return prefix.isEmpty() ? s : prefix + s;
-    }
-
-    /**
-     * @return
-     */
+    // TODO: replace with delegated call to javaC parser;
     private List<JCExpression> parseArgumentList() {
         ListBuffer<JCExpression> lb = new ListBuffer<JCExpression>();
         accept(LPAREN);
@@ -612,35 +431,6 @@ public class SystemParser {
         return lb.toList();
     }
 
-    @Deprecated
-    public JCExpression parseTypeOld() {
-        JCExpression vartype;
-
-        if (token.kind == IDENTIFIER) {
-            Name typeName = ident();
-            vartype = F.at(token.pos).Ident(typeName);
-            if (isAcceptableTypeForNormalArray(typeName)) {
-                vartype = parseArrayTypeOptional(vartype);
-            } else {
-                vartype = parseCapsuleArrayTypeOptional(vartype);
-            }
-        } else {
-            vartype = basicType();
-            vartype = parseArrayTypeOptional(vartype);
-        }
-        return vartype;
-    }
-
-    /**
-     * We have to differentiate capsule arrays and other arrays. TODO: create a
-     * final static set that contains these names;
-     */
-    private boolean isAcceptableTypeForNormalArray(Name typeName) {
-        ListBuffer<String> acc = new ListBuffer<String>();
-        acc.add("String");
-        return acc.contains(typeName.toString());
-    }
-
     private JCExpression parseCapsuleArrayTypeOptional(JCExpression vartype) {
         if (token.kind == LBRACKET) {
             nextToken();
@@ -649,26 +439,6 @@ public class SystemParser {
             return toP(F.at(token.pos).CapsuleArray(vartype, sizeExpression));
         }
         return vartype;
-    }
-
-    private JCExpression parseArrayTypeOptional(JCExpression vartype) {
-
-        if (token.kind == LBRACKET) {
-            nextToken();
-            accept(RBRACKET);
-            return toP(F.at(token.pos).TypeArray(vartype));
-        }
-        return vartype;
-    }
-
-    /**
-     * BasicType = BYTE | SHORT | CHAR | INT | LONG | FLOAT | DOUBLE | BOOLEAN
-     */
-    private JCPrimitiveTypeTree basicType() {
-        JCPrimitiveTypeTree t = to(F.at(token.pos).TypeIdent(
-                typetag(token.kind)));
-        nextToken();
-        return t;
     }
 
     private JCStatement parseStatement() {
@@ -800,11 +570,14 @@ public class SystemParser {
         JCExpression varType = parseTypeWithJavac();
         Name variableName = ident();
         JCExpression previousVarType = varType;
-        //FIXME-XXX: do better disambiguation between capsule arrays and normal arrays;
+        // FIXME-XXX: do better disambiguation between capsule arrays and normal
+        // arrays;
         varType = parseCapsuleArrayTypeOptional(varType);
-        //if the variable type didn't changed after we've parsed the optional capsule arrayType then
-        //we can't initialize
-        JCExpression varInit = variableInitializerOptional(isInitAllowed && (previousVarType == varType));
+        // if the variable type didn't changed after we've parsed the optional
+        // capsule arrayType then
+        // we can't initialize
+        JCExpression varInit = variableInitializerOptional(isInitAllowed
+                && (previousVarType == varType));
         JCVariableDecl varDef = F.at(token.pos).VarDef(mods, variableName,
                 varType, varInit);
         return toP(varDef);
@@ -845,9 +618,6 @@ public class SystemParser {
         return toP(t);
     }
 
-    /**
-     * @return
-     */
     private List<JCStatement> systemStatements() {
         ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
         while (true) {
@@ -863,9 +633,6 @@ public class SystemParser {
         }
     }
 
-    /**
-     * @return
-     */
     private JCStatement systemStatement() {
         if (token.kind == EOF) {
             error(token.pos, "premature.eof");
@@ -1160,15 +927,11 @@ public class SystemParser {
 
     public class SystemParserResult {
         public final Token token;
-        public final int mode;
-        public final int lastMode;
         public final int errorEndPos;
         public final JCSystemDecl systemDeclaration;
 
         protected SystemParserResult(JCSystemDecl systemDeclaration) {
             this.token = SystemParser.this.token;
-            this.mode = SystemParser.this.mode;
-            this.lastMode = SystemParser.this.lastmode;
             this.errorEndPos = endPosTable.errorEndPos;
             this.systemDeclaration = systemDeclaration;
         }

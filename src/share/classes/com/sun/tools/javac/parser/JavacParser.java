@@ -3062,8 +3062,6 @@ public class JavacParser implements Parser {
         this.token = result.token;
         //TODO: treat for case when endPosTable is null;
         this.endPosTable.errorEndPos = result.errorEndPos;
-        this.mode = result.mode;
-        this.lastmode = result.lastMode;
     }
     
     private JCStatement computeResultWithNewParser(JCModifiers mods, String dc){
