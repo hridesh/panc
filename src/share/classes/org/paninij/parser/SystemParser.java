@@ -69,6 +69,7 @@ import com.sun.tools.javac.parser.Tokens;
 import com.sun.tools.javac.parser.Tokens.Token;
 import com.sun.tools.javac.parser.Tokens.TokenKind;
 import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.JCTree.JCArrayAccess;
 import com.sun.tools.javac.tree.JCTree.JCBinary;
 import com.sun.tools.javac.tree.JCTree.JCBlock;
 import com.sun.tools.javac.tree.JCTree.JCErroneous;
@@ -81,6 +82,7 @@ import com.sun.tools.javac.tree.JCTree.JCPrimitiveTypeTree;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
+import com.sun.tools.javac.tree.JCTree.Tag;
 import com.sun.tools.javac.tree.TreeInfo;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.util.Assert;
@@ -959,6 +961,14 @@ public class SystemParser {
             JCIdent nameOfArray, JCExpression indexExpression) {
         if ((mode & EXPR) != 0 && (token.kind == LPAREN)) {
             List<JCExpression> args = parseArgumentList();
+            // TODO: Remove when the parser is fixed.
+            // unwrap the inner indexed if there is one.
+            if (t.getTag() == Tag.INDEXED) {
+                System.err
+                        .println("Warning found an ArrayAcces expression inside a capsule array wiring expression."
+                                + "\nUnwrapping the inner expression -- FIX THE PARSER");
+                t = ((JCArrayAccess) t).indexed;
+            }
             return F.at(token.pos).CapsuleArrayCall(nameOfArray.getName(),
                     indexExpression, nameOfArray, args);
         }
@@ -1181,11 +1191,22 @@ public class SystemParser {
      * 
      */
     private JCVariableDecl variableDeclaration(boolean isInitAllowed) {
+        JCModifiers mods = parseOptModifiers();
         JCExpression vartype = parseType();
         Name variableName = ident();
-        return toP(F.at(token.pos).VarDef(F.at(token.pos).Modifiers(0),
-                variableName, vartype,
+        return toP(F.at(token.pos).VarDef(mods, variableName, vartype,
                 variableInitializerOptional(isInitAllowed)));
+    }
+
+    private JCModifiers parseOptModifiers() {
+        if (PaniniTokens.isConcurrencyModifier(token)) {
+            JCModifiers mod = F.at(Position.NOPOS).Modifiers(
+                    PaniniTokens.toModfier(token));
+            nextToken();
+            return mod;
+        } else {
+            return F.at(Position.NOPOS).Modifiers(0);
+        }
     }
 
     /**
@@ -1266,8 +1287,13 @@ public class SystemParser {
         boolean isArrayDeclaration = (token.kind == IDENTIFIER)
                 && peekToken(LBRACKET) && (findAfter(RBRACKET) == IDENTIFIER);
 
+        final String tokenName = token.name().toString();
+        boolean isConcurrencyTypeModifier = (token.kind == IDENTIFIER)
+                && (tokenName.equals(MONITOR) || tokenName.equals(SEQUENTIAL) || tokenName
+                        .equals(TASK));
+
         return (typetag(token.kind) > 0) || isSimpleDeclaration
-                || isArrayDeclaration;
+                || isArrayDeclaration || isConcurrencyTypeModifier;
     }
 
     private boolean isStatementStartingToken(Token kind) {

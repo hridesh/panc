@@ -18,8 +18,10 @@
  */
 package org.paninij.parser;
 
+import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.parser.Tokens.Token;
 import com.sun.tools.javac.parser.Tokens.TokenKind;
+import com.sun.tools.javac.util.Assert;
 
 /**
  * @author lorand
@@ -50,6 +52,10 @@ final public class PaniniTokens {
 	 */
     public static final String SEQUENTIAL = "sequential";
 
+    private static final String[] concurrentModifiers = {
+        TASK, MONITOR, SEQUENTIAL
+    };
+
     public static boolean isWiringToken(Token kind) {
         if (kind.kind != TokenKind.IDENTIFIER)
             return false;
@@ -67,5 +73,46 @@ final public class PaniniTokens {
             return false;
 
         return kind.name().toString().equals(paniniToken);
+    }
+
+    /**
+     * Check if the token represents one of the concurrency modifiers for
+     * Panini capsule declarations.
+     * @param token
+     * @return
+     */
+    public static boolean isConcurrencyModifier(Token token) {
+        if (token.kind != TokenKind.IDENTIFIER)
+            return false;
+
+        final String tokenName = token.name().toString();
+        for (String conMod : concurrentModifiers) {
+            if (conMod.equals(tokenName))
+                return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Convert a token to it's modifier flag. If the token is not a modifier
+     * flag, throw an exception.
+     *
+     * @param token
+     * @return
+     */
+    public static long toModfier(Token token) {
+        String s = token.name().toString();
+
+        if (SEQUENTIAL.equals(s)) {
+            return Flags.SERIAL;
+        } else if (TASK.equals(s)) {
+            return Flags.TASK;
+        } else if (MONITOR.equals(s)) {
+            return Flags.MONITOR;
+        } else {
+            Assert.error(s + " is not a known capsule concurrency modifier!");
+            return 0;
+        }
     }
 }

@@ -32,13 +32,13 @@ capsule O{
 }
 
 system ForSys {
-   // int size = 5;
-    M[5] many;
+   int size = 5;
+    M[size] many;
     O one;
+    int temp;
 
     one();
-    for(int i = 0; i < 5; i = i + 1)
+    for(int i = 0; i < size; i = i + 1)
         many[i](one, 42);
-
 }
 

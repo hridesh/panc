@@ -846,9 +846,6 @@ public class Attr extends JCTree.Visitor {
 
         List<Type> argtypes = attribArgs(tree.arguments, env);
         checkWiring(tree, owntype, tree.arguments, argtypes);
-
-
-        System.err.println("Checking the index bounds " + tree.index);
     }
 
 
@@ -900,19 +897,15 @@ public class Attr extends JCTree.Visitor {
             // Check that type parameters are well-formed.
             chk.validate(tree.typarams, localEnv);
 
-
             // Attribute the body statements.
             for(List<JCStatement> l = tree.body.stats; l.nonEmpty(); l = l.tail) {
                 attribStat(l.head, localEnv);
             }
 
-
-
             // visit the system def for rewriting and analysis.
             pAttr.visitSystemDef(tree, rs, localEnv, doGraphs, seqConstAlg);
 
             localEnv.info.scope.leave();
-
         } finally {
             treeSym.kind = oldKind;
             chk.setLint(prevLint);

@@ -71,7 +71,7 @@ system Philosophers {
     Fork f2;
     Fork f3;
     Philosopher p1;
-    Philosopher p2
+    Philosopher p2;
     Philosopher p3;
 	p1(f1,f2, "Aristotle");
 	p2(f2,f3, "Demosthenes");
