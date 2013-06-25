@@ -21,7 +21,6 @@ package org.paninij.system;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-
 import com.sun.source.tree.Tree.Kind;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.tools.javac.code.TypeTags;
@@ -40,6 +39,7 @@ import com.sun.tools.javac.tree.JCTree.JCForLoop;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
 import com.sun.tools.javac.tree.JCTree.JCTopology;
+import com.sun.tools.javac.tree.JCTree.JCUnary;
 import com.sun.tools.javac.tree.JCTree.JCWireall;
 import com.sun.tools.javac.tree.JCTree.JCProcInvocation;
 import com.sun.tools.javac.tree.JCTree.JCRing;
@@ -136,7 +136,11 @@ public class SystemDeclRewriter extends TreeTranslator {
         JCTree bound = valueEnv.lookup(tree.name);
         // Don't lose the identifier if we don't know about it!
         if (bound != null) {
-            result = bound;
+            if (bound.hasTag((Tag.LITERAL))) {
+                result = bound;
+            } else {
+                result = tree;
+            }
         } else {
             result = tree;
         }
@@ -157,6 +161,7 @@ public class SystemDeclRewriter extends TreeTranslator {
         if (tree.sizeExpr.hasTag(Tag.LITERAL)) {
             tree.size = atInterp.asInt(((JCLiteral) tree.sizeExpr).value);
         } else {
+            //TODO: this is an actual error, not an assertion;
             Assert.error(tree.sizeExpr
                     + " should evaluate to an integer literal during system interpretation.");
         }
@@ -189,19 +194,27 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     @Override
     public void visitBinary(final JCBinary tree) {
-        JCTree lhs = translate(tree.lhs);
-        JCTree rhs = translate(tree.rhs);
+        JCExpression lhs = translate(tree.lhs);
+        JCExpression rhs = translate(tree.rhs);
 
         if (lhs instanceof JCLiteral && rhs instanceof JCLiteral) {
             JCLiteral lhsLit = (JCLiteral) lhs;
             JCLiteral rhsLit = (JCLiteral) rhs;
             result = atInterp.interp(tree, lhsLit, rhsLit);
         } else {
+            tree.lhs = lhs;
+            tree.rhs = rhs;
             result = tree;
-            log.rawError(tree.pos, "Trying to interpret " + tree
-                    + " but one side is not a literal!");
+//            log.rawError(tree.pos, "Trying to interpret " + tree
+//                    + " but one side is not a literal!");
         }
 
+    }
+    
+    @Override
+    //TODO: implement;
+    public void visitUnary(JCUnary tree) {
+        Assert.error("unimplemented expression: " + tree);
     }
 
     @Override
@@ -294,8 +307,18 @@ public class SystemDeclRewriter extends TreeTranslator {
         List<JCExpression> args = tree.args;
 
         // Don't worry about the casts. Typing checking assures the
-        // index/len elems are integer types. Interpretation of the system
-        // will make sure they are literals
+        // index/len elems are integer types.If during interpretation
+        // they are not evaluated to literals then it means that they depend
+        // on runtime values.
+        if(!tree.srcPos.hasTag(Tag.LITERAL)){
+            Assert.error("The source position parameter of a assoc operator should always evaluate to a literal: " + tree.srcPos);
+        }
+        if(!tree.destPos.hasTag(Tag.LITERAL)){
+            Assert.error("The destination position parameter of a assoc operator should always evaluate to a literal: " + tree.srcPos);
+        }
+        if(!tree.len.hasTag(Tag.LITERAL)){
+            Assert.error("The length parameter of a assoc operator should always evaluate to a literal: " + tree.srcPos);
+        }
         int srcPos = atInterp.asInt(((JCLiteral) tree.srcPos).value);
         int destPos = atInterp.asInt(((JCLiteral) tree.destPos).value);
         int len = atInterp.asInt(((JCLiteral) tree.len).value);
@@ -345,7 +368,8 @@ public class SystemDeclRewriter extends TreeTranslator {
                 executeForStatement(tree.body, buffer);
             }
 
-            translate(copy.copy(tree.step));
+            List<JCExpressionStatement> treeStep = copy.copy(tree.step);
+            translate(treeStep);
             cond = atInterp.asBoolean(((JCLiteral) translate(copy
                     .copy(tree.cond))).value);
         }
@@ -479,6 +503,7 @@ public class SystemDeclRewriter extends TreeTranslator {
 
             // TODO: Other cases?
             default:
+                Assert.error("Unsupported operator during interpretation: " + tree);
                 result = tree;
             }
 

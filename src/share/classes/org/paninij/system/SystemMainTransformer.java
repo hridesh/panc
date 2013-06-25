@@ -48,6 +48,7 @@ import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.Resolve;
+import com.sun.tools.javac.tree.JCTree.JCAssignOp;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.TreeTranslator;
 import com.sun.tools.javac.tree.JCTree.JCArrayTypeTree;
@@ -197,6 +198,18 @@ public class SystemMainTransformer extends TreeTranslator {
     @Override
     public void visitForeachLoop(JCEnhancedForLoop tree) {
         processForEachLoop(tree, assigns, variables, capsulesToWire, sysGraph);
+        result = tree;
+    }
+    
+    @Override
+    public void visitAssign(JCAssign tree) {
+        this.assigns.add(make.Exec(tree));
+        result = tree;
+    }
+
+    @Override
+    public void visitAssignop(JCAssignOp tree) {
+        this.assigns.add(make.Exec(tree));
         result = tree;
     }
 
