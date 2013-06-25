@@ -3068,10 +3068,6 @@ public class JavacParser implements Parser {
     private JCStatement computeResultWithNewParser(JCModifiers mods, String dc){
         SystemParser systemParser = new SystemParser(F, log, names, S, getInitialEndPosTable(), token, mode,this.lastmode, this);
         SystemParserResult result = systemParser.parseSystemDecl(mods, dc);
-
-        System.out.println(result.systemDeclaration);
-        System.out.println("\n args: " + (result.systemDeclaration.params.head == null ? "" : result.systemDeclaration.params.head.toString()));
-//        System.exit(0);
         
         restoreParserState(result);
         return result.systemDeclaration;

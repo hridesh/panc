@@ -247,8 +247,6 @@ public final class Attr extends CapsuleInternal {
 
         SystemDeclRewriter interp = new SystemDeclRewriter(make, log);
         JCSystemDecl rewritenTree = interp.rewrite(tree);
-        System.out.println(rewritenTree);
-
 
         SystemMainTransformer mt = new SystemMainTransformer(syms, names, types, log,
                 rs, env, make, systemGraphBuilder);
