@@ -19,6 +19,7 @@
 
 import java.io.File;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -26,24 +27,54 @@ import java.util.ArrayList;
 /*
  */
 public abstract class CompileKnownExample {
-    final File testDir = new File(System.getProperty("test.src", "."));
+    final File testDir;
     final File examples;
     //Don't pollute the src directory with test code.
-    final File dest_dir = new File(".");
+    final File dest_dir;
 
     public CompileKnownExample() {
+        this.testDir  = getTestDir();
+        this.dest_dir = getDestDir();
         this.examples = getSrcDir();
     }
 
     /**
      * Get the source directory. Tests that do not have sources in examples should
      * override this method.
+     * @return $testDir/examples
      */
     File getSrcDir() {
         return new File(testDir, "examples");
     }
 
+    /**
+     * Hook to change the dest directory for generated (.class) files.
+     * @return "."
+     */
+    File getDestDir() {
+        return new File(".");
+    }
+
+    /**
+     * Hook to set testDir
+     * @return a file located at the value of the "test.src" system property.
+     */
+    File getTestDir() {
+        return new File(System.getProperty("test.src", "."));
+    }
+
     void run(File[] files) throws Exception {
+        run(files, new File[]{});
+    }
+
+    /**
+     * @param files
+     * @param classpath extra classpath (e.g. jars) for the build.
+     */
+    void run(File[] files, File[] classpath) throws FileNotFoundException {
+        assertFilesExist(files);
+        assertFilesExist(classpath);
+
         ArrayList<String> pancArgs = new ArrayList<String>();
         pancArgs.add("-d");
         pancArgs.add(dest_dir.getAbsolutePath());
@@ -51,7 +82,25 @@ public abstract class CompileKnownExample {
             pancArgs.add(files[i].getAbsolutePath());
         }
 
+        if (classpath.length > 0 ) {
+            StringBuffer cp = new StringBuffer();
+            for(File f : classpath) {
+                cp.append(f.getPath());
+                cp.append(File.pathSeparatorChar);
+            }
+            pancArgs.add("-cp");
+            pancArgs.add(cp.toString());
+        }
+
         panc(pancArgs);
+    }
+
+    void assertFilesExist(File[] fs) throws FileNotFoundException {
+        for (File f : fs) {
+            if (!f.exists()) {
+                throw new FileNotFoundException(f.getAbsolutePath());
+            }
+        }
     }
 
     void panc(ArrayList<String> args) {
