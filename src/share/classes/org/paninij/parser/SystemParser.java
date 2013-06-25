@@ -520,7 +520,6 @@ public class SystemParser {
         Name systemName = ident();
 
         List<JCVariableDecl> params = parseFormalParametersWithJavaC();
-
         JCBlock body = systemBlock();
         JCSystemDecl result = toP(F.at(pos).SystemDef(mod, systemName, body,
                 params));

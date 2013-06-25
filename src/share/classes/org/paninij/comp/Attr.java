@@ -297,7 +297,6 @@ public final class Attr extends CapsuleInternal {
 		List<JCStatement> mainStmts;
 		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
 		JCMethodDecl maindecl = createMainMethod(rewritenTree.sym, rewritenTree.body, rewritenTree.params, mainStmts);
-		System.out.println(maindecl.toString());
 		rewritenTree.defs = rewritenTree.defs.append(maindecl);
 
 		systemGraphBuilder.completeEdges(sysGraph, annotationProcessor, env, rs);
