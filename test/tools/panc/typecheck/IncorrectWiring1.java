@@ -21,8 +21,7 @@
  * @test
  * @summary Compile an incorrect wiring operator example. Should
  *          fail if it doesn't catch a type checking error.
- * @compile/fail IncorrectWiring1.java
- * @compile/fail/ref=IncorrectWiring1.out IncorrectWiring1.java
+ * @compile/fail/ref=IncorrectWiring1.out -XDrawDiagnostics IncorrectWiring1.java
  */
 capsule C(C2 other) {
     void run() {
