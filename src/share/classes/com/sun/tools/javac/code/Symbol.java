@@ -792,7 +792,7 @@ public abstract class Symbol implements Element {
     }
     
     /**
-     * A class for capsule symbols
+     * A class for system symbols
      */
     public static class SystemSymbol extends ClassSymbol{
     	public SystemGraphs graphs;
