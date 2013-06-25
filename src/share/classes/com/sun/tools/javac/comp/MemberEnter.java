@@ -64,11 +64,11 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
      */
     final static boolean checkClash = true;
 
-    private final Names names;
+    protected final Names names;
     private final Enter enter;
     private final Log log;
-    private final Check chk;
-    private final Attr attr;
+    protected final Check chk;
+    protected final Attr attr;
     private final Symtab syms;
     private final TreeMaker make;
     private final ClassReader reader;
@@ -84,7 +84,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
     public static MemberEnter instance(Context context) {
         MemberEnter instance = context.get(memberEnterKey);
         if (instance == null)
-            instance = new MemberEnter(context);
+            instance = new org.paninij.comp.MemberEnter(context); //Panini code -- use an instance of org.paninij.comp.MemberEnter
         return instance;
     }
 
@@ -417,7 +417,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
 
     /** Enter members for a class.
      */
-    void finishClass(JCClassDecl tree, Env<AttrContext> env) {
+    protected void finishClass(JCClassDecl tree, Env<AttrContext> env) {
         if ((tree.mods.flags & Flags.ENUM) != 0 &&
             (types.supertype(tree.sym.type).tsym.flags() & Flags.ENUM) == 0) {
             addEnumMembers(tree, env);
@@ -762,7 +762,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
  *********************************************************************/
 
     /** Queue annotations for later processing. */
-    void annotateLater(final List<JCAnnotation> annotations,
+    protected void annotateLater(final List<JCAnnotation> annotations,
                        final Env<AttrContext> localEnv,
                        final Symbol s) {
         if (annotations.isEmpty()) return;

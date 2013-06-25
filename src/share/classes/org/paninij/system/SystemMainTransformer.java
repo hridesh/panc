@@ -416,23 +416,7 @@ public class SystemMainTransformer extends TreeTranslator {
         for(; cparams.nonEmpty();
                 cparams = cparams.tail,
                 args = args.tail) {
-            if(syms.capsules.containsKey(cparams.head.type.tsym.name)){//if its a capsule type
-                if(args.head.toString().equals("null")){
-                    log.error(args.head.pos(), "capsule.null.declare");
-                }else{
-                    String argument = "";
-                    if(types.isArray(args.head.type)){
-                        Assert.error("NAME NOT TYPE!");
-                        argument = types.elemtype(args.head.type).toString();
-                    }else
-                        argument = args.head.toString();
-                    if(args.head.getTag()!=Tag.NEWARRAY)
-                        if(variables.get(names.fromString(argument))==null){
-                            Assert.error(args.head + " symbol not found");
-                            //log.error(args.head.pos, "symbol.not.found");
-                        }
-                }
-            }
+
             JCAssign newAssign = make
                     .at(mi.pos())
                     .Assign(make.Select(make.TypeCast(make.Ident(c), capId),

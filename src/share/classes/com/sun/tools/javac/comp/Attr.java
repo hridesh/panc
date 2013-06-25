@@ -507,7 +507,7 @@ public class Attr extends JCTree.Visitor {
 
     /** Derived visitor method: attribute a type tree.
      */
-    Type attribType(JCTree tree, Env<AttrContext> env) {
+    public Type attribType(JCTree tree, Env<AttrContext> env) {
         Type result = attribType(tree, env, Type.noType);
         return result;
     }
@@ -742,51 +742,73 @@ public class Attr extends JCTree.Visitor {
             return types.createErrorType(capsuletype);
         }
 
-
         Type wiringtype = types.createErrorType(capsuletype);
 
-        if(capsuletype.tsym instanceof CapsuleSymbol){
-            CapsuleSymbol ownsym = (CapsuleSymbol)capsuletype.tsym;
-
-            List<Type> wt = ownsym.wiringSym.type.getParameterTypes();
-            List<JCExpression> as = argtrees;
-            List<Type> ats = argtypes;
-
-            if(wt.size() != as.size()) {
-                log.error(tree, "wiring.args.count.mismatch", wt.size(), as.size());
-            }
-
-            boolean wiringOkay = true;
-            while(wt.nonEmpty()){
-                // redo our check here. The stock version assigns
-                // the type to the tree when it finishes, which we do not want
-                // in this context.
-                Type aType = ats.head;
-                int  aKind = VAL;
-                ResultInfo wireResult = new ResultInfo(VAL, wt.head);
-
-                if (aType.tag != ERROR && wireResult.pt.tag != METHOD && resultInfo.pt.tag != FORALL) {
-                    Type res = wireResult.check(as.head, aType);
-                    wiringOkay &= res.tag != ERROR; //check for a mismatch in arg wiring
-                } else {
-                    log.error(as.head.pos(), "unexpected.type",
-                              kindNames(wireResult.pkind),
-                              kindNames(aKind));
-                    wiringOkay = false;
-                }
-
-                wt = wt.tail;
-                as = as.tail;
-                ats = ats.tail;
-            }
-
-           wiringtype = wiringOkay ? ownsym.wiringSym.type : wiringtype;
+        if (capsuletype.tsym instanceof CapsuleSymbol) {
+            wiringtype = checkWiringArgs(tree, wiringtype, (CapsuleSymbol) capsuletype.tsym, argtrees,
+                    argtypes);
         } else {
             log.error(tree, "invalid.capsule.type1", capsuletype);
         }
 
         tree.type = wiringtype;
         return wiringtype;
+    }
+
+    /**
+     * Check each argument against its prototype from the wiring symbol type.
+     * @param tree
+     * @param owntype
+     * @param ownsym
+     * @param argtrees
+     * @param argtypes
+     * @return
+     */
+    private Type checkWiringArgs(JCTree tree, Type owntype,
+            CapsuleSymbol ownsym, List<JCExpression> argtrees, List<Type> argtypes) {
+        List<Type> wt = ownsym.wiringSym.type.getParameterTypes();
+        List<JCExpression> as = argtrees;
+        List<Type> ats = argtypes;
+
+        if(wt.size() != as.size()) {
+            log.error(tree, "wiring.args.count.mismatch", wt.size(), as.size());
+        }
+
+        if(wt.size() < 1) { //nothing to do.
+            return ownsym.wiringSym.type;
+        }
+
+        if(syms.capsules.containsKey(wt.head.tsym.name)){//if its a capsule type
+            if(as.head.toString().equals("null")){
+                log.error(as.head.pos(), "capsule.null.declare");
+            }
+        }
+
+        boolean wiringOkay = true;
+        while(wt.nonEmpty()){
+            // redo our check here. The stock version assigns
+            // the type to the tree when it finishes, which we do not want
+            // in this context.
+            Type aType = ats.head;
+            int  aKind = VAL;
+            ResultInfo wireResult = new ResultInfo(VAL, wt.head);
+
+            if (aType.tag != ERROR && wireResult.pt.tag != METHOD && resultInfo.pt.tag != FORALL) {
+                Type res = wireResult.check(as.head, aType);
+                wiringOkay &= res.tag != ERROR; //check for a mismatch in arg wiring
+            } else {
+                log.error(as.head.pos(), "unexpected.type",
+                          kindNames(wireResult.pkind),
+                          kindNames(aKind));
+                wiringOkay = false;
+            }
+
+            wt = wt.tail;
+            as = as.tail;
+            ats = ats.tail;
+        }
+
+        return wiringOkay ? ownsym.wiringSym.type : owntype;
     }
 
     /**

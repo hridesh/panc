@@ -776,20 +776,6 @@ public abstract class Symbol implements Element {
         public CapsuleSymbol(long flags, Name name, Symbol owner) {
             super(flags, name, owner);
         }
-
-        /**
-         * Create a wiring symbol for the symbl.
-         * PRE: Capsule Parameters have symbols and types.
-         */
-        public void createWiringSymbol(Names names, List<Type> paramTypes) {
-            wiringSym = new WiringSymbol(flags_field,
-                    names.panini.Wiring,
-                    createWiringType(paramTypes, this), this);
-        }
-
-        WiringType createWiringType(List<Type> capsuleParamTypes, CapsuleSymbol tsym) {
-            return new WiringType(capsuleParamTypes, tsym);
-        }
         
         public static CapsuleSymbol fromClassSymbol(ClassSymbol c){
         	CapsuleSymbol capsule = new CapsuleSymbol(c.flags_field, c.name, c.owner);

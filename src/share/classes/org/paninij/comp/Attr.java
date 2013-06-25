@@ -59,8 +59,6 @@ import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.*;
 import com.sun.tools.javac.tree.JCTree;
-import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
-import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.util.List;
@@ -70,7 +68,6 @@ import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
 import org.paninij.system.*;
-import org.paninij.system.SystemDeclRewriter;
 import org.paninij.systemgraph.*;
 import com.sun.source.tree.Tree.Kind;
 import java.util.ArrayList;
@@ -92,7 +89,8 @@ public final class Attr extends CapsuleInternal {
 	Types types;
 
     public Attr(TreeMaker make, Names names, Types types, Enter enter,
-            MemberEnter memberEnter, Symtab syms, Log log,
+            com.sun.tools.javac.comp.MemberEnter memberEnter,
+            Symtab syms, Log log,
             Annotate annotate) {
         super(make, names, enter, memberEnter, syms);
         this.types = types;
@@ -233,28 +231,6 @@ public final class Attr extends CapsuleInternal {
 					((JCVariableDecl)def).mods.flags |= FINAL;
 			}
 		}
-		
-		// TODO: Can this be done with a completer?
-		ListBuffer<Type> wiringSig = new ListBuffer<Type>();
-		List<JCVariableDecl> sps = ((CapsuleSymbol)tree.sym).capsuleParameters;
-		for(List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail, sps = sps.tail) {
-		    Symbol psym = tree.sym.members_field.lookup(l.head.name).sym;
-		    if(psym.kind == VAR) {
-		        l.head.sym = (VarSymbol)psym;
-		        l.head.type = psym.type;
-		        wiringSig.add(psym.type);
-
-		        sps.head.sym = l.head.sym;
-		        sps.head.type = psym.type;
-		    } else {
-		        log.error(l.head.pos, "symbol.not.found");
-		        wiringSig.add(null);
-		    }
-		}
-
-
-		((CapsuleSymbol)tree.sym.type.tsym)
-		    .createWiringSymbol(names, wiringSig.toList());
 	}
 
 	public final void visitSystemDef(JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){

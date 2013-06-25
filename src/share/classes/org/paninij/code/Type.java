@@ -19,6 +19,7 @@
 package org.paninij.code;
 
 import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
+import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.util.List;
 
 import static org.paninij.code.TypeTags.*;
@@ -38,7 +39,7 @@ public abstract class Type  {
 
         List<com.sun.tools.javac.code.Type> wiringParamTypes;
 
-        public WiringType(List<com.sun.tools.javac.code.Type> wiringTypes, CapsuleSymbol tsym) {
+        public WiringType(List<com.sun.tools.javac.code.Type> wiringTypes, ClassSymbol tsym) {
             super(CAPSULE_WIRING, tsym);
             this.wiringParamTypes = wiringTypes;
         }

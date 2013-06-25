@@ -49,10 +49,10 @@ import static com.sun.tools.javac.code.Kinds.*;
 public class CapsuleInternal extends Internal {
 	protected Symtab syms;
 	protected Enter enter;
-	protected MemberEnter memberEnter;
+	protected com.sun.tools.javac.comp.MemberEnter memberEnter;
 
 	public CapsuleInternal(TreeMaker make, Names names, Enter enter,
-			MemberEnter memberEnter, Symtab syms) {
+	        com.sun.tools.javac.comp.MemberEnter memberEnter, Symtab syms) {
 		super(make, names);
 		this.enter = enter;
 		this.syms = syms;
