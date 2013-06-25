@@ -255,10 +255,6 @@ public final class Attr extends CapsuleInternal {
 
 		((CapsuleSymbol)tree.sym.type.tsym)
 		    .createWiringSymbol(names, wiringSig.toList());
-
-
-		/*if (doGraphs)
-            effects.computeEffects(tree);*/
 	}
 
 	public final void visitSystemDef(JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
