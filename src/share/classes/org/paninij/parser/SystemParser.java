@@ -524,19 +524,20 @@ public class SystemParser {
     }
 
     private List<JCVariableDecl> parseFormalParametersWithJavaC() {
+        List<JCVariableDecl> d = null;
         if (token.kind == LPAREN) {
             initJavaParserState();
             List<JCVariableDecl> formalParams = javaParser
                     .parseFormalParameters();
             restoreSystemParserState();
-            return formalParams;
-        } else if (token.kind == LBRACE)
-            return List.<JCVariableDecl> nil();
-        else {
-            // TODO: better error message
-            com.sun.tools.javac.util.Assert.error("illegal system decl");
-            return null;
+            d= formalParams;
+        } else if (token.kind != LBRACE) { //Wasn't a LPAREN or LBRACE, must be an error.
+            error(token.pos, "expected2", "(", "{");
+            skip(false, true, false, false);
         }
+
+        //return the list, if it not null, or an empty list.
+        return (d != null) ? d : List.<JCVariableDecl>nil();
     }
 
     private List<JCStatement> variableDeclarations() {
@@ -562,14 +563,14 @@ public class SystemParser {
         // if the variable type didn't changed after we've parsed the optional
         // capsule arrayType then we can't initialize
         boolean isInitAllowed = (previousVarType == varType);
-        JCExpression varInit = variableInitializerOptional(isInitAllowed);
+        JCExpression varInit = variableInitializerOptional(isInitAllowed, variableName);
         JCVariableDecl varDef = F.at(token.pos).VarDef(mods, variableName,
                 varType, varInit);
         return toP(varDef);
     }
 
     private JCModifiers parseOptModifiers() {
-        if (PaniniTokens.isConcurrencyModifier(token)) {
+        if (PaniniTokens.isCapsuleKindModifier(token)) {
             JCModifiers mod = F.at(Position.NOPOS).Modifiers(
                     PaniniTokens.toModfier(token));
             nextToken();
@@ -583,10 +584,10 @@ public class SystemParser {
      * @param isInitAllowed
      * @return
      */
-    private JCExpression variableInitializerOptional(boolean isInitAllowed) {
+    private JCExpression variableInitializerOptional(boolean isInitAllowed, Name name) {
         if (token.kind == EQ) {
             if (!isInitAllowed) {
-                rawError("Cannot initialize this variable");
+                error(token.endPos, "system.cannot.init.variable", name);
             }
             nextToken();
             return parseVariableInitWithJavac();
@@ -704,7 +705,7 @@ public class SystemParser {
         boolean isArrayDeclaration = (token.kind == IDENTIFIER)
                 && peekToken(LBRACKET) && (findAfter(RBRACKET) == IDENTIFIER);
 
-        boolean isConcurrencyTypeModifier = isConcurrencyModifier(token);
+        boolean isConcurrencyTypeModifier = isCapsuleKindModifier(token);
 
         return isPrimitiveDeclaration || isSimpleDeclaration
                 || isConcurrencyTypeModifier || isArrayDeclaration;

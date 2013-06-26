@@ -2028,11 +2028,11 @@ public class JavacParser implements Parser {
     @SuppressWarnings("fallthrough")
     private List<JCStatement> systemStatement(){
     	if(token.kind == IDENTIFIER){
-    		if(token.name().toString().equals(PaniniTokens.TASK))
+    		if(token.name().toString().equals(PaniniTokens.CAP_KIND_TASK))
     			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.TASK));
-    		else if(token.name().toString().equals(PaniniTokens.SEQUENTIAL))
+    		else if(token.name().toString().equals(PaniniTokens.CAP_KIND_SEQUENTIAL))
     			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.SERIAL));
-    		else if(token.name().toString().equals(PaniniTokens.MONITOR))
+    		else if(token.name().toString().equals(PaniniTokens.CAP_KIND_MONITOR))
     			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.MONITOR));
     		else if (token.name().toString().equals(PaniniTokens.SYSLANG_WIRE_ALL)){
     			//FIXME: remove syso
