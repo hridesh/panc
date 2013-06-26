@@ -39,21 +39,12 @@ final public class PaniniTokens {
     private static final String[] wiringTokens = { SYSLANG_WIRE_ALL,
             SYSLANG_STAR, SYSLANG_RING, SYSLANG_ASSOCIATE };
 
-    /**
-	 *
-	 */
-    public static final String TASK = "task";
-    /**
-	 *
-	 */
-    public static final String MONITOR = "monitor";
-    /**
-	 *
-	 */
-    public static final String SEQUENTIAL = "sequential";
+    public static final String CAP_KIND_TASK = "task";
+    public static final String CAP_KIND_MONITOR = "monitor";
+    public static final String CAP_KIND_SEQUENTIAL = "sequential";
 
-    private static final String[] concurrentModifiers = {
-        TASK, MONITOR, SEQUENTIAL
+    private static final String[] capsuleKinds = {
+        CAP_KIND_TASK, CAP_KIND_MONITOR, CAP_KIND_SEQUENTIAL
     };
 
     public static boolean isWiringToken(Token kind) {
@@ -81,12 +72,12 @@ final public class PaniniTokens {
      * @param token
      * @return
      */
-    public static boolean isConcurrencyModifier(Token token) {
+    public static boolean isCapsuleKindModifier(Token token) {
         if (token.kind != TokenKind.IDENTIFIER)
             return false;
 
         final String tokenName = token.name().toString();
-        for (String conMod : concurrentModifiers) {
+        for (String conMod : capsuleKinds) {
             if (conMod.equals(tokenName))
                 return true;
         }
@@ -104,11 +95,11 @@ final public class PaniniTokens {
     public static long toModfier(Token token) {
         String s = token.name().toString();
 
-        if (SEQUENTIAL.equals(s)) {
+        if (CAP_KIND_SEQUENTIAL.equals(s)) {
             return Flags.SERIAL;
-        } else if (TASK.equals(s)) {
+        } else if (CAP_KIND_TASK.equals(s)) {
             return Flags.TASK;
-        } else if (MONITOR.equals(s)) {
+        } else if (CAP_KIND_MONITOR.equals(s)) {
             return Flags.MONITOR;
         } else {
             Assert.error(s + " is not a known capsule concurrency modifier!");

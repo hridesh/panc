@@ -572,7 +572,7 @@ public class SystemParser {
     }
 
     private JCModifiers parseOptModifiers() {
-        if (PaniniTokens.isConcurrencyModifier(token)) {
+        if (PaniniTokens.isCapsuleKindModifier(token)) {
             JCModifiers mod = F.at(Position.NOPOS).Modifiers(
                     PaniniTokens.toModfier(token));
             nextToken();
@@ -705,7 +705,7 @@ public class SystemParser {
         boolean isArrayDeclaration = (token.kind == IDENTIFIER)
                 && peekToken(LBRACKET) && (findAfter(RBRACKET) == IDENTIFIER);
 
-        boolean isConcurrencyTypeModifier = isConcurrencyModifier(token);
+        boolean isConcurrencyTypeModifier = isCapsuleKindModifier(token);
 
         return isPrimitiveDeclaration || isSimpleDeclaration
                 || isConcurrencyTypeModifier || isArrayDeclaration;
