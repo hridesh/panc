@@ -565,7 +565,7 @@ public class SystemParser {
         // if the variable type didn't changed after we've parsed the optional
         // capsule arrayType then we can't initialize
         boolean isInitAllowed = (previousVarType == varType);
-        JCExpression varInit = variableInitializerOptional(isInitAllowed);
+        JCExpression varInit = variableInitializerOptional(isInitAllowed, variableName);
         JCVariableDecl varDef = F.at(token.pos).VarDef(mods, variableName,
                 varType, varInit);
         return toP(varDef);
@@ -586,10 +586,10 @@ public class SystemParser {
      * @param isInitAllowed
      * @return
      */
-    private JCExpression variableInitializerOptional(boolean isInitAllowed) {
+    private JCExpression variableInitializerOptional(boolean isInitAllowed, Name name) {
         if (token.kind == EQ) {
             if (!isInitAllowed) {
-                rawError("Cannot initialize this variable");
+                error(token.endPos, "system.cannot.init.variable", name);
             }
             nextToken();
             return parseVariableInitWithJavac();
