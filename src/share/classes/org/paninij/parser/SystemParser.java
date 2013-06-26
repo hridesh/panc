@@ -542,25 +542,30 @@ public class SystemParser {
         }
     }
 
-    /**
-     * <pre>
-     * Identifier
-     * </pre>
-     * 
-     */
-    private JCVariableDecl variableDeclaration(boolean isInitAllowed) {
+    private List<JCStatement> variableDeclarations() {
         JCModifiers mods = parseOptModifiers();
         JCExpression varType = parseTypeWithJavac();
+        ListBuffer<JCStatement> variableDecls = new ListBuffer<JCStatement>();
+        variableDecls.add(variableDeclaration(mods, varType));
+        while (token.kind == COMMA) {
+            accept(COMMA);
+            JCVariableDecl newDecl = variableDeclaration(mods, varType);
+            variableDecls.add(newDecl);
+        }
+        return variableDecls.toList();
+    }
+
+    private JCVariableDecl variableDeclaration(JCModifiers mods,
+            JCExpression varType) {
         Name variableName = ident();
         JCExpression previousVarType = varType;
         // FIXME-XXX: do better disambiguation between capsule arrays and normal
         // arrays;
         varType = parseCapsuleArrayTypeOptional(varType);
         // if the variable type didn't changed after we've parsed the optional
-        // capsule arrayType then
-        // we can't initialize
-        JCExpression varInit = variableInitializerOptional(isInitAllowed
-                && (previousVarType == varType));
+        // capsule arrayType then we can't initialize
+        boolean isInitAllowed = (previousVarType == varType);
+        JCExpression varInit = variableInitializerOptional(isInitAllowed);
         JCVariableDecl varDef = F.at(token.pos).VarDef(mods, variableName,
                 varType, varInit);
         return toP(varDef);
@@ -604,19 +609,19 @@ public class SystemParser {
     private List<JCStatement> systemStatements() {
         ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
         while (true) {
-            JCStatement statement = systemStatement();
+            List<JCStatement> statement = systemStatement();
             if (statement == null) {
                 return stats.toList();
             } else {
                 if (token.pos <= endPosTable.errorEndPos) {
                     skip(false, true, true, true);
                 }
-                stats.add(statement);
+                stats.addAll(statement);
             }
         }
     }
 
-    private JCStatement systemStatement() {
+    private List<JCStatement> systemStatement() {
         if (token.kind == EOF) {
             error(token.pos, "premature.eof");
         }
@@ -624,21 +629,30 @@ public class SystemParser {
             return null;
         }
         if (isStatementStartingToken(token)) {
-            return parseStatement();
+            JCStatement statement = parseStatement();
+            return returnNullOrNonEmptyList(statement);
         } else if (isCapsuleWiringStart()) {
-            return parseCapsuleWiringStatement();
+            return returnNullOrNonEmptyList(parseCapsuleWiringStatement());
         } else if (isIndexedCapsuleWiringStart()) {
-            return parseIndexedCapsuleWiringStatement();
+            return returnNullOrNonEmptyList(parseIndexedCapsuleWiringStatement());
         } else if (isVariableDeclStart()) {
-            JCVariableDecl variableDeclaration = variableDeclaration(true);
+            List<JCStatement> variableDeclarations = variableDeclarations();
             accept(SEMI);
-            return variableDeclaration;
+            return variableDeclarations;
         } else {
             JCExpression expression = parseExpressionWithJavac();
             accept(SEMI);
-            return to(F.at(token.pos)
-                    .Exec(checkExpressionStatement(expression)));
+            return returnNullOrNonEmptyList(to(F.at(token.pos).Exec(
+                    checkExpressionStatement(expression))));
         }
+
+    }
+
+    private List<JCStatement> returnNullOrNonEmptyList(JCStatement statement) {
+        if (statement == null)
+            return null;
+        else
+            return List.<JCStatement> of(statement);
 
     }
 

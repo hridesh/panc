@@ -23,7 +23,15 @@
  */
 capsule Indirection () { void run() {} }
 
-system SequentialConsistency {
+system TCapIdentList {
 	Indirection i1, i2;
-    i1(); i2();
+    i1();i2();
+    
+    Indirection i3;
+    i3();
+    
+    //capsule arrays are declared with the size after the identifier,
+    //allowing you to declare single instance of the same capsule type;
+    Indirection arr[2], i4;
+    
 }
