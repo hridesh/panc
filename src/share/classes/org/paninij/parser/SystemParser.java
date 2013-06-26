@@ -527,19 +527,20 @@ public class SystemParser {
     }
 
     private List<JCVariableDecl> parseFormalParametersWithJavaC() {
+        List<JCVariableDecl> d = null;
         if (token.kind == LPAREN) {
             initJavaParserState();
             List<JCVariableDecl> formalParams = javaParser
                     .parseFormalParameters();
             restoreSystemParserState();
-            return formalParams;
-        } else if (token.kind == LBRACE)
-            return List.<JCVariableDecl> nil();
-        else {
-            // TODO: better error message
-            com.sun.tools.javac.util.Assert.error("illegal system decl");
-            return null;
+            d= formalParams;
+        } else if (token.kind != LBRACE) { //Wasn't a LPAREN or LBRACE, must be an error.
+            error(token.pos, "expected2", "(", "{");
+            skip(false, true, false, false);
         }
+
+        //return the list, if it not null, or an empty list.
+        return (d != null) ? d : List.<JCVariableDecl>nil();
     }
 
     private List<JCStatement> variableDeclarations() {
