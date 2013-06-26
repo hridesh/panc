@@ -649,6 +649,10 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
     }
 
     // Panini code
+    /**Create an environment to attribute the system block in.
+     * @param tree The definition
+     * @param env  The environment out side the system.
+     */
     Env<AttrContext> systemEnv(JCSystemDecl tree, Env<AttrContext> env) {
         Env<AttrContext> localEnv =
                 env.dup(tree, env.info.dup(env.info.scope.dupUnshared()));
