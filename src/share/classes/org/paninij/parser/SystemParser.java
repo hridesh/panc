@@ -496,10 +496,7 @@ public class SystemParser {
             JCBlock systemBlock = systemBlock();
             return systemBlock;
         } else {
-            JCExpression checkExpressionStatement = checkExpressionStatement(parseExpressionWithJavac());
-            JCExpressionStatement forBody = F.at(token.pos).Exec(
-                    checkExpressionStatement);
-            accept(SEMI);
+            JCStatement forBody = systemStatement().head;
             return forBody;
         }
     }
@@ -690,8 +687,10 @@ public class SystemParser {
 
     private boolean isIndexedCapsuleWiringStart() {
         // Identifier[...](..
+        boolean lBrace = peekToken(LBRACKET);
+        TokenKind afterRBracket = findAfter(RBRACKET);
         boolean result = (token.kind == IDENTIFIER)
-                && (peekToken(LBRACKET) && (findAfter(RBRACKET) == LPAREN));
+                && (lBrace && (afterRBracket == LPAREN));
         return result;
     };
 
