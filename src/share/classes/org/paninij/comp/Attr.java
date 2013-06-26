@@ -89,8 +89,7 @@ public final class Attr extends CapsuleInternal {
 	Types types;
 
     public Attr(TreeMaker make, Names names, Types types, Enter enter,
-            com.sun.tools.javac.comp.MemberEnter memberEnter,
-            Symtab syms, Log log,
+            MemberEnter memberEnter, Symtab syms, Log log,
             Annotate annotate) {
         super(make, names, enter, memberEnter, syms);
         this.types = types;

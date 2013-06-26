@@ -64,11 +64,11 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
      */
     final static boolean checkClash = true;
 
-    protected final Names names;
+    private final Names names;
     private final Enter enter;
     private final Log log;
-    protected final Check chk;
-    protected final Attr attr;
+    private final Check chk;
+    private final Attr attr;
     private final Symtab syms;
     private final TreeMaker make;
     private final ClassReader reader;
@@ -84,7 +84,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
     public static MemberEnter instance(Context context) {
         MemberEnter instance = context.get(memberEnterKey);
         if (instance == null)
-            instance = new org.paninij.comp.MemberEnter(context); //Panini code -- use an instance of org.paninij.comp.MemberEnter
+            instance = new MemberEnter(context);
         return instance;
     }
 
@@ -417,12 +417,18 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
 
     /** Enter members for a class.
      */
-    protected void finishClass(JCClassDecl tree, Env<AttrContext> env) {
+    void finishClass(JCClassDecl tree, Env<AttrContext> env) {
         if ((tree.mods.flags & Flags.ENUM) != 0 &&
             (types.supertype(tree.sym.type).tsym.flags() & Flags.ENUM) == 0) {
             addEnumMembers(tree, env);
         }
         memberEnter(tree.defs, env);
+
+        // Panini code
+        if (tree instanceof JCCapsuleDecl) {
+            finishCapsule((JCCapsuleDecl) tree, env);
+        }
+        // end Panini code
     }
 
     /** Add the implicit members for an enum type
@@ -650,6 +656,56 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         localEnv.info.scope.owner = tree.sym;
         return localEnv;
     }
+
+    /**
+     * Finish a CapsuleDecl by partially entering the capsule parameters
+     * and creating the wiring symbol.
+     * @param tree
+     * @param env
+     */
+    void finishCapsule(JCCapsuleDecl tree, Env<AttrContext> env) {
+        ListBuffer<Type> wts = new ListBuffer<Type>();
+
+        for (JCVariableDecl p : tree.params) {
+            wts.append(enterCapsuleParam(p, tree.sym, env));
+        }
+
+        //Create a wiring symbol from the parameter types.
+        WiringSymbol wiringSym = new WiringSymbol(0, names.panini.Wiring,
+                new org.paninij.code.Type.WiringType(wts.toList(), tree.sym),
+                tree.sym);
+        ((CapsuleSymbol) tree.sym).wiringSym = wiringSym;
+    }
+
+    /**Assign a type and symbol to a capsule parameter decl.
+     */
+    Type enterCapsuleParam(JCVariableDecl tree, Symbol owner, Env<AttrContext> env) {
+        /*
+         * Adapted from the logic for entering VariableDecls.
+         *
+         * Does not call member enter. Will cause a conflict with the
+         * entered fields of the capsule that are translated from
+         * the system parameters.
+         */
+
+        Scope enclScope = env.info.getScope();
+
+        Type type = attr.attribType(tree.vartype, env);
+
+        VarSymbol v = new VarSymbol(0, tree.name, tree.vartype.type, tree.sym);
+        v.owner = owner;
+        v.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, v, tree);
+        tree.sym = v;
+
+        if (chk.checkUnique(tree.pos(), v, enclScope)) {
+            chk.checkTransparentVar(tree.pos(), v, enclScope);
+            enclScope.enter(v);
+        }
+        annotateLater(tree.mods.annotations, env, v);
+        v.pos = tree.pos;
+
+        return type;
+    }
     // end Panini code
 
     public void visitVarDef(JCVariableDecl tree) {    	
@@ -762,7 +818,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
  *********************************************************************/
 
     /** Queue annotations for later processing. */
-    protected void annotateLater(final List<JCAnnotation> annotations,
+    void annotateLater(final List<JCAnnotation> annotations,
                        final Env<AttrContext> localEnv,
                        final Symbol s) {
         if (annotations.isEmpty()) return;

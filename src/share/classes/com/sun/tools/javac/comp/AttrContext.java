@@ -73,7 +73,7 @@ public class AttrContext {
 
     /** Duplicate this context, replacing scope field and copying all others.
      */
-    public AttrContext dup(Scope scope) {
+    AttrContext dup(Scope scope) {
         AttrContext info = new AttrContext();
         info.scope = scope;
         info.staticLevel = staticLevel;

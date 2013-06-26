@@ -507,7 +507,7 @@ public class Attr extends JCTree.Visitor {
 
     /** Derived visitor method: attribute a type tree.
      */
-    public Type attribType(JCTree tree, Env<AttrContext> env) {
+    Type attribType(JCTree tree, Env<AttrContext> env) {
         Type result = attribType(tree, env, Type.noType);
         return result;
     }

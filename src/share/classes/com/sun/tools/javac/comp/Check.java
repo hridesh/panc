@@ -330,7 +330,7 @@ public class Check {
      *  @param v             The symbol.
      *  @param s             The scope.
      */
-    public void checkTransparentVar(DiagnosticPosition pos, VarSymbol v, Scope s) {
+    void checkTransparentVar(DiagnosticPosition pos, VarSymbol v, Scope s) {
         if (s.next != null) {
             for (Scope.Entry e = s.next.lookup(v.name);
                  e.scope != null && e.sym.owner == v.owner;
@@ -1028,7 +1028,7 @@ public class Check {
      *  @param flags         The set of modifiers given in a definition.
      *  @param sym           The defined symbol.
      */
-    public long checkFlags(DiagnosticPosition pos, long flags, Symbol sym, JCTree tree) {
+    long checkFlags(DiagnosticPosition pos, long flags, Symbol sym, JCTree tree) {
         long mask;
         long implicit = 0;
         switch (sym.kind) {
@@ -2824,7 +2824,7 @@ public class Check {
      *  @param sym           The symbol.
      *  @param s             The scope.
      */
-    public boolean checkUnique(DiagnosticPosition pos, Symbol sym, Scope s) {
+    boolean checkUnique(DiagnosticPosition pos, Symbol sym, Scope s) {
         if (sym.type.isErroneous())
             return true;
         if (sym.owner.name == names.any) return false;
