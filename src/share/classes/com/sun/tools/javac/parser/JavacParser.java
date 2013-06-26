@@ -3065,9 +3065,9 @@ public class JavacParser implements Parser {
         this.endPosTable.errorEndPos = result.errorEndPos;
     }
     
-    private JCStatement computeResultWithNewParser(JCModifiers mods, String dc){
+    private JCStatement computeResultWithNewParser(JCModifiers mods){
         SystemParser systemParser = new SystemParser(F, log, names, S, getInitialEndPosTable(), token, mode,this.lastmode, this);
-        SystemParserResult result = systemParser.parseSystemDecl(mods, dc);
+        SystemParserResult result = systemParser.parseSystemDecl(mods);
         
         restoreParserState(result);
         return result.systemDeclaration;
@@ -3087,7 +3087,7 @@ public class JavacParser implements Parser {
         } // Panini code
         else if(token.kind == IDENTIFIER){
         	if(token.name().toString().equals("system")){
-        	    return computeResultWithNewParser(mods, dc);
+        	    return computeResultWithNewParser(mods);
 //        	    return systemDecl(mods, dc);
         	}
          	else if(token.name().toString().equals("capsule")) 
