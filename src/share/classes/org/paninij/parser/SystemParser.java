@@ -482,7 +482,7 @@ public class SystemParser {
     /**
      * <pre>
      *    SystemDecl = 
-     *       "system" Identifier {"[ JavacFormalParamaters ]"}+ Block
+     *       "system" Identifier JavacFormalParamaters? Block
      * </pre>
      * 
      * @param mods
@@ -494,7 +494,15 @@ public class SystemParser {
         int pos = token.pos;
         Name systemName = ident();
 
-        List<JCVariableDecl> params = parseFormalParametersWithJavaC();
+        List<JCVariableDecl> params;
+        // Only parse params if there is an LPAREN. Otherwise
+        // try to parse a system block
+        if ( token.kind == LPAREN ) {
+            params = parseFormalParametersWithJavaC();
+        } else {
+            params = List.<JCVariableDecl>nil();
+        }
+
         JCBlock body = systemBlock();
         JCSystemDecl result = toP(F.at(pos).SystemDef(mod, systemName, body,
                 params));
