@@ -313,8 +313,8 @@ public class AnnotationProcessor extends Internal{
 	 * @param c
 	 * @param paramsString
 	 */
-	private void fillInParams(ClassSymbol c, String paramsString) {
-        JavacParser parser = (JavacParser)parserFactory.newParser(paramsString, false, false, false);
+    private void fillInParams(ClassSymbol c, String paramsString) {
+        JavacParser parser = (JavacParser) parserFactory.newParser(paramsString, false, false, false);
         List<JCVariableDecl> params = parser.capsuleParameters();
         c.capsule_info.capsuleParameters = params;
 
