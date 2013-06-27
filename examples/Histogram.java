@@ -64,9 +64,7 @@ system Histogram (String[] args){
 	sequential Printer p;
 	
 	r(args, buckets);
-	for(Bucket b : buckets) {
-		b(p);
-	}
+	wireall(buckets, p);
 }
 
 

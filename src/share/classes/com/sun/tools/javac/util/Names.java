@@ -169,6 +169,11 @@ public class Names {
     public final Name ex;
     public final Name package_info;
 
+    // Panini code
+    // Prefer full packages to minimize impact on import list.
+    public final org.paninij.util.Names panini;
+    // end Panini code
+
     public final Name.Table table;
 
     public Names(Context context) {
@@ -296,6 +301,10 @@ public class Names {
         deprecated = fromString("deprecated");
         ex = fromString("ex");
         package_info = fromString("package-info");
+
+        // Panini code
+        panini = new org.paninij.util.Names(this);
+        // end Panini code
     }
 
     protected Name.Table createTable(Options options) {

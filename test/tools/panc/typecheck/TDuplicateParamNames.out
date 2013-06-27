@@ -1,0 +1,2 @@
+TDuplicateParamNames.java:25:44: compiler.err.already.defined: kindname.variable, s, kindname.interface, TDuplicateParamNames
+1 error

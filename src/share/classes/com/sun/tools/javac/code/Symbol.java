@@ -45,6 +45,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import org.paninij.systemgraphs.SystemGraphs;
 import org.paninij.analysis.CFG;
+import org.paninij.code.Type.WiringType;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -708,6 +709,35 @@ public abstract class Symbol implements Element {
         }
     }
     // Panini code
+
+    /**
+     * A symbol representing what argument types are needed to
+     * correctly wire a capsule instance.
+     * 
+     * @author Sean L. Mooney
+     * @since panini-0.9.2
+     */
+    public static class WiringSymbol extends Symbol {
+
+        public WiringSymbol(long flags, Name name, Type type, Symbol owner) {
+            //TODO: Is this public? 
+            // Conceptually, wiring is only accessible in a system.
+            super(PUBLIC, flags, name, type, owner);
+            this.kind = org.paninij.code.TypeTags.CAPSULE_WIRING;
+        }
+
+        @Override
+        public String toString() {
+            return owner + "." + name;
+        }
+
+        @Override
+        public <R, P> R accept(ElementVisitor<R, P> v, P p) {
+            //TODO-XXX ElementVisitor case for WiringSymbols
+            return v.visit(this, p);
+        }
+    }
+
     /**
      * A class for capsule symbols
      */
@@ -718,6 +748,8 @@ public abstract class Symbol implements Element {
     	public CapsuleSymbol translated_task;
     	public CapsuleSymbol translated_thread;
     	public CapsuleSymbol parentCapsule;
+    	public WiringSymbol wiringSym;
+    	
     	public boolean definedRun;
     	public List<JCTree.JCVariableDecl> capsuleParameters;
     	
@@ -760,7 +792,7 @@ public abstract class Symbol implements Element {
     }
     
     /**
-     * A class for capsule symbols
+     * A class for system symbols
      */
     public static class SystemSymbol extends ClassSymbol{
     	public SystemGraphs graphs;

@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<addressbook>
+
+<address>
+<firstname>Hridesh</firstname>
+<lastname>Rajan</lastname>
+<street>Atanasoff Hall</street>
+<city>Ames</city>
+<state>IA</state>
+<zipcode>50010</zipcode>
+</address>
+
+<address>
+<firstname>Steven</firstname>
+<lastname>Kautz</lastname>
+<street>Atanasoff Hall</street>
+<city>Ames</city>
+<state>IA</state>
+<zipcode>50010</zipcode>
+</address>
+
+<address>
+<firstname>Hridesh</firstname>
+<lastname>Rajan</lastname>
+<street>Atanasoff Hall</street>
+<city>Ames</city>
+<state>IA</state>
+<zipcode>50010</zipcode>
+</address>
+
+</addressbook>

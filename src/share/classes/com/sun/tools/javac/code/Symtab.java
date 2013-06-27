@@ -192,6 +192,10 @@ public class Symtab {
     // Panini code
     public boolean duckAdded = false;
     public final Map<Name, CapsuleSymbol> capsules = new HashMap<Name, CapsuleSymbol>();
+    public final ClassSymbol capsuleWiring;
+    public boolean isCapsuleSym(Name n) {
+        return capsules.containsKey(n);
+    }
     // end Panini code
     
     /** A hashtable containing the encountered packages.
@@ -409,6 +413,11 @@ public class Symtab {
         // the builtin class of all methods
         methodClass = new ClassSymbol(PUBLIC|ACYCLIC, names.Method, noSymbol);
         methodClass.members_field = new Scope.ErrorScope(boundClass);
+
+        // Panini code
+        capsuleWiring = new ClassSymbol(PUBLIC|ACYCLIC, names.panini.Capsule, noSymbol);
+        capsuleWiring.members_field = new Scope.ErrorScope(boundClass);
+        // end Panini code
 
         // Create class to hold all predefined constants and operations.
         predefClass = new ClassSymbol(PUBLIC|ACYCLIC, names.empty, rootPackage);

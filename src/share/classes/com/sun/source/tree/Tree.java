@@ -49,6 +49,7 @@ public interface Tree {
     	PROCCALL(ProcInvocationTree.class),
     	PROCEDURE(ProcedureTree.class),
     	STATE(StateTree.class),
+    	CAPSULE_WIRING(CapsuleWiringTree.class),
     	CAPSULE_ARRAY_CALL(CapsuleArrayCallTree.class),
     	CAPSULE_ARRAY(CapsuleArrayTree.class),
     	SYSTEM(SystemTree.class),
@@ -59,6 +60,13 @@ public interface Tree {
     	FORALLLOOP(ForAllTree.class),
     	FOREACH(ForeachTree.class),
     	INIT(InitMethodTree.class),
+        /**
+         * Used for instances of {@link ManyToOne} topology construction.
+         */
+        WIREALL(WireallTree.class),
+        STAR_TOP(StarTree.class),
+        RING(RingTree.class),
+        ASSOCIATE(AssociateTree.class),
     	// end Panini code
         /**
          * Used for instances of {@link AnnotationTree}.

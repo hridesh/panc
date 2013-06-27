@@ -200,8 +200,8 @@ public class SystemGraphsBuilder extends TreeScanner {
             String varName = tree.name.toString();
             if(syms.capsules.containsKey(names.fromString(capsuleName))) {
                 CapsuleSymbol c = syms.capsules.get(names.fromString(capsuleName));
-                ArrayList<Node> nodes = new ArrayList<Node>(type.amount);
-                for (int i = 0; i < type.amount; i++) {
+                ArrayList<Node> nodes = new ArrayList<Node>(type.size);
+                for (int i = 0; i < type.size; i++) {
                     nodes.add(graphs.addCapsule(c, varName, i));
                 }
                 capsuleNames.put(varName, nodes);
@@ -285,7 +285,7 @@ public class SystemGraphsBuilder extends TreeScanner {
         }
     }
 
-    public void visitCapsuleArrayCall(JCCapsuleArrayCall tree) { 
+    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
         if(tree.index.getTag()!=Tag.LITERAL) { 
             System.out.println("Illegal capsule array call index");
             System.exit(1);

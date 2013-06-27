@@ -41,6 +41,10 @@ import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Flags.ANNOTATION;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
+// Panini code
+import org.paninij.parser.PaniniTokens;
+// end Panini code
+
 /** Prints out a tree as an indented Java source program.
  *
  *  <p><b>This is NOT part of any supported API.
@@ -484,14 +488,26 @@ public class Pretty extends JCTree.Visitor {
     	visitVarDef(tree);
     }
     
-    public void visitCapsuleArrayCall(JCCapsuleArrayCall tree){
+    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree){
     	try {
-			print(tree.name + "[" + tree.index + "]" + "(" + tree.arguments + ");");
+			print(tree.name + "[" + tree.index + "]" + "(" + tree.arguments + ")");
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
     }
     
+    @Override
+    public void visitCapsuleWiring(JCCapsuleWiring tree) {
+        try{
+            printExpr(tree.capsule);
+            print("(");
+            printExprs(tree.args);
+            print(")");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     public void visitCapsuleArray(JCCapsuleArray tree) {
         try {
             printBaseElementType(tree);
@@ -501,11 +517,48 @@ public class Pretty extends JCTree.Visitor {
         }
     }
     
+    @Override
+    public void visitWireall(JCWireall that) {
+    	try {
+			print(PaniniTokens.SYSLANG_WIRE_ALL + "(" + that.many + "," + that.args + ")");
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+    }
+
+    @Override
+    public void visitStar(JCStar that){
+    	try {
+			print("star" + "(" + that.center + "," + that.others + "," + that.args + ")");
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+    }
+
+    @Override
+    public void visitRing(JCRing that){
+    	try {
+			print("ring" + "(" + that.capsules + "," + that.args + ")");
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+    }
+
+    @Override
+    public void visitAssociate(JCAssociate that){
+    	try {
+    		print("associate" + "(" + that.src + "," + that.srcPos + "," + that.dest + ","
+    				+ that.destPos + "," + that.len + "," + that.args + ")");
+    	} catch (IOException e) {
+    		throw new UncheckedIOException(e);
+    	}
+    }
+
     private void printBrackets(JCCapsuleArray tree) throws IOException {
         JCTree elem;
         while (true) {
             elem = tree.elemtype;
-            print("[" + tree.amount + "]");
+            print("[" + tree.sizeExpr.toString() + "]");
             if (!elem.hasTag(CAPSULEARRAY)) break;
             tree = (JCCapsuleArray) elem;
         }

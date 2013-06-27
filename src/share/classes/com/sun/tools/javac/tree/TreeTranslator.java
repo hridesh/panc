@@ -435,13 +435,21 @@ public class TreeTranslator extends JCTree.Visitor {
     }
     
     public void visitSystemDef(JCSystemDecl tree){
+        tree.params = translate(tree.params);
+        tree.body = translate(tree.body);
         result = tree;
     }
     
     public void visitCapsuleDef(JCCapsuleDecl tree){
     	result = tree;
     }
-    
+
+    public void visitCapsuleArray(JCCapsuleArray tree) {
+        tree.elemtype = translate(tree.elemtype);
+        tree.sizeExpr = translate(tree.sizeExpr);
+        result = tree;
+    }
+
     public void visitInitDef(JCInitDecl tree){
     	visitMethodDef(tree);
     }
@@ -455,8 +463,59 @@ public class TreeTranslator extends JCTree.Visitor {
         tree.body = translate(tree.body);
         result = tree;
     }
+
+    @Override
+    public void visitCapsuleWiring(JCCapsuleWiring tree) {
+        tree.capsule = translate(tree.capsule);
+        tree.args = translate(tree.args);
+        result = tree;
+    }
+
+
+    @Override
+    public void visitWireall(JCWireall tree) {
+    	tree.many = translate(tree.many);
+    	tree.args = translate(tree.args);
+    	result = tree;
+    }
+
+    @Override
+    public void visitStar(JCStar tree){
+    	tree.center = translate(tree.center);
+    	tree.others = translate(tree.others);
+    	tree.args = translate(tree.args);
+    	result = tree;
+    }
+
+    @Override
+    public void visitRing(JCRing tree){
+    	tree.capsules = translate(tree.capsules);
+    	tree.args = translate(tree.args);
+    	result = tree;
+    }
+
+    @Override
+    public void visitAssociate(JCAssociate tree){
+    	tree.src = translate(tree.src);
+    	tree.srcPos = translate(tree.srcPos);
+    	tree.dest = translate(tree.dest);
+    	tree.destPos = translate(tree.destPos);
+    	tree.len = translate(tree.len);
+    	tree.args = translate(tree.args);
+    	result = tree;
+    }
+
+    @Override
+    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
+        tree.arguments = translate(tree.arguments);
+        tree.index = translate(tree.index);
+        tree.indexed = translate(tree.indexed);
+        result = tree;
+    }
     // end Panini code
+
+
     public void visitTree(JCTree tree) {
-        throw new AssertionError(tree);
+        throw new AssertionError(tree + "No visit method for node: " + tree.getClass().getName() + " in " + this.getClass().getName());
     }
 }

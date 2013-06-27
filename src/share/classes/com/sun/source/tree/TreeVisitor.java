@@ -112,7 +112,8 @@ public interface TreeVisitor<R,P> {
     R visitProc(ProcedureTree tree, P p);
     R visitProcInvocation(ProcInvocationTree tree, P p);
     R visitState(StateTree tree, P p);
-    R visitCapsuleArrayCall(CapsuleArrayCallTree tree, P p);
+    R visitCapsuleWiring(CapsuleWiringTree node, P p);
+    R visitIndexedCapsuleWiring(CapsuleArrayCallTree tree, P p);
     R visitCapsuleArray(CapsuleArrayTree tree, P p);
     R visitSystem(SystemTree node, P p);
     R visitCapsule(CapsuleTree node, P p);
@@ -120,5 +121,9 @@ public interface TreeVisitor<R,P> {
     R visitForAll(ForAllTree node, P p);
     R visitForeach(ForeachTree node, P p);
     R visitInit(InitMethodTree node, P p);
+    R visitWireall(WireallTree node, P p);
+    R visitStar(StarTree node, P p);
+    R visitRing(RingTree node, P p);
+    R visitAssociate(AssociateTree node, P p);
     //end Panini Code
 }

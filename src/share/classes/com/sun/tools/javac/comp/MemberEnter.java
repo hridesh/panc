@@ -423,6 +423,12 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
             addEnumMembers(tree, env);
         }
         memberEnter(tree.defs, env);
+
+        // Panini code
+        if (tree instanceof JCCapsuleDecl) {
+            finishCapsule((JCCapsuleDecl) tree, env);
+        }
+        // end Panini code
     }
 
     /** Add the implicit members for an enum type
@@ -641,6 +647,70 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         if ((tree.mods.flags & STATIC) != 0) localEnv.info.staticLevel++;
         return localEnv;
     }
+
+    // Panini code
+    /**Create an environment to attribute the system block in.
+     * @param tree The definition
+     * @param env  The environment out side the system.
+     */
+    Env<AttrContext> systemEnv(JCSystemDecl tree, Env<AttrContext> env) {
+        Env<AttrContext> localEnv =
+                env.dup(tree, env.info.dup(env.info.scope.dupUnshared()));
+        localEnv.enclClass=tree;
+        localEnv.info.scope.owner = tree.sym;
+        return localEnv;
+    }
+
+    /**
+     * Finish a CapsuleDecl by partially entering the capsule parameters
+     * and creating the wiring symbol.
+     * @param tree
+     * @param env
+     */
+    void finishCapsule(JCCapsuleDecl tree, Env<AttrContext> env) {
+        ListBuffer<Type> wts = new ListBuffer<Type>();
+
+        for (JCVariableDecl p : tree.params) {
+            wts.append(enterCapsuleParam(p, tree.sym, env));
+        }
+
+        //Create a wiring symbol from the parameter types.
+        WiringSymbol wiringSym = new WiringSymbol(0, names.panini.Wiring,
+                new org.paninij.code.Type.WiringType(wts.toList(), tree.sym),
+                tree.sym);
+        ((CapsuleSymbol) tree.sym).wiringSym = wiringSym;
+    }
+
+    /**Assign a type and symbol to a capsule parameter decl.
+     */
+    Type enterCapsuleParam(JCVariableDecl tree, Symbol owner, Env<AttrContext> env) {
+        /*
+         * Adapted from the logic for entering VariableDecls.
+         *
+         * Does not call member enter. Will cause a conflict with the
+         * entered fields of the capsule that are translated from
+         * the system parameters.
+         */
+
+        Scope enclScope = env.info.getScope();
+
+        Type type = attr.attribType(tree.vartype, env);
+
+        VarSymbol v = new VarSymbol(0, tree.name, tree.vartype.type, tree.sym);
+        v.owner = owner;
+        v.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, v, tree);
+        tree.sym = v;
+
+        if (chk.checkUnique(tree.pos(), v, enclScope)) {
+            chk.checkTransparentVar(tree.pos(), v, enclScope);
+            enclScope.enter(v);
+        }
+        annotateLater(tree.mods.annotations, env, v);
+        v.pos = tree.pos;
+
+        return type;
+    }
+    // end Panini code
 
     public void visitVarDef(JCVariableDecl tree) {    	
         Env<AttrContext> localEnv = env;

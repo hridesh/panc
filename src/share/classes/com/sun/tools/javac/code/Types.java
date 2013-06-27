@@ -28,6 +28,8 @@ package com.sun.tools.javac.code;
 import java.lang.ref.SoftReference;
 import java.util.*;
 
+import org.paninij.code.Type.WiringType;
+
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
 
@@ -581,6 +583,10 @@ public class Types {
             undet.lobounds = undet.lobounds.prepend(s);
             return true;
         }
+        // Panini code
+        case org.paninij.code.TypeTags.CAPSULE_WIRING:
+            return false;
+        // end Panini code
         default:
             return isSubtype(s, t);
         }
@@ -2196,6 +2202,18 @@ public class Types {
             public Boolean visitErrorType(ErrorType t, Type s) {
                 return false;
             }
+
+            // Panini code
+
+            public Boolean visitWiringType(WiringType t, Type s) {
+                if(s.tag != org.paninij.code.TypeTags.CAPSULE_WIRING) {
+                    return false;
+                }
+                WiringType other = (WiringType) s;
+                return containsType(t.getWiringTypes(), other.getWiringTypes());
+
+            }
+            // end Panini code
         };
 
         TypeRelation hasSameArgs_strict = new HasSameArgs(true);

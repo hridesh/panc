@@ -30,6 +30,8 @@ import javax.lang.model.element.ElementKind;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.*;
+import static com.sun.tools.javac.code.Flags.ANNOTATION;
+import static com.sun.tools.javac.code.Flags.BLOCK;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
@@ -54,8 +56,6 @@ import org.paninij.systemgraphs.*;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
-import static com.sun.tools.javac.code.Flags.ANNOTATION;
-import static com.sun.tools.javac.code.Flags.BLOCK;
 import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.Kinds.ERRONEOUS;
 import static com.sun.tools.javac.code.TypeTags.*;
@@ -152,7 +152,7 @@ public class Attr extends JCTree.Visitor {
         unknownTypeInfo = new ResultInfo(TYP, Type.noType);
 
         // Panini code
-        pAttr = new org.paninij.comp.Attr(make, names, enter, memberEnter, syms, log, annotate);
+        pAttr = new org.paninij.comp.Attr(make, names, types, enter, memberEnter, syms, log, annotate);
         graphsBuilder = SystemGraphsBuilder.instance(context);
         // end Panini code
     }
@@ -225,7 +225,7 @@ public class Attr extends JCTree.Visitor {
      *  @param resultInfo  The expected result of the tree
      */
     Type check(JCTree tree, Type owntype, int ownkind, ResultInfo resultInfo) {
-        if (owntype.tag != ERROR && resultInfo.pt.tag != METHOD && resultInfo.pt.tag != FORALL) {
+        if (owntype.tag != ERROR && resultInfo.pt.tag != METHOD && resultInfo.pt.tag != FORALL ) {
             if ((ownkind & ~resultInfo.pkind) == 0) {
                 owntype = resultInfo.check(tree, owntype);
             } else {
@@ -722,33 +722,223 @@ public class Attr extends JCTree.Visitor {
     }
     
     // Panini code
-    public final void visitCapsuleDef(final JCCapsuleDecl tree){
-    	pAttr.visitCapsuleDef(tree, this, env, rs);
+    /**Check the wiring for a capsule instance.
+     * If the check succeeds, store the wiring type in tree and return it.
+     * If the check fails, store errType in tree and return it.
+     *
+     * Based on {@link #check(JCTree, Type, int, ResultInfo)}. This version
+     * behaves a little bit differently because it iterates/checks the wiring
+     * argument types before assigning the final type to tree. In that respect,
+     * this method is more like checking a method invocation, but is much simpler.
+     *
+     * @param tree capsule wiring/topology tree.
+     * @param capsuletype type of the capsule to wire
+     * @param argtrees arguments for wiring
+     * @param argtypes argument types.
+     */
+    Type checkWiring(JCTree tree, Type capsuletype, List<JCExpression> argtrees, List<Type> argtypes) {
+        if(!syms.capsules.containsKey(capsuletype.tsym.name)) {
+            log.error(tree, "only.capsule.types.allowed");
+            return types.createErrorType(capsuletype);
+        }
 
-    	// print out the effect
-    	/*for (JCTree def : tree.defs) {
-    		if (def instanceof JCMethodDecl) {
-    			JCMethodDecl jcmd = (JCMethodDecl)def;
-    			org.paninij.effects.EffectSet ars = jcmd.sym.effect;
-    			if (ars != null) {
-    				System.out.println(jcmd.sym + "\t" + tree.sym);
-    				ars.printEffect();
-    				for (String s: ars.effectsToStrings()) {
-    					System.out.println(s);
-    				}
-    			}
-    		}
-    	}*/
+        Type wiringtype = types.createErrorType(capsuletype);
+
+        if (capsuletype.tsym instanceof CapsuleSymbol) {
+            wiringtype = checkWiringArgs(tree, wiringtype, (CapsuleSymbol) capsuletype.tsym, argtrees,
+                    argtypes);
+        } else {
+            log.error(tree, "invalid.capsule.type1", capsuletype);
+        }
+
+        tree.type = wiringtype;
+        return wiringtype;
     }
 
+    /**
+     * Check each argument against its prototype from the wiring symbol type.
+     * @param tree
+     * @param owntype
+     * @param ownsym
+     * @param argtrees
+     * @param argtypes
+     * @return
+     */
+    private Type checkWiringArgs(JCTree tree, Type owntype,
+            CapsuleSymbol ownsym, List<JCExpression> argtrees, List<Type> argtypes) {
+        List<Type> wt = ownsym.wiringSym.type.getParameterTypes();
+        List<JCExpression> as = argtrees;
+        List<Type> ats = argtypes;
+
+        if(wt.size() != as.size()) {
+            log.error(tree, "wiring.args.count.mismatch", wt.size(), as.size());
+        }
+
+        if(wt.size() < 1) { //nothing to do.
+            return ownsym.wiringSym.type;
+        }
+
+        if(syms.capsules.containsKey(wt.head.tsym.name)){//if its a capsule type
+            if(as.head.toString().equals("null")){
+                log.error(as.head.pos(), "capsule.null.declare");
+            }
+        }
+
+        boolean wiringOkay = true;
+        while(wt.nonEmpty()){
+            // redo our check here. The stock version assigns
+            // the type to the tree when it finishes, which we do not want
+            // in this context.
+            Type aType = ats.head;
+            int  aKind = VAL;
+            ResultInfo wireResult = new ResultInfo(VAL, wt.head);
+
+            if (aType.tag != ERROR && wireResult.pt.tag != METHOD && resultInfo.pt.tag != FORALL) {
+                Type res = wireResult.check(as.head, aType);
+                wiringOkay &= res.tag != ERROR; //check for a mismatch in arg wiring
+            } else {
+                log.error(as.head.pos(), "unexpected.type",
+                          kindNames(wireResult.pkind),
+                          kindNames(aKind));
+                wiringOkay = false;
+            }
+
+            wt = wt.tail;
+            as = as.tail;
+            ats = ats.tail;
+        }
+
+        return wiringOkay ? ownsym.wiringSym.type : owntype;
+    }
+
+    /**
+     * Utility method to check a expression is a capsule array
+     * @param pos
+     * @param capArray
+     * @param env
+     * @return the Capsule type for the array, or an error type.
+     */
+    Type checkCapsuleArray(JCExpression tree, Env<AttrContext> env) {
+        Type owntype = types.createErrorType(tree.type);
+        Type atype   = attribExpr(tree, env);
+        if( types.isArray(atype) ) {
+            //Will need to handle nested arrays eventually.
+            owntype = types.elemtype(atype);
+            if(!syms.capsules.containsKey(owntype.tsym.name)) {
+                log.error(tree.pos(), "only.capsule.types.allowed");
+            }
+        } else {
+            log.error(tree.pos(), "array.req.but.found", atype);
+        }
+        return owntype;
+    }
+
+    public final void visitCapsuleDef(final JCCapsuleDecl tree){
+    	pAttr.visitCapsuleDef(tree, this, env, rs);
+    }
+
+    @Override
+    public void visitCapsuleWiring(JCCapsuleWiring tree) {
+        Env<AttrContext> localEnv = env.dup(tree, env.info.dup());
+        Type owntype = attribExpr(tree.capsule, localEnv);
+        List<Type> argtypes = attribArgs(tree.args, localEnv);
+        if( owntype.tag != ERROR) {
+            checkWiring(tree, owntype, tree.args, argtypes);
+        }
+    }
+
+    @Override
+    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
+        attribExpr(tree.index, env, syms.intType);
+        Type owntype = checkCapsuleArray(tree.indexed, env);
+
+        List<Type> argtypes = attribArgs(tree.arguments, env);
+        checkWiring(tree, owntype, tree.arguments, argtypes);
+    }
+
+
+
+    @Override
+    public void visitCapsuleArray(JCCapsuleArray tree) {
+        visitTypeArray(tree);
+    }
+
+    /**
+     * Adapted from {@link #visitMethodDef(JCMethodDecl)}.
+     */
     public final void visitSystemDef(final JCSystemDecl tree){
-		pAttr.visitSystemDef(tree, rs, env, doGraphs, seqConstAlg);
+        final ClassSymbol treeSym = tree.sym;
+
+        //Make the sym look like a method kind.
+        // Otherwise visiting the local vardefs fails.
+        // But reset it at the end, or Lower fails.
+        final int oldKind = treeSym.kind;
+        treeSym.kind = MTH;
+
+        // Create a new environment with local scope
+        // for attributing the method.
+        Env<AttrContext> localEnv = memberEnter.systemEnv(tree, env);
+
+        Lint lint = env.info.lint.augment(treeSym.attributes_field, treeSym.flags());
+        Lint prevLint = chk.setLint(lint);
+
+        try {
+            deferredLintHandler.flush(tree.pos());
+
+            // Enter all type parameters into the local method scope.
+            //TODO: Do we have type parameters for systems?
+            for (List<JCTypeParameter> l = tree.typarams; l.nonEmpty(); l = l.tail)
+                localEnv.info.scope.enterIfAbsent(l.head.type.tsym);
+
+            ClassSymbol owner = env.enclClass.sym;
+            if ((owner.flags() & ANNOTATION) != 0 &&
+                    tree.params.nonEmpty())
+                log.error(tree.params.head.pos(),
+                        "intf.annotation.members.cant.have.params");
+
+
+            // Attribute all input parameters.
+            for (List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail) {
+                attribStat(l.head, localEnv);
+            }
+
+            // Check that type parameters are well-formed.
+            chk.validate(tree.typarams, localEnv);
+
+            // Attribute the body statements.
+            for(List<JCStatement> l = tree.body.stats; l.nonEmpty(); l = l.tail) {
+                attribStat(l.head, localEnv);
+            }
+
+            // visit the system def for rewriting and analysis.
+            pAttr.visitSystemDef(tree, rs, localEnv, doGraphs, seqConstAlg);
+
+            localEnv.info.scope.leave();
+        } finally {
+            treeSym.kind = oldKind;
+            chk.setLint(prevLint);
+        }
     }
     
     public void visitProcDef(JCProcDecl tree){
     	pAttr.visitProcDef(tree);
     }
     
+    @Override
+    public void visitProcApply(JCProcInvocation tree) {
+        //TODO: Extend the env?
+
+        //find the capsule instance.
+        //attribute wiring, maybe?
+        //check the args.
+        List<Type> argTypes = attribArgs(tree.args, env);
+        //Find the Capsule type for the name of the symbol
+        Type mt = newMethTemplate(List.<Type>nil(), argTypes);
+        //localEnv.info.varArgs = false;
+        tree.type =  attribExpr(tree.meth, env, mt);
+        result = tree.type;
+    }
+
     public void visitForeach(JCForeach tree){
     	
     	attribStat(tree.var, env);
@@ -763,6 +953,134 @@ public class Attr extends JCTree.Visitor {
     	tree.predecessors = new java.util.LinkedList<JCTree>();
     	tree.startNodes = new java.util.LinkedList<JCTree>();
     	tree.type = proto;
+    }
+
+
+    @Override
+    public void visitWireall(JCWireall tree) {
+        arrangeWiringOperatorArgs(tree);
+        Type mType = checkCapsuleArray(tree.many, env);
+        List<Type> argtypes = attribArgs(tree.args, env);
+        checkWiring(tree, mType, tree.args, argtypes);
+    }
+
+    @Override
+    public void visitRing(JCRing tree) {
+        arrangeWiringOperatorArgs(tree);
+        attribExpr(tree.capsules, env);
+        Type ctype = checkCapsuleArray(tree.capsules, env);
+        List<Type> argtypes = attribArgs(tree.args, env);
+
+        //Make up a new list to type check against.
+        //The capusules arg is also an argument.
+        ListBuffer<JCExpression> was = new ListBuffer<JCExpression>();
+        was.add(tree.capsules); was.addAll(tree.args);
+        ListBuffer<Type> wts = new ListBuffer<Type>();
+        wts.add(ctype); wts.addAll(argtypes);
+
+        checkWiring(tree, ctype, was.toList(), wts.toList());
+    }
+
+    @Override
+    public void visitStar(JCStar tree) {
+        arrangeWiringOperatorArgs(tree);
+        Type centerT = attribExpr(tree.center, env);
+        Type spokeT = checkCapsuleArray(tree.others, env);
+        List<Type> argtypes = attribArgs(tree.args, env);
+
+        ListBuffer<JCExpression> was = new ListBuffer<JCExpression>();
+        ListBuffer<Type> wts = new ListBuffer<Type>();
+
+        //Center needs be wired to a caparray of othertype, with args.
+
+        was.add(tree.others);
+        was.addAll(tree.args);
+        wts.add(tree.others.type);
+        wts.addAll(argtypes);
+        checkWiring(tree, centerT, was.toList(), wts.toList());
+
+        //Other type wires to the center, with args.
+        //Reset the args lists.
+        was = new ListBuffer<JCExpression>();
+        wts = new ListBuffer<Type>();
+        was.add(tree.center);
+        was.addAll(tree.args);
+        wts.add(centerT);
+        wts.addAll(argtypes);
+
+        result = tree.type = checkWiring(tree, spokeT, was.toList(), wts.toList());
+    }
+
+    @Override
+    public void visitAssociate(JCAssociate tree) {
+        arrangeWiringOperatorArgs(tree);
+        //capture types without the arrays.
+        Type sType = checkCapsuleArray(tree.src, env);
+        Type dType = checkCapsuleArray(tree.dest, env);
+
+        attribExpr(tree.srcPos, env, syms.intType);
+        attribExpr(tree.destPos, env, syms.intType);
+        attribExpr(tree.len, env, syms.intType);
+        List<Type> argtypes = attribArgs(tree.args, env);
+
+        ListBuffer<JCExpression> was = new ListBuffer<JCExpression>();
+        was.add(tree.dest);
+        was.addAll(tree.args);
+        ListBuffer<Type> wts = new ListBuffer<Type>();
+        wts.add(dType);
+        wts.addAll(argtypes);
+
+        tree.type = checkWiring(tree, sType, was.toList(), wts.toList());
+    }
+
+    /**
+     * Rearrange the arguments into the more specific fields of
+     * the topology. Re-solves parsing abiguity for the topology
+     * syntax.
+     * @param tree
+     */
+    void arrangeWiringOperatorArgs(JCTopology tree){
+        boolean argSizeError = false;
+        switch(tree.getTag()) {
+        case TOP_WIREALL:
+        case TOP_RING:
+            if(tree.args.size() >= 1){
+                //first arg is actually the id to be wired
+                tree.setMany(tree.args.head);
+                //remaining args are the wiring args
+                tree.args = tree.args.tail;
+            } else {
+                argSizeError = true;
+            }
+            break;
+        case TOP_STAR:
+            if(tree.args.size() >= 2) {
+               tree.setOrbiters(tree.args.head);
+               tree.setCenter(tree.args.tail.head);
+               tree.args = tree.args.tail.tail;
+            } else {
+               argSizeError = true;
+            }
+            break;
+        case TOP_ASSOC:
+            if(tree.args.size() >= 5) { //walk down the list 5 times.
+                tree.setSrc(tree.args.head);     tree.args = tree.args.tail;
+                tree.setSrcPos(tree.args.head);  tree.args = tree.args.tail;
+                tree.setDest(tree.args.head);    tree.args = tree.args.tail;
+                tree.setDestPos(tree.args.head); tree.args = tree.args.tail;
+                tree.setLength(tree.args.head);
+                tree.args = tree.args.tail;
+            } else {
+                argSizeError = true;
+            }
+            break;
+        default:
+            Assert.error("Unknown topology operator " + tree.desc());
+        }
+
+        if(argSizeError){
+            log.error(tree, "topology.operator.needs.n.args", tree.desc(), tree.minArgCount());
+        }
     }
     // end Panini code
 
@@ -2248,6 +2566,8 @@ public class Attr extends JCTree.Visitor {
     public void visitIdent(JCIdent tree) {
         Symbol sym;
         boolean varArgs = false;
+
+        int pttag = pt().tag;
 
         // Find symbol
         if (pt().tag == METHOD || pt().tag == FORALL) {

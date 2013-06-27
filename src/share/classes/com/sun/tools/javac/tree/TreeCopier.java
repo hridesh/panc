@@ -26,6 +26,7 @@
 package com.sun.tools.javac.tree;
 
 import com.sun.source.tree.*;
+import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
@@ -470,7 +471,15 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     }
     
     @Override
-	public JCTree visitCapsuleArrayCall(CapsuleArrayCallTree node, P p) {
+    public JCTree visitCapsuleWiring(CapsuleWiringTree node, P p) {
+        JCCapsuleWiring t = (JCCapsuleWiring) node;
+        JCExpression capSel = copy(t.capsule, p);
+        List<JCExpression> args = copy(t.args, p);
+        return M.at(t.pos).WiringApply(capSel, args);
+    }
+
+    @Override
+	public JCTree visitIndexedCapsuleWiring(CapsuleArrayCallTree node, P p) {
 		JCCapsuleArrayCall t = (JCCapsuleArrayCall) node;
 		List<JCExpression> args = copy(t.arguments, p);
 		return M.at(t.pos).CapsuleArrayCall(t.name, t.index, t.indexed, args);
@@ -480,7 +489,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 	public JCTree visitCapsuleArray(CapsuleArrayTree node, P p) {
     	JCCapsuleArray t = (JCCapsuleArray) node;
         JCExpression elemtype = copy(t.elemtype, p);
-        return M.at(t.pos).CapsuleArray(elemtype, t.getAmount());
+        return M.at(t.pos).CapsuleArray(elemtype, t.sizeExpr);
 	}
     
 	public JCTree visitSystem(SystemTree node, P p) {
@@ -521,5 +530,21 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         JCExpression defaultValue = copy(t.defaultValue, p);
         return M.at(t.pos).MethodDef(mods, t.name, restype, typarams, params, thrown, body, defaultValue);
 	}
+
+	public JCTree visitWireall(WireallTree node, P p) {
+	    return null; //FIXME
+	}
+
+	public JCTree visitStar(StarTree node, P p){
+		return null; //FIXME
+	}
+
+	public JCTree visitRing(RingTree node, P p){
+		return null; //FIXME
+	}
+
+	public JCTree visitAssociate(AssociateTree node, P p){
+		return null; //FIXME
+	};
 	// end Panini code
 }

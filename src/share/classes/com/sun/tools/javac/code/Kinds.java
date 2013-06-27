@@ -91,7 +91,14 @@ public class Kinds {
     public static final int ABSENT_MTH   = ERRONEOUS+7; // missing method
     public static final int ABSENT_TYP   = ERRONEOUS+8; // missing type
 
+    // Panini code
+    public static final int ABSENT_WIRE  = ERRONEOUS+9; //missing capsule wiring
+    // end Panini code
+
     public enum KindName implements Formattable {
+        // Panini code
+        CAPSULE_WIRING("kindname.panini.capsule_wiring"),
+        // end Panini code
         ANNOTATION("kindname.annotation"),
         CONSTRUCTOR("kindname.constructor"),
         INTERFACE("kindname.interface"),
@@ -227,6 +234,10 @@ public class Kinds {
             return KindName.METHOD;
         case ABSENT_TYP:
             return KindName.CLASS;
+        // Panini code
+        case ABSENT_WIRE:
+            return KindName.CAPSULE_WIRING;
+        // end Panini code
         default:
             throw new AssertionError("Unexpected kind: "+kind);
         }

@@ -503,11 +503,6 @@
         <build-tool name="javac"/>
     </target>
 
-    <target name="build-panc" depends="build-classes-javac">
-        <build-jar  name="panc" includes="${javac.includes}"/>
-        <build-tool name="panc"/>
-    </target>
-
     <target name="javadoc-javac" depends="build-javac,-def-javadoc-tool">
         <javadoc-tool name="javac" includes="${javac.includes}" options="${javadoc.jls.option}"/>
     </target>
@@ -1081,6 +1076,19 @@
         </macrodef>
     </target>
 	
+    <!--
+    **** panini/panc targets.
+    -->
+
+    <target name="build-panc" depends="build-classes-javac">
+        <build-jar  name="panc" includes="${javac.includes}"/>
+        <build-tool name="panc"/>
+    </target>
+
+    <target name="javadoc-panc" depends="build-javac,-def-javadoc-tool">
+        <property name="javadoc.packagenames" value="*"/>
+        <javadoc-tool name="panc" includes="${javac.includes}" options="${javadoc.jls.option}"/>
+    </target>
 
     <target name="build-paninij-runtime" depends="build-panc">
         <build-classes

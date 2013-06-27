@@ -16,25 +16,7 @@
  *
  * Contributor(s): Sean L. Mooney
  */
-
-import java.io.File;
-
-
-/*
- * @test Primitives
- * @summary Compile the auto-boxing primitives example.
- */
-public class CompilePrimitiveExample extends CompileKnownExample {
-    public static void main(String[] args) throws Exception {
-        new CompilePrimitiveExample().run();
-    }
-
-    void run() throws Exception {
-       run(new File[]{new File(examples, "PrimitiveTest.java")});
-    }
-
-    File getSrcDir() {
-        return new File("../../../examples");
-    }
-
+system S1(String[] args) {
+    int size = 5;
+    int size2 = size + 3;
 }

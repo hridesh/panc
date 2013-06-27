@@ -143,11 +143,64 @@ public class TreeMaker implements JCTree.Factory {
 		return tree;
 	}
 
+	public JCWireall ManyToOne(List<JCExpression> args){
+		JCWireall tree = new JCWireall(null, args);
+		tree.pos = pos;
+		return tree;
+	}
+
+	@Deprecated
+	public JCStar Star(JCExpression center, JCExpression others, List<JCExpression> args){
+		JCStar tree = new JCStar(center, others, args);
+		tree.pos = pos;
+		return tree;
+	}
+	
+	public JCStar Star(List<JCExpression> args){
+        JCStar tree = new JCStar(null, null, args);
+        tree.pos = pos;
+        return tree;
+    }
+
+	@Deprecated
+	public JCRing Ring(JCExpression capsules, List<JCExpression> args){
+		JCRing tree = new JCRing(capsules, args);
+		tree.pos = pos;
+		return tree;
+	}
+	
+	public JCRing Ring( List<JCExpression> args){
+        JCRing tree = new JCRing(null, args);
+        tree.pos = pos;
+        return tree;
+    }
+
+	public JCAssociate Associate(JCExpression src, JCExpression srcPos, JCExpression dest,
+			JCExpression destPos, JCExpression len, List<JCExpression> args){
+		JCAssociate tree = new JCAssociate(src, srcPos, dest, destPos, len, args);
+		tree.pos = pos;
+		return tree;
+	}
+	
+	public JCAssociate Associate(List<JCExpression> args){
+        JCAssociate tree = new JCAssociate(null, null, null, null, null, args);
+        tree.pos = pos;
+        return tree;
+    }
+
 	public JCStateDecl StateDef(JCModifiers mods, Name name,
 			JCExpression vartype, JCExpression init) {
 		JCStateDecl tree = new JCStateDecl(mods, name, vartype, init, null);
 		tree.pos = pos;
 		return tree;
+	}
+
+	/**Create a new capsule wiring statement.
+	 */
+	public JCCapsuleWiring WiringApply(JCExpression t, List<JCExpression> args) {
+	    JCCapsuleWiring tree = new JCCapsuleWiring(t, args);
+	    tree.pos = pos;
+	    return tree;
 	}
 
 	public JCCapsuleArrayCall CapsuleArrayCall(Name name, JCExpression index,
@@ -158,8 +211,8 @@ public class TreeMaker implements JCTree.Factory {
 		return tree;
 	}
 
-	public JCCapsuleArray CapsuleArray(JCExpression elemtype, int amount) {
-		JCCapsuleArray tree = new JCCapsuleArray(elemtype, amount);
+	public JCCapsuleArray CapsuleArray(JCExpression elemtype, JCExpression sizeExpr) {
+		JCCapsuleArray tree = new JCCapsuleArray(elemtype, sizeExpr);
 		tree.pos = pos;
 		return tree;
 	}
