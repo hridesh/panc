@@ -8,20 +8,21 @@ import org.paninij.analysis.CommonMethod;
 import org.paninij.path.Path_Var;
 
 import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
+import com.sun.tools.javac.code.Symbol.CapsuleExtras;
+import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
 
 public class AliasingIntra {
-	public final CapsuleSymbol cap;
+	public final ClassSymbol cap;
 	public final JCMethodDecl current_analyzing_meth;
 	public HashMap<JCTree, AliasingGraph> graphBeforeFlow =
 		new HashMap<JCTree, AliasingGraph>();
 	public HashMap<JCTree, AliasingGraph> graphAfterFlow =
 		new HashMap<JCTree, AliasingGraph>();
 
-	public AliasingIntra(CapsuleSymbol cap, JCMethodDecl current_meth) {
+	public AliasingIntra(ClassSymbol cap, JCMethodDecl current_meth) {
 		this.current_analyzing_meth = current_meth;
 		this.cap = cap;
 	}

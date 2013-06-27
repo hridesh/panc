@@ -2112,8 +2112,8 @@ public class ClassReader implements Completer {
             return (SystemSymbol)c;
     }
     
-    public CapsuleSymbol defineCapsule(Name name, Symbol owner){
-    	CapsuleSymbol c = new CapsuleSymbol(0, name, owner);
+    public ClassSymbol defineCapsule(Name name, Symbol owner){
+        ClassSymbol c = new ClassSymbol(Flags.CAPSULE, name, owner);
         c.completer = this;
         return c;
     }
@@ -2121,10 +2121,10 @@ public class ClassReader implements Completer {
     /** Create a new toplevel or member class symbol with given name
      *  and owner and enter in `classes' unless already there.
      */
-    public CapsuleSymbol enterCapsule(Name name, TypeSymbol owner) {
+    public ClassSymbol enterCapsule(Name name, TypeSymbol owner) {
         Name flatname = TypeSymbol.formFlatName(name, owner);
         ClassSymbol c = classes.get(flatname);
-        if (c == null||(c instanceof ClassSymbol)) {
+        if (c == null) {
             c = defineCapsule(name, owner);
             classes.put(flatname, c);
         } else if ((c.name != name || c.owner != owner) && owner.kind == TYP && c.owner.kind == PCK) {
@@ -2134,8 +2134,12 @@ public class ClassReader implements Completer {
             c.name = name;
             c.owner = owner;
             c.fullname = ClassSymbol.formFullName(name, owner);
+        } else {
+            // Add the capsule flag. This symbol was created by an earlier step
+            // that did not/could not know this would be a capsule.
+           Symbol.CapsuleExtras.asCapsuleSymbol(c);
         }
-        return (CapsuleSymbol)c;
+        return c;
     }
 
     /**
@@ -2148,7 +2152,7 @@ public class ClassReader implements Completer {
      * @return a newly created class symbol
      * @throws AssertionError if the class symbol already exists
      */
-    public CapsuleSymbol enterCapsule(Name flatName, JavaFileObject classFile) {
+    public ClassSymbol enterCapsule(Name flatName, JavaFileObject classFile) {
         ClassSymbol cs = classes.get(flatName);
         if (cs != null||(cs instanceof ClassSymbol)) {
             String msg = Log.format("%s: completer = %s; class file = %s; source file = %s",
@@ -2165,18 +2169,18 @@ public class ClassReader implements Completer {
         cs = defineCapsule(Convert.shortName(flatName), owner);
         cs.classfile = classFile;
         classes.put(flatName, cs);
-        return (CapsuleSymbol)cs;
+        return cs;
     }
 
     /** Create a new member or toplevel class symbol with given flat name
      *  and enter in `classes' unless already there.
      */
-    public CapsuleSymbol enterCapsule(Name flatname) {
+    public ClassSymbol enterCapsule(Name flatname) {
         ClassSymbol c = classes.get(flatname);
         if (c == null)
             return enterCapsule(flatname, (JavaFileObject)null);
         else
-            return (CapsuleSymbol)c;
+            return c;
     }
     // end Panini code
     

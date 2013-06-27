@@ -91,7 +91,7 @@ public class SystemGraphsBuilder extends TreeScanner {
         scan(system.body);
 
         for (Node capsule : capsuleNames.allNodes()) {
-            for (MethodSymbol method : capsule.sym.procedures.keySet()) {
+            for (MethodSymbol method : capsule.sym.capsule_info.procedures.keySet()) {
                 currentCapsule = capsule;
                 traverseCallGraph(method);
             }
@@ -199,7 +199,7 @@ public class SystemGraphsBuilder extends TreeScanner {
             String capsuleName = type.elemtype.toString();
             String varName = tree.name.toString();
             if(syms.capsules.containsKey(names.fromString(capsuleName))) {
-                CapsuleSymbol c = syms.capsules.get(names.fromString(capsuleName));
+                ClassSymbol c = syms.capsules.get(names.fromString(capsuleName));
                 ArrayList<Node> nodes = new ArrayList<Node>(type.size);
                 for (int i = 0; i < type.size; i++) {
                     nodes.add(graphs.addCapsule(c, varName, i));
@@ -210,7 +210,7 @@ public class SystemGraphsBuilder extends TreeScanner {
             String capsuleName = tree.vartype.toString();
             String varName = tree.name.toString();
             if(syms.capsules.containsKey(names.fromString(capsuleName))) {
-                CapsuleSymbol c = syms.capsules.get(names.fromString(capsuleName));
+                ClassSymbol c = syms.capsules.get(names.fromString(capsuleName));
                 capsuleNames.put(varName, graphs.addCapsule(c, varName));
             } else {
                 systemConstantNames.add(varName);
@@ -226,7 +226,7 @@ public class SystemGraphsBuilder extends TreeScanner {
 
         for (int i = 0; i < tree.args.size(); i++) {
             JCExpression arg = tree.args.get(i);
-            String name = capsule.sym.capsuleParameters.get(i).name.toString();
+            String name = capsule.sym.capsule_info.capsuleParameters.get(i).name.toString();
 
             if (arg.getTag()==Tag.IDENT) { // arg could just be some literal; don't need to look at those
                 if (!arg.toString().equals("args") // ignore commandline params. This shouldn't be hardcoded like this
@@ -269,7 +269,7 @@ public class SystemGraphsBuilder extends TreeScanner {
                         capsule = capsuleNames.get(recipient);
                     for (int i = 0; i < tree.args.size(); i++) {
                         JCExpression arg = tree.args.get(i);
-                        String name = capsule.sym.capsuleParameters.get(i).name.toString();
+                        String name = capsule.sym.capsule_info.capsuleParameters.get(i).name.toString();
                         if (arg.getTag()==Tag.IDENT) {
                             Node argCapsule;
                             if (arg.toString().equals(varName))
@@ -297,7 +297,7 @@ public class SystemGraphsBuilder extends TreeScanner {
 
         for (int i = 0; i < tree.arguments.size(); i++) {
             JCExpression arg = tree.arguments.get(i);
-            String name = capsule.sym.capsuleParameters.get(i).name.toString();
+            String name = capsule.sym.capsule_info.capsuleParameters.get(i).name.toString();
 
             if (arg.getTag()==Tag.IDENT) { // arg could just be some literal; don't need to look at those
                 if (!arg.toString().equals("args") // ignore commandline params. This shouldn't be hardcoded like this

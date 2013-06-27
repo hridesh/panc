@@ -425,7 +425,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         memberEnter(tree.defs, env);
 
         // Panini code
-        if (tree instanceof JCCapsuleDecl) {
+        if ( (tree.sym.flags_field & Flags.CAPSULE) != 0 ) {
             finishCapsule((JCCapsuleDecl) tree, env);
         }
         // end Panini code
@@ -626,7 +626,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
     	}
         ////////////
 		if (!tree.name.toString().contains("$Original")
-				&& m.owner instanceof CapsuleSymbol
+				&& (m.owner.flags_field & Flags.CAPSULE) != 0
 				&& !((tree.name.equals(names.fromString("run")) || (tree.name
 						.equals(names.init))))) {
 			m.isProcedure = true;
@@ -667,10 +667,10 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
      * @param tree
      * @param env
      */
-    void finishCapsule(JCCapsuleDecl tree, Env<AttrContext> env) {
+    void finishCapsule(JCClassDecl tree, Env<AttrContext> env) {
         ListBuffer<Type> wts = new ListBuffer<Type>();
 
-        for (JCVariableDecl p : tree.params) {
+        for (JCVariableDecl p : tree.sym.capsule_info.capsuleParameters) {
             wts.append(enterCapsuleParam(p, tree.sym, env));
         }
 
@@ -678,7 +678,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         WiringSymbol wiringSym = new WiringSymbol(0, names.panini.Wiring,
                 new org.paninij.code.Type.WiringType(wts.toList(), tree.sym),
                 tree.sym);
-        ((CapsuleSymbol) tree.sym).wiringSym = wiringSym;
+        tree.sym.capsule_info.wiringSym = wiringSym;
     }
 
     /**Assign a type and symbol to a capsule parameter decl.

@@ -4,7 +4,7 @@ import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.*;
 
 public class ForeachEffect implements CallEffect {
-	public final CapsuleSymbol caller;
+	public final ClassSymbol caller;
 	public final Symbol callee;
 	public final MethodSymbol meth;
 
@@ -19,7 +19,7 @@ public class ForeachEffect implements CallEffect {
 	public final String fileName;
 	
 
-	public ForeachEffect(CapsuleSymbol caller, Symbol callee,
+	public ForeachEffect(ClassSymbol caller, Symbol callee,
 			MethodSymbol meth, int pos, int line, int col, String fileName) {
 		this.caller = caller;
 		this.callee = callee;

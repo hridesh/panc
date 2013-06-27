@@ -737,19 +737,14 @@ public class Attr extends JCTree.Visitor {
      * @param argtypes argument types.
      */
     Type checkWiring(JCTree tree, Type capsuletype, List<JCExpression> argtrees, List<Type> argtypes) {
-        if(!syms.capsules.containsKey(capsuletype.tsym.name)) {
-            log.error(tree, "only.capsule.types.allowed");
-            return types.createErrorType(capsuletype);
+        if( (capsuletype.tsym.flags() & Flags.CAPSULE) == 0 ) {
+            log.error(tree.pos(), "only.capsule.types.allowed", capsuletype);
         }
-
         Type wiringtype = types.createErrorType(capsuletype);
+        CapsuleExtras cinfo = ((ClassSymbol)capsuletype.tsym).capsule_info;
 
-        if (capsuletype.tsym instanceof CapsuleSymbol) {
-            wiringtype = checkWiringArgs(tree, wiringtype, (CapsuleSymbol) capsuletype.tsym, argtrees,
-                    argtypes);
-        } else {
-            log.error(tree, "invalid.capsule.type1", capsuletype);
-        }
+        wiringtype = checkWiringArgs(tree, wiringtype, cinfo.wiringSym,
+                argtrees, argtypes);
 
         tree.type = wiringtype;
         return wiringtype;
@@ -759,14 +754,15 @@ public class Attr extends JCTree.Visitor {
      * Check each argument against its prototype from the wiring symbol type.
      * @param tree
      * @param owntype
-     * @param ownsym
+     * @param ownsym symbol for the type being wired. Must be a ClassSymbol for a capsule.
      * @param argtrees
      * @param argtypes
      * @return
      */
-    private Type checkWiringArgs(JCTree tree, Type owntype,
-            CapsuleSymbol ownsym, List<JCExpression> argtrees, List<Type> argtypes) {
-        List<Type> wt = ownsym.wiringSym.type.getParameterTypes();
+    private Type checkWiringArgs(JCTree tree, Type owntype, Symbol wiringSym, List<JCExpression> argtrees, List<Type> argtypes) {
+        
+
+        List<Type> wt = wiringSym.type.getParameterTypes();
         List<JCExpression> as = argtrees;
         List<Type> ats = argtypes;
 
@@ -775,17 +771,17 @@ public class Attr extends JCTree.Visitor {
         }
 
         if(wt.size() < 1) { //nothing to do.
-            return ownsym.wiringSym.type;
-        }
-
-        if(syms.capsules.containsKey(wt.head.tsym.name)){//if its a capsule type
-            if(as.head.toString().equals("null")){
-                log.error(as.head.pos(), "capsule.null.declare");
-            }
+            return wiringSym.type;
         }
 
         boolean wiringOkay = true;
         while(wt.nonEmpty()){
+            if( (wt.head.tsym.flags() & Flags.CAPSULE) != 0 ){//if its a capsule type
+                if(as.head.toString().equals("null")){
+                    log.error(as.head.pos(), "capsule.null.declare");
+                }
+            }
+
             // redo our check here. The stock version assigns
             // the type to the tree when it finishes, which we do not want
             // in this context.
@@ -808,7 +804,7 @@ public class Attr extends JCTree.Visitor {
             ats = ats.tail;
         }
 
-        return wiringOkay ? ownsym.wiringSym.type : owntype;
+        return wiringOkay ? wiringSym.type : owntype;
     }
 
     /**
@@ -1309,7 +1305,7 @@ public class Attr extends JCTree.Visitor {
             chk.setLint(prevLint);
         }
         // Panini code
-        if(env.enclClass.sym instanceof CapsuleSymbol&&tree.init!=null){
+        if((env.enclClass.sym.flags() & Flags.CAPSULE) != 0 && tree.init!=null){
         	if(syms.capsules.containsKey(names.fromString(tree.init.type.toString())))
         		log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
         }
@@ -1950,7 +1946,7 @@ public class Attr extends JCTree.Visitor {
             
             // Panini Code
             if( (((MethodSymbol)TreeInfo.symbol(tree.meth)).flags()&Flags.PRIVATE)==0 &&(((MethodSymbol)TreeInfo.symbol(tree.meth)).flags()&Flags.PROTECTED)==0 ){
-            	if(env.enclClass.sym instanceof CapsuleSymbol&&((env.enclClass.sym.flags_field&Flags.SERIAL)==0)&&((env.enclClass.sym.flags_field&Flags.MONITOR)==0)){
+            	if((env.enclClass.sym.flags_field & Flags.CAPSULE) != 0 &&((env.enclClass.sym.flags_field&Flags.SERIAL)==0)&&((env.enclClass.sym.flags_field&Flags.MONITOR)==0)){
             		if(tree.meth.hasTag(Tag.IDENT)){
             			if(!tree.meth.toString().contains("$") 
             					&& !tree.meth.toString().equals(PaniniConstants.PANINI_YIELD)
@@ -2404,7 +2400,7 @@ public class Attr extends JCTree.Visitor {
         attribExpr(tree.rhs, env, owntype);
         result = check(tree, capturedType, VAL, resultInfo);
         // Panini code
-        if(env.enclClass.sym instanceof CapsuleSymbol){
+        if((env.enclClass.sym.flags_field & Flags.CAPSULE) != 0){
         	if(syms.capsules.containsKey(names.fromString(tree.rhs.type.toString())))
         		log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
         }
@@ -2784,8 +2780,8 @@ public class Attr extends JCTree.Visitor {
         env.info.tvars = List.nil();
         
         // Panini code
-        if(tree.selected.type.tsym instanceof CapsuleSymbol&&!tree.type.getKind().toString().equals("EXECUTABLE")
-        		&&env.enclClass.sym instanceof CapsuleSymbol&&!tree.selected.toString().equals("this")){
+        if( (tree.selected.type.tsym.flags_field & Flags.CAPSULE) != 0 &&!tree.type.getKind().toString().equals("EXECUTABLE")
+        		&&(env.enclClass.sym.flags_field & Flags.CAPSULE) != 0 &&!tree.selected.toString().equals("this")){
         	log.error(tree.pos, "invalid.access.of.capsules.states");
         }
         // end Panini code
@@ -3524,7 +3520,7 @@ public class Attr extends JCTree.Visitor {
                 	((JCSystemDecl)env.tree).switchToClass();
                 	this.env = oldEnv;
                 }
-                if(c instanceof CapsuleSymbol){
+                if((c.flags_field & Flags.CAPSULE) != 0){
                 	Env<AttrContext> oldEnv = this.env;
                 	this.env = env;
                 	((JCCapsuleDecl)env.tree).switchToCapsule();

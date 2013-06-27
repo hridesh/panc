@@ -181,7 +181,7 @@ public class ConsistencyChecker {
 			if(!duplicate)
 				sets = sets.append(set);
 		}
-		log.warning("sequential.inconsistency.warning", sets, startingNode.capsule.parentCapsule.name);
+		log.warning("sequential.inconsistency.warning", sets, startingNode.capsule.capsule_info.parentCapsule.name);
 	}
 	
 	private void pathCheck(HashSet<Path> paths) {

@@ -256,6 +256,7 @@ public class Flags {
     public static final long ACTIVE = 1L<<44;
     public static final long TASK = 1L<<45;
     public static final long MONITOR = 1L<<46;
+    public static final long CAPSULE = 1L<<47;
     // end Panini code
 
     /** Modifier masks.
@@ -314,6 +315,9 @@ public class Flags {
     }
 
     public enum Flag {
+        // Panini code
+        CAPSULE("capsule"),
+        // end Panini code
 
         PUBLIC("public"),
         PRIVATE("private"),
@@ -345,6 +349,7 @@ public class Flags {
         PARAMETER("parameter"),
         VARARGS("varargs"),
         PACKAGE("package");
+
 
         String name;
 

@@ -2,16 +2,16 @@ package org.paninij.consistency;
 
 import org.paninij.systemgraph.SystemGraph.Node;
 
-import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
+import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 
 // auxiliary class used by the SequentialFIFO
 public class ClassMethod {
-	public final CapsuleSymbol cs;
+	public final ClassSymbol cs;
 	public final MethodSymbol meth;
 	public final Node node;
 
-	public ClassMethod(CapsuleSymbol cs, MethodSymbol meth, Node node) {
+	public ClassMethod(ClassSymbol cs, MethodSymbol meth, Node node) {
 		this.cs = cs;
 		this.meth = meth;
 		this.node = node;

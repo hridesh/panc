@@ -41,9 +41,10 @@ import org.paninij.systemgraph.SystemGraphBuilder;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Kinds;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
+import com.sun.tools.javac.code.Symbol.CapsuleExtras;
 import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
@@ -220,7 +221,7 @@ public class SystemMainTransformer extends TreeTranslator {
                 .fromString(mi.name.toString()))){
             log.error(mi.pos(), "symbol.not.found");
         }
-        CapsuleSymbol c = (CapsuleSymbol) rs
+        ClassSymbol c = (ClassSymbol) rs
                 .findType(env, variables.get(names
                         .fromString(mi.name.toString())));
         if(mi.index.getTag()!=Tag.LITERAL)
@@ -232,7 +233,7 @@ public class SystemMainTransformer extends TreeTranslator {
             log.error(mi.index.pos(), "capsule.array.call.index.out.of.bound", ind.value, modArrays.get(names
                     .fromString(mi.name.toString())));
         }
-        if (mi.arguments.length() != c.capsuleParameters.length()) {
+        if (mi.arguments.length() != c.capsule_info.capsuleParameters.length()) {
             log.error(mi.pos(), "arguments.of.wiring.mismatch");
         } else {
             for (int j = 0; j < mi.arguments.length(); j++) {
@@ -243,26 +244,26 @@ public class SystemMainTransformer extends TreeTranslator {
                                         .fromString(mi.indexed.toString()))), make.Indexed
                                         (mi.indexed,
                                                 mi.index)),
-                                                c.capsuleParameters.get(j)
+                                                c.capsule_info.capsuleParameters.get(j)
                                                 .getName()), mi.arguments.get(j));
                 JCExpressionStatement assignAssign = make
                         .Exec(newAssign);
                 assigns.append(assignAssign);
-                if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
+                if(c.capsule_info.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
                     if(syms.capsules.containsKey(names
-                            .fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
+                            .fromString(((JCArrayTypeTree)c.capsule_info.capsuleParameters.get(j).vartype).elemtype
                                     .toString())))
                         systemGraphBuilder.addConnectionsOneToMany(sysGraph,
                                 names.fromString(mi.indexed.toString()+"["+mi.index+"]"),
-                                c.capsuleParameters.get(j).getName(),
+                                c.capsule_info.capsuleParameters.get(j).getName(),
                                 names.fromString(mi.arguments.get(j).toString()));
                 }
                 if (syms.capsules.containsKey(names
-                        .fromString(c.capsuleParameters.get(j).vartype
+                        .fromString(c.capsule_info.capsuleParameters.get(j).vartype
                                 .toString()))) {
                     systemGraphBuilder.addConnection(sysGraph,
                             names.fromString(mi.indexed.toString()+"["+mi.index+"]"),
-                            c.capsuleParameters.get(j).getName(),
+                            c.capsule_info.capsuleParameters.get(j).getName(),
                             names.fromString(mi.arguments.get(j).toString()));
                 }
             }
@@ -271,11 +272,11 @@ public class SystemMainTransformer extends TreeTranslator {
     }
 
     private void processForEachLoop(JCEnhancedForLoop loop, ListBuffer<JCStatement> assigns, Map<Name, Name> variables, Set<Name> capsules, SystemGraph sysGraph) {
-        CapsuleSymbol c = syms.capsules.get(names.fromString(loop.var.vartype.toString()));
+        ClassSymbol c = syms.capsules.get(names.fromString(loop.var.vartype.toString()));
         if(c==null){
             log.error(loop.pos(), "capsule.array.type.error", loop.var.vartype);
         }
-        CapsuleSymbol d = syms.capsules.get(variables.get(names.fromString(loop.expr.toString())));
+        ClassSymbol d = syms.capsules.get(variables.get(names.fromString(loop.expr.toString())));
         if(d==null)
             log.error(loop.expr.pos(), "symbol.not.found");
         variables.put(loop.var.name, names.fromString(d.name.toString()));
@@ -312,24 +313,24 @@ public class SystemMainTransformer extends TreeTranslator {
                 loopBody.appendList(transWiring(mi, env, true));
                 if(loop.var.name.toString().equals(mi.capsule.toString()))
                     capsules.remove(names.fromString(loop.expr.toString()));
-                if (mi.args.length() != c.capsuleParameters.length()) {
+                if (mi.args.length() != c.capsule_info.capsuleParameters.length()) {
                     log.error(mi.pos(), "arguments.of.wiring.mismatch");
                 } else {
                     for(int j=0;j<mi.args.length();j++){
-                        if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
+                        if(c.capsule_info.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
                             if(syms.capsules.containsKey(names
-                                    .fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
+                                    .fromString(((JCArrayTypeTree)c.capsule_info.capsuleParameters.get(j).vartype).elemtype
                                             .toString())))
                                 systemGraphBuilder.addConnectionsManyToMany(sysGraph,
-                                        names.fromString(loop.expr.toString()), c.capsuleParameters.get(j).getName(),
+                                        names.fromString(loop.expr.toString()), c.capsule_info.capsuleParameters.get(j).getName(),
                                         names.fromString(mi.args.get(j).toString()));
                         }
                         if (syms.capsules.containsKey(names
-                                .fromString(c.capsuleParameters.get(j).vartype
+                                .fromString(c.capsule_info.capsuleParameters.get(j).vartype
                                         .toString()))) {
                             systemGraphBuilder.addConnectionsManyToOne(sysGraph,
                                     names.fromString(loop.expr.toString()),
-                                    c.capsuleParameters.get(j).getName(),
+                                    c.capsule_info.capsuleParameters.get(j).getName(),
                                     names.fromString(mi.args.get(j).toString()));
                         }
                     }
@@ -346,24 +347,24 @@ public class SystemMainTransformer extends TreeTranslator {
             loopBody.appendList(transWiring(mi, env, true));
             if(loop.var.name.toString().equals(mi.capsule.toString()))
                 capsules.remove(names.fromString(loop.expr.toString()));
-            if (mi.args.length() != c.capsuleParameters.length()) {
+            if (mi.args.length() != c.capsule_info.capsuleParameters.length()) {
                 log.error(mi.pos(), "arguments.of.wiring.mismatch");
             } else {
                 for(int j=0;j<mi.args.length();j++){
-                    if(c.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
+                    if(c.capsule_info.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
                         if(syms.capsules.containsKey(names
-                                .fromString(((JCArrayTypeTree)c.capsuleParameters.get(j).vartype).elemtype
+                                .fromString(((JCArrayTypeTree)c.capsule_info.capsuleParameters.get(j).vartype).elemtype
                                         .toString())))
                             systemGraphBuilder.addConnectionsManyToMany(sysGraph,
-                                    names.fromString(loop.expr.toString()), c.capsuleParameters.get(j).getName(),
+                                    names.fromString(loop.expr.toString()), c.capsule_info.capsuleParameters.get(j).getName(),
                                     names.fromString(mi.args.get(j).toString()));
                     }
                     if (syms.capsules.containsKey(names
-                            .fromString(c.capsuleParameters.get(j).vartype
+                            .fromString(c.capsule_info.capsuleParameters.get(j).vartype
                                     .toString()))) {
                         systemGraphBuilder.addConnectionsManyToOne(sysGraph,
                                 names.fromString(loop.expr.toString()),
-                                c.capsuleParameters.get(j).getName(),
+                                c.capsule_info.capsuleParameters.get(j).getName(),
                                 names.fromString(mi.args.get(j).toString()));
                     }
                 }
@@ -388,7 +389,7 @@ public class SystemMainTransformer extends TreeTranslator {
     }
 
     private List<JCStatement> transWiring(final JCCapsuleWiring mi, Env<AttrContext> env, boolean forEachLoop){
-        CapsuleSymbol c = null;
+        ClassSymbol c = null;
         //A 'fresh' identifier for the translated wiring.
         //Creating a fresh one ensures the expression will be
         //typed/attributed correctly.
@@ -399,7 +400,7 @@ public class SystemMainTransformer extends TreeTranslator {
             Symbol s = rs.findType(env, variables.get(mId.name) );
             
             if (s.kind == Kinds.TYP) {
-                c = (CapsuleSymbol)s;
+                c = (ClassSymbol)s;
             } else {
                 Assert.error("Unknown type for " + mi.capsule);
             }
@@ -411,7 +412,7 @@ public class SystemMainTransformer extends TreeTranslator {
 
         ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
 
-        List<JCVariableDecl> cparams = c.capsuleParameters;
+        List<JCVariableDecl> cparams = c.capsule_info.capsuleParameters;
         List<JCExpression> args = mi.args;
         for(; cparams.nonEmpty();
                 cparams = cparams.tail,
@@ -458,7 +459,7 @@ public class SystemMainTransformer extends TreeTranslator {
             initName = mat.elemtype.toString()+"$serial";
         else if((vdecl.mods.flags & Flags.MONITOR) !=0)
             initName = mat.elemtype.toString()+"$monitor";
-        CapsuleSymbol c = syms.capsules.get(names.fromString(initName));
+        ClassSymbol c = syms.capsules.get(names.fromString(initName));
         if(c==null){
             log.error(vdecl.pos(), "capsule.array.type.error", mat.elemtype);
         }
@@ -494,7 +495,7 @@ public class SystemMainTransformer extends TreeTranslator {
                         List.of(step),
                         make.Block(0, loopBody.toList()));
         assigns.append(floop);
-        if(c.definedRun){
+        if(c.capsule_info.definedRun){
             for(int j = mat.size-1; j>=0;j--){
                 if(tree.activeCapsuleCount==0)
                     starts.append(make.Exec(make.Apply(List.<JCExpression>nil(),
@@ -530,7 +531,7 @@ public class SystemMainTransformer extends TreeTranslator {
         //                      tree.defs = tree.defs.append(createOwnerInterface(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j));
 
         variables.put(vdecl.name, c.name);
-        if(c.capsuleParameters.nonEmpty())
+        if(c.capsule_info.capsuleParameters.nonEmpty())
             capsulesToWire.add(vdecl.name);
         modArrays.put(vdecl.name, mat.size);
     }
@@ -545,7 +546,7 @@ public class SystemMainTransformer extends TreeTranslator {
             initName = vdecl.vartype.toString()+"$serial";
         else if((vdecl.mods.flags & Flags.MONITOR) !=0)
             initName = vdecl.vartype.toString()+"$monitor";
-        CapsuleSymbol c = syms.capsules.get(names.fromString((initName)));
+        ClassSymbol c = syms.capsules.get(names.fromString((initName)));
         if(c==null)
             log.error(vdecl.pos, "invalid.capsule.type");
         systemGraphBuilder.addSingleNode(sysGraph, vdecl.name, c);
@@ -564,7 +565,7 @@ public class SystemMainTransformer extends TreeTranslator {
         JCExpressionStatement startAssign = make.Exec(make.Apply(List.<JCExpression>nil(),
                 make.Select(make.Ident(vdecl.name), names.fromString(PaniniConstants.PANINI_START)),
                 List.<JCExpression>nil()));
-        if(c.definedRun){
+        if(c.capsule_info.definedRun){
             if(tree.activeCapsuleCount==0)
                 starts.append(make.Exec(make.Apply(List.<JCExpression>nil(),
                         make.Select(make.Ident(vdecl.name), names.fromString("run")),
@@ -591,7 +592,7 @@ public class SystemMainTransformer extends TreeTranslator {
         //      enter.classEnter(ownerIface, env);
         //      tree.defs = tree.defs.append(ownerIface);
         variables.put(vdecl.name, c.name);
-        if(c.capsuleParameters.nonEmpty())
+        if(c.capsule_info.capsuleParameters.nonEmpty())
             capsulesToWire.add(vdecl.name);
     }
 }

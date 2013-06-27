@@ -117,7 +117,8 @@ public abstract class Symbol implements Element {
     public ClassSymbol ownerCapsule() {
         Symbol owner = this.owner;
         while (owner != null) {
-            if (owner instanceof CapsuleSymbol) return (CapsuleSymbol)owner;
+            //TODO: What is this check usually?
+            if ((owner.flags_field & Flags.CAPSULE) != 0) return (ClassSymbol)owner;
             else owner = owner.owner;
         }
         return null;
@@ -739,55 +740,51 @@ public abstract class Symbol implements Element {
     }
 
     /**
-     * A class for capsule symbols
+     * Store the extra information about capsules.
      */
-    public static class CapsuleSymbol extends ClassSymbol{
+    public static class CapsuleExtras {
      	public HashMap<MethodSymbol, CapsuleProcedure> procedures = new HashMap<MethodSymbol, CapsuleProcedure>(); 
-    	public CapsuleSymbol translated_serial;
-    	public CapsuleSymbol translated_monitor;
-    	public CapsuleSymbol translated_task;
-    	public CapsuleSymbol translated_thread;
-    	public CapsuleSymbol parentCapsule;
+    	public ClassSymbol translated_serial;
+    	public ClassSymbol translated_monitor;
+    	public ClassSymbol translated_task;
+    	public ClassSymbol translated_thread;
+    	public ClassSymbol parentCapsule;
     	public WiringSymbol wiringSym;
     	
     	public boolean definedRun;
     	public List<JCTree.JCVariableDecl> capsuleParameters;
     	
-    	public CapsuleSymbol getTranslatedSerial(){
+    	public ClassSymbol getTranslatedSerial(){
     		return translated_serial;
     	}
-    	public CapsuleSymbol getTranslatedMonitor(){
+    	public ClassSymbol getTranslatedMonitor(){
     		return translated_monitor;
     	}
-    	public CapsuleSymbol getTranslatedTask(){
+    	public ClassSymbol getTranslatedTask(){
     		return translated_task;
     	}
-    	public CapsuleSymbol getTranslatedThread(){
+    	public ClassSymbol getTranslatedThread(){
     		return translated_thread;
     	}
-    	public CapsuleSymbol getParent(){
+    	public ClassSymbol getParent(){
     		return parentCapsule;
     	}
 
-		public CapsuleSymbol(long flags, Name name, Type type, Symbol owner) {
-            super(flags, name, type, owner);
-        }
-
-        public CapsuleSymbol(long flags, Name name, Symbol owner) {
-            super(flags, name, owner);
-        }
-        
-        public static CapsuleSymbol fromClassSymbol(ClassSymbol c){
-        	CapsuleSymbol capsule = new CapsuleSymbol(c.flags_field, c.name, c.owner);
-        	capsule.attributes_field = c.attributes_field;
-        	capsule.members_field = c.members_field;
-        	capsule.erasure_field = c.erasure_field;
-        	capsule.classfile = c.classfile;
-        	capsule.sourcefile = c.sourcefile;
-        	capsule.type = c.type;
-        	capsule.completer = c.completer;
-        	c = capsule;
-        	return capsule;
+        /**
+         * Add the flags and extra struct to the class symbol to make it
+         * represent a capsule type.
+         *
+         * Any ClassSymbol which represents a Capsule should this method
+         * and not or in the bit flag manually.
+         * @param c
+         * @return the a reference to the modified object.
+         */
+        public static ClassSymbol asCapsuleSymbol(ClassSymbol c) {
+            c.flags_field |= Flags.CAPSULE;
+            if (c.capsule_info == null) {
+                c.capsule_info = new CapsuleExtras();
+            }
+            return c;
         }
     }
     
@@ -843,6 +840,10 @@ public abstract class Symbol implements Element {
          */
         public Pool pool;
 
+        // Panini code
+        public CapsuleExtras capsule_info = null;
+        // end Panini code
+
         public ClassSymbol(long flags, Name name, Type type, Symbol owner) {
             super(flags, name, type, owner);
             this.members_field = null;
@@ -851,6 +852,11 @@ public abstract class Symbol implements Element {
             this.sourcefile = null;
             this.classfile = null;
             this.pool = null;
+            // Panini code
+            if( (flags & Flags.CAPSULE) != 0 ) {
+                CapsuleExtras.asCapsuleSymbol(this);
+            }
+            // end Panini code
         }
 
         public ClassSymbol(long flags, Name name, Symbol owner) {

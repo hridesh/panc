@@ -58,9 +58,9 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 	public void potentialPathCheck() {
 		HashSet<ClassMethod> traversed = new HashSet<ClassMethod>();
 		for (Node node : graph.nodes.values()) {
-			CapsuleSymbol cs = node.capsule;
+			ClassSymbol cs = node.capsule;
 			for (MethodSymbol ms : node.procedures) {
-				if (cs.definedRun && ms.toString().compareTo("run()") == 0) {
+				if (cs.capsule_info.definedRun && ms.toString().compareTo("run()") == 0) {
 					ClassMethod now = new ClassMethod(cs, ms, node);
 
 					if (traversed.contains(now)) { continue; }

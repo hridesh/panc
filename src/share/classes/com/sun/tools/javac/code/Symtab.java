@@ -191,7 +191,8 @@ public class Symtab {
 
     // Panini code
     public boolean duckAdded = false;
-    public final Map<Name, CapsuleSymbol> capsules = new HashMap<Name, CapsuleSymbol>();
+    //TODO: DELETE
+    public final Map<Name, ClassSymbol> capsules = new HashMap<Name, ClassSymbol>();
     public final ClassSymbol capsuleWiring;
     public boolean isCapsuleSym(Name n) {
         return capsules.containsKey(n);

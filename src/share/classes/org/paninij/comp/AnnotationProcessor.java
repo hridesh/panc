@@ -23,7 +23,6 @@ import java.util.Iterator;
 
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
 import com.sun.tools.javac.comp.*;
 
 import com.sun.tools.javac.parser.*;
@@ -112,7 +111,7 @@ public class AnnotationProcessor extends Internal{
 		return ann;
 	}
 
-	public void translateCapsuleAnnotations(CapsuleSymbol c, Attribute.Compound annotation) {
+	public void translateCapsuleAnnotations(ClassSymbol c, Attribute.Compound annotation) {
 		if(parserFactory == null)
 			throw new AssertionError("ParserFactory not available");
 		fillInProcedures(c);
@@ -121,12 +120,10 @@ public class AnnotationProcessor extends Internal{
 		for(Pair<MethodSymbol, Attribute> s: annotation.values){
 			if(s.fst.name.toString().equals("params")){
 				String paramsString = "(" + s.snd.getValue() + ")";
-				JavacParser parser = (JavacParser)parserFactory.newParser(paramsString, false, false, false);
-				List<JCVariableDecl> params = parser.capsuleParameters();
-				c.capsuleParameters = params;
+				fillInParams(c, paramsString);
 			}else if (s.fst.name.toString().equals("definedRun")){
 				boolean definedRun = (Boolean)annotation.values.get(1).snd.getValue();
-				c.definedRun = definedRun;
+				c.capsule_info.definedRun = definedRun;
 			}else{
 				log.error("capsule.incompatible.capsule.annotation", c.classfile.getName());
 			}
@@ -160,7 +157,11 @@ public class AnnotationProcessor extends Internal{
 	 * Used to find a symbol from the memebrs of a classSymbol
 	 */
 	private Symbol findField(Symbol s, String name){
-		return ((ClassSymbol)s).members_field.lookup(names.fromString(name)).sym;
+		return findField((ClassSymbol)s, names.fromString(name));
+	}
+
+	private Symbol findField(ClassSymbol s, Name name) {
+	    return s.members_field.lookup(name).sym;
 	}
 	
 	/**
@@ -201,7 +202,7 @@ public class AnnotationProcessor extends Internal{
 							Kinds.TYP); // caller
 					m = findMethod(rs.findIdent(env,
 							names.fromString(split[2]), Kinds.TYP), split);
-					effect = new CapsuleEffect((CapsuleSymbol) ownerSymbol,
+					effect = new CapsuleEffect( (ClassSymbol)ownerSymbol,
 							findField(ownerSymbol, split[1]), m,
 							Integer.parseInt(split[split.length - 4]),
 							Integer.parseInt(split[split.length - 3]),
@@ -213,7 +214,7 @@ public class AnnotationProcessor extends Internal{
 							Kinds.TYP); // caller
 					m = findMethod(rs.findIdent(env,
 							names.fromString(split[2]), Kinds.TYP), split);
-					effect = new ForeachEffect((CapsuleSymbol) ownerSymbol,
+					effect = new ForeachEffect( (ClassSymbol)ownerSymbol,
 							findField(ownerSymbol, split[1]), m,
 							Integer.parseInt(split[split.length - 4]),
 							Integer.parseInt(split[split.length - 3]),
@@ -303,14 +304,44 @@ public class AnnotationProcessor extends Internal{
 			mdecl.mods.annotations = mdecl.mods.annotations.append(ann);
 		}
 	}
+
+	/**
+	 * Parse the paramaters annotation, and fill in the paramater sym/type
+	 * using the existing information from the class symbol's fields.
+	 *
+	 * Assumes this happens when a capsuled is loaded from a class file.
+	 * @param c
+	 * @param paramsString
+	 */
+	private void fillInParams(ClassSymbol c, String paramsString) {
+        JavacParser parser = (JavacParser)parserFactory.newParser(paramsString, false, false, false);
+        List<JCVariableDecl> params = parser.capsuleParameters();
+        c.capsule_info.capsuleParameters = params;
+
+        ListBuffer<Type> wts = new ListBuffer<Type>();
+        for (JCVariableDecl p : params) {
+            Symbol fs = findField(c, p.name);
+            Type t = fs.type;
+            Assert.checkNonNull(t, "No type for capsule " + c + " parameter " + p);
+            wts.append(t);
+            VarSymbol v = new VarSymbol(0, p.name, t, c);
+            v.owner = c;
+            p.sym = v;
+        }
+
+        //Create a wiring symbol from the parameter types.
+        WiringSymbol wiringSym = new WiringSymbol(0, names.panini.Wiring,
+                new org.paninij.code.Type.WiringType(wts.toList(), c), c);
+        c.capsule_info.wiringSym = wiringSym;
+    }
 	
-	private void fillInProcedures(CapsuleSymbol c){
+	private void fillInProcedures(ClassSymbol c){
 		Iterator<Symbol> iter = c.members().getElements().iterator();
 		while(iter.hasNext()){
 			Symbol s = iter.next();
 			if(s instanceof MethodSymbol){
 				CapsuleProcedure cp = new CapsuleProcedure(c, s.name, ((MethodSymbol)s).params);
-	        	c.procedures.put((MethodSymbol)s, cp);
+	        	c.capsule_info.procedures.put((MethodSymbol)s, cp);
 			}
 		}
 	}

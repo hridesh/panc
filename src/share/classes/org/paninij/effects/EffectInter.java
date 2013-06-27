@@ -18,7 +18,7 @@ import com.sun.tools.javac.util.DiagnosticSource;
 import com.sun.tools.javac.util.List;
 
 public class EffectInter {
-	public CapsuleSymbol curr_cap;
+	public ClassSymbol curr_cap;
 	public JCMethodDecl curr_meth;
 
 	// effects for all the method in each capsule.
@@ -194,7 +194,7 @@ public class EffectInter {
 						ClassType elemtype = (ClassType)tempT;
 						ClassSymbol tsym = (ClassSymbol)elemtype.tsym;
 	
-						if (tsym instanceof CapsuleSymbol) {
+						if ((tsym.flags_field & Flags.CAPSULE) != 0) {
 							JCMethodInvocation body = jcf.body;
 							JCExpression meth = body.meth;
 							if (meth instanceof JCFieldAccess) {
@@ -250,7 +250,7 @@ public class EffectInter {
 			if (caps != null) {
 				Symbol typeSym = caps.type.tsym;
 				// single capsule call.
-				if (typeSym instanceof CapsuleSymbol) {
+				if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
 					return true;
 				}
 			}
@@ -261,7 +261,7 @@ public class EffectInter {
 	}
 
 	public static final CallEffect capsuleCall(JCMethodInvocation tree,
-			AliasingGraph ag, CapsuleSymbol cap) {
+			AliasingGraph ag, ClassSymbol cap) {
 		JCExpression meth = tree.meth;
 		meth = CommonMethod.essentialExpr(meth);
 
@@ -273,7 +273,7 @@ public class EffectInter {
 			if (caps != null) {
 				Symbol typeSym = caps.type.tsym;
 				// single capsule call.
-				if (typeSym instanceof CapsuleSymbol) {
+				if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
 					DiagnosticSource ds =
 						new DiagnosticSource(cap.sourcefile, null);
 					int pos = tree.getPreferredPosition();
@@ -294,7 +294,7 @@ public class EffectInter {
 					ArrayType at = (ArrayType)cs.type;
 					Symbol typeSym = at.elemtype.tsym;
 					// many capsule call.
-					if (typeSym instanceof CapsuleSymbol) {
+					if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
 						DiagnosticSource ds =
 							new DiagnosticSource(cap.sourcefile, null);
 						int pos = tree.getPreferredPosition();
@@ -356,7 +356,7 @@ public class EffectInter {
 			if (caps != null) {
 				Symbol typeSym = caps.type.tsym;
 				// single capsule call.
-				if (typeSym instanceof CapsuleSymbol) {
+				if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
 					return true;
 				}
 			}
@@ -416,7 +416,7 @@ public class EffectInter {
 				ArrayType at = (ArrayType)caps.type;
 				Symbol typeSym = at.elemtype.tsym;
 				// many capsule call.
-				if (typeSym instanceof CapsuleSymbol) {
+				if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
 					return true;
 				}
 			}
@@ -426,7 +426,7 @@ public class EffectInter {
 
 	// return a capsule effect instead of boolean
 	private static final ForeachEffect foreachCall(JCExpression tree,
-			AliasingGraph ag, CapsuleSymbol curr_cap, MethodSymbol ms,
+			AliasingGraph ag, ClassSymbol curr_cap, MethodSymbol ms,
 			JCMethodInvocation jcmd) {
 		if (tree instanceof JCArrayAccess) {
 			JCArrayAccess jcaa = (JCArrayAccess)tree;
@@ -437,7 +437,7 @@ public class EffectInter {
 				ArrayType at = (ArrayType)caps.type;
 				Symbol typeSym = at.elemtype.tsym;
 				// many capsule call.
-				if (typeSym instanceof CapsuleSymbol) {
+				if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
 					DiagnosticSource ds =
 						new DiagnosticSource(curr_cap.sourcefile, null);
 					int pos = jcmd.getPreferredPosition();
@@ -502,7 +502,7 @@ public class EffectInter {
 			if (fld != null) {
 				Symbol typeSym = fld.type.tsym;
 				// single capsule call.
-				if (typeSym instanceof CapsuleSymbol) {
+				if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
 					DiagnosticSource ds =
 						new DiagnosticSource(curr_cap.sourcefile, null);
 					int pos = tree.getPreferredPosition();
@@ -541,7 +541,7 @@ public class EffectInter {
 					ArrayType at = (ArrayType)fld.type;
 					Symbol typeSym = at.elemtype.tsym;
 					// many capsule call.
-					if (typeSym instanceof CapsuleSymbol) {
+					if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
 						DiagnosticSource ds =
 							new DiagnosticSource(curr_cap.sourcefile, null);
 						int pos = tree.getPreferredPosition();
@@ -588,7 +588,7 @@ public class EffectInter {
 					if (receiver != null) {
 						Symbol typeSym = receiver.type.tsym;
 						// single capsule call.
-						if (typeSym instanceof CapsuleSymbol) {
+						if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
 							DiagnosticSource ds =
 								new DiagnosticSource(curr_cap.sourcefile, null);
 							int pos = selected.getPreferredPosition();
@@ -634,7 +634,7 @@ public class EffectInter {
 	} // end of intraProcessMethodCall
 
 	// This method should be called only when jcmd is non-null
-	public void analysis(JCMethodDecl jcmd, CapsuleSymbol cap) {
+	public void analysis(JCMethodDecl jcmd, ClassSymbol cap) {
 		curr_meth = jcmd;
 		JCBlock body = jcmd.body;
 		curr_cap = cap;
@@ -672,7 +672,7 @@ public class EffectInter {
 
 				// copy the effect from method XYZ$Original to XYZ
 				if (n1.contains("$Original")) {
-					for (MethodSymbol ms : cap.procedures.keySet()) {
+					for (MethodSymbol ms : cap.capsule_info.procedures.keySet()) {
 						String n2 = ms.name.toString();
 						if (n2.equals(n1.substring(0,
 								n1.indexOf("$Original")))) {

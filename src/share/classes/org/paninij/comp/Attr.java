@@ -51,7 +51,7 @@ import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
+import com.sun.tools.javac.code.Symbol.CapsuleExtras;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Type.ArrayType;
@@ -140,7 +140,7 @@ public final class Attr extends CapsuleInternal {
 			tree.accept(new ASTCFGBuilder());
 		}
 
-		if (tree.sym.owner instanceof CapsuleSymbol) {
+		if ((tree.sym.owner.flags() & Flags.CAPSULE) != 0) {
 			////
 //			EffectSet es = new EffectSet();
 //			es.add(es.bottomEffect());
@@ -148,9 +148,9 @@ public final class Attr extends CapsuleInternal {
 //			annotationProcessor.setEffects(tree, es);
 //			annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
 			//// to add effectset: move out of if clause and remove test set; change second argument of setEffects to actual effectSet
-			CapsuleProcedure cp = new CapsuleProcedure((CapsuleSymbol) tree.sym.owner,
+			CapsuleProcedure cp = new CapsuleProcedure((ClassSymbol) tree.sym.owner,
 					tree.name, tree.sym.params);
-			((CapsuleSymbol) tree.sym.owner).procedures.put(tree.sym, cp);
+			((ClassSymbol) tree.sym.owner).capsule_info.procedures.put(tree.sym, cp);
 			if(tree.sym.effect!=null){
 				annotationProcessor.setEffects(tree, tree.sym.effect);
 				Attribute.Compound buf = annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
@@ -221,12 +221,12 @@ public final class Attr extends CapsuleInternal {
 		for(JCTree def : tree.defs){
 			if(def instanceof JCMethodDecl){
 				for(JCVariableDecl param : ((JCMethodDecl)def).params){
-					if(param.type.tsym instanceof CapsuleSymbol&&!((JCMethodDecl)def).name.toString().contains("$Original")){
+					if((param.type.tsym.flags_field & Flags.CAPSULE) != 0 &&!((JCMethodDecl)def).name.toString().contains("$Original")){
 						log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.sym);
 					}
 				}
 			}else if(def.getTag() == Tag.VARDEF){
-				if(((JCVariableDecl)def).type.tsym instanceof CapsuleSymbol)
+				if((((JCVariableDecl)def).type.tsym.flags_field & Flags.CAPSULE) != 0)
 					((JCVariableDecl)def).mods.flags |= FINAL;
 			}
 		}
@@ -300,7 +300,7 @@ public final class Attr extends CapsuleInternal {
 
 	public final void visitProcDef(JCProcDecl tree){
 		Type restype = ((MethodType)tree.sym.type).restype;
-		if(restype.tsym instanceof CapsuleSymbol){
+		if((restype.tsym.flags_field & Flags.CAPSULE) == 1){
 			log.error(tree.pos(), "procedure.restype.illegal.capsule");
 		}
 		tree.switchToMethod();

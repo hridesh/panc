@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.tree.TreeScanner;
@@ -103,7 +104,7 @@ public final class StaticProfilePass extends TreeScanner {
 			ClassSymbol cls = (ClassSymbol) sym.owner;
 			String type = meth.type.getReturnType().toString();
 			String method = type + " " + cls.fullname + "." + sym.toString();
-			if (sym.owner instanceof Symbol.CapsuleSymbol) {
+			if ( (sym.owner.flags() & Flags.CAPSULE) != 0 ) {
 				//this.methodCost += sym.tree.cost;
 				invokedCapsuleProcs.add(method); // TODO: library methods cost
 			} else {

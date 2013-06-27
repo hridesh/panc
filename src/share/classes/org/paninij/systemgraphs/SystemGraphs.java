@@ -11,9 +11,9 @@ import java.util.HashSet;
 // system-specified capsule instances as nodes.
 public class SystemGraphs {
     public static class Node { // a capsule instance
-        public CapsuleSymbol sym; public String name; public int index; public int indegree; public int outdegree;
-        public Node(CapsuleSymbol sym, String name) { this.sym = sym; this.name = name; this.index = -1; }
-        public Node(CapsuleSymbol sym, String name, int index) { this.sym = sym; this.name = name; this.index = index; }
+        public ClassSymbol sym; public String name; public int index; public int indegree; public int outdegree;
+        public Node(ClassSymbol sym, String name) { this.sym = sym; this.name = name; this.index = -1; }
+        public Node(ClassSymbol sym, String name, int index) { this.sym = sym; this.name = name; this.index = index; }
         public String toString() { 
             if (index==-1) return sym + " " + name;
             else return sym + " " + name + "[" + index + "]";
@@ -61,14 +61,14 @@ public class SystemGraphs {
     public HashMap<Node, HashSet<ProcEdge>> forwardProcEdges = new HashMap<Node, HashSet<ProcEdge>>();
     public HashMap<Node, HashSet<ConnectionEdge>> forwardConnectionEdges = new HashMap<Node, HashSet<ConnectionEdge>>();
 
-    public Node addCapsule(CapsuleSymbol sym, String name) {
+    public Node addCapsule(ClassSymbol sym, String name) {
         Node n = new Node(sym, name);
         forwardProcEdges.put(n, new HashSet<ProcEdge>());
         forwardConnectionEdges.put(n, new HashSet<ConnectionEdge>());
         return n;
     }
 
-    public Node addCapsule(CapsuleSymbol sym, String name, int i) {
+    public Node addCapsule(ClassSymbol sym, String name, int i) {
         Node n = new Node(sym, name, i);
         forwardProcEdges.put(n, new HashSet<ProcEdge>());
         forwardConnectionEdges.put(n, new HashSet<ConnectionEdge>());

@@ -25,7 +25,8 @@ import java.util.Set;
 import java.util.HashMap;
 
 import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.code.Symbol.CapsuleSymbol;
+import com.sun.tools.javac.code.Symbol.CapsuleExtras;
+import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 
 import com.sun.tools.javac.util.*;
@@ -57,10 +58,10 @@ public class SystemGraph {
 		public Set<MethodSymbol> procedures = new HashSet<MethodSymbol>();
 //		public Set<Connection> connections = new HashSet<Connection>();
 		public HashMap<Name, Node> connections = new HashMap<Name, Node>();
-		public CapsuleSymbol capsule;//symbol of the capsule instance
+		public ClassSymbol capsule;//symbol of the capsule instance
 		public Name name;//name of the capsule instance
 
-		Node(Name name, CapsuleSymbol sym){
+		Node(Name name, ClassSymbol sym){
 			capsule = sym;
 			this.name = name;
 			for(Symbol s : sym.members().getElements()){
@@ -138,7 +139,7 @@ public class SystemGraph {
 	public Set<Edge> edges = new HashSet<Edge>(); 
 	public HashMap<Name, Integer> capsuleArrays = new HashMap<Name, Integer>();//this is to save size of arrays. maybe view arrays as an whole instead.
 	
-	void addNode(Name name, CapsuleSymbol sym){
+	void addNode(Name name, ClassSymbol sym){
 		nodes.put(name, new Node(name, sym));
 	}
 	

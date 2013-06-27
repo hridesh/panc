@@ -962,6 +962,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 				List<JCTree> defs) {
 			super(mods, name, List.<JCTypeParameter> nil(), null, implementing, defs,
 					null);
+			//Append the capsule flag.
+			this.mods.flags |= Flags.CAPSULE;
 			this.name = name;
 			this.params = params;
 			this.implementing = implementing;

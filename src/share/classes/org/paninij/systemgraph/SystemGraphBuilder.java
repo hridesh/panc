@@ -53,14 +53,14 @@ public class SystemGraphBuilder {
 	
 	/** Adds a single Node with the name and capsuleSymbol to graph
 	 */
-	public void addSingleNode(SystemGraph graph, Name name, final CapsuleSymbol c){
+	public void addSingleNode(SystemGraph graph, Name name, final ClassSymbol c){
 		graph.addNode(name, c);
 	}
 
 	/** Adds an array of capsules as multiple nodes.
 	 * Name of these nodes are represented as "capsuleName[index]" in the graph
 	 */
-	public void addMultipleNodes(SystemGraph graph, Name name, int amount, final CapsuleSymbol c) {
+	public void addMultipleNodes(SystemGraph graph, Name name, int amount, final ClassSymbol c) {
 		for(int i=0;i<amount;i++){
 			graph.addNode(names.fromString(name+"["+i+"]"), c);
 		}
@@ -113,7 +113,7 @@ public class SystemGraphBuilder {
 				int line = ce.line;
 
 				if(n!=null)
-				for (MethodSymbol ms : n.capsule.procedures.keySet()) {
+				for (MethodSymbol ms : n.capsule.capsule_info.procedures.keySet()) {
 					if (ms.toString().compareTo(meth.toString()) == 0) {
 						graph.setEdge(node, fromProc, n, ms, pos, line);
 						break;
@@ -137,7 +137,7 @@ public class SystemGraphBuilder {
 					if (keyS.startsWith(calleeName.toString()) &&
 							keyS.charAt(size) == '[') {
 						Node n = connections.get(key);
-						for (MethodSymbol ms : n.capsule.procedures.keySet()) {
+						for (MethodSymbol ms : n.capsule.capsule_info.procedures.keySet()) {
 							if (ms.toString().compareTo(meth.toString()) == 0) {
 								graph.setEdge(node, fromProc, n, ms, pos, line);
 								break;

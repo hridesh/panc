@@ -159,9 +159,10 @@ public class ASTCFGBuilder extends TreeScanner {
 
 	public ArrayList<JCTree> order;
 	public void visitMethodDef(JCMethodDecl tree) {
-		CapsuleSymbol cs = (CapsuleSymbol)tree.sym.ownerCapsule();
-		if (cs != null) {
-			if ((cs.definedRun && tree.sym.toString().indexOf("$") == -1) ||
+		ClassSymbol cs = tree.sym.ownerCapsule();
+        if (cs != null) {
+		    Assert.checkNonNull(cs.capsule_info);
+	        if ((cs.capsule_info.definedRun && tree.sym.toString().indexOf("$") == -1) ||
 					((cs.toString().substring(cs.toString().indexOf("$")
 							+ 1).compareTo("thread") == 0) &&
 					(tree.sym.toString().indexOf("$Original()") != -1 ||

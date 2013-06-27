@@ -4,14 +4,14 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.util.*;
 
 public class CapsuleProcedure {
-	public Symbol.CapsuleSymbol owner;
+	public Symbol.ClassSymbol owner;
 	public List<Symbol.VarSymbol> params;
 	public Name name;
 	public Type restype;//unused
 	public boolean isFresh;//unused
 	public boolean isCommunitive;//unused
 	
-	public CapsuleProcedure(Symbol.CapsuleSymbol owner, Name name, List<Symbol.VarSymbol> params){
+	public CapsuleProcedure(Symbol.ClassSymbol owner, Name name, List<Symbol.VarSymbol> params){
 		this.owner = owner;
 		this.params = params;
 		this.name = name;

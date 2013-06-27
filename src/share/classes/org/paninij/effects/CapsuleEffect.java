@@ -4,7 +4,7 @@ import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.*;
 
 public class CapsuleEffect implements CallEffect {
-	public final CapsuleSymbol caller;
+	public final ClassSymbol caller;
 	public final Symbol callee;
 	public final MethodSymbol meth;
 
@@ -18,7 +18,7 @@ public class CapsuleEffect implements CallEffect {
 	// the file of this call
 	public final String fileName;
 
-	public CapsuleEffect(CapsuleSymbol caller, Symbol callee,
+	public CapsuleEffect(ClassSymbol caller, Symbol callee,
 			MethodSymbol meth, int pos, int line, int col, String fileName) {
 		this.caller = caller;
 		this.callee = callee;

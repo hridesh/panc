@@ -674,7 +674,7 @@ public class Enter extends JCTree.Visitor {
     	}
     	Symbol owner = env.info.scope.owner;
         Scope enclScope = enterScope(env);
-        CapsuleSymbol c;
+        ClassSymbol c;
         if (owner.kind == PCK) {
             // We are seeing a toplevel class.
             PackageSymbol packge = (PackageSymbol)owner;
@@ -755,25 +755,26 @@ public class Enter extends JCTree.Visitor {
 //      System.err.println("entering " + c.fullname + " in " + c.owner);//DEBUG
         
         if((tree.mods.flags & Flags.INTERFACE) ==0){
+            //FIXME: OR IN THE CAPSULE FLAG
 	        c.flags_field = processCapsuleAnnotations(tree, c);
 	        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
 	        if((c.flags_field & SERIAL)!=0){
 	        	definitions = translateSerialCapsule(tree, c, localEnv);
-	        	((CapsuleSymbol)tree.parentCapsule.sym).translated_serial = c;
+	        	tree.parentCapsule.sym.capsule_info.translated_serial = c;
 	        }else if((c.flags_field & ACTIVE)!=0){
 	        	definitions = translateActiveCapsule(tree, c, localEnv);
-	        	((CapsuleSymbol)tree.parentCapsule.sym).translated_thread = c;
+	        	tree.parentCapsule.sym.capsule_info.translated_thread = c;
 	        }else if((c.flags_field & TASK)!=0){
 	        	definitions = translateTaskCapsule(tree, c, localEnv);
-	        	((CapsuleSymbol)tree.parentCapsule.sym).translated_task = c;
+	        	tree.parentCapsule.sym.capsule_info.translated_task = c;
 	        }else if((c.flags_field & MONITOR)!=0){
 	        	definitions = translateMonitorCapsule(tree, c, localEnv);
-	        	((CapsuleSymbol)tree.parentCapsule.sym).translated_monitor = c;
+	        	tree.parentCapsule.sym.capsule_info.translated_monitor = c;
 	        }else{ //default action
 	        	definitions = translateActiveCapsule(tree, c, localEnv);
-	        	((CapsuleSymbol)tree.parentCapsule.sym).translated_thread = c;
+	        	tree.parentCapsule.sym.capsule_info.translated_thread = c;
 	        }
-	        c.parentCapsule = (CapsuleSymbol)tree.parentCapsule.sym;
+	        c.capsule_info.parentCapsule = tree.parentCapsule.sym;
 	    	List<JCVariableDecl> fields = tree.getParameters();
 	    	while(fields.nonEmpty()){
 	    		definitions.prepend(make.VarDef(make.Modifiers(PUBLIC),
@@ -792,16 +793,16 @@ public class Enter extends JCTree.Visitor {
 	    				null));
 	    		fields = fields.tail;
 	    	}
-        	c.definedRun = true;
+        	c.capsule_info.definedRun = true;
         }
         ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
         params.appendList(tree.params);
-        c.capsuleParameters = params.toList();
+        c.capsule_info.capsuleParameters = params.toList();
         tree.sym = c;
         syms.capsules.put(c.name, c);
         classEnter(tree.defs, localEnv);
         result = c.type;
-        annotationProcessor.setDefinedRun(tree, c.definedRun);
+        annotationProcessor.setDefinedRun(tree, c.capsule_info.definedRun);
 //        c.fillIn();//fill in fields?
         tree.switchToClass();
     }
@@ -822,7 +823,7 @@ public class Enter extends JCTree.Visitor {
     	return stats.toList();
     }
     
-    public ListBuffer<JCTree> translateSerialCapsule(JCCapsuleDecl tree, CapsuleSymbol c, Env<AttrContext> localEnv){
+    public ListBuffer<JCTree> translateSerialCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
     	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_SEQUENTIAL));
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
         for(int i=0;i<tree.defs.length();i++){
@@ -855,7 +856,7 @@ public class Enter extends JCTree.Visitor {
     			definitions.add(state);
     		}else definitions.add(tree.defs.get(i));
         }
-        c.definedRun = false;
+        c.capsule_info.definedRun = false;
         for(JCMethodDecl d : tree.publicMethods){
     		definitions.add(d);
     	}
@@ -863,7 +864,7 @@ public class Enter extends JCTree.Visitor {
         return definitions;
     }
     
-    public ListBuffer<JCTree> translateMonitorCapsule(JCCapsuleDecl tree, CapsuleSymbol c, Env<AttrContext> localEnv){
+    public ListBuffer<JCTree> translateMonitorCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
     	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_SEQUENTIAL));
         ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
         for(int i=0;i<tree.defs.length();i++){
@@ -896,7 +897,7 @@ public class Enter extends JCTree.Visitor {
     			definitions.add(state);
     		}else definitions.add(tree.defs.get(i));
         }
-        c.definedRun = false;
+        c.capsule_info.definedRun = false;
         for(JCMethodDecl d : tree.publicMethods){
     		definitions.add(d);
     	}
@@ -904,7 +905,7 @@ public class Enter extends JCTree.Visitor {
         return definitions;
     }
     
-    public ListBuffer<JCTree> translateActiveCapsule(JCCapsuleDecl tree, CapsuleSymbol c, Env<AttrContext> localEnv){
+    public ListBuffer<JCTree> translateActiveCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
     	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_THREAD));
     	int indexer = 0;
         boolean hasRun = false;
@@ -979,7 +980,7 @@ public class Enter extends JCTree.Visitor {
         			for(JCVariableDecl param: mdecl.params){
         				constantName = constantName + "$" + param.vartype.toString();
         			}
-        		c.definedRun = false;
+        		c.capsule_info.definedRun = false;
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
 	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString(PaniniConstants.PANINI_PUSH)), List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))))));
 	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
@@ -1061,7 +1062,7 @@ public class Enter extends JCTree.Visitor {
             tree.computeMethod = m;
     	}
         else{
-        	c.definedRun = true;
+        	c.capsule_info.definedRun = true;
         	for(JCMethodDecl d : tree.publicMethods){
         		definitions.add(d);
         	}
@@ -1093,7 +1094,7 @@ public class Enter extends JCTree.Visitor {
         return definitions;
     }
     
-    public ListBuffer<JCTree> translateTaskCapsule(JCCapsuleDecl tree, CapsuleSymbol c, Env<AttrContext> localEnv){
+    public ListBuffer<JCTree> translateTaskCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
     	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_TASK));
     	int indexer = 0;
         boolean hasRun = false;
@@ -1149,7 +1150,7 @@ public class Enter extends JCTree.Visitor {
         			for(JCVariableDecl param: mdecl.params){
         				constantName = constantName + "$" + param.vartype.toString();
         			}
-        		c.definedRun = false;
+        		c.capsule_info.definedRun = false;
 	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
 	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString(PaniniConstants.PANINI_PUSH)), List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))))));
 	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
@@ -1232,7 +1233,7 @@ public class Enter extends JCTree.Visitor {
             tree.computeMethod = m;
     	}
         else{
-        	c.definedRun = true;
+        	c.capsule_info.definedRun = true;
         	for(JCMethodDecl d : tree.publicMethods){
         		definitions.add(d);
         	}
@@ -1381,13 +1382,12 @@ public class Enter extends JCTree.Visitor {
     		if(classSymbol.attributes_field.size()!=0){
     			for(Attribute.Compound compound : classSymbol.attributes_field){
     				if(compound.type.tsym.getQualifiedName().toString().contains("PaniniCapsuleDecl")){
-    					CapsuleSymbol capsuleSymbol;
-    					if(classSymbol instanceof CapsuleSymbol)
-    						capsuleSymbol = (CapsuleSymbol)classSymbol;
-    					else
-    						capsuleSymbol = CapsuleSymbol.fromClassSymbol(classSymbol);
-    					annotationProcessor.translateCapsuleAnnotations(capsuleSymbol, compound);
-	    				syms.capsules.put(capsuleSymbol.name, capsuleSymbol);
+	 					//ClassSymbol capsuleSymbol;
+	 					if((classSymbol.flags_field & Flags.CAPSULE) == 0){
+	 					    CapsuleExtras.asCapsuleSymbol(classSymbol);
+	 					}
+	 					annotationProcessor.translateCapsuleAnnotations(classSymbol, compound);
+	 				syms.capsules.put(classSymbol.name, classSymbol);
     				}
     			}
     		}
@@ -1395,26 +1395,26 @@ public class Enter extends JCTree.Visitor {
     }
     
     private void fillInCapsuleSymbolRest(){
-    	for(CapsuleSymbol capsule : syms.capsules.values()){
-    		CapsuleSymbol c = syms.capsules.get(names.fromString(capsule+"$thread"));
+    	for(ClassSymbol capsule : syms.capsules.values()){
+    		ClassSymbol c = syms.capsules.get(names.fromString(capsule+"$thread"));
     		if(c!=null){
-    			capsule.translated_thread = c;
-    			c.parentCapsule = capsule;
+    			capsule.capsule_info.translated_thread = c;
+    			c.capsule_info.parentCapsule = capsule;
     		}
     		c = syms.capsules.get(names.fromString(capsule+"$task"));
     		if(c!=null){
-    			capsule.translated_task = c;
-    			c.parentCapsule = capsule;
+    			capsule.capsule_info.translated_task = c;
+    			c.capsule_info.parentCapsule = capsule;
     		}
     		c = syms.capsules.get(names.fromString(capsule+"$monitor"));
     		if(c!=null){
-    			capsule.translated_monitor = c;
-    			c.parentCapsule = capsule;
+    			capsule.capsule_info.translated_monitor = c;
+    			c.capsule_info.parentCapsule = capsule;
     		}
     		c = syms.capsules.get(names.fromString(capsule+"$serial"));
     		if(c!=null){
-    			capsule.translated_serial = c;
-    			c.parentCapsule = capsule;
+    			capsule.capsule_info.translated_serial = c;
+    			c.capsule_info.parentCapsule = capsule;
     		}
     	}
     }
