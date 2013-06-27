@@ -154,7 +154,7 @@ public class AnnotationProcessor extends Internal{
 	}
 	
 	/**
-	 * Used to find a symbol from the memebrs of a classSymbol
+	 * Used to find a symbol from the members of a classSymbol
 	 */
 	private Symbol findField(Symbol s, String name){
 		return findField((ClassSymbol)s, names.fromString(name));
@@ -309,7 +309,7 @@ public class AnnotationProcessor extends Internal{
 	 * Parse the paramaters annotation, and fill in the paramater sym/type
 	 * using the existing information from the class symbol's fields.
 	 *
-	 * Assumes this happens when a capsuled is loaded from a class file.
+	 * Assumes this happens when a capsule is loaded from a class file.
 	 * @param c
 	 * @param paramsString
 	 */
