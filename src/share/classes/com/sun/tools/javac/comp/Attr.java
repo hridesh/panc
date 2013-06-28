@@ -835,9 +835,8 @@ public class Attr extends JCTree.Visitor {
 
     @Override
     public void visitCapsuleWiring(JCCapsuleWiring tree) {
-        Env<AttrContext> localEnv = env.dup(tree, env.info.dup());
-        Type owntype = attribExpr(tree.capsule, localEnv);
-        List<Type> argtypes = attribArgs(tree.args, localEnv);
+        Type owntype = attribExpr(tree.capsule, env);
+        List<Type> argtypes = attribArgs(tree.args,  env);
         if( owntype.tag != ERROR) {
             checkWiring(tree, owntype, tree.args, argtypes);
         }
