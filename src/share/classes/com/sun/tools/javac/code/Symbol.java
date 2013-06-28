@@ -43,7 +43,6 @@ import com.sun.tools.javac.tree.JCTree;
 // Panini code
 import java.util.HashSet;
 import java.util.HashMap;
-import org.paninij.systemgraphs.SystemGraphs;
 import org.paninij.analysis.CFG;
 import org.paninij.code.Type.WiringType;
 // end Panini code
@@ -792,7 +791,6 @@ public abstract class Symbol implements Element {
      * A class for system symbols
      */
     public static class SystemSymbol extends ClassSymbol{
-    	public SystemGraphs graphs;
 		public SystemSymbol(long flags, Name name, Type type, Symbol owner) {
             super(flags, name, type, owner);
         }

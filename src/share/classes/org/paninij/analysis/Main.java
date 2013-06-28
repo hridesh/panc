@@ -102,44 +102,44 @@ public final class Main {
 			// 5. capsule instance with no run() method, and more than one
 			// indegree and high cost and high PIC: thread
 
-			Stack<org.paninij.systemgraphs.SystemGraphs.Node> visited = new Stack<org.paninij.systemgraphs.SystemGraphs.Node>();
-			org.paninij.systemgraphs.SystemGraphs graphs = ((Symbol.SystemSymbol)root.sym).graphs;
-			if (graphs == null)	return;
-			for (Collection<org.paninij.systemgraphs.SystemGraphs.ConnectionEdge> edges : graphs.forwardConnectionEdges
-					.values()) {
-				for (org.paninij.systemgraphs.SystemGraphs.ConnectionEdge edge : edges) {
-					org.paninij.systemgraphs.SystemGraphs.Node from = edge.from;
-					org.paninij.systemgraphs.SystemGraphs.Node to = edge.to;
-					if (!visited.contains(from)) {
-						decide(from);
-						visited.add(from);
-					}
-					if (!visited.contains(to)) {
-						decide(to);
-						visited.add(to);
-					}
-				}
-			}
+//			Stack<org.paninij.systemgraphs.SystemGraphs.Node> visited = new Stack<org.paninij.systemgraphs.SystemGraphs.Node>();
+//			org.paninij.systemgraphs.SystemGraphs graphs = ((Symbol.SystemSymbol)root.sym).graphs;
+//			if (graphs == null)	return;
+//			for (Collection<org.paninij.systemgraphs.SystemGraphs.ConnectionEdge> edges : graphs.forwardConnectionEdges
+//					.values()) {
+//				for (org.paninij.systemgraphs.SystemGraphs.ConnectionEdge edge : edges) {
+//					org.paninij.systemgraphs.SystemGraphs.Node from = edge.from;
+//					org.paninij.systemgraphs.SystemGraphs.Node to = edge.to;
+//					if (!visited.contains(from)) {
+//						decide(from);
+//						visited.add(from);
+//					}
+//					if (!visited.contains(to)) {
+//						decide(to);
+//						visited.add(to);
+//					}
+//				}
+//			}
 		}
 	}
 
-	private static void decide(org.paninij.systemgraphs.SystemGraphs.Node node) {
-		if (((node.sym.flags() & Flags.CAPSULE) != 0 && (node.sym.capsule_info.definedRun) && (node.indegree == 0))
-				|| org.paninij.analysis.StaticProfilePass.blockingCapsules
-						.contains(node.sym.name)) {
-			// thread
-			System.out.println(node.toString() + " := THREAD");
-		} else if (node.indegree == 1) {
-			if (org.paninij.analysis.StaticProfilePass.highCostCapsules
-					.contains(node.sym.name.toString()))
-				System.out.println(node.toString() + " := TASK");
-			else {
-				// serial
-				System.out.println(node.toString() + " := SERIAL");
-			}
-		} else {
-			// monitor
-			System.out.println(node.toString() + " := MONITOR");
-		}
-	}
+//	private static void decide(org.paninij.systemgraphs.SystemGraphs.Node node) {
+//		if (((node.sym.flags() & Flags.CAPSULE) != 0 && (node.sym.capsule_info.definedRun) && (node.indegree == 0))
+//				|| org.paninij.analysis.StaticProfilePass.blockingCapsules
+//						.contains(node.sym.name)) {
+//			// thread
+//			System.out.println(node.toString() + " := THREAD");
+//		} else if (node.indegree == 1) {
+//			if (org.paninij.analysis.StaticProfilePass.highCostCapsules
+//					.contains(node.sym.name.toString()))
+//				System.out.println(node.toString() + " := TASK");
+//			else {
+//				// serial
+//				System.out.println(node.toString() + " := SERIAL");
+//			}
+//		} else {
+//			// monitor
+//			System.out.println(node.toString() + " := MONITOR");
+//		}
+//	}
 }

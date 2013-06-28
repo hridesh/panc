@@ -52,7 +52,6 @@ import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
 import org.paninij.consistency.*;
-import org.paninij.systemgraphs.*;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -99,7 +98,6 @@ public class Attr extends JCTree.Visitor {
     /*Defult to FULL, unless otherwise specified.*/
     public static ConsistencyUtil.SEQ_CONST_ALG seqConstAlg =
         ConsistencyUtil.SEQ_CONST_ALG.TRANS;
-    SystemGraphsBuilder graphsBuilder;
     public static boolean doGraphs = false;
     // end Panini code
 
@@ -153,7 +151,6 @@ public class Attr extends JCTree.Visitor {
 
         // Panini code
         pAttr = new org.paninij.comp.Attr(make, names, types, enter, memberEnter, syms, log, annotate);
-        graphsBuilder = SystemGraphsBuilder.instance(context);
         // end Panini code
     }
 
