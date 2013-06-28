@@ -809,9 +809,6 @@ public class Attr extends JCTree.Visitor {
 
     /**
      * Utility method to check a expression is a capsule array
-     * @param pos
-     * @param capArray
-     * @param env
      * @return the Capsule type for the array, or an error type.
      */
     Type checkCapsuleArray(JCExpression tree, Env<AttrContext> env) {
