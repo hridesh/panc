@@ -32,9 +32,9 @@ cd -
 
 echo "Testing separately compiled version of the HelloWorld example."
 cd HelloWorldSeparate
-../$PANC Console.java
-../$PANC Greeter.java
-../$PANC HelloWorld.java
+../$PANC -cp . Console.java
+../$PANC -cp . Greeter.java
+../$PANC -cp . HelloWorld.java
 ../$PANINI HelloWorld
 rm *.class 
 cd -
