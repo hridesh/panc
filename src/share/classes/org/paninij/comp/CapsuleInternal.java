@@ -419,18 +419,18 @@ public class CapsuleInternal extends Internal {
 	
 						ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
 	
+						
+						ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
+						ListBuffer<JCVariableDecl> consParams = new ListBuffer<JCVariableDecl>();
+						consParams.add(var(mods(0),
+								PaniniConstants.PANINI_MESSAGE_ID,
+								make.TypeIdent(TypeTags.INT)));
+						consBody.add(es(supert(args(id(PaniniConstants.PANINI_MESSAGE_ID)))));
+						consBody.add(es(assign(
+								select(thist(),
+										PaniniConstants.PANINI_MESSAGE_ID),
+								id(PaniniConstants.PANINI_MESSAGE_ID))));
 						if (!method.params.isEmpty()) {
-							ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
-							ListBuffer<JCVariableDecl> consParams = new ListBuffer<JCVariableDecl>();
-							consParams.add(var(mods(0),
-									PaniniConstants.PANINI_MESSAGE_ID,
-									make.TypeIdent(TypeTags.INT)));
-							consBody.add(es(supert(args(id(PaniniConstants.PANINI_MESSAGE_ID)))));
-							consBody.add(es(assign(
-									select(thist(),
-											PaniniConstants.PANINI_MESSAGE_ID),
-									id(PaniniConstants.PANINI_MESSAGE_ID))));
-	
 							for (JCVariableDecl par : method.params) {
 								consParams.add(var(mods(0), par.name, par.vartype));
 								consBody.add(es(assign(
@@ -451,11 +451,10 @@ public class CapsuleInternal extends Internal {
 																	method.params)),
 													nullv())));
 							}
+						}
 							constructors.add(constructor(mods(PUBLIC), consParams,
 									body(consBody)));
-						}
-						wrappedMethods.add(paniniFinish);
-						
+							wrappedMethods.add(paniniFinish);
 						String restypeString = restype.toString();
 						if(restype.toString().equals("java.lang.String"))
 							restypeString = "String";
