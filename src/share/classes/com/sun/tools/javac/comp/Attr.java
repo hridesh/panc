@@ -824,7 +824,7 @@ public class Attr extends JCTree.Visitor {
                 log.error(tree.pos(), "only.capsule.types.allowed");
             }
         } else {
-            log.error(tree.pos(), "array.req.but.found", atype);
+            log.error(tree.pos(), "array.req.but.not.found", atype);
         }
         return owntype;
     }
