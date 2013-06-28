@@ -893,9 +893,17 @@ public class Attr extends JCTree.Visitor {
                         "intf.annotation.members.cant.have.params");
 
 
-            // Attribute all input parameters.
-            for (List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail) {
-                attribStat(l.head, localEnv);
+            //SystemDecls may have 0 or exactly 1 argument of type String[]
+            if(tree.params.size() <= 1) {
+                // Attribute all input parameters.
+                for (List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail) {
+                    attribStat(l.head, localEnv);
+                    check(l.head, l.head.type, l.head.sym.kind, new ResultInfo(
+                            VAR,
+                            new ArrayType(syms.stringType, syms.arrayClass)));
+                }
+            } else {
+                log.error(tree.params.tail.head.pos, "system.argument.illegal");
             }
 
             // Check that type parameters are well-formed.

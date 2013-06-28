@@ -3135,29 +3135,6 @@ public class JavacParser implements Parser {
     
 
     // Panini code
-     private JCStatement systemDecl(JCModifiers mod, String dc){
-        inSystem = true;
-     	accept(IDENTIFIER);
-     	int pos = token.pos;
-     	Name name = ident();
-
-     	List<JCVariableDecl> params; 
-     	if(token.kind == LPAREN)
-     		params = formalParameters();
-     	else
-     		params = List.<JCVariableDecl>nil();
-     	
-     	if(params.length() > 1 
-     			|| (params.length() == 1 && !params.get(0).getType().toString().equals("String[]")) )
-     		log.error(token.pos, "system.argument.illegal");
-
-     	JCBlock body = systemBlock();
-     	JCSystemDecl result = toP(F.at(pos).SystemDef(mod, name, body, params));
-     	attach(result, dc);
-     	inSystem = false;
-     	return result;
-     }
-     
      JCStatement capsuleDecl(JCModifiers mod, String dc){
      	accept(IDENTIFIER);
      	int pos = token.pos;
