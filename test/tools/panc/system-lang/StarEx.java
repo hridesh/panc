@@ -25,7 +25,7 @@ capsule C(C2[] cs, int i) {
     void foo() {}
 }
 
-capsule C2(C c, int i) {
+capsule C2() {
     void bar() {}
 }
 
@@ -33,5 +33,5 @@ system S {
     C c;
     C2 c2s[3];
 
-    star(c2s, c, 1);
+    star(c, c2s, 1);
 }

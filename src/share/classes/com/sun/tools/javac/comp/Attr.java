@@ -988,7 +988,7 @@ public class Attr extends JCTree.Visitor {
     public void visitStar(JCStar tree) {
         arrangeWiringOperatorArgs(tree);
         Type centerT = attribExpr(tree.center, env);
-        Type spokeT = checkCapsuleArray(tree.others, env);
+        checkCapsuleArray(tree.others, env);
         List<Type> argtypes = attribArgs(tree.args, env);
 
         ListBuffer<JCExpression> was = new ListBuffer<JCExpression>();
@@ -1000,18 +1000,8 @@ public class Attr extends JCTree.Visitor {
         was.addAll(tree.args);
         wts.add(tree.others.type);
         wts.addAll(argtypes);
-        checkWiring(tree, centerT, was.toList(), wts.toList());
 
-        //Other type wires to the center, with args.
-        //Reset the args lists.
-        was = new ListBuffer<JCExpression>();
-        wts = new ListBuffer<Type>();
-        was.add(tree.center);
-        was.addAll(tree.args);
-        wts.add(centerT);
-        wts.addAll(argtypes);
-
-        result = tree.type = checkWiring(tree, spokeT, was.toList(), wts.toList());
+        result = tree.type = checkWiring(tree, centerT, was.toList(), wts.toList());
     }
 
     @Override
@@ -1058,8 +1048,8 @@ public class Attr extends JCTree.Visitor {
             break;
         case TOP_STAR:
             if(tree.args.size() >= 2) {
-               tree.setOrbiters(tree.args.head);
-               tree.setCenter(tree.args.tail.head);
+               tree.setCenter(tree.args.head);
+               tree.setOrbiters(tree.args.tail.head);
                tree.args = tree.args.tail.tail;
             } else {
                argSizeError = true;

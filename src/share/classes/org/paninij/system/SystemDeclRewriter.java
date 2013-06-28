@@ -242,12 +242,6 @@ public class SystemDeclRewriter extends TreeTranslator {
         int capsuleArraySize = getCapsuleArraySize(others);
         ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
 
-        for (int i = 0; i < capsuleArraySize; i++) {
-            unrolledStats
-                    .add(make.Exec( // others -> center
-                            createIndexedCapsuleWiring(others, i,
-                                    args.prepend(center))));
-        }
         unrolledStats.add(make.Exec(make.WiringApply(center,
                 args.prepend(others))));
         tree.unrolled = unrolledStats.toList();
