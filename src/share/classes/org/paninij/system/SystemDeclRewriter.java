@@ -327,8 +327,6 @@ public class SystemDeclRewriter extends TreeTranslator {
                             args.prepend(make.Indexed(dest,
                                     make.Literal(destPos + i))))));
         }
-        System.out.println("Rewritten associate statement: "
-                + unrolledStats.toList().toString());
         tree.unrolled = unrolledStats.toList();
 
         result = tree;
