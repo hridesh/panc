@@ -122,6 +122,14 @@ public abstract class Symbol implements Element {
         }
         return null;
     }
+
+    /**
+     * Check if the Symbol represents a capsule symbol.
+     * @return
+     */
+    public boolean isCapsule() {
+        return (flags() & Flags.CAPSULE) != 0;
+    }
 // end Panini code
 
 
