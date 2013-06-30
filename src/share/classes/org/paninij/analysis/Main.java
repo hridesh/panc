@@ -72,7 +72,7 @@ public final class Main {
 			// eliminate processing of task, thread versions except for
 			// capsule with run method
 			if (!root.sym.name.toString().contains("$serial")
-					&& ((root.sym.flags() & Flags.CAPSULE) != 0 && !root.sym.capsule_info.definedRun))
+					&& (root.sym.isCapsule() && !root.sym.capsule_info.definedRun))
 				return;
 
 			// System.out.println("Processing class: " + root.sym);
@@ -124,7 +124,7 @@ public final class Main {
 	}
 
 //	private static void decide(org.paninij.systemgraphs.SystemGraphs.Node node) {
-//		if (((node.sym.flags() & Flags.CAPSULE) != 0 && (node.sym.capsule_info.definedRun) && (node.indegree == 0))
+//		if ((node.sym.isCapsule() && (node.sym.capsule_info.definedRun) && (node.indegree == 0))
 //				|| org.paninij.analysis.StaticProfilePass.blockingCapsules
 //						.contains(node.sym.name)) {
 //			// thread

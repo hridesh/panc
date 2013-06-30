@@ -125,6 +125,11 @@ public abstract class Symbol implements Element {
 
     /**
      * Check if the Symbol represents a capsule symbol.
+     *
+     * This is the preferred way to check if a symbol represents
+     * a capsule, once the enter/member enter is done. Using
+     * this method in enter or member enter may cause a completer
+     * to run too early.
      * @return
      */
     public boolean isCapsule() {

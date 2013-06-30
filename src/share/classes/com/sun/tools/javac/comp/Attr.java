@@ -734,7 +734,7 @@ public class Attr extends JCTree.Visitor {
      * @param argtypes argument types.
      */
     Type checkWiring(JCTree tree, Type capsuletype, List<JCExpression> argtrees, List<Type> argtypes) {
-        if( (capsuletype.tsym.flags() & Flags.CAPSULE) == 0 ) {
+        if( !capsuletype.tsym.isCapsule() ) {
             log.error(tree.pos(), "only.capsule.types.allowed", capsuletype);
         }
         Type wiringtype = types.createErrorType(capsuletype);
@@ -773,7 +773,7 @@ public class Attr extends JCTree.Visitor {
 
         boolean wiringOkay = true;
         while(wt.nonEmpty()){
-            if( (wt.head.tsym.flags() & Flags.CAPSULE) != 0 ){//if its a capsule type
+            if( wt.head.tsym.isCapsule() ){//if its a capsule type
                 if(as.head.toString().equals("null")){
                     log.error(as.head.pos(), "capsule.null.declare");
                 }
@@ -1296,7 +1296,7 @@ public class Attr extends JCTree.Visitor {
             chk.setLint(prevLint);
         }
         // Panini code
-        if((env.enclClass.sym.flags() & Flags.CAPSULE) != 0 && tree.init!=null){
+        if(env.enclClass.sym.isCapsule() && tree.init!=null){
         	if(syms.capsules.containsKey(names.fromString(tree.init.type.toString())))
         		log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
         }
@@ -1937,7 +1937,7 @@ public class Attr extends JCTree.Visitor {
             
             // Panini Code
             if( (((MethodSymbol)TreeInfo.symbol(tree.meth)).flags()&Flags.PRIVATE)==0 &&(((MethodSymbol)TreeInfo.symbol(tree.meth)).flags()&Flags.PROTECTED)==0 ){
-            	if((env.enclClass.sym.flags_field & Flags.CAPSULE) != 0 &&((env.enclClass.sym.flags_field&Flags.SERIAL)==0)&&((env.enclClass.sym.flags_field&Flags.MONITOR)==0)){
+            	if(env.enclClass.sym.isCapsule() &&((env.enclClass.sym.flags_field&Flags.SERIAL)==0)&&((env.enclClass.sym.flags_field&Flags.MONITOR)==0)){
             		if(tree.meth.hasTag(Tag.IDENT)){
             			if(!tree.meth.toString().contains("$") 
             					&& !tree.meth.toString().equals(PaniniConstants.PANINI_YIELD)
@@ -2391,7 +2391,7 @@ public class Attr extends JCTree.Visitor {
         attribExpr(tree.rhs, env, owntype);
         result = check(tree, capturedType, VAL, resultInfo);
         // Panini code
-        if((env.enclClass.sym.flags_field & Flags.CAPSULE) != 0){
+        if(env.enclClass.sym.isCapsule()){
         	if(syms.capsules.containsKey(names.fromString(tree.rhs.type.toString())))
         		log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
         }
@@ -2771,8 +2771,8 @@ public class Attr extends JCTree.Visitor {
         env.info.tvars = List.nil();
         
         // Panini code
-        if( (tree.selected.type.tsym.flags_field & Flags.CAPSULE) != 0 &&!tree.type.getKind().toString().equals("EXECUTABLE")
-        		&&(env.enclClass.sym.flags_field & Flags.CAPSULE) != 0 &&!tree.selected.toString().equals("this")){
+        if (tree.selected.type.tsym.isCapsule() &&!tree.type.getKind().toString().equals("EXECUTABLE")
+        		&&env.enclClass.sym.isCapsule() &&!tree.selected.toString().equals("this")){
         	log.error(tree.pos, "invalid.access.of.capsules.states");
         }
         // end Panini code
@@ -3511,7 +3511,7 @@ public class Attr extends JCTree.Visitor {
                 	((JCSystemDecl)env.tree).switchToClass();
                 	this.env = oldEnv;
                 }
-                if((c.flags_field & Flags.CAPSULE) != 0){
+                if(c.isCapsule()){
                 	Env<AttrContext> oldEnv = this.env;
                 	this.env = env;
                 	((JCCapsuleDecl)env.tree).switchToCapsule();

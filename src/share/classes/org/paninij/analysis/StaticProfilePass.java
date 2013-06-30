@@ -104,7 +104,7 @@ public final class StaticProfilePass extends TreeScanner {
 			ClassSymbol cls = (ClassSymbol) sym.owner;
 			String type = meth.type.getReturnType().toString();
 			String method = type + " " + cls.fullname + "." + sym.toString();
-			if ( (sym.owner.flags() & Flags.CAPSULE) != 0 ) {
+			if ( sym.owner.isCapsule() ) {
 				//this.methodCost += sym.tree.cost;
 				invokedCapsuleProcs.add(method); // TODO: library methods cost
 			} else {

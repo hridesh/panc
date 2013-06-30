@@ -140,7 +140,7 @@ public final class Attr extends CapsuleInternal {
 			tree.accept(new ASTCFGBuilder());
 		}
 
-		if ((tree.sym.owner.flags() & Flags.CAPSULE) != 0) {
+		if (tree.sym.owner.isCapsule()) {
 			////
 //			EffectSet es = new EffectSet();
 //			es.add(es.bottomEffect());
@@ -221,12 +221,12 @@ public final class Attr extends CapsuleInternal {
 		for(JCTree def : tree.defs){
 			if(def instanceof JCMethodDecl){
 				for(JCVariableDecl param : ((JCMethodDecl)def).params){
-					if((param.type.tsym.flags_field & Flags.CAPSULE) != 0 &&!((JCMethodDecl)def).name.toString().contains("$Original")){
+					if(param.type.tsym.isCapsule() &&!((JCMethodDecl)def).name.toString().contains("$Original")){
 						log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.sym);
 					}
 				}
 			}else if(def.getTag() == Tag.VARDEF){
-				if((((JCVariableDecl)def).type.tsym.flags_field & Flags.CAPSULE) != 0)
+				if(((JCVariableDecl)def).type.tsym.isCapsule())
 					((JCVariableDecl)def).mods.flags |= FINAL;
 			}
 		}
