@@ -786,10 +786,15 @@ public abstract class Symbol implements Element {
          * Add the flags and extra struct to the class symbol to make it
          * represent a capsule type.
          *
-         * Any ClassSymbol which represents a Capsule should this method
-         * and not or in the bit flag manually.
-         * @param c
-         * @return the a reference to the modified object.
+         * Any existing ClassSymbol which needs to represent a Capsule should
+         * use this method to adapt the symbol, and not the flag manually.
+         * @param c An existing symbol to modify
+         * @return The reference to the modified argument. It is important to not
+         * create a new instance of the symbol, because object identity
+         * (or properties based on the identity such as the hashcode) is used
+         * in many places in the compiler to look up other pieces of information
+         * (such as the environment for the symbol.) If object changes, these
+         * types of checks/look ups will fail.
          */
         public static ClassSymbol asCapsuleSymbol(ClassSymbol c) {
             c.flags_field |= Flags.CAPSULE;
@@ -852,6 +857,21 @@ public abstract class Symbol implements Element {
         public Pool pool;
 
         // Panini code
+        /**
+         * Store the extra information specific to Capsules
+         *  -- Access only if symbol is a capsule.
+         * <p>
+         * <b>pre:</b> <code>{@link Symbol#isCapsule()} == true</code>
+         * </p><p>
+         * <b>implies either:</b>
+         *   <ol>
+         *   <li>A class symbol was constructed with the {@link Flags#CAPSULE}
+         *   bit set in its flags,</li>
+         *   <li>or a class symbol was marked as a capsule
+         *      by {@link CapsuleExtras#asCapsuleSymbol(ClassSymbol)}.</li>
+         *   </ol>
+         * </p>
+         */
         public CapsuleExtras capsule_info = null;
         // end Panini code
 
