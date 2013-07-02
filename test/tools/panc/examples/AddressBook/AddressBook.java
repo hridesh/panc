@@ -17,6 +17,12 @@
  * Contributor(s): Hridesh Rajan
  */
 
+/* @test
+ * @summary Test compile the address book example.
+ * @library htmlparser.jar
+ * @compile AddressBook.java
+ */
+
 /***
  * The design of this application consists of a collection of address books 
  * and a UI capsule. The UI capsule initiates the address search by broadcasting
