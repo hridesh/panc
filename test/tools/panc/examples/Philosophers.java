@@ -16,6 +16,13 @@
  * 
  * Contributor(s): 
  */
+
+/* 
+ * @test
+ * @summary Complie the Philosophers example.
+ * @compile Philosophers.java
+ */
+
 class Bool {
 	private boolean v;
 	public Bool(boolean v) { this.v = v; }

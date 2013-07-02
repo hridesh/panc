@@ -24,6 +24,12 @@
  */
 import java.io.*;
 
+/* 
+ * @test
+ * @summary Complie the Histogram example.
+ * @compile Histogram.java
+ */
+
 capsule Reader(String[] args, Bucket[] buckets) {
 	void run() {
 		if(args.length == 0) process("shaks12.txt");

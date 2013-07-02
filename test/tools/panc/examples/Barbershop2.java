@@ -19,6 +19,12 @@
 import java.util.Queue;
 import java.util.LinkedList;
 
+/* 
+ * @test
+ * @summary Complie the Barbershop2 example.
+ * @compile Barbershop2.java
+ */
+
 class Customer {
 	private String name;
 	public Customer(String name) { this.name = name; }

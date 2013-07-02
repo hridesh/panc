@@ -17,6 +17,12 @@
  * Contributor(s): Hridesh Rajan
  */
 
+/* 
+ * @test
+ * @summary Complie the SignatureExample example.
+ * @compile SignatureExample.java
+ */
+
 signature Stream {
  void write(String s); 
 }
