@@ -1090,6 +1090,16 @@
         <javadoc-tool name="panc" includes="${javac.includes}" options="${javadoc.jls.option}"/>
     </target>
 
+    <target name="jtreg-panc" depends="build-panc,-def-jtreg">
+        <jtreg-tool name="panc" tests="${panc.tests}"/>
+    </target>
+
+    <target name="findbugs-panc" depends="build-panc,-def-findbugs">
+        <findbugs-tool name="panc"/>
+    </target>
+
+    <target name="panc" depends="build-panc,runtime,jtreg-panc,findbugs-panc"/>
+
     <target name="build-paninij-runtime" depends="build-panc">
         <build-classes
             includes="${paninij.runtime.includes}"/>

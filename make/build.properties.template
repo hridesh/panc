@@ -162,6 +162,9 @@ javap.includes = \
 javap.tests = \
         tools/javap/
 
+panc.tests = \
+        tools/panc/
+
 paninij.runtime.includes = \
         org/paninij/runtime/ \
         org/paninij/lang/
