@@ -347,7 +347,10 @@ public final class Attr extends CapsuleInternal {
 			int refCount = 0;
 			Name vdeclName = entry.getKey();
 			Name cdeclName = entry.getValue();
-			refCount = sysGraph.nodes.get(vdeclName).indegree;
+			if (sysGraph.nodes.containsKey(vdeclName))
+				refCount = sysGraph.nodes.get(vdeclName).indegree;
+			else
+				refCount = 0;
 			JCAssign refCountAssign = make
 					.Assign(make.Select(
 							make.TypeCast(make.Ident(cdeclName),
