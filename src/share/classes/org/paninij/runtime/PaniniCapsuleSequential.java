@@ -20,6 +20,7 @@
 package org.paninij.runtime;
 
 public abstract class PaniniCapsuleSequential implements PaniniCapsule{
+	public volatile int panini$ref$count;
   	/**
   	 * Causes the current capsule to sleep (temporarily cease execution) 
   	 * for the specified number of milliseconds, subject to the precision 
@@ -41,18 +42,7 @@ public abstract class PaniniCapsuleSequential implements PaniniCapsule{
   		}
   	}  	
   	
-  	/**
-  	 * Causes the current capsule to complete its remaining work and then cease execution.
-  	 * 
-  	 * Shutdown is allowed only if the client capsule has permission to modify this capsule.
-  	 * 
-  	 * If there is a security manager, its checkAccess method is called with this capsule 
-  	 * as its argument. This may result in throwing a SecurityException.
-  	 * 
-  	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
-  	 * 
-  	 */
-  	public final void shutdown () {
+  	public void disconnect () {
   	}
   	
   	/**

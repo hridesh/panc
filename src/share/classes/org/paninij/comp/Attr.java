@@ -37,6 +37,7 @@ import static com.sun.tools.javac.tree.JCTree.Tag.VARDEF;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.paninij.analysis.ASTCFGBuilder;
@@ -48,6 +49,7 @@ import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
@@ -217,6 +219,111 @@ public final class Attr extends CapsuleInternal {
 								make.Ident(names
 										.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
 								List.<JCExpression> nil())));
+			if ((tree.sym.flags_field & ACTIVE) != 0) {
+				// Reference count disconnect()
+				ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
+				List<JCVariableDecl> params = tree.params;
+				for (JCVariableDecl jcVariableDecl : params) {
+					if (jcVariableDecl.vartype.type.tsym.isCapsule()) {
+						JCStatement stmt = make
+								.Exec(make.Apply(
+										List.<JCExpression> nil(),
+										make.Select(
+												make.TypeCast(
+														make.Ident(names
+																.fromString(PaniniConstants.PANINI_QUEUE)),
+														make.Ident(jcVariableDecl.name)),
+												names.fromString(PaniniConstants.PANINI_DISCONNECT)),
+										List.<JCExpression> nil()));
+
+						blockStats.append(stmt);
+					}
+				}
+
+				List<JCCatch> catchers = List
+						.<JCCatch> of(make.Catch(
+								make.VarDef(make.Modifiers(0), names
+										.fromString("e"), make.Ident(names
+										.fromString("Exception")), null), make
+										.Block(0, List.<JCStatement> nil())));
+				List<JCStatement> bodyStats = (make.Try(
+						make.Block(0, blockStats.toList()), catchers,
+						null)).getBlock().stats;
+				
+				tree.computeMethod.body.stats = tree.computeMethod.body.stats
+						.append(make.Try(
+								make.Block(0, blockStats.toList()), catchers,
+								null));//List(bodyStats);
+			}
+			
+			if ((tree.sym.flags_field & SERIAL) != 0 || (tree.sym.flags_field & MONITOR) != 0) {
+				// For serial capsule version
+				ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
+				List<JCVariableDecl> params = tree.params;
+				for (JCVariableDecl jcVariableDecl : params) {
+					if (jcVariableDecl.vartype.type.tsym.isCapsule()) {
+						JCStatement stmt = make.Exec(make.Apply(
+								List.<JCExpression> nil(),
+								make.Select(
+										make.TypeCast(
+												make.Ident(names
+														.fromString(PaniniConstants.PANINI_QUEUE)),
+												make.Ident(jcVariableDecl.name)),
+										names.fromString(PaniniConstants.PANINI_DISCONNECT)),
+								List.<JCExpression> nil()));
+
+						blockStats.append(stmt);
+					}
+				}
+				
+				List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
+						make.Modifiers(0), names.fromString("e"),
+						make.Ident(names.fromString("Exception")), null),
+						make.Block(0, List.<JCStatement> nil())));
+				ListBuffer<JCStatement> methodStats = new ListBuffer<JCStatement>();
+				methodStats.append(make.Exec(make.Unary(JCTree.Tag.POSTDEC, make.Ident(names
+						.fromString(PaniniConstants.PANINI_REF_COUNT)))));
+			
+				methodStats.append(make.If(make.Binary(JCTree.Tag.EQ, make.Ident(names
+						.fromString(PaniniConstants.PANINI_REF_COUNT)), make.Literal(TypeTags.INT, new Integer(0))), 
+						make.Block(0, blockStats.toList()), null));
+				
+				JCBlock body = make.Block(0, methodStats.toList());
+				
+				JCMethodDecl disconnectMeth = null;
+				MethodSymbol msym = null;
+				if ((tree.sym.flags_field & SERIAL) != 0) {
+					msym = new MethodSymbol(
+	        				PUBLIC|FINAL,
+	        				names.fromString(PaniniConstants.PANINI_DISCONNECT),
+	        				new MethodType(
+	        						List.<Type>nil(),
+	        						syms.voidType,
+	        						List.<Type>nil(),
+	        						syms.methodClass
+	        						),
+	        						tree.sym
+	        				);
+					disconnectMeth = make.MethodDef(make.Modifiers(PUBLIC|FINAL), names.fromString(PaniniConstants.PANINI_DISCONNECT), make.TypeIdent(TypeTags.VOID),
+							List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>nil(), body, null);
+				} else {
+					msym = new MethodSymbol(
+	        				PUBLIC|FINAL|Flags.SYNCHRONIZED,
+	        				names.fromString(PaniniConstants.PANINI_DISCONNECT),
+	        				new MethodType(
+	        						List.<Type>nil(),
+	        						syms.voidType,
+	        						List.<Type>nil(),
+	        						syms.methodClass
+	        						),
+	        						tree.sym
+	        				);
+					disconnectMeth = make.MethodDef(make.Modifiers(PUBLIC|FINAL|Flags.SYNCHRONIZED), names.fromString(PaniniConstants.PANINI_DISCONNECT), make.TypeIdent(TypeTags.VOID),
+						List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>nil(), body, null);
+				}				
+				disconnectMeth.sym = msym;
+				tree.defs = tree.defs.append(disconnectMeth);
+			}
 		}
 		for(JCTree def : tree.defs){
 			if(def instanceof JCMethodDecl){
@@ -229,6 +336,27 @@ public final class Attr extends CapsuleInternal {
 				if(((JCVariableDecl)def).type.tsym.isCapsule())
 					((JCVariableDecl)def).mods.flags |= FINAL;
 			}
+		}
+	}
+	
+	private void initRefCount(Map<Name, Name> variables,
+			ListBuffer<JCStatement> assigns, SystemGraph sysGraph) {
+		Set<Entry<Name, Name>> entrySet = variables.entrySet();
+		for (Entry<Name, Name> entry : entrySet) {
+			// Reference count update
+			int refCount = 0;
+			Name vdeclName = entry.getKey();
+			Name cdeclName = entry.getValue();
+			refCount = sysGraph.nodes.get(vdeclName).indegree;
+			JCAssign refCountAssign = make
+					.Assign(make.Select(
+							make.TypeCast(make.Ident(cdeclName),
+									make.Ident(vdeclName)),
+							names.fromString(PaniniConstants.PANINI_REF_COUNT)),
+							intlit(refCount));
+			JCExpressionStatement refCountAssignStmt = make
+					.Exec(refCountAssign);
+			assigns.append(refCountAssignStmt);
 		}
 	}
 
@@ -262,9 +390,12 @@ public final class Attr extends CapsuleInternal {
 
 		if(rewritenTree.hasTaskCapsule)
 			processSystemAnnotation(rewritenTree, inits, env);
+		
+		initRefCount(mt.variables, assigns, sysGraph);
+		// Reference counting based garbage collection
 
 		List<JCStatement> mainStmts;
-		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
+		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins)/*.appendList(submits)*/.toList();
 		JCMethodDecl maindecl = createMainMethod(rewritenTree.sym, rewritenTree.body, rewritenTree.params, mainStmts);
 		rewritenTree.defs = rewritenTree.defs.append(maindecl);
 

@@ -128,11 +128,29 @@ public class CapsuleInternal extends Internal {
 				apply(PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_MESSAGE_ID), cases));
 
+		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
+		List<JCVariableDecl> params = tree.params;
+		for (JCVariableDecl jcVariableDecl : params) {
+			if (jcVariableDecl.vartype.type.tsym.isCapsule()) {
+				JCStatement stmt = es(apply(make.TypeCast(make.Ident(names
+						.fromString(PaniniConstants.PANINI_QUEUE)),
+						select(jcVariableDecl.name.toString())),
+						PaniniConstants.PANINI_DISCONNECT));
+				blockStats.append(stmt);
+			}
+		}
+		
+		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
+				make.Modifiers(0), names.fromString("e"),
+				make.Ident(names.fromString("Exception")), null),
+				make.Block(0, List.<JCStatement> nil())));
+
 		JCBlock b = body(
-				var(mods(0), PaniniConstants.PANINI_TERMINATE,
-						make.TypeIdent(TypeTags.BOOLEAN), falsev()),
-				whilel(nott(id(PaniniConstants.PANINI_TERMINATE)),
-						body(messageLoopBody)));
+				make.Try(body(
+						var(mods(0), PaniniConstants.PANINI_TERMINATE,
+								make.TypeIdent(TypeTags.BOOLEAN), falsev()),
+						whilel(nott(id(PaniniConstants.PANINI_TERMINATE)),
+								body(messageLoopBody))), catchers, body(blockStats)));
 		return b;
 	}
 
@@ -201,9 +219,21 @@ public class CapsuleInternal extends Internal {
 										List.<JCExpression> of(id(PaniniConstants.PANINI_DUCK_TYPE)))),
 								returnt(falsev())))));
 
-		cases.append(case_(intlit(-2),
-				es(assign(PaniniConstants.PANINI_TERMINATE, truev())),
-				returnt(truev())));
+		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
+		List<JCVariableDecl> params = tree.params;
+		for (JCVariableDecl jcVariableDecl : params) {
+			if (jcVariableDecl.vartype.type.tsym.isCapsule()) {
+				JCStatement stmt = es(apply(make.TypeCast(make.Ident(names
+						.fromString(PaniniConstants.PANINI_QUEUE)),
+						select(jcVariableDecl.name.toString())),
+						PaniniConstants.PANINI_DISCONNECT));
+				blockStats.append(stmt);
+			}
+		}
+
+		blockStats.append(es(assign(PaniniConstants.PANINI_TERMINATE, truev())));
+		blockStats.append(returnt(truev()));
+		cases.append(case_(intlit(-2), blockStats));
 
 		messageLoopBody.append(swtch(
 				apply(PaniniConstants.PANINI_DUCK_TYPE,

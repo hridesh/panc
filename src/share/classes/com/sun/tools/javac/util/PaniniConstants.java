@@ -61,4 +61,7 @@ public class PaniniConstants {
 	// To implement the flag in the duck.
 	public final static String REDEEMED = "panini$redeemed";
 	public final static String VALUE = "value";
+	
+	public final static String PANINI_REF_COUNT = "panini$ref$count";
+	public final static String PANINI_DISCONNECT = "disconnect";
 }

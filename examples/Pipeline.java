@@ -43,7 +43,7 @@ capsule Source (Stage next, long num) {
 			next.consume(n);
 		}
 		next.consume(-1);
-		yield(2);
+		//yield(2);
 	}
 }
 
