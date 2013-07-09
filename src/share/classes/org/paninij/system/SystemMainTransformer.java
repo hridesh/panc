@@ -63,6 +63,7 @@ import com.sun.tools.javac.tree.JCTree.JCCatch;
 import com.sun.tools.javac.tree.JCTree.JCEnhancedForLoop;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
+import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCForLoop;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
@@ -99,6 +100,7 @@ public class SystemMainTransformer extends TreeTranslator {
     public final ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
     public final Map<Name, Name> variables = new HashMap<Name, Name>();
     public final Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
+    public final Map<Name, JCFieldAccess> refCountStats = new HashMap<Name, JCFieldAccess>();
 
     final Symtab syms;
     final Names names;
@@ -267,6 +269,16 @@ public class SystemMainTransformer extends TreeTranslator {
                             names.fromString(mi.arguments.get(j).toString()));
                 }
             }
+            // updated refcount stats
+            Name variableName = names.fromString(mi.indexed.toString()+"["+mi.index+"]");
+            JCFieldAccess refAccess = make.Select
+                    (make.TypeCast(make.Ident(variables.get(names
+                            .fromString(mi.indexed.toString()))), make.Indexed
+                            (mi.indexed,
+                                    mi.index)),
+                                    names.fromString(PaniniConstants.PANINI_REF_COUNT));
+            refCountStats.put(variableName, refAccess);
+            
             capsulesToWire.remove(mi.name);
         }
     }
@@ -445,6 +457,12 @@ public class SystemMainTransformer extends TreeTranslator {
             }
         }
 
+        // update refaccess
+        Name variableName = capId.name;
+        JCFieldAccess refCountAccess = make.Select(make.TypeCast(make.Ident(c), capId),
+        		names.fromString(PaniniConstants.PANINI_REF_COUNT));
+        refCountStats.put(variableName,refCountAccess);
+        
         return assigns.toList();
     }
 

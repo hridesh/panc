@@ -71,6 +71,8 @@ import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
 import org.paninij.system.*;
 import org.paninij.systemgraph.*;
+import org.paninij.systemgraph.SystemGraph.Node;
+
 import com.sun.source.tree.Tree.Kind;
 import java.util.ArrayList;
 
@@ -339,23 +341,17 @@ public final class Attr extends CapsuleInternal {
 		}
 	}
 	
-	private void initRefCount(Map<Name, Name> variables,
+	private void initRefCount(Map<Name, JCFieldAccess> refCountStats,
 			ListBuffer<JCStatement> assigns, SystemGraph sysGraph) {
-		Set<Entry<Name, Name>> entrySet = variables.entrySet();
-		for (Entry<Name, Name> entry : entrySet) {
+		Set<Entry<Name, JCFieldAccess>> entrySet = refCountStats.entrySet();//sysGraph.nodes.entrySet();//variables.entrySet();
+		for (Entry<Name, JCFieldAccess> entry : entrySet) {
 			// Reference count update
 			int refCount = 0;
 			Name vdeclName = entry.getKey();
-			Name cdeclName = entry.getValue();
-			if (sysGraph.nodes.containsKey(vdeclName))
-				refCount = sysGraph.nodes.get(vdeclName).indegree;
-			else
-				refCount = 0;
+			refCount = sysGraph.nodes.get(vdeclName).indegree;
+			JCFieldAccess accessStat = entry.getValue();
 			JCAssign refCountAssign = make
-					.Assign(make.Select(
-							make.TypeCast(make.Ident(cdeclName),
-									make.Ident(vdeclName)),
-							names.fromString(PaniniConstants.PANINI_REF_COUNT)),
+					.Assign(accessStat,
 							intlit(refCount));
 			JCExpressionStatement refCountAssignStmt = make
 					.Exec(refCountAssign);
@@ -394,7 +390,7 @@ public final class Attr extends CapsuleInternal {
 		if(rewritenTree.hasTaskCapsule)
 			processSystemAnnotation(rewritenTree, inits, env);
 		
-		initRefCount(mt.variables, assigns, sysGraph);
+		initRefCount(mt.refCountStats, assigns, sysGraph);
 		// Reference counting based garbage collection
 
 		List<JCStatement> mainStmts;
