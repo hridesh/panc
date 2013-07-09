@@ -294,35 +294,17 @@ public final class Attr extends CapsuleInternal {
 				
 				JCMethodDecl disconnectMeth = null;
 				MethodSymbol msym = null;
-				if ((tree.sym.flags_field & SERIAL) != 0) {
-					msym = new MethodSymbol(
-	        				PUBLIC|FINAL,
-	        				names.fromString(PaniniConstants.PANINI_DISCONNECT),
-	        				new MethodType(
-	        						List.<Type>nil(),
-	        						syms.voidType,
-	        						List.<Type>nil(),
-	        						syms.methodClass
-	        						),
-	        						tree.sym
-	        				);
-					disconnectMeth = make.MethodDef(make.Modifiers(PUBLIC|FINAL), names.fromString(PaniniConstants.PANINI_DISCONNECT), make.TypeIdent(TypeTags.VOID),
-							List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>nil(), body, null);
-				} else {
-					msym = new MethodSymbol(
-	        				PUBLIC|FINAL|Flags.SYNCHRONIZED,
-	        				names.fromString(PaniniConstants.PANINI_DISCONNECT),
-	        				new MethodType(
-	        						List.<Type>nil(),
-	        						syms.voidType,
-	        						List.<Type>nil(),
-	        						syms.methodClass
-	        						),
-	        						tree.sym
-	        				);
-					disconnectMeth = make.MethodDef(make.Modifiers(PUBLIC|FINAL|Flags.SYNCHRONIZED), names.fromString(PaniniConstants.PANINI_DISCONNECT), make.TypeIdent(TypeTags.VOID),
-						List.<JCTypeParameter>nil(), List.<JCVariableDecl>nil(), List.<JCExpression>nil(), body, null);
-				}				
+				msym = new MethodSymbol(PUBLIC | FINAL | Flags.SYNCHRONIZED,
+						names.fromString(PaniniConstants.PANINI_DISCONNECT),
+						new MethodType(List.<Type> nil(), syms.voidType,
+								List.<Type> nil(), syms.methodClass), tree.sym);
+				disconnectMeth = make.MethodDef(
+						make.Modifiers(PUBLIC | FINAL | Flags.SYNCHRONIZED),
+						names.fromString(PaniniConstants.PANINI_DISCONNECT),
+						make.TypeIdent(TypeTags.VOID),
+						List.<JCTypeParameter> nil(),
+						List.<JCVariableDecl> nil(), List.<JCExpression> nil(),
+						body, null);
 				disconnectMeth.sym = msym;
 				tree.defs = tree.defs.append(disconnectMeth);
 			}

@@ -104,7 +104,7 @@ public abstract class PaniniCapsuleTask implements PaniniCapsule{
 		}
 	}  	
 
-	public final void disconnect() {
+	public final synchronized void disconnect() {
 		panini$ref$count--;
 		if (panini$ref$count == 0)
 			panini$push(new org.paninij.runtime.types.Panini$Duck$Void(-2));

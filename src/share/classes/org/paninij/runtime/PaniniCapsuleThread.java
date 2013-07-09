@@ -112,7 +112,7 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
   		}
   	}  	
   	
-	public final void disconnect() {
+	public final synchronized void disconnect() {
 		panini$ref$count--;
 		if (panini$ref$count == 0)
 			panini$push(new org.paninij.runtime.types.Panini$Duck$Void(-2));

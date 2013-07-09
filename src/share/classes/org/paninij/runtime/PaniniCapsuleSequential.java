@@ -42,7 +42,7 @@ public abstract class PaniniCapsuleSequential implements PaniniCapsule{
   		}
   	}  	
   	
-  	public void disconnect () {
+  	public synchronized void disconnect () {
   	}
   	
   	/**
