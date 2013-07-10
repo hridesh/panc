@@ -224,65 +224,13 @@ public final class Attr extends CapsuleInternal {
 			if ((tree.sym.flags_field & ACTIVE) != 0) {
 				// Reference count disconnect()
 				ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
-				List<JCVariableDecl> params = tree.params;
-				for (JCVariableDecl jcVariableDecl : params) {
-					if (jcVariableDecl.vartype.type.tsym.isCapsule()) {
-						JCStatement stmt = make
-								.Exec(make.Apply(
-										List.<JCExpression> nil(),
-										make.Select(
-												make.TypeCast(
-														make.Ident(names
-																.fromString(PaniniConstants.PANINI_QUEUE)),
-														make.Ident(jcVariableDecl.name)),
-												names.fromString(PaniniConstants.PANINI_DISCONNECT)),
-										List.<JCExpression> nil()));
-
-						blockStats.append(stmt);
-					} else if (jcVariableDecl.vartype.type.tsym.name.toString().equalsIgnoreCase("Array")) {
-						if (((ArrayType)jcVariableDecl.vartype.type).elemtype.tsym.isCapsule()) {
-							ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
-					        JCVariableDecl arraycache = make.VarDef(make.Modifiers(0),
-					                names.fromString("index$"),
-					                make.TypeIdent(INT),
-					                make.Literal(0));
-					        JCBinary cond = make.Binary(LT, make.Ident(names.fromString("index$")),
-					                make.Select(make.Ident(jcVariableDecl.name),
-					                        names.fromString("length")));
-					        JCUnary unary = make.Unary(PREINC, make.Ident(names.fromString("index$")));
-					        JCExpressionStatement step =
-					                make.Exec(unary);
-					        loopBody.add(make
-									.Exec(make.Apply(
-											List.<JCExpression> nil(),
-											make.Select(
-													make.TypeCast(
-															make.Ident(names
-																	.fromString(PaniniConstants.PANINI_QUEUE)),
-																	make.Indexed(make.Ident(jcVariableDecl.name), 
-																			make.Ident(names.fromString("index$")))),
-													names.fromString(PaniniConstants.PANINI_DISCONNECT)),
-											List.<JCExpression> nil())));
-					        JCForLoop floop =
-					                make.ForLoop(List.<JCStatement>of(arraycache),
-					                        cond,
-					                        List.of(step),
-					                        make.Block(0, loopBody.toList()));
-					        blockStats.append(floop);
-						}
-					} 
-				}
-
+				blockStats = createCapsuleMemberDisconnects(tree.params);
 				List<JCCatch> catchers = List
 						.<JCCatch> of(make.Catch(
 								make.VarDef(make.Modifiers(0), names
 										.fromString("e"), make.Ident(names
 										.fromString("Exception")), null), make
 										.Block(0, List.<JCStatement> nil())));
-				List<JCStatement> bodyStats = (make.Try(
-						make.Block(0, blockStats.toList()), catchers,
-						null)).getBlock().stats;
-				
 				tree.computeMethod.body.stats = tree.computeMethod.body.stats
 						.append(make.Try(
 								make.Block(0, blockStats.toList()), catchers,
@@ -292,33 +240,13 @@ public final class Attr extends CapsuleInternal {
 			if ((tree.sym.flags_field & SERIAL) != 0 || (tree.sym.flags_field & MONITOR) != 0) {
 				// For serial capsule version
 				ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
-				List<JCVariableDecl> params = tree.params;
-				for (JCVariableDecl jcVariableDecl : params) {
-					if (jcVariableDecl.vartype.type.tsym.isCapsule()) {
-						JCStatement stmt = make.Exec(make.Apply(
-								List.<JCExpression> nil(),
-								make.Select(
-										make.TypeCast(
-												make.Ident(names
-														.fromString(PaniniConstants.PANINI_QUEUE)),
-												make.Ident(jcVariableDecl.name)),
-										names.fromString(PaniniConstants.PANINI_DISCONNECT)),
-								List.<JCExpression> nil()));
-
-						blockStats.append(stmt);
-					}
-				}
-				
-				List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
-						make.Modifiers(0), names.fromString("e"),
-						make.Ident(names.fromString("Exception")), null),
-						make.Block(0, List.<JCStatement> nil())));
+				blockStats = createCapsuleMemberDisconnects(tree.params);
 				ListBuffer<JCStatement> methodStats = new ListBuffer<JCStatement>();
 				methodStats.append(make.Exec(make.Unary(JCTree.Tag.POSTDEC, make.Ident(names
 						.fromString(PaniniConstants.PANINI_REF_COUNT)))));
 			
 				methodStats.append(make.If(make.Binary(JCTree.Tag.EQ, make.Ident(names
-						.fromString(PaniniConstants.PANINI_REF_COUNT)), make.Literal(TypeTags.INT, new Integer(0))), 
+						.fromString(PaniniConstants.PANINI_REF_COUNT)), make.Literal(TypeTags.INT, Integer.valueOf(0))), 
 						make.Block(0, blockStats.toList()), null));
 				
 				JCBlock body = make.Block(0, methodStats.toList());
@@ -354,9 +282,61 @@ public final class Attr extends CapsuleInternal {
 		}
 	}
 	
+	private ListBuffer<JCStatement> createCapsuleMemberDisconnects(
+			List<JCVariableDecl> params) {
+		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
+		for (JCVariableDecl jcVariableDecl : params) {
+			if (jcVariableDecl.vartype.type.tsym.isCapsule()) {
+				JCStatement stmt = make
+						.Exec(make.Apply(
+								List.<JCExpression> nil(),
+								make.Select(
+										make.TypeCast(
+												make.Ident(names
+														.fromString(PaniniConstants.PANINI_QUEUE)),
+												make.Ident(jcVariableDecl.name)),
+										names.fromString(PaniniConstants.PANINI_DISCONNECT)),
+								List.<JCExpression> nil()));
+
+				blockStats.append(stmt);
+			} else if (jcVariableDecl.vartype.type.tsym.name.toString().equalsIgnoreCase("Array")) {
+				if (((ArrayType)jcVariableDecl.vartype.type).elemtype.tsym.isCapsule()) {
+					ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
+			        JCVariableDecl arraycache = make.VarDef(make.Modifiers(0),
+			                names.fromString("index$"),
+			                make.TypeIdent(INT),
+			                make.Literal(0));
+			        JCBinary cond = make.Binary(LT, make.Ident(names.fromString("index$")),
+			                make.Select(make.Ident(jcVariableDecl.name),
+			                        names.fromString("length")));
+			        JCUnary unary = make.Unary(PREINC, make.Ident(names.fromString("index$")));
+			        JCExpressionStatement step =
+			                make.Exec(unary);
+			        loopBody.add(make
+							.Exec(make.Apply(
+									List.<JCExpression> nil(),
+									make.Select(
+											make.TypeCast(
+													make.Ident(names
+															.fromString(PaniniConstants.PANINI_QUEUE)),
+															make.Indexed(make.Ident(jcVariableDecl.name), 
+																	make.Ident(names.fromString("index$")))),
+											names.fromString(PaniniConstants.PANINI_DISCONNECT)),
+									List.<JCExpression> nil())));
+			        JCForLoop floop =
+			                make.ForLoop(List.<JCStatement>of(arraycache),
+			                        cond,
+			                        List.of(step),
+			                        make.Block(0, loopBody.toList()));
+			        blockStats.append(floop);
+				}
+			}
+		}
+		return blockStats;
+	}
+	
 	private void initRefCount(Map<Name, Name> variables, Map<Name, JCFieldAccess> refCountStats,
 			ListBuffer<JCStatement> assigns, SystemGraph sysGraph) {
-		//Set<Entry<Name, JCFieldAccess>> entrySet = refCountStats.entrySet();//sysGraph.nodes.entrySet();//variables.entrySet();
 		Set<Name> vars = sysGraph.nodes.keySet();
 		for (Name vdeclName: vars) {
 			// Reference count update
@@ -386,7 +366,6 @@ public final class Attr extends CapsuleInternal {
 	    ListBuffer<JCStatement> decls;
         ListBuffer<JCStatement> inits;
         ListBuffer<JCStatement> assigns;
-        ListBuffer<JCStatement> submits;
         ListBuffer<JCStatement> starts;
         ListBuffer<JCStatement> joins;
 
@@ -403,7 +382,6 @@ public final class Attr extends CapsuleInternal {
         decls = mt.decls;
         inits = mt.inits;
         assigns = mt.assigns;
-        submits = mt.submits;
         starts = mt.starts;
         joins = mt.joins;
         sysGraph = mt.sysGraph;
@@ -415,7 +393,7 @@ public final class Attr extends CapsuleInternal {
 		// Reference counting based garbage collection
 
 		List<JCStatement> mainStmts;
-		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins)/*.appendList(submits)*/.toList();
+		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).toList();
 		JCMethodDecl maindecl = createMainMethod(rewritenTree.sym, rewritenTree.body, rewritenTree.params, mainStmts);
 		rewritenTree.defs = rewritenTree.defs.append(maindecl);
 

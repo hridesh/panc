@@ -95,7 +95,6 @@ public class SystemMainTransformer extends TreeTranslator {
     public final ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
-    public final ListBuffer<JCStatement> submits = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> starts = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
     public final Map<Name, Name> variables = new HashMap<Name, Name>();
@@ -539,11 +538,6 @@ public class SystemMainTransformer extends TreeTranslator {
                         make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString(PaniniConstants.PANINI_START)),
                         List.<JCExpression>nil())));
             }
-            for(int j=0; j<mat.size;j++){
-                submits.append(make.Exec(make.Apply(List.<JCExpression>nil(),
-                        make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
-                                names.fromString(PaniniConstants.PANINI_SHUTDOWN)), List.<JCExpression>nil())));
-            }
         }
         //                  for(int j = 0; j<mat.size; j++)
         //                      tree.defs = tree.defs.append(createOwnerInterface(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j));
@@ -601,9 +595,6 @@ public class SystemMainTransformer extends TreeTranslator {
         }
         else{
             starts.prepend(startAssign);
-            submits.append(make.Exec(make.Apply(List.<JCExpression>nil(),
-                    make.Select(make.Ident(vdecl.name),
-                            names.fromString(PaniniConstants.PANINI_SHUTDOWN)), List.<JCExpression>nil())));
         }
         //      JCClassDecl ownerIface = createOwnerInterface(
         //              vdecl.vartype.toString()+"_"+vdecl.name.toString(), make, names);

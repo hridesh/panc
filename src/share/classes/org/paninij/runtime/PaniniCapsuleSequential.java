@@ -42,6 +42,11 @@ public abstract class PaniniCapsuleSequential implements PaniniCapsule{
   		}
   	}  	
   	
+  	/**
+  	 * Causes the current capsule to disconnect from its parent. For sequential capsules,
+  	 * a disconnect() on all connected capsules is called. This is part of automatic 
+  	 * garbage collection of capsules.
+  	 */
   	public synchronized void disconnect () {
   	}
   	

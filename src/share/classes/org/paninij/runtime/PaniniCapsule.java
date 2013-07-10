@@ -32,6 +32,11 @@ public interface PaniniCapsule{
   	 */
   	public void yield (long millis);  	
   	
+  	/**
+  	 * Causes the current capsule to disconnect from its parent. On disconnecting
+  	 * from all its parents, a terminate call is made to shutdown the capsule
+  	 * running thread. This is part of automatic garbage collection of capsules.
+  	 */
   	public void disconnect();
   	
   	/**
