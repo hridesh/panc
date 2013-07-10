@@ -354,15 +354,23 @@ public final class Attr extends CapsuleInternal {
 		}
 	}
 	
-	private void initRefCount(Map<Name, JCFieldAccess> refCountStats,
+	private void initRefCount(Map<Name, Name> variables, Map<Name, JCFieldAccess> refCountStats,
 			ListBuffer<JCStatement> assigns, SystemGraph sysGraph) {
-		Set<Entry<Name, JCFieldAccess>> entrySet = refCountStats.entrySet();//sysGraph.nodes.entrySet();//variables.entrySet();
-		for (Entry<Name, JCFieldAccess> entry : entrySet) {
+		//Set<Entry<Name, JCFieldAccess>> entrySet = refCountStats.entrySet();//sysGraph.nodes.entrySet();//variables.entrySet();
+		Set<Name> vars = sysGraph.nodes.keySet();
+		for (Name vdeclName: vars) {
 			// Reference count update
 			int refCount = 0;
-			Name vdeclName = entry.getKey();
 			refCount = sysGraph.nodes.get(vdeclName).indegree;
-			JCFieldAccess accessStat = entry.getValue();
+			JCFieldAccess accessStat = null;
+			if (refCountStats.containsKey(vdeclName)) {
+				accessStat = refCountStats.get(vdeclName);
+			} else if (variables.containsKey(vdeclName)) {
+				Name capsule = variables.get(vdeclName);
+				accessStat = make.Select(make.TypeCast(make.Ident(capsule), make.Ident(vdeclName)),
+		        		names.fromString(PaniniConstants.PANINI_REF_COUNT));
+			}
+			if (accessStat == null)	continue;
 			JCAssign refCountAssign = make
 					.Assign(accessStat,
 							intlit(refCount));
@@ -403,7 +411,7 @@ public final class Attr extends CapsuleInternal {
 		if(rewritenTree.hasTaskCapsule)
 			processSystemAnnotation(rewritenTree, inits, env);
 		
-		initRefCount(mt.refCountStats, assigns, sysGraph);
+		initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph);
 		// Reference counting based garbage collection
 
 		List<JCStatement> mainStmts;
