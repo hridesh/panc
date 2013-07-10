@@ -239,7 +239,38 @@ public final class Attr extends CapsuleInternal {
 										List.<JCExpression> nil()));
 
 						blockStats.append(stmt);
-					}
+					} else if (jcVariableDecl.vartype.type.tsym.name.toString().equalsIgnoreCase("Array")) {
+						if (((ArrayType)jcVariableDecl.vartype.type).elemtype.tsym.isCapsule()) {
+							ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
+					        JCVariableDecl arraycache = make.VarDef(make.Modifiers(0),
+					                names.fromString("index$"),
+					                make.TypeIdent(INT),
+					                make.Literal(0));
+					        JCBinary cond = make.Binary(LT, make.Ident(names.fromString("index$")),
+					                make.Select(make.Ident(jcVariableDecl.name),
+					                        names.fromString("length")));
+					        JCUnary unary = make.Unary(PREINC, make.Ident(names.fromString("index$")));
+					        JCExpressionStatement step =
+					                make.Exec(unary);
+					        loopBody.add(make
+									.Exec(make.Apply(
+											List.<JCExpression> nil(),
+											make.Select(
+													make.TypeCast(
+															make.Ident(names
+																	.fromString(PaniniConstants.PANINI_QUEUE)),
+																	make.Indexed(make.Ident(jcVariableDecl.name), 
+																			make.Ident(names.fromString("index$")))),
+													names.fromString(PaniniConstants.PANINI_DISCONNECT)),
+											List.<JCExpression> nil())));
+					        JCForLoop floop =
+					                make.ForLoop(List.<JCStatement>of(arraycache),
+					                        cond,
+					                        List.of(step),
+					                        make.Block(0, loopBody.toList()));
+					        blockStats.append(floop);
+						}
+					} 
 				}
 
 				List<JCCatch> catchers = List
