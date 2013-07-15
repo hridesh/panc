@@ -141,13 +141,6 @@ public final class Attr extends CapsuleInternal {
 		}
 
 		if ((tree.sym.owner.flags() & Flags.CAPSULE) != 0) {
-			////
-//			EffectSet es = new EffectSet();
-//			es.add(es.bottomEffect());
-//			es.add(es.methodEffect(tree.sym));
-//			annotationProcessor.setEffects(tree, es);
-//			annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
-			//// to add effectset: move out of if clause and remove test set; change second argument of setEffects to actual effectSet
 			CapsuleProcedure cp = new CapsuleProcedure((ClassSymbol) tree.sym.owner,
 					tree.name, tree.sym.params);
 			((ClassSymbol) tree.sym.owner).capsule_info.procedures.put(tree.sym, cp);
@@ -278,24 +271,6 @@ public final class Attr extends CapsuleInternal {
 		rewritenTree.switchToClass();
 
 		memberEnter.memberEnter(maindecl, env);
-		if (doGraphs) {
-			//ListBuffer<Symbol> capsules = new ListBuffer<Symbol>();
-			for (JCStatement v : decls) {
-				if (v.getTag() == VARDEF) {
-					JCVariableDecl varDecl = (JCVariableDecl)v;
-					ClassSymbol c = syms.capsules.get(names.fromString(varDecl.vartype.toString()));
-					//System.out.println("indegree: "+ c.indegree + ", outdegree: "+ c.outdegree);
-					if (varDecl.vartype.toString().contains("[]")) {
-						//                    System.out.println("\n\n\nConsistency checker doesn't yet support capsule arrays. Exiting now.\n\n\n");
-						//                    System.exit(5);
-						//c = syms.capsules.get(names.fromString(varDecl.vartype.toString().substring(0, varDecl.vartype.toString().indexOf("["))));
-
-					}
-					//if (!capsules.contains(c)) capsules.append(c);
-				}
-			}
-			//tree.sym.capsules = capsules.toList();
-		}
 	}
 
 	public final void visitProcDef(JCProcDecl tree){
