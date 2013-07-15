@@ -212,9 +212,25 @@ public class SystemDeclRewriter extends TreeTranslator {
     }
     
     @Override
-    //TODO: implement;
     public void visitUnary(JCUnary tree) {
-        Assert.error("unimplemented expression: " + tree);
+        super.visitUnary(tree);
+
+        switch (tree.getTag()) {
+        case NEG: {
+            //TODO: Turn unary neg into a negative literal?
+        }
+            break;
+        case NOT: {
+            if (tree.arg.type.isTrue()) {
+                result = make.Literal(Boolean.FALSE);
+            } else if (tree.arg.type.isFalse()) {
+                result = make.Literal(Boolean.TRUE);
+            }
+        }
+            break;
+        default:
+            //Nothing to be done. Result was set in super call
+        }
     }
 
     @Override
