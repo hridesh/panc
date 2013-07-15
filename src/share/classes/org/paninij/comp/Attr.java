@@ -200,16 +200,19 @@ public final class Attr extends CapsuleInternal {
 										.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
 								List.<JCExpression> nil()))); 
 			}
+			attr.attribStat(tree.computeMethod, env);
 		}
 		else {
 			attr.attribClassBody(env, tree.sym);
-			if(tree.computeMethod!=null)
+			if(tree.computeMethod!=null) {
 				tree.computeMethod.body.stats = tree.computeMethod.body.stats
 						.prepend(make.Exec(make.Apply(
 								List.<JCExpression> nil(),
 								make.Ident(names
 										.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
 								List.<JCExpression> nil())));
+				attr.attribStat(tree.computeMethod, env);
+			}
 		}
 		for(JCTree def : tree.defs){
 			if(def instanceof JCMethodDecl){

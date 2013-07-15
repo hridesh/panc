@@ -3511,6 +3511,8 @@ public class Attr extends JCTree.Visitor {
                 	((JCSystemDecl)env.tree).switchToClass();
                 	this.env = oldEnv;
                 }
+                //Do not attrib classBody for capsules.
+                //Visiting a capsule def will cause the class body to be attributed.
                 if(c.isCapsule()){
                 	Env<AttrContext> oldEnv = this.env;
                 	this.env = env;
@@ -3518,9 +3520,10 @@ public class Attr extends JCTree.Visitor {
                 	env.tree.accept(this);
                 	((JCCapsuleDecl)env.tree).switchToClass();
                 	this.env = oldEnv;
-                }
+                } else {
                 // end Panini code
                 attribClassBody(env, c);
+                }
                 chk.checkDeprecatedAnnotation(env.tree.pos(), c);
             } finally {
                 log.useSource(prev);
