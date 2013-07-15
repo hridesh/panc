@@ -183,9 +183,7 @@ public class SystemDeclRewriter extends TreeTranslator {
             Name assignTo = ((JCIdent) tree.lhs).name;
             valueEnv.bind(assignTo, tree.rhs);
         } else {
-            // FIXME: Non-raw error message.
-            log.rawError(tree.pos, tree
-                    + " does not have an identifier on the left hand side!");
+            log.error(tree.lhs.pos(), "rewrite.assign.lhs.not.identifier", tree.lhs);
         }
 
         // TODO return translatedRHS instead of tree;
