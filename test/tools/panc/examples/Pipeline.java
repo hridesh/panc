@@ -31,6 +31,12 @@
  */
 import java.util.Random;
 
+/* 
+ * @test
+ * @summary Complie the Pipeline example.
+ * @compile Pipeline.java
+ */
+
 signature Stage {
 	void consume(long n);
 }

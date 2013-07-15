@@ -17,6 +17,12 @@
  * Contributor(s): Hridesh Rajan
  */
 
+/* 
+ * @test
+ * @summary Complie the HelloWorld example.
+ * @compile HelloWorld.java
+ */
+
 capsule Console () { //Capsule declaration
 	void write(String s) { //Capsule procedure
 		System.out.println(s); 

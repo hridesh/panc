@@ -425,7 +425,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         memberEnter(tree.defs, env);
 
         // Panini code
-        if ( (tree.sym.flags_field & Flags.CAPSULE) != 0 ) {
+        if ( (tree.mods.flags & Flags.CAPSULE) != 0 ) {
             finishCapsule((JCCapsuleDecl) tree, env);
         }
         // end Panini code

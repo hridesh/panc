@@ -17,6 +17,12 @@
  * Contributor(s): Rex Fernando
  */
 
+/* 
+ * @test
+ * @summary Complie the SequentialConsistency example.
+ * @compile SequentialConsistency.java
+ */
+
 class IntegerC {
 	int value; public IntegerC(int value) { this.value = value; }
 	public int value() { return value; }

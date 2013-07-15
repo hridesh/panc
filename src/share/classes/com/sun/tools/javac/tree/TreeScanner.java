@@ -100,6 +100,12 @@ public class TreeScanner extends Visitor {
     	scan(tree.body);
     }
 
+    @Override
+    public void visitCapsuleWiring(JCCapsuleWiring tree) {
+        scan(tree.capsule);
+        scan(tree.args);
+    }
+
 	@Override
 	public void visitWireall(JCWireall tree) {
 		scan(tree.many);

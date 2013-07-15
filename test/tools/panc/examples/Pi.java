@@ -24,6 +24,12 @@
  */
 import java.util.Random;
 
+/* 
+ * @test
+ * @summary Complie the Pi example.
+ * @compile Pi.java
+ */
+
 class Number {
 	double value;
 	Number (){ this.value = 0; }

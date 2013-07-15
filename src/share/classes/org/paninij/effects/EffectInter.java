@@ -194,7 +194,7 @@ public class EffectInter {
 						ClassType elemtype = (ClassType)tempT;
 						ClassSymbol tsym = (ClassSymbol)elemtype.tsym;
 	
-						if ((tsym.flags_field & Flags.CAPSULE) != 0) {
+						if (tsym.isCapsule()) {
 							JCMethodInvocation body = jcf.body;
 							JCExpression meth = body.meth;
 							if (meth instanceof JCFieldAccess) {
@@ -250,7 +250,7 @@ public class EffectInter {
 			if (caps != null) {
 				Symbol typeSym = caps.type.tsym;
 				// single capsule call.
-				if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
+				if (typeSym.isCapsule()) {
 					return true;
 				}
 			}
@@ -273,7 +273,7 @@ public class EffectInter {
 			if (caps != null) {
 				Symbol typeSym = caps.type.tsym;
 				// single capsule call.
-				if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
+				if (typeSym.isCapsule()) {
 					DiagnosticSource ds =
 						new DiagnosticSource(cap.sourcefile, null);
 					int pos = tree.getPreferredPosition();
@@ -294,7 +294,7 @@ public class EffectInter {
 					ArrayType at = (ArrayType)cs.type;
 					Symbol typeSym = at.elemtype.tsym;
 					// many capsule call.
-					if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
+					if (typeSym.isCapsule()) {
 						DiagnosticSource ds =
 							new DiagnosticSource(cap.sourcefile, null);
 						int pos = tree.getPreferredPosition();
@@ -356,7 +356,7 @@ public class EffectInter {
 			if (caps != null) {
 				Symbol typeSym = caps.type.tsym;
 				// single capsule call.
-				if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
+				if (typeSym.isCapsule()) {
 					return true;
 				}
 			}
@@ -416,7 +416,7 @@ public class EffectInter {
 				ArrayType at = (ArrayType)caps.type;
 				Symbol typeSym = at.elemtype.tsym;
 				// many capsule call.
-				if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
+				if (typeSym.isCapsule()) {
 					return true;
 				}
 			}
@@ -437,7 +437,7 @@ public class EffectInter {
 				ArrayType at = (ArrayType)caps.type;
 				Symbol typeSym = at.elemtype.tsym;
 				// many capsule call.
-				if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
+				if (typeSym.isCapsule()) {
 					DiagnosticSource ds =
 						new DiagnosticSource(curr_cap.sourcefile, null);
 					int pos = jcmd.getPreferredPosition();
@@ -502,7 +502,7 @@ public class EffectInter {
 			if (fld != null) {
 				Symbol typeSym = fld.type.tsym;
 				// single capsule call.
-				if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
+				if (typeSym.isCapsule()) {
 					DiagnosticSource ds =
 						new DiagnosticSource(curr_cap.sourcefile, null);
 					int pos = tree.getPreferredPosition();
@@ -541,7 +541,7 @@ public class EffectInter {
 					ArrayType at = (ArrayType)fld.type;
 					Symbol typeSym = at.elemtype.tsym;
 					// many capsule call.
-					if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
+					if (typeSym.isCapsule()) {
 						DiagnosticSource ds =
 							new DiagnosticSource(curr_cap.sourcefile, null);
 						int pos = tree.getPreferredPosition();
@@ -588,7 +588,7 @@ public class EffectInter {
 					if (receiver != null) {
 						Symbol typeSym = receiver.type.tsym;
 						// single capsule call.
-						if ((typeSym.flags_field & Flags.CAPSULE) != 0) {
+						if (typeSym.isCapsule()) {
 							DiagnosticSource ds =
 								new DiagnosticSource(curr_cap.sourcefile, null);
 							int pos = selected.getPreferredPosition();
