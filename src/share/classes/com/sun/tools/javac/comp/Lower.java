@@ -2312,8 +2312,10 @@ public class Lower extends TreeTranslator {
         // Panini code
         if((tree.mods.flags & CAPSULE) != 0){
         	//reapply access flags
-        	tree.mods.flags |= ((JCCapsuleDecl)tree).accessMods.flags;
-        	tree.sym.flags_field |= ((JCCapsuleDecl)tree).accessMods.flags;
+        	if(((JCCapsuleDecl)tree).accessMods!=null){
+	        	tree.mods.flags |= ((JCCapsuleDecl)tree).accessMods.flags;
+	        	tree.sym.flags_field |= ((JCCapsuleDecl)tree).accessMods.flags;
+        	}
         }
         // end Panini code
 
