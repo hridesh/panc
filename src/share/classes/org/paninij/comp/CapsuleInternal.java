@@ -147,6 +147,11 @@ public class CapsuleInternal extends Internal {
 
 		JCBlock b = body(
 				make.Try(body(
+						make.Exec(make.Apply(
+								List.<JCExpression> nil(),
+								make.Ident(names
+										.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
+								List.<JCExpression> nil())),
 						var(mods(0), PaniniConstants.PANINI_TERMINATE,
 								make.TypeIdent(TypeTags.BOOLEAN), falsev()),
 						whilel(nott(id(PaniniConstants.PANINI_TERMINATE)),

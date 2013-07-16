@@ -204,12 +204,6 @@ public final class Attr extends CapsuleInternal {
 				tree.computeMethod.body = generateTaskCapsuleComputeMethodBody(tree);
 			else{
 				tree.computeMethod.body = generateThreadCapsuleComputeMethodBody(tree);
-				tree.computeMethod.body.stats = tree.computeMethod.body.stats
-						.prepend(make.Exec(make.Apply(
-								List.<JCExpression> nil(),
-								make.Ident(names
-										.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
-								List.<JCExpression> nil()))); 
 			}
 		}
 		else {
@@ -231,10 +225,11 @@ public final class Attr extends CapsuleInternal {
 										.fromString("e"), make.Ident(names
 										.fromString("Exception")), null), make
 										.Block(0, List.<JCStatement> nil())));
-				tree.computeMethod.body.stats = tree.computeMethod.body.stats
-						.append(make.Try(
-								make.Block(0, blockStats.toList()), catchers,
-								null));//List(bodyStats);
+				ListBuffer<JCStatement> body = new ListBuffer<JCStatement>();
+				body.add(make.Try(
+						make.Block(0, tree.computeMethod.body.stats),
+						catchers, body(blockStats)));
+				tree.computeMethod.body.stats = body.toList();
 			}
 			
 			if ((tree.sym.flags_field & SERIAL) != 0 || (tree.sym.flags_field & MONITOR) != 0) {
