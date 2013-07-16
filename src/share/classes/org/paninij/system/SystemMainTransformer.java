@@ -527,9 +527,6 @@ public class SystemMainTransformer extends TreeTranslator {
                                 names.fromString(PaniniConstants.PANINI_SHUTDOWN)), List.<JCExpression>nil())));
             }
         }
-        //                  for(int j = 0; j<mat.size; j++)
-        //                      tree.defs = tree.defs.append(createOwnerInterface(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j));
-
         variables.put(vdecl.name, c.name);
         if(c.capsule_info.capsuleParameters.nonEmpty())
             capsulesToWire.add(vdecl.name);
@@ -587,10 +584,6 @@ public class SystemMainTransformer extends TreeTranslator {
                     make.Select(make.Ident(vdecl.name),
                             names.fromString(PaniniConstants.PANINI_SHUTDOWN)), List.<JCExpression>nil())));
         }
-        //      JCClassDecl ownerIface = createOwnerInterface(
-        //              vdecl.vartype.toString()+"_"+vdecl.name.toString(), make, names);
-        //      enter.classEnter(ownerIface, env);
-        //      tree.defs = tree.defs.append(ownerIface);
         variables.put(vdecl.name, c.name);
         if(c.capsule_info.capsuleParameters.nonEmpty())
             capsulesToWire.add(vdecl.name);
