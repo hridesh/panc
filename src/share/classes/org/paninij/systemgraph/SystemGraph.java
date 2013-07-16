@@ -60,7 +60,8 @@ public class SystemGraph {
 		public HashMap<Name, Node> connections = new HashMap<Name, Node>();
 		public ClassSymbol capsule;//symbol of the capsule instance
 		public Name name;//name of the capsule instance
-
+		public int indegree;
+		
 		Node(Name name, ClassSymbol sym){
 			capsule = sym;
 			this.name = name;
@@ -75,6 +76,7 @@ public class SystemGraph {
 		}
 		
 		void addConnection(Name name, Node node){
+			node.indegree++;
 			connections.put(name, node);
 		}
 

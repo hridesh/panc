@@ -33,17 +33,11 @@ public interface PaniniCapsule{
   	public void yield (long millis);  	
   	
   	/**
-  	 * Causes the current capsule to complete its remaining work and then cease execution.
-  	 * 
-  	 * Shutdown is allowed only if the client capsule has permission to modify this capsule.
-  	 * 
-  	 * If there is a security manager, its checkAccess method is called with this capsule 
-  	 * as its argument. This may result in throwing a SecurityException.
-  	 * 
-  	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
-  	 * 
+  	 * Causes the current capsule to disconnect from its parent. On disconnecting
+  	 * from all its parents, a terminate call is made to shutdown the capsule
+  	 * running thread. This is part of automatic garbage collection of capsules.
   	 */
-  	public void shutdown();
+  	public void disconnect();
   	
   	/**
   	 * Causes the current capsule to immediately cease execution. 

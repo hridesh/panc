@@ -25,7 +25,9 @@ import org.paninij.runtime.types.Panini$Duck;
 public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsule{
    protected volatile Object[] panini$capsule$objects;
    protected volatile int panini$capsule$head, panini$capsule$tail, panini$capsule$size;
+   public volatile int panini$ref$count;
    protected final ReentrantLock queueLock = new ReentrantLock();
+   public static final int TERMINATE = -2;
 
   	protected PaniniCapsuleThread() {
   		panini$capsule$objects = new Object[10];
@@ -112,21 +114,15 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
   	}  	
   	
   	/**
-  	 * Causes the current capsule to complete its remaining work and then cease execution.
-  	 * 
-  	 * Shutdown is allowed only if the client capsule has permission to modify this capsule.
-  	 * 
-  	 * If there is a security manager, its checkAccess method is called with this capsule 
-  	 * as its argument. This may result in throwing a SecurityException.
-  	 * 
-  	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
-  	 * 
+  	 * Causes the current capsule to disconnect from its parent. On disconnecting
+  	 * from all its parents, a terminate call is made to shutdown the capsule
+  	 * running thread. This is part of automatic garbage collection of capsules.
   	 */
-  	public final void shutdown () {
-  		 this.checkAccess();
-	   	org.paninij.runtime.types.Panini$Duck$Void d = new org.paninij.runtime.types.Panini$Duck$Void(-1);
-	   	panini$push(d);
-  	}
+	public final synchronized void disconnect() {
+		panini$ref$count--;
+		if (panini$ref$count == 0)
+			panini$push(new org.paninij.runtime.types.Panini$Duck$Void(TERMINATE));
+	}
   	
   	/**
   	 * Causes the current capsule to immediately cease execution. 

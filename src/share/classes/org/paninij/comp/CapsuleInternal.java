@@ -46,6 +46,9 @@ import javax.lang.model.type.TypeKind;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
+import static com.sun.tools.javac.code.TypeTags.INT;
+import static com.sun.tools.javac.tree.JCTree.Tag.LT;
+import static com.sun.tools.javac.tree.JCTree.Tag.PREINC;
 
 public class CapsuleInternal extends Internal {
 	protected Symtab syms;
@@ -128,12 +131,79 @@ public class CapsuleInternal extends Internal {
 				apply(PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_MESSAGE_ID), cases));
 
+		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
+		blockStats = createCapsuleMemberDisconnects(tree.params);
+		
+		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
+				make.Modifiers(0), names.fromString("e"),
+				make.Ident(names.fromString("Exception")), null),
+				make.Block(0, List.<JCStatement> nil())));
+
 		JCBlock b = body(
-				var(mods(0), PaniniConstants.PANINI_TERMINATE,
-						make.TypeIdent(TypeTags.BOOLEAN), falsev()),
-				whilel(nott(id(PaniniConstants.PANINI_TERMINATE)),
-						body(messageLoopBody)));
+				make.Try(body(
+						make.Exec(make.Apply(
+								List.<JCExpression> nil(),
+								make.Ident(names
+										.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
+								List.<JCExpression> nil())),
+						var(mods(0), PaniniConstants.PANINI_TERMINATE,
+								make.TypeIdent(TypeTags.BOOLEAN), falsev()),
+						whilel(nott(id(PaniniConstants.PANINI_TERMINATE)),
+								body(messageLoopBody))), catchers, body(blockStats)));
 		return b;
+	}
+	
+	private ListBuffer<JCStatement> createCapsuleMemberDisconnects(
+			List<JCVariableDecl> params) {
+		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
+		for (JCVariableDecl jcVariableDecl : params) {
+			if (jcVariableDecl.vartype.type.tsym.isCapsule()) {
+				JCStatement stmt = make
+						.Exec(make.Apply(
+								List.<JCExpression> nil(),
+								make.Select(
+										make.TypeCast(
+												make.Ident(names
+														.fromString(PaniniConstants.PANINI_QUEUE)),
+												make.Ident(jcVariableDecl.name)),
+										names.fromString(PaniniConstants.PANINI_DISCONNECT)),
+								List.<JCExpression> nil()));
+
+				blockStats.append(stmt);
+			} else if (jcVariableDecl.vartype.type.tsym.name.toString().equalsIgnoreCase("Array")) {
+				if (((ArrayType)jcVariableDecl.vartype.type).elemtype.tsym.isCapsule()) {
+					ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
+			        JCVariableDecl arraycache = make.VarDef(make.Modifiers(0),
+			                names.fromString("index$"),
+			                make.TypeIdent(INT),
+			                make.Literal(0));
+			        JCBinary cond = make.Binary(LT, make.Ident(names.fromString("index$")),
+			                make.Select(make.Ident(jcVariableDecl.name),
+			                        names.fromString("length")));
+			        JCUnary unary = make.Unary(PREINC, make.Ident(names.fromString("index$")));
+			        JCExpressionStatement step =
+			                make.Exec(unary);
+			        loopBody.add(make
+							.Exec(make.Apply(
+									List.<JCExpression> nil(),
+									make.Select(
+											make.TypeCast(
+													make.Ident(names
+															.fromString(PaniniConstants.PANINI_QUEUE)),
+															make.Indexed(make.Ident(jcVariableDecl.name), 
+																	make.Ident(names.fromString("index$")))),
+											names.fromString(PaniniConstants.PANINI_DISCONNECT)),
+									List.<JCExpression> nil())));
+			        JCForLoop floop =
+			                make.ForLoop(List.<JCStatement>of(arraycache),
+			                        cond,
+			                        List.of(step),
+			                        make.Block(0, loopBody.toList()));
+			        blockStats.append(floop);
+				}
+			}
+		}
+		return blockStats;
 	}
 
 	protected JCBlock generateTaskCapsuleComputeMethodBody(JCCapsuleDecl tree) {
@@ -201,9 +271,12 @@ public class CapsuleInternal extends Internal {
 										List.<JCExpression> of(id(PaniniConstants.PANINI_DUCK_TYPE)))),
 								returnt(falsev())))));
 
-		cases.append(case_(intlit(-2),
-				es(assign(PaniniConstants.PANINI_TERMINATE, truev())),
-				returnt(truev())));
+		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
+		blockStats = createCapsuleMemberDisconnects(tree.params);
+
+		blockStats.append(es(assign(PaniniConstants.PANINI_TERMINATE, truev())));
+		blockStats.append(returnt(truev()));
+		cases.append(case_(intlit(-2), blockStats));
 
 		messageLoopBody.append(swtch(
 				apply(PaniniConstants.PANINI_DUCK_TYPE,

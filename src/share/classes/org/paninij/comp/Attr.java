@@ -56,6 +56,7 @@ import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.code.Type.MethodType;
+import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.*;
 import com.sun.tools.javac.tree.JCTree;
@@ -193,12 +194,6 @@ public final class Attr extends CapsuleInternal {
 				tree.computeMethod.body = generateTaskCapsuleComputeMethodBody(tree);
 			else{
 				tree.computeMethod.body = generateThreadCapsuleComputeMethodBody(tree);
-				tree.computeMethod.body.stats = tree.computeMethod.body.stats
-						.prepend(make.Exec(make.Apply(
-								List.<JCExpression> nil(),
-								make.Ident(names
-										.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
-								List.<JCExpression> nil()))); 
 			}
 			attr.attribStat(tree.computeMethod, env);
 		}
@@ -211,7 +206,54 @@ public final class Attr extends CapsuleInternal {
 								make.Ident(names
 										.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
 								List.<JCExpression> nil())));
+				if ((tree.sym.flags_field & ACTIVE) != 0) {
+					// Reference count disconnect()
+					ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
+					blockStats = createCapsuleMemberDisconnects(tree.params);
+					List<JCCatch> catchers = List
+							.<JCCatch> of(make.Catch(
+									make.VarDef(make.Modifiers(0), names
+											.fromString("e"), make.Ident(names
+											.fromString("Exception")), null), make
+											.Block(0, List.<JCStatement> nil())));
+					ListBuffer<JCStatement> body = new ListBuffer<JCStatement>();
+					body.add(make.Try(
+							make.Block(0, tree.computeMethod.body.stats),
+							catchers, body(blockStats)));
+					tree.computeMethod.body.stats = body.toList();
+				}
 				attr.attribStat(tree.computeMethod, env);
+			}
+			if ((tree.sym.flags_field & SERIAL) != 0 || (tree.sym.flags_field & MONITOR) != 0) {
+				// For serial capsule version
+				ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
+				blockStats = createCapsuleMemberDisconnects(tree.params);
+				ListBuffer<JCStatement> methodStats = new ListBuffer<JCStatement>();
+				methodStats.append(make.Exec(make.Unary(JCTree.Tag.POSTDEC, make.Ident(names
+						.fromString(PaniniConstants.PANINI_REF_COUNT)))));
+			
+				methodStats.append(make.If(make.Binary(JCTree.Tag.EQ, make.Ident(names
+						.fromString(PaniniConstants.PANINI_REF_COUNT)), make.Literal(TypeTags.INT, Integer.valueOf(0))), 
+						make.Block(0, blockStats.toList()), null));
+				
+				JCBlock body = make.Block(0, methodStats.toList());
+				
+				JCMethodDecl disconnectMeth = null;
+				MethodSymbol msym = null;
+				msym = new MethodSymbol(PUBLIC | FINAL | Flags.SYNCHRONIZED,
+						names.fromString(PaniniConstants.PANINI_DISCONNECT),
+						new MethodType(List.<Type> nil(), syms.voidType,
+								List.<Type> nil(), syms.methodClass), tree.sym);
+				disconnectMeth = make.MethodDef(
+						make.Modifiers(PUBLIC | FINAL | Flags.SYNCHRONIZED),
+						names.fromString(PaniniConstants.PANINI_DISCONNECT),
+						make.TypeIdent(TypeTags.VOID),
+						List.<JCTypeParameter> nil(),
+						List.<JCVariableDecl> nil(), List.<JCExpression> nil(),
+						body, null);
+				disconnectMeth.sym = msym;
+				tree.defs = tree.defs.append(disconnectMeth);
+				attr.attribStat(disconnectMeth, env);
 			}
 		}
 		for(JCTree def : tree.defs){
@@ -227,14 +269,93 @@ public final class Attr extends CapsuleInternal {
 			}
 		}
 	}
+	
+	private ListBuffer<JCStatement> createCapsuleMemberDisconnects(
+			List<JCVariableDecl> params) {
+		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
+		for (JCVariableDecl jcVariableDecl : params) {
+			if (jcVariableDecl.vartype.type.tsym.isCapsule()) {
+				JCStatement stmt = make
+						.Exec(make.Apply(
+								List.<JCExpression> nil(),
+								make.Select(
+										make.TypeCast(
+												make.Ident(names
+														.fromString(PaniniConstants.PANINI_QUEUE)),
+												make.Ident(jcVariableDecl.name)),
+										names.fromString(PaniniConstants.PANINI_DISCONNECT)),
+								List.<JCExpression> nil()));
 
+				blockStats.append(stmt);
+			} else if (jcVariableDecl.vartype.type.tsym.name.toString().equalsIgnoreCase("Array")) {
+				if (((ArrayType)jcVariableDecl.vartype.type).elemtype.tsym.isCapsule()) {
+					ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
+			        JCVariableDecl arraycache = make.VarDef(make.Modifiers(0),
+			                names.fromString("index$"),
+			                make.TypeIdent(INT),
+			                make.Literal(0));
+			        JCBinary cond = make.Binary(LT, make.Ident(names.fromString("index$")),
+			                make.Select(make.Ident(jcVariableDecl.name),
+			                        names.fromString("length")));
+			        JCUnary unary = make.Unary(PREINC, make.Ident(names.fromString("index$")));
+			        JCExpressionStatement step =
+			                make.Exec(unary);
+			        loopBody.add(make
+							.Exec(make.Apply(
+									List.<JCExpression> nil(),
+									make.Select(
+											make.TypeCast(
+													make.Ident(names
+															.fromString(PaniniConstants.PANINI_QUEUE)),
+															make.Indexed(make.Ident(jcVariableDecl.name), 
+																	make.Ident(names.fromString("index$")))),
+											names.fromString(PaniniConstants.PANINI_DISCONNECT)),
+									List.<JCExpression> nil())));
+			        JCForLoop floop =
+			                make.ForLoop(List.<JCStatement>of(arraycache),
+			                        cond,
+			                        List.of(step),
+			                        make.Block(0, loopBody.toList()));
+			        blockStats.append(floop);
+				}
+			}
+		}
+		return blockStats;
+	}
+
+	private void initRefCount(Map<Name, Name> variables,
+			Map<Name, JCFieldAccess> refCountStats,
+			ListBuffer<JCStatement> assigns, SystemGraph sysGraph) {
+		Set<Name> vars = sysGraph.nodes.keySet();
+		for (Name vdeclName : vars) {
+			// Reference count update
+			int refCount = 0;
+			refCount = sysGraph.nodes.get(vdeclName).indegree;
+			JCFieldAccess accessStat = null;
+			if (refCountStats.containsKey(vdeclName)) {
+				accessStat = refCountStats.get(vdeclName);
+			} else if (variables.containsKey(vdeclName)) {
+				Name capsule = variables.get(vdeclName);
+				accessStat = make.Select(
+						make.TypeCast(make.Ident(capsule),
+								make.Ident(vdeclName)),
+						names.fromString(PaniniConstants.PANINI_REF_COUNT));
+			}
+			if (accessStat == null)
+				continue;
+			JCAssign refCountAssign = make.Assign(accessStat, intlit(refCount));
+			JCExpressionStatement refCountAssignStmt = make
+					.Exec(refCountAssign);
+			assigns.append(refCountAssignStmt);
+		}
+	}
+	
 	public final void visitSystemDef(JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
 	    attribSystemDecl(tree, rs, env);
 
 	    ListBuffer<JCStatement> decls;
         ListBuffer<JCStatement> inits;
         ListBuffer<JCStatement> assigns;
-        ListBuffer<JCStatement> submits;
         ListBuffer<JCStatement> starts;
         ListBuffer<JCStatement> joins;
 
@@ -251,7 +372,6 @@ public final class Attr extends CapsuleInternal {
         decls = mt.decls;
         inits = mt.inits;
         assigns = mt.assigns;
-        submits = mt.submits;
         starts = mt.starts;
         joins = mt.joins;
         sysGraph = mt.sysGraph;
@@ -259,8 +379,10 @@ public final class Attr extends CapsuleInternal {
 		if(rewritenTree.hasTaskCapsule)
 			processSystemAnnotation(rewritenTree, inits, env);
 
+		initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph);
+		
 		List<JCStatement> mainStmts;
-		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).appendList(submits).toList();
+		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).toList();
 		JCMethodDecl maindecl = createMainMethod(rewritenTree.sym, rewritenTree.body, rewritenTree.params, mainStmts);
 		rewritenTree.defs = rewritenTree.defs.append(maindecl);
 

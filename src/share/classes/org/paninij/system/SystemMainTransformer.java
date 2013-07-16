@@ -63,6 +63,7 @@ import com.sun.tools.javac.tree.JCTree.JCCatch;
 import com.sun.tools.javac.tree.JCTree.JCEnhancedForLoop;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
+import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCForLoop;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
@@ -94,12 +95,12 @@ public class SystemMainTransformer extends TreeTranslator {
     public final ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
-    public final ListBuffer<JCStatement> submits = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> starts = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
     public final Map<Name, Name> variables = new HashMap<Name, Name>();
     public final Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
-
+    public final Map<Name, JCFieldAccess> refCountStats = new HashMap<Name, JCFieldAccess>();
+    
     final Symtab syms;
     final Names names;
     final Types types;
@@ -267,6 +268,15 @@ public class SystemMainTransformer extends TreeTranslator {
                             names.fromString(mi.arguments.get(j).toString()));
                 }
             }
+            // updated refcount stats
+            Name variableName = names.fromString(mi.indexed.toString()+"["+mi.index+"]");
+            JCFieldAccess refAccess = make.Select
+                    (make.TypeCast(make.Ident(variables.get(names
+                            .fromString(mi.indexed.toString()))), make.Indexed
+                            (mi.indexed,
+                                    mi.index)),
+                                    names.fromString(PaniniConstants.PANINI_REF_COUNT));
+            refCountStats.put(variableName, refAccess);
             capsulesToWire.remove(mi.name);
         }
     }
@@ -444,7 +454,12 @@ public class SystemMainTransformer extends TreeTranslator {
                 }
             }
         }
-
+        // update refaccess
+        Name variableName = capId.name;
+        JCFieldAccess refCountAccess = make.Select(make.TypeCast(make.Ident(c), capId),
+        		names.fromString(PaniniConstants.PANINI_REF_COUNT));
+        refCountStats.put(variableName,refCountAccess);
+        
         return assigns.toList();
     }
 
@@ -521,11 +536,6 @@ public class SystemMainTransformer extends TreeTranslator {
                         make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString(PaniniConstants.PANINI_START)),
                         List.<JCExpression>nil())));
             }
-            for(int j=0; j<mat.size;j++){
-                submits.append(make.Exec(make.Apply(List.<JCExpression>nil(),
-                        make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
-                                names.fromString(PaniniConstants.PANINI_SHUTDOWN)), List.<JCExpression>nil())));
-            }
         }
         //                  for(int j = 0; j<mat.size; j++)
         //                      tree.defs = tree.defs.append(createOwnerInterface(mat.elemtype.toString()+"_"+vdecl.name.toString()+"_"+j));
@@ -583,9 +593,6 @@ public class SystemMainTransformer extends TreeTranslator {
         }
         else{
             starts.prepend(startAssign);
-            submits.append(make.Exec(make.Apply(List.<JCExpression>nil(),
-                    make.Select(make.Ident(vdecl.name),
-                            names.fromString(PaniniConstants.PANINI_SHUTDOWN)), List.<JCExpression>nil())));
         }
         //      JCClassDecl ownerIface = createOwnerInterface(
         //              vdecl.vartype.toString()+"_"+vdecl.name.toString(), make, names);
