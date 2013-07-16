@@ -2309,6 +2309,13 @@ public class Lower extends TreeTranslator {
         classdefs.put(currentClass, tree);
         proxies = proxies.dup(currentClass);
         List<VarSymbol> prevOuterThisStack = outerThisStack;
+        // Panini code
+        if((tree.mods.flags & CAPSULE) != 0){
+        	//reapply access flags
+        	tree.mods.flags |= ((JCCapsuleDecl)tree).accessMods.flags;
+        	tree.sym.flags_field |= ((JCCapsuleDecl)tree).accessMods.flags;
+        }
+        // end Panini code
 
         // If this is an enum definition
         if ((tree.mods.flags & ENUM) != 0 &&

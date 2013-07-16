@@ -956,6 +956,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		public JCMethodDecl computeMethod;
 		public JCCapsuleDecl parentCapsule;
 		public boolean needsDefaultRun;
+		public JCModifiers accessMods;
 
 		public JCCapsuleDecl(JCModifiers mods, Name name,
 				List<JCVariableDecl> params, List<JCExpression> implementing,
