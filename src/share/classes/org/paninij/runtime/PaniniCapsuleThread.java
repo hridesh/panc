@@ -27,7 +27,7 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
    protected volatile int panini$capsule$head, panini$capsule$tail, panini$capsule$size;
    public volatile int panini$ref$count;
    protected final ReentrantLock queueLock = new ReentrantLock();
-   public static final int TERMINATE = -2;
+   public static final int SHUTDOWN = -1;
 
   	protected PaniniCapsuleThread() {
   		panini$capsule$objects = new Object[10];
@@ -121,7 +121,7 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
 	public final synchronized void panini$disconnect() {
 		panini$ref$count--;
 		if (panini$ref$count == 0)
-			panini$push(new org.paninij.runtime.types.Panini$Duck$Void(TERMINATE));
+			panini$push(new org.paninij.runtime.types.Panini$Duck$Void(SHUTDOWN));
 	}
   	
   	/**
