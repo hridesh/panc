@@ -63,5 +63,5 @@ public class PaniniConstants {
 	public final static String VALUE = "value";
 	
 	public final static String PANINI_REF_COUNT = "panini$ref$count";
-	public final static String PANINI_DISCONNECT = "disconnect";
+	public final static String PANINI_DISCONNECT = "panini$disconnect";
 }

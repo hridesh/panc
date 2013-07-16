@@ -47,7 +47,7 @@ public abstract class PaniniCapsuleSequential implements PaniniCapsule{
   	 * a disconnect() on all connected capsules is called. This is part of automatic 
   	 * garbage collection of capsules.
   	 */
-  	public synchronized void disconnect () {
+  	public synchronized void panini$disconnect () {
   	}
   	
   	/**

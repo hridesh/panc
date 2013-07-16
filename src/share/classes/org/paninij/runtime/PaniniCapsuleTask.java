@@ -110,7 +110,7 @@ public abstract class PaniniCapsuleTask implements PaniniCapsule{
   	 * from all its parents, a terminate call is made to shutdown the capsule
   	 * running thread. This is part of automatic garbage collection of capsules.
   	 */
-	public final synchronized void disconnect() {
+	public final synchronized void panini$disconnect() {
 		panini$ref$count--;
 		if (panini$ref$count == 0)
 			panini$push(new org.paninij.runtime.types.Panini$Duck$Void(TERMINATE));
