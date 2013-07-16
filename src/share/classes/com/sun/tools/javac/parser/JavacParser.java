@@ -218,10 +218,6 @@ public class JavacParser implements Parser {
     /** The mode of the term that was parsed last.
      */
     private int lastmode = 0;
-    
-    // Panini code
-    boolean inSystem = false;
-    // end Panini code
 
     /* ---------- token management -------------- */
 
@@ -1455,31 +1451,10 @@ public class JavacParser implements Parser {
         return args.toList();
     }
 
-    // Panini code
-    /*
-     * Change return of the method from JCMethodInvocation to JCExpression.
-     * This method now returns either a WiringApply or a 'normal' apply depending
-     * if we are in a system or not.  This may need to be further refined to
-     * support some types of method invocations in systems.
-     */
-    // end Panini code
     JCExpression arguments(List<JCExpression> typeArgs, JCExpression t) {
         int pos = token.pos;
         List<JCExpression> args = arguments();
-        // Panini code
-        if(inSystem){
-            return toP(F.at(pos).WiringApply(t, args));
-        }
-        else
-        // end Panini code
-        	return toP(F.at(pos).Apply(typeArgs, t, args));
-    }
-
-    JCCapsuleWiring wiringArguments(JCExpression t) {
-        int pos = token.pos;
-        List<JCExpression> args = arguments();
-        JCCapsuleWiring proc = toP(F.at(pos).WiringApply(t, args));
-        return proc;
+        return toP(F.at(pos).Apply(typeArgs, t, args));
     }
 
     /**  TypeArgumentsOpt = [ TypeArguments ]
@@ -1635,38 +1610,6 @@ public class JavacParser implements Parser {
         }
         return t;
     }
-
-    // Panini code
-    /** BracketsOpt = {"[" "]"}
-     */
-    //TODO: remove
-    @Deprecated
-    private JCExpression systemBracketsOpt(JCExpression t) {
-        if (token.kind == LBRACKET) {
-            int pos = token.pos;
-            nextToken();
-            t = systemBracketsOptCont(t, pos);
-            F.at(pos);
-        }
-        return t;
-    }
-
-        private JCArrayTypeTree systemBracketsOptCont(JCExpression t, int pos) {
-            if (token.kind == RBRACKET) {
-                accept(RBRACKET);
-                t = bracketsOpt(t);
-                return toP(F.at(pos).TypeArray(t));
-            } else {
-                JCExpression sizeTree =  parseExpression();
-                if (sizeTree.getKind()!=Kind.INT_LITERAL) {
-                    log.error(pos, "capsule.array.call.illegal.index");
-                    System.exit(5555);
-                }
-                accept(RBRACKET);
-                return null;//toP(F.at(pos).CapsuleArray(t, ((Integer)((JCLiteral)sizeTree).value).intValue()));
-            }
-    }
-    // end Panini code
 
     /**
      * MemberReferenceSuffix = "#" [TypeArguments] Ident
@@ -1908,61 +1851,10 @@ public class JavacParser implements Parser {
         return toP(t);
     }
 
-    // Panini code
-    
-    private JCBlock systemBlock(int pos, long flags) {
-        accept(LBRACE);
-        List<JCStatement> stats = systemStatements();
-        JCBlock t = F.at(pos).Block(flags, stats);
-        while (token.kind == CASE || token.kind == DEFAULT) {
-            syntaxError("orphaned", token.kind);
-            switchBlockStatementGroups();
-        }
-        // the Block node has a field "endpos" for first char of last token, which is
-        // usually but not necessarily the last char of the last token.
-        t.endpos = token.pos;
-        accept(RBRACE);
-        return toP(t);
-    }
-    
-    private JCBlock systemBlock(){
-        return systemBlock(token.pos, 0);
-    }
-    
-    // end Panini code
-    
     public JCBlock block() {
         return block(token.pos, 0);
     }
 
-    /** BlockStatements = { BlockStatement }
-     *  BlockStatement  = LocalVariableDeclarationStatement
-     *                  | ClassOrInterfaceOrEnumDeclaration
-     *                  | [Ident ":"] Statement
-     *  LocalVariableDeclarationStatement
-     *                  = { FINAL | '@' Annotation } Type VariableDeclarators ";"
-     */
-    // Panini code
-    private List<JCStatement> systemStatements(){
-    	ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
-        while (true) {
-            List<JCStatement> stat = systemStatement();
-            if (stat.isEmpty()) {
-                return stats.toList();
-            } else {
-                if (token.pos <= endPosTable.errorEndPos) {
-                    skip(false, true, true, true);
-                }
-//                for(JCStatement s : stat){
-//                	if(s.getTag() == FORLOOP)
-//                		reportSyntaxError(s.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.system");
-//                }
-                stats.addAll(stat);
-            }
-        }
-    }
-    // end Panini code
-    
     @SuppressWarnings("fallthrough")
     List<JCStatement> blockStatements() {
         //todo: skip to anchor on error(?)
@@ -2011,225 +1903,6 @@ public class JavacParser implements Parser {
             return first;
         }
     }
-    // Panini code
-    List<JCStatement> parseModdedVariableDecl(JCModifiers capsuleMod){
-		nextToken();
-		JCExpression t = term(EXPR | TYPE);
-		int pos = token.pos;
-		F.at(pos);
-		ListBuffer<JCStatement> stats =
-				systemVariableDeclarators(capsuleMod, t, new ListBuffer<JCStatement>());
-		// A "LocalVariableDeclarationStatement" subsumes the terminating semicolon
-		storeEnd(stats.elems.last(), token.endPos);
-		accept(SEMI);
-		return stats.toList();
-    }
-    
-    @SuppressWarnings("fallthrough")
-    private List<JCStatement> systemStatement(){
-    	if(token.kind == IDENTIFIER){
-    		if(token.name().toString().equals(PaniniTokens.CAP_KIND_TASK))
-    			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.TASK));
-    		else if(token.name().toString().equals(PaniniTokens.CAP_KIND_SEQUENTIAL))
-    			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.SERIAL));
-    		else if(token.name().toString().equals(PaniniTokens.CAP_KIND_MONITOR))
-    			return parseModdedVariableDecl(F.at(Position.NOPOS).Modifiers(Flags.MONITOR));
-    		else if (token.name().toString().equals(PaniniTokens.SYSLANG_WIRE_ALL)){
-    			//FIXME: remove syso
-    			System.out.println("starting to parse a many2one expression");
-    			return parseManyToOne();
-    			}
-    		else if (token.name().toString().equals(PaniniTokens.SYSLANG_STAR)){
-    			//FIXME: remove syso
-    			System.out.println("starting to parse a star expression");
-    			return parseStarTopology();
-    		}
-    		else if (token.name().toString().equals(PaniniTokens.SYSLANG_RING)){
-    			//FIXME: remove syso
-    			System.out.println("starting to parse a ring expression");
-    			return parseRingTopology();
-    		}
-    		else if (token.name().toString().equals(PaniniTokens.SYSLANG_ASSOCIATE)){
-    			//FIXME: remove syso
-    			System.out.println("starting to parse an associate expression");
-    			return parseAssociate();
-    		}
-
-    	}
-    	if(token.kind != FOR &&((token.kind.tag != Token.Tag.NAMED && (token.kind != RBRACE))
-    			|| token.kind == ASSERT || token.kind == ENUM 
-    			|| token.kind == SUPER	|| token.kind == THIS)){
-    		reportSyntaxError(token.pos, "only.local.variable.declaration.or.method.invocation.is.allowed.within.system");
-    		//Other errors (e.g.: void x;) are suppressed by the rest of the code
-    	}
-    	//todo: skip to anchor on error(?)
-    	int pos = token.pos;
-    	switch (token.kind) {
-    	case RBRACE: case CASE: case DEFAULT: case EOF:
-    		return List.nil();
-    	case LBRACE: case IF: case WHILE: case DO: case TRY:
-    	case SWITCH: case SYNCHRONIZED: case RETURN: case THROW: case BREAK:
-    	case CONTINUE: case SEMI: case ELSE: case FINALLY: case CATCH:
-    		return List.of(parseStatement());
-    	case MONKEYS_AT:
-    	case FINAL: {
-    		String dc = token.comment(CommentStyle.JAVADOC);
-    		JCModifiers mods = modifiersOpt();
-    		if (token.kind == INTERFACE ||
-    				token.kind == CLASS ||
-    				allowEnums && token.kind == ENUM) {
-    			return List.of(classOrInterfaceOrEnumDeclaration(mods, dc));
-    		} else {
-    			JCExpression t = parseType();
-    			ListBuffer<JCStatement> stats =
-    					systemVariableDeclarators(mods, t, new ListBuffer<JCStatement>());
-    			// A "LocalVariableDeclarationStatement" subsumes the terminating semicolon
-    			storeEnd(stats.elems.last(), token.endPos);
-    			accept(SEMI);
-    			return stats.toList();
-    		}
-    	}
-    	case ABSTRACT: case STRICTFP: {
-    		String dc = token.comment(CommentStyle.JAVADOC);
-    		JCModifiers mods = modifiersOpt();
-    		return List.of(classOrInterfaceOrEnumDeclaration(mods, dc));
-    	}
-    	case INTERFACE:
-    	case CLASS:
-    		String dc = token.comment(CommentStyle.JAVADOC);
-    		return List.of(classOrInterfaceOrEnumDeclaration(modifiersOpt(), dc));
-    	case ENUM:
-    	case ASSERT:
-    		if (allowEnums && token.kind == ENUM) {
-    			error(token.pos, "local.enum");
-    			dc = token.comment(CommentStyle.JAVADOC);
-    			return List.of(classOrInterfaceOrEnumDeclaration(modifiersOpt(), dc));
-    		} else if (allowAsserts && token.kind == ASSERT) {
-    			return List.of(parseStatement());
-    		}
-    	case FOR:{
-    	    System.out.println("hijacking for");
-    	    nextToken();
-    	    accept(LPAREN);
-    	    List<JCStatement> forInit = forInit();
-    	    accept(SEMI);
-            JCExpression cond = token.kind == SEMI ? null : parseExpression();
-            accept(SEMI);
-            List<JCExpressionStatement> steps = token.kind == RPAREN ? List.<JCExpressionStatement>nil() : forUpdate();
-            accept(RPAREN);
-            JCStatement body = F.at(token.pos).Block(0, defaultSystemStatement(token.pos));//defaultSystemStatement();
-            return List.<JCStatement>of(F.at(pos).ForLoop(forInit, cond, steps, body));
-
-    	}
-    		/* fall through to default */
-    	default:
-    		return defaultSystemStatement(pos);
-    	}
-    }
-
-    /**
-     * @param pos
-     * @return
-     */
-    private List<JCStatement> defaultSystemStatement(int pos) {
-        Token prevToken = token;
-        JCExpression t = term(EXPR | TYPE);
-        if(token.kind == LPAREN){
-        	List<JCExpression> args = arguments();
-        	accept(SEMI);
-        	JCStatement stm = F.Exec((F.at(pos).
-        			CapsuleArrayCall(names.fromString(((JCArrayAccess)t).indexed.toString()),
-        					((JCArrayAccess)t).index, ((JCArrayAccess)t).indexed, args)));
-        	return List.<JCStatement>of(stm);
-        }else if (token.kind == COLON && t.hasTag(IDENT)) {
-        	nextToken();
-        	JCStatement stat = parseStatement();
-        	return List.<JCStatement>of(F.at(pos).Labelled(prevToken.name(), stat));
-        } else if ((lastmode & TYPE) != 0 &&
-        		(token.kind == IDENTIFIER ||
-        		token.kind == ASSERT ||
-        		token.kind == ENUM)) {
-        	pos = token.pos;
-        	JCModifiers mods = F.at(Position.NOPOS).Modifiers(0);
-        	F.at(pos);
-        	ListBuffer<JCStatement> stats =
-        			systemVariableDeclarators(mods, t, new ListBuffer<JCStatement>());
-        	// A "LocalVariableDeclarationStatement" subsumes the terminating semicolon
-        	storeEnd(stats.elems.last(), token.endPos);
-        	accept(SEMI);
-        	return stats.toList();
-        } else {
-        	//System.out.println("Default " + prevToken.kind + (prevToken.kind == IDENTIFIER ? prevToken.name() : ""));
-        	// This Exec is an "ExpressionStatement"; it subsumes the terminating semicolon
-        	JCExpressionStatement expr = to(F.at(pos).Exec(checkExprStat(t)));
-        	accept(SEMI);
-        	return List.<JCStatement>of(expr);
-        }
-    }
-
-    /**
-	 *
-	 */
-	private List<JCStatement> parseManyToOne() {
-		int positionAfterMany2One = token.pos;
-		accept(IDENTIFIER);
-		List<JCExpression> expressions = arguments();
-		accept(SEMI);
-		if(expressions.size() < 2){
-			log.error(token.pos, "compiler.err.system.topology.wireall.size");
-		}
-
-		 JCWireall expr = toP(F.at(positionAfterMany2One).ManyToOne(expressions));
-		 JCExpressionStatement statement = to(F.Exec(expr));
-		 return List.<JCStatement>of(statement);
-
-	}
-
-	private List<JCStatement> parseStarTopology() {
-		int positionAfterStat = token.pos;
-		accept(IDENTIFIER);
-		List<JCExpression> expressions = arguments();
-		accept(SEMI);
-		if(expressions.size() < 2){
-			log.error(token.pos, "compiler.err.system.topology.wireall.size");
-		}
-		 JCStar expr = toP(F.at(positionAfterStat).Star(null, null, expressions));
-		 JCExpressionStatement statement = to(F.Exec(expr));
-		 return List.<JCStatement>of(statement);
-
-	}
-
-	private List<JCStatement> parseRingTopology() {
-		int positionAfterStat = token.pos;
-		accept(IDENTIFIER);
-		List<JCExpression> expressions = arguments();
-		accept(SEMI);
-		if(expressions.size() < 1){
-			log.error(token.pos, "compiler.err.system.topology.wireall.size");
-		}
-		 JCRing expr = toP(F.at(positionAfterStat).Ring(null, expressions));
-		 JCExpressionStatement statement = to(F.Exec(expr));
-		 return List.<JCStatement>of(statement);
-
-	}
-
-	private List<JCStatement> parseAssociate() {
-		int positionAfterStat = token.pos;
-		accept(IDENTIFIER);
-		List<JCExpression> expressions = arguments();
-		accept(SEMI);
-		if(expressions.size() < 5){
-			log.error(token.pos, "compiler.err.system.topology.wireall.size");
-		}
-
-		 JCAssociate expr = toP(F.at(positionAfterStat).Associate(null, null,
-				 null, null, null, expressions));
-		 JCExpressionStatement statement = to(F.Exec(expr));
-		 return List.<JCStatement>of(statement);
-
-	}
-
-	// end Panini code
     
     @SuppressWarnings("fallthrough")
     List<JCStatement> blockStatement() {
@@ -2853,69 +2526,6 @@ public class JavacParser implements Parser {
         type = bracketsOpt(type);
         return toP(F.at(pos).VarDef(mods, name, type, null));
     }
-
-    // Panini code
-    /** VariableDeclarators = VariableDeclarator { "," VariableDeclarator }
-     */
-    private <T extends ListBuffer<? super JCVariableDecl>> T systemVariableDeclarators(JCModifiers mods,
-                                                                         JCExpression type,
-                                                                         T vdefs)
-    {
-        return systemVariableDeclaratorsRest(token.pos, mods, type, ident(), false, null, vdefs);
-    }
-
-        /** VariableDeclaratorsRest = VariableDeclaratorRest { "," VariableDeclarator }
-     *  ConstantDeclaratorsRest = ConstantDeclaratorRest { "," ConstantDeclarator }
-     *
-     *  @param reqInit  Is an initializer always required?
-     *  @param dc       The documentation comment for the variable declarations, or null.
-     */
-    private <T extends ListBuffer<? super JCVariableDecl>> T systemVariableDeclaratorsRest(int pos,
-                                                                     JCModifiers mods,
-                                                                     JCExpression type,
-                                                                     Name name,
-                                                                     boolean reqInit,
-                                                                     String dc,
-                                                                     T vdefs)
-    {
-        vdefs.append(systemVariableDeclaratorRest(pos, mods, type, name, reqInit, dc));
-        while (token.kind == COMMA) {
-            // All but last of multiple declarators subsume a comma
-            storeEnd((JCTree)vdefs.elems.last(), token.endPos);
-            nextToken();
-            vdefs.append(systemVariableDeclarator(mods, type, reqInit, dc));
-        }
-        return vdefs;
-    }
-
-        /** VariableDeclarator = Ident VariableDeclaratorRest
-     *  ConstantDeclarator = Ident ConstantDeclaratorRest
-     */
-    private JCVariableDecl systemVariableDeclarator(JCModifiers mods, JCExpression type, boolean reqInit, String dc) {
-        return variableDeclaratorRest(token.pos, mods, type, ident(), reqInit, dc);
-    }
-
-    /** VariableDeclaratorRest = BracketsOpt ["=" VariableInitializer]
-     *  ConstantDeclaratorRest = BracketsOpt "=" VariableInitializer
-     *
-     *  @param reqInit  Is an initializer always required?
-     *  @param dc       The documentation comment for the variable declarations, or null.
-     */
-    private JCVariableDecl systemVariableDeclaratorRest(int pos, JCModifiers mods, JCExpression type, Name name,
-                                  boolean reqInit, String dc) {
-        type = systemBracketsOpt(type);
-        JCExpression init = null;
-        if (token.kind == EQ) {
-            nextToken();
-            init = variableInitializer();
-        }
-        else if (reqInit) syntaxError(token.pos, "expected", EQ);
-        JCVariableDecl result =
-            toP(F.at(pos).VarDef(mods, name, type, init));
-        attach(result, dc);
-        return result;
-    }
-    // end Panini code
 
     /** Resources = Resource { ";" Resources }
      */
