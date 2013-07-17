@@ -19,46 +19,47 @@
 
 package org.paninij.comp;
 
-
-import static com.sun.tools.javac.code.Flags.*;
-import static com.sun.tools.javac.code.Kinds.*;
-import static com.sun.tools.javac.code.TypeTags.*;
-import static com.sun.tools.javac.tree.JCTree.Tag.APPLY;
+import static com.sun.tools.javac.code.Flags.ACTIVE;
+import static com.sun.tools.javac.code.Flags.FINAL;
+import static com.sun.tools.javac.code.Flags.MONITOR;
+import static com.sun.tools.javac.code.Flags.PUBLIC;
+import static com.sun.tools.javac.code.Flags.SERIAL;
+import static com.sun.tools.javac.code.Flags.STATIC;
+import static com.sun.tools.javac.code.Flags.TASK;
+import static com.sun.tools.javac.code.TypeTags.INT;
 import static com.sun.tools.javac.tree.JCTree.Tag.ASSIGN;
-import static com.sun.tools.javac.tree.JCTree.Tag.CAPSULEARRAY;
-import static com.sun.tools.javac.tree.JCTree.Tag.EXEC;
-import static com.sun.tools.javac.tree.JCTree.Tag.FOREACHLOOP;
 import static com.sun.tools.javac.tree.JCTree.Tag.LT;
-import static com.sun.tools.javac.tree.JCTree.Tag.MAAPPLY;
 import static com.sun.tools.javac.tree.JCTree.Tag.PREINC;
-import static com.sun.tools.javac.tree.JCTree.Tag.TYPEIDENT;
-import static com.sun.tools.javac.tree.JCTree.Tag.VARDEF;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.paninij.analysis.ASTCFGBuilder;
-import org.paninij.consistency.*;
-import static org.paninij.code.Type.*;
-import static org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
+import org.paninij.consistency.ConsistencyUtil;
+import org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
+import org.paninij.consistency.SeqConstCheckAlgorithm;
+import org.paninij.system.SystemDeclRewriter;
+import org.paninij.system.SystemMainTransformer;
+import org.paninij.systemgraph.SystemGraph;
+import org.paninij.systemgraph.SystemGraphBuilder;
 
-import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Attribute;
+import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Symbol.VarSymbol;
-import com.sun.tools.javac.code.Symtab;
-import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.code.Symbol.CapsuleExtras;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.code.Symtab;
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.code.Types;
-import com.sun.tools.javac.comp.*;
+import com.sun.tools.javac.comp.Annotate;
+import com.sun.tools.javac.comp.AttrContext;
+import com.sun.tools.javac.comp.Enter;
+import com.sun.tools.javac.comp.Env;
+import com.sun.tools.javac.comp.MemberEnter;
+import com.sun.tools.javac.comp.Resolve;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
@@ -68,10 +69,6 @@ import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.PaniniConstants;
-import org.paninij.system.*;
-import org.paninij.systemgraph.*;
-import com.sun.source.tree.Tree.Kind;
-import java.util.ArrayList;
 
 /***
  * Panini-specific context-dependent analysis. All public functions in 
