@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.paninij.code.Type.WiringType;
 import org.paninij.systemgraph.SystemGraph;
 import org.paninij.systemgraph.SystemGraphBuilder;
 
@@ -42,6 +43,7 @@ import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Kinds;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
+import com.sun.tools.javac.code.Symbol.WiringSymbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.CapsuleExtras;
@@ -423,10 +425,13 @@ public class SystemMainTransformer extends TreeTranslator {
         ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
 
         List<JCVariableDecl> cparams = c.capsule_info.capsuleParameters;
+        List<Type> wiringTypes = c.capsule_info.wiringSym.type.getParameterTypes();
         List<JCExpression> args = mi.args;
         for(; cparams.nonEmpty();
                 cparams = cparams.tail,
-                args = args.tail) {
+                args = args.tail,
+                wiringTypes = wiringTypes.tail
+                ) {
 
             JCAssign newAssign = make
                     .at(mi.pos())
@@ -446,7 +451,8 @@ public class SystemMainTransformer extends TreeTranslator {
                                     names.fromString(mi.capsule.toString()), cparams.head.getName(),
                                     names.fromString(args.head.toString()));
                 }
-                if (syms.capsules.containsKey(names.fromString(cparams.head.vartype.toString()))) {
+
+                if (wiringTypes.head.tsym.isCapsule()) {
                     systemGraphBuilder.addConnection(sysGraph,
                             names.fromString(mi.capsule.toString()),
                             cparams.head.getName(),
