@@ -19,6 +19,7 @@
 package org.paninij.util;
 
 import com.sun.tools.javac.util.Name;
+import com.sun.tools.javac.util.PaniniConstants;
 
 /**
  * Names for the panc compiler. Parallel to {@link com.sun.tools.javac.util.Names}.
@@ -27,9 +28,16 @@ import com.sun.tools.javac.util.Name;
  * @since panini-0.9.2
  */
 public class Names {
+    /**
+     * Capsule Initialization method.
+     */
+    public final Name PaniniCapsuleInit;
+    /**
+    * Name of the 'run' method.
+    */
+    public final Name Run;
 
     public final Name Capsule;
-
     public final Name Wiring;
 
     /**
@@ -37,7 +45,12 @@ public class Names {
      * @param names
      */
     public Names(com.sun.tools.javac.util.Names names) {
-       Capsule = names.fromString("Capsule");
-       Wiring = names.fromString("Wiring");
+        //Method Names
+        PaniniCapsuleInit = names.fromString(PaniniConstants.PANINI_CAPSULE_INIT);
+        Run = names.fromString("run");
+
+        //Capsule related
+        Capsule = names.fromString("Capsule");
+        Wiring = names.fromString("Wiring");
     }
 }

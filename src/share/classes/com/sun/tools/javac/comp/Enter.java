@@ -923,10 +923,10 @@ public class Enter extends JCTree.Visitor {
         for(int i=0;i<tree.defs.length();i++){
         	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
         		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
-        		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
+				if(mdecl.name.equals(names.panini.Run) && mdecl.params.isEmpty()){
             		MethodSymbol msym = new MethodSymbol(
             				PUBLIC|FINAL,
-            				names.fromString("run"),
+							names.panini.Run,
             				new MethodType(
             						List.<Type>nil(),
             						syms.voidType,

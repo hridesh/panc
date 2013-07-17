@@ -143,8 +143,7 @@ public class CapsuleInternal extends Internal {
 				make.Try(body(
 						make.Exec(make.Apply(
 								List.<JCExpression> nil(),
-								make.Ident(names
-										.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
+								make.Ident(names.panini.PaniniCapsuleInit),
 								List.<JCExpression> nil())),
 						var(mods(0), PaniniConstants.PANINI_TERMINATE,
 								make.TypeIdent(TypeTags.BOOLEAN), falsev()),
