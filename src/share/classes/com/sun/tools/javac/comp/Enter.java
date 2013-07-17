@@ -50,6 +50,7 @@ import static com.sun.tools.javac.tree.JCTree.Tag.*;
 // Panini code
 import com.sun.tools.javac.parser.ParserFactory;
 import org.paninij.comp.AnnotationProcessor;
+import org.paninij.util.PaniniConstants;
 // end Panini code
 
 /** This class enters symbols for all encountered definitions into
@@ -367,19 +368,21 @@ public class Enter extends JCTree.Visitor {
     			boolean hasRun = false;
     			for(JCTree capsuleDefs : capsule.defs){
     				if(capsuleDefs.getTag() == METHODDEF){
-    					if(((JCMethodDecl)capsuleDefs).name.toString().equals("run")&&((JCMethodDecl)capsuleDefs).params.isEmpty())
+    					JCMethodDecl mdecl = (JCMethodDecl)capsuleDefs;
+    					if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty())
     						hasRun = true;
-    					if((((JCMethodDecl)capsuleDefs).mods.flags & PRIVATE)==0 && !((JCMethodDecl)capsuleDefs).name.toString().equals(PaniniConstants.PANINI_CAPSULE_INIT)){
-	    					interfaceBody.add(make.MethodDef(tc.copy(((JCMethodDecl)capsuleDefs).mods), 
+    					if((mdecl.mods.flags & PRIVATE)==0 && !mdecl.name.equals(names.panini.CapsuleInit)){
+	    					interfaceBody.add(make.MethodDef(tc.copy(mdecl.mods), 
 	    							((JCMethodDecl)capsuleDefs).name, 
-	    							tc.copy(((JCMethodDecl)capsuleDefs).restype), 
-	    							tc.copy(((JCMethodDecl)capsuleDefs).typarams), 
-	    							tc.copy(((JCMethodDecl)capsuleDefs).params), 
-	    							tc.copy(((JCMethodDecl)capsuleDefs).thrown), null, tc.copy(((JCMethodDecl)capsuleDefs).defaultValue)));
+	    							tc.copy(mdecl.restype), 
+	    							tc.copy(mdecl.typarams), 
+	    							tc.copy(mdecl.params), 
+	    							tc.copy(mdecl.thrown), null, tc.copy(mdecl.defaultValue)));
     					}
     				}else if(capsuleDefs.getTag() == VARDEF){
-    					interfaceBody.add(make.VarDef(tc.copy(((JCVariableDecl)capsuleDefs).mods), ((JCVariableDecl)capsuleDefs).name, 
-    							tc.copy(((JCVariableDecl)capsuleDefs).vartype), null));
+    					JCVariableDecl vdecl = (JCVariableDecl)capsuleDefs;
+    					interfaceBody.add(make.VarDef(tc.copy(vdecl.mods), vdecl.name, 
+    							tc.copy(vdecl.vartype), null));
     				}else
     					interfaceBody.add(tc.copy(capsuleDefs));
     			}
@@ -812,7 +815,6 @@ public class Enter extends JCTree.Visitor {
         classEnter(tree.defs, localEnv);
         result = c.type;
         annotationProcessor.setDefinedRun(tree, c.capsule_info.definedRun);
-//        c.fillIn();//fill in fields?
         tree.switchToClass();
     }
     

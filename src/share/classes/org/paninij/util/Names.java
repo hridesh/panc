@@ -29,8 +29,9 @@ import com.sun.tools.javac.util.Name;
 public class Names {
 
     public final Name Capsule;
-
     public final Name Wiring;
+    public final Name CapsuleInit;
+    public final Name PaniniFinish;
 
     /**
      * Construct more names, using an exitings Names table.
@@ -39,5 +40,7 @@ public class Names {
     public Names(com.sun.tools.javac.util.Names names) {
        Capsule = names.fromString("Capsule");
        Wiring = names.fromString("Wiring");
+       CapsuleInit = names.fromString(PaniniConstants.PANINI_CAPSULE_INIT);
+       PaniniFinish = names.fromString(PaniniConstants.PANINI_FINISH);
     }
 }

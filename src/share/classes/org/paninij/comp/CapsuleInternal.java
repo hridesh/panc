@@ -39,7 +39,7 @@ import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.comp.*;
 import com.sun.tools.javac.tree.JCTree.*;
-import com.sun.tools.javac.util.PaniniConstants;
+import org.paninij.util.PaniniConstants;
 
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.type.TypeKind;
@@ -78,22 +78,22 @@ public class CapsuleInternal extends Internal {
 		for (JCMethodDecl method : tree.publicMethods) {
 			ListBuffer<JCStatement> caseStatements = new ListBuffer<JCStatement>();
 			ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
-			for (int i = 0; i < method.params.size(); i++) {
-				JCExpression varType = tc.copy(method.params.get(i).vartype);
+			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
+				JCVariableDecl v = l.head;
+				JCExpression varType = tc.copy(v.vartype);
 				caseStatements.append(var(
 						noMods,
 						"var" + varIndex,
 						varType,
 						cast(varType,
 								select(cast(PaniniConstants.DUCK_INTERFACE_NAME
-										+ "$" + method.restype.toString() + "$"
-										+ tree.name.toString(),
+										+ "$" + method.restype + "$"
+										+ tree.name,
 										id(PaniniConstants.PANINI_DUCK_TYPE)),
-										createFieldString(method.name
-												.toString(),
+										createFieldString(
+												method.name.toString(),
 												varType.toString(),
-												method.params.get(i).name
-														.toString(),
+												v.name.toString(),
 												method.params)))));
 				args.append(id("var" + varIndex++));
 			}
@@ -112,11 +112,11 @@ public class CapsuleInternal extends Internal {
 			} 
 			caseStatements.append(break_());
 			String constantName = PaniniConstants.PANINI_METHOD_CONST
-					+ method.name.toString();
+					+ method.name;
 			if (method.params.nonEmpty())
 				for (JCVariableDecl param : method.params) {
 					constantName = constantName + "$"
-							+ param.vartype.toString();
+							+ param.vartype;
 				}
 			cases.append(case_(id(constantName), caseStatements));
 		}
@@ -143,8 +143,7 @@ public class CapsuleInternal extends Internal {
 				make.Try(body(
 						make.Exec(make.Apply(
 								List.<JCExpression> nil(),
-								make.Ident(names
-										.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
+								make.Ident(names.panini.CapsuleInit),
 								List.<JCExpression> nil())),
 						var(mods(0), PaniniConstants.PANINI_TERMINATE,
 								make.TypeIdent(TypeTags.BOOLEAN), falsev()),
@@ -156,8 +155,8 @@ public class CapsuleInternal extends Internal {
 	private ListBuffer<JCStatement> createCapsuleMemberDisconnects(
 			List<JCVariableDecl> params) {
 		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
-		for (JCVariableDecl jcVariableDecl : params) {
-			if (jcVariableDecl.vartype.type.tsym.isCapsule()) {
+		for (JCVariableDecl vdecl : params) {
+			if (vdecl.vartype.type.tsym.isCapsule()) {
 				JCStatement stmt = make
 						.Exec(make.Apply(
 								List.<JCExpression> nil(),
@@ -165,20 +164,20 @@ public class CapsuleInternal extends Internal {
 										make.TypeCast(
 												make.Ident(names
 														.fromString(PaniniConstants.PANINI_QUEUE)),
-												make.Ident(jcVariableDecl.name)),
+												make.Ident(vdecl.name)),
 										names.fromString(PaniniConstants.PANINI_DISCONNECT)),
 								List.<JCExpression> nil()));
 
 				blockStats.append(stmt);
-			} else if (jcVariableDecl.vartype.type.tsym.name.toString().equalsIgnoreCase("Array")) {
-				if (((ArrayType)jcVariableDecl.vartype.type).elemtype.tsym.isCapsule()) {
+			} else if (vdecl.vartype.type.tsym.name.toString().equalsIgnoreCase("Array")) {
+				if (((ArrayType)vdecl.vartype.type).elemtype.tsym.isCapsule()) {
 					ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
 			        JCVariableDecl arraycache = make.VarDef(make.Modifiers(0),
 			                names.fromString("index$"),
 			                make.TypeIdent(INT),
 			                make.Literal(0));
 			        JCBinary cond = make.Binary(LT, make.Ident(names.fromString("index$")),
-			                make.Select(make.Ident(jcVariableDecl.name),
+			                make.Select(make.Ident(vdecl.name),
 			                        names.fromString("length")));
 			        JCUnary unary = make.Unary(PREINC, make.Ident(names.fromString("index$")));
 			        JCExpressionStatement step =
@@ -190,7 +189,7 @@ public class CapsuleInternal extends Internal {
 											make.TypeCast(
 													make.Ident(names
 															.fromString(PaniniConstants.PANINI_QUEUE)),
-															make.Indexed(make.Ident(jcVariableDecl.name), 
+															make.Indexed(make.Ident(vdecl.name), 
 																	make.Ident(names.fromString("index$")))),
 											names.fromString(PaniniConstants.PANINI_DISCONNECT)),
 									List.<JCExpression> nil())));
@@ -216,22 +215,22 @@ public class CapsuleInternal extends Internal {
 		for (JCMethodDecl method : tree.publicMethods) {
 			ListBuffer<JCStatement> caseStatements = new ListBuffer<JCStatement>();
 			ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
-			for (int i = 0; i < method.params.size(); i++) {
-				JCExpression varType = method.params.get(i).vartype;
+			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
+				JCVariableDecl vdecl = l.head;
+				JCExpression varType = vdecl.vartype;
 				caseStatements.append(var(
 						noMods,
 						"var" + varIndex,
 						varType,
 						cast(varType,
 								select(cast(PaniniConstants.DUCK_INTERFACE_NAME
-										+ "$" + method.restype.toString() + "$"
-										+ tree.name.toString(),
+										+ "$" + method.restype + "$"
+										+ tree.name,
 										id(PaniniConstants.PANINI_DUCK_TYPE)),
-										createFieldString(method.name
-												.toString(),
+										createFieldString(
+												method.name.toString(),
 												varType.toString(),
-												method.params.get(i).name
-														.toString(),
+												vdecl.name.toString(),
 												method.params)))));
 				args.append(id("var" + varIndex++));
 			}
@@ -242,9 +241,12 @@ public class CapsuleInternal extends Internal {
 				caseStatements.append(es(apply(
 						PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_FINISH, args(nullv()))));
-			} else{
-				caseStatements.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Select(make.Select(make.Ident(names.fromString("System")), names.fromString("out")), names.fromString("println")), 
-						List.<JCExpression>of(stringc("got it")))));
+			} else {
+				caseStatements.append(make.Exec(make.Apply(List
+						.<JCExpression> nil(), make.Select(make.Select(
+						make.Ident(names.fromString("System")),
+						names.fromString("out")), names.fromString("println")),
+						List.<JCExpression> of(stringc("got it")))));
 				caseStatements.append(es(apply(
 						PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_FINISH,
@@ -252,11 +254,11 @@ public class CapsuleInternal extends Internal {
 			}
 			caseStatements.append(returnt(falsev()));
 			String constantName = PaniniConstants.PANINI_METHOD_CONST
-					+ method.name.toString();
+					+ method.name;
 			if (method.params.nonEmpty())
 				for (JCVariableDecl param : method.params) {
 					constantName = constantName + "$"
-							+ param.vartype.toString();
+							+ param.vartype;
 				}
 			cases.append(case_(id(constantName), caseStatements));
 		}
@@ -296,7 +298,7 @@ public class CapsuleInternal extends Internal {
 	private JCMethodInvocation createOriginalCall(final JCMethodDecl method,
 			final ListBuffer<JCExpression> args) {
 		TreeCopier<Void> tc = new TreeCopier<Void>(make);
-		return apply(thist(), method.name.toString() + "$Original", tc.copy(args.toList()));
+		return apply(thist(), method.name + "$Original", tc.copy(args.toList()));
 	}
 
 	private ListBuffer<JCStatement> createShutdownLogic() {
@@ -325,7 +327,8 @@ public class CapsuleInternal extends Internal {
 		ListBuffer<JCClassDecl> classes = new ListBuffer<JCClassDecl>();
 		Map<String, JCClassDecl> alreadedAddedDuckClasses = new HashMap<String, JCClassDecl>();
 
-		for (JCMethodDecl method : tree.publicMethods) {
+		for (List<JCMethodDecl> l = tree.publicMethods; l.nonEmpty(); l = l.tail){
+			JCMethodDecl method = l.head;
 			ListBuffer<JCTree> constructors = new ListBuffer<JCTree>();
 
 			Type restype = ((MethodType) method.sym.type).restype;
@@ -411,17 +414,23 @@ public class CapsuleInternal extends Internal {
 									select(thist(),
 											PaniniConstants.PANINI_MESSAGE_ID),
 									id(PaniniConstants.PANINI_MESSAGE_ID))));
-	
-							for (JCVariableDecl par : method.params) {
-								consParams.add(var(mods(0), par.name, par.vartype));
+
+							for (List<JCVariableDecl> vl = method.params; vl
+									.nonEmpty(); vl = vl.tail) {
+								JCVariableDecl par = vl.head;
+								consParams.add(var(mods(0), par.name,
+										par.vartype));
 								consBody.add(es(assign(
 										select(thist(),
-												createFieldString(method.name, par,
-														method.params)),
+												createFieldString(method.name,
+														par, method.params)),
 										id(par.name))));
-								variableFields.add(var(mods(PUBLIC), names
-										.fromString(createFieldString(method.name,
-												par, method.params)), par.vartype));
+								variableFields
+										.add(var(mods(PUBLIC), names
+												.fromString(createFieldString(
+														method.name, par,
+														method.params)),
+												par.vartype));
 								if (!par.vartype.type.isPrimitive())
 									paniniFinish.body.stats = paniniFinish.body.stats
 											.append(es(assign(
@@ -432,26 +441,27 @@ public class CapsuleInternal extends Internal {
 																	method.params)),
 													nullv())));
 							}
-							constructors.add(constructor(mods(PUBLIC), consParams,
-									body(consBody)));
+							constructors.add(constructor(mods(PUBLIC),
+									consParams, body(consBody)));
 						}
 						wrappedMethods.add(paniniFinish);
-	
+
 						JCClassDecl wrappedClass = make
 								.ClassDef(
 										mods(0),
 										names.fromString(PaniniConstants.DUCK_INTERFACE_NAME
 												+ "$"
-												+ restype.toString()
+												+ restype
 												+ "$"
-												+ tree.name.toString()), List
+												+ tree.name), List
 												.<JCTypeParameter> nil(), null,
 										implement,
 										defs(fieldMessageId, fieldRedeemed)
 												.appendList(variableFields)
 												.appendList(wrappedMethods)
-												.appendList(constructors).toList());
-	
+												.appendList(constructors)
+												.toList());
+
 						classes.add(wrappedClass);
 						alreadedAddedDuckClasses.put(restype.toString(),
 								wrappedClass);
@@ -504,16 +514,22 @@ public class CapsuleInternal extends Internal {
 										PaniniConstants.PANINI_MESSAGE_ID),
 								id(PaniniConstants.PANINI_MESSAGE_ID))));
 						if (!method.params.isEmpty()) {
-							for (JCVariableDecl par : method.params) {
-								consParams.add(var(mods(0), par.name, par.vartype));
+							for (List<JCVariableDecl> vl = method.params; vl
+									.nonEmpty(); vl = vl.tail) {
+								JCVariableDecl par = vl.head;
+								consParams.add(var(mods(0), par.name,
+										par.vartype));
 								consBody.add(es(assign(
 										select(thist(),
-												createFieldString(method.name, par,
-														method.params)),
+												createFieldString(method.name,
+														par, method.params)),
 										id(par.name))));
-								variableFields.add(var(mods(PUBLIC), names
-										.fromString(createFieldString(method.name,
-												par, method.params)), par.vartype));
+								variableFields
+										.add(var(mods(PUBLIC), names
+												.fromString(createFieldString(
+														method.name, par,
+														method.params)),
+												par.vartype));
 								if (!par.vartype.type.isPrimitive())
 									paniniFinish.body.stats = paniniFinish.body.stats
 											.append(es(assign(
@@ -527,11 +543,11 @@ public class CapsuleInternal extends Internal {
 						}
 							constructors.add(constructor(mods(PUBLIC), consParams,
 									body(consBody)));
-							wrappedMethods.add(paniniFinish);
-						String restypeString = restype.toString();
-						if(restype.toString().equals("java.lang.String"))
-							restypeString = "String";
-	
+						wrappedMethods.add(paniniFinish);
+						String restypeString = restype.toString().equals(
+								"java.lang.String") ? "String" : restype
+								.toString();
+
 						JCClassDecl wrappedClass = make
 								.ClassDef(
 										mods(0),
@@ -539,7 +555,7 @@ public class CapsuleInternal extends Internal {
 												+ "$"
 												+ restypeString
 												+ "$"
-												+ tree.name.toString()), List
+												+ tree.name), List
 												.<JCTypeParameter> nil(), select(PrimitiveClass.get(restypeString).toString()),
 												List
 												.<JCExpression> nil(),
@@ -637,7 +653,8 @@ public class CapsuleInternal extends Internal {
 				}
 			}
 			if (constructor != null)
-				for (VarSymbol v : constructor.params()) {
+				for (List<VarSymbol> l = constructor.params(); l.nonEmpty(); l = l.tail){
+					VarSymbol v = l.head;
 					if (v.type.toString().equals("boolean"))
 						args.add(falsev());
 					else if (v.type.isPrimitive())
@@ -674,7 +691,8 @@ public class CapsuleInternal extends Internal {
 	
 	private JCMethodDecl createDuckConstructor(Iterator<Symbol> iter, boolean isVoid, JCMethodDecl method, JCMethodDecl paniniFinish, final boolean isPrimitive){
 		JCMethodDecl constructor = createDuckConstructor(iter, isVoid, isPrimitive);
-		for (JCVariableDecl par : method.params) {
+		for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail){
+			JCVariableDecl par = l.head;
 			constructor.params = constructor.params.append(var(mods(0), par.name, par.vartype));
 			constructor.body.stats = constructor.body.stats.append(es(assign(
 					select(thist(),
@@ -706,7 +724,8 @@ public class CapsuleInternal extends Internal {
 			}
 		}
 		if (constructor != null)
-			for (VarSymbol v : constructor.params()) {
+			for (List<VarSymbol> l = constructor.params(); l.nonEmpty(); l = l.tail){
+				VarSymbol v = l.head;
 				if (v.type.toString().equals("boolean"))
 					args.add(falsev());
 				else if (v.type.isPrimitive())
@@ -721,10 +740,10 @@ public class CapsuleInternal extends Internal {
 			JCClassDecl duckClass, final boolean isPrimitive) {
 		ListBuffer<JCTree> newFields = new ListBuffer<JCTree>();
 		JCMethodDecl paniniFinish = null;
-		for (JCTree def : duckClass.defs) {
+		for (List<JCTree> l = duckClass.defs; l.nonEmpty(); l=l.tail){
+			JCTree def = l.head;
 			if (def.hasTag(Tag.METHODDEF))
-				if (((JCMethodDecl) def).name.toString().equals(
-						PaniniConstants.PANINI_FINISH))
+				if (((JCMethodDecl) def).name.equals(names.panini.PaniniFinish))
 					paniniFinish = (JCMethodDecl) def;
 		}
 		if (!hasDuplicate(duckClass, method.params, method.name)) {
@@ -738,7 +757,8 @@ public class CapsuleInternal extends Internal {
 						iter, method.restype.toString().equals("void"), method,
 						paniniFinish, isPrimitive));
 		}
-		for (JCVariableDecl par : method.params) {
+		for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l=l.tail){
+			JCVariableDecl par = l.head;
 			newFields.add(var(mods(PUBLIC), names.fromString(createFieldString(
 					method.name, par, method.params)), par.vartype));
 		}
@@ -780,11 +800,13 @@ public class CapsuleInternal extends Internal {
 			Iterator<Symbol> iter, ClassSymbol c, Env<AttrContext> env) {
 		String rawClassName = trim(restype.toString());
 		ListBuffer<JCTypeParameter> typeParams = new ListBuffer<JCTypeParameter>();
-		for (TypeSymbol ts : c.getTypeParameters()) {
+		for (List<TypeSymbol> l = c.getTypeParameters(); l.nonEmpty(); l=l.tail){
+			TypeSymbol ts = l.head;
 			typeParams.append(make.TypeParam(ts.name, (TypeVar) ts.type));
 		}
 		ListBuffer<JCExpression> typeExpressions = new ListBuffer<JCExpression>();
-		for (JCTypeParameter tp : typeParams) {
+		for (List<JCTypeParameter> l = typeParams.toList(); l.nonEmpty(); l=l.tail){
+			JCTypeParameter tp = l.head;
 			typeExpressions.add(make.Ident(tp.name));
 		}
 		JCVariableDecl fieldWrapped = var(mods(PRIVATE),
@@ -863,7 +885,8 @@ public class CapsuleInternal extends Internal {
 		ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
 
 		if (!method.params.isEmpty()) {
-			for (JCVariableDecl par : method.params) {
+			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l=l.tail){
+				JCVariableDecl par = l.head;
 				variableFields.add(var(mods(PUBLIC), names
 						.fromString(createFieldString(method.name, par,
 								method.params)), par.vartype));
@@ -974,11 +997,13 @@ public class CapsuleInternal extends Internal {
 		JCExpression restype = make.Type(m.type.getReturnType());
 
 		ListBuffer<JCTypeParameter> tp = new ListBuffer<JCTypeParameter>();
-		for (TypeSymbol ts : m.getTypeParameters()) {
+		for (List<TypeSymbol> l = m.getTypeParameters(); l.nonEmpty(); l=l.tail){
+			TypeSymbol ts = l.head;
 			tp.appendList(make.TypeParams(List.<Type> of(ts.type)));
 		}
 		if (m.getParameters() != null) {
-			for (VarSymbol v : m.getParameters()) {
+			for (List<VarSymbol> l = m.getParameters(); l.nonEmpty(); l=l.tail){
+				VarSymbol v = l.head;
 				params.add(make.VarDef(v, null));
 				args.add(id(v.name));
 			}
@@ -1002,12 +1027,14 @@ public class CapsuleInternal extends Internal {
 		ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
 		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 		ListBuffer<JCTypeParameter> tp = new ListBuffer<JCTypeParameter>();
-		for (TypeSymbol ts : m.getTypeParameters()) {
+		for (List<TypeSymbol> l = m.getTypeParameters(); l.nonEmpty(); l = l.tail){
+			TypeSymbol ts = l.head;
 			tp.appendList(make.TypeParams(List.<Type> of(ts.type)));
 		}
 
 		if (m.getParameters() != null) {
-			for (VarSymbol v : m.getParameters()) {
+			for (List<VarSymbol> l = m.getParameters(); l.nonEmpty(); l = l.tail){
+				VarSymbol v = l.head;
 				params.add(make.VarDef(v, null));
 				args.add(id(v.name));
 			}
@@ -1086,27 +1113,29 @@ public class CapsuleInternal extends Internal {
 	private boolean hasDuplicate(JCClassDecl c, List<JCVariableDecl> v,
 			Name name) {
 		boolean result = false;
-		for (JCTree def : c.defs) {
+		for (List<JCTree> l = c.defs; l.nonEmpty(); l = l.tail){
+			JCTree def = l.head;
 			if (def.getTag() == Tag.METHODDEF
 					&& ((JCMethodDecl) def).name.equals(names.init)) {
-				if (((JCMethodDecl) def).params.length() == v.length() + 1) {
+				JCMethodDecl mdecl = (JCMethodDecl)def;
+				if (mdecl.params.length() == v.length() + 1) {
 					result = true;
-					for (int i = 1; i < ((JCMethodDecl) def).params.length(); i++) {
-						if (!((JCMethodDecl) def).params.get(i).vartype
+					for (int i = 1; i < mdecl.params.length(); i++) {
+						if (!mdecl.params.get(i).vartype
 								.toString().equals(
 										v.get(i - 1).vartype.toString())) {
 							result = false;
-							i = ((JCMethodDecl) def).params.length();
+							i = mdecl.params.length();
 						}
 					}
 					if (result) {
 						for (int i=0; i<v.length(); i++){
-							((JCMethodDecl) def).body.stats = ((JCMethodDecl) def).body.stats
+							mdecl.body.stats = mdecl.body.stats
 									.append(es(assign(
 											select(thist(),
 													createFieldString(name,
 															v.get(i), v)),
-											id(((JCMethodDecl) def).params.get(i+1).name.toString()))));
+											id(mdecl.params.get(i+1).name.toString()))));
 						}
 						break;
 					}
@@ -1127,7 +1156,8 @@ public class CapsuleInternal extends Internal {
 		String fieldName;
 		fieldName = vartype + "$" + paramName + "$" + name;
 		if (params.nonEmpty())
-			for (JCVariableDecl v : params) {
+			for(List<JCVariableDecl> l = params; l.nonEmpty(); l=l.tail){
+				JCVariableDecl v = l.head;
 				fieldName = fieldName + "$" + v.vartype.toString();
 			}
 		return fieldName;

@@ -17,7 +17,7 @@
  * Contributor(s): Eric Lin
  */
 
-package com.sun.tools.javac.util;
+package org.paninij.util;
 
 public class PaniniConstants {
 	public final static String PANINI = "Panini$";

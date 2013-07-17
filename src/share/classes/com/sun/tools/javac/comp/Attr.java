@@ -52,6 +52,7 @@ import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
 import org.paninij.consistency.*;
+import org.paninij.util.PaniniConstants;
 // end Panini code
 
 import static com.sun.tools.javac.code.Flags.*;

@@ -68,7 +68,7 @@ import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
-import com.sun.tools.javac.util.PaniniConstants;
+import org.paninij.util.PaniniConstants;
 
 /***
  * Panini-specific context-dependent analysis. All public functions in 
