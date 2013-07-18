@@ -25,6 +25,7 @@
 
 package com.sun.tools.javac.tree;
 
+
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
@@ -36,6 +37,10 @@ import com.sun.tools.javac.tree.JCTree.*;
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.TypeTags.*;
+
+// Panini code
+import org.paninij.util.PaniniConstants;
+// end Panini code
 
 /** Factory class for trees.
  *
