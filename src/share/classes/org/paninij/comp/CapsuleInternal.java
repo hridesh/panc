@@ -256,7 +256,8 @@ public class CapsuleInternal extends Internal {
 			String constantName = PaniniConstants.PANINI_METHOD_CONST
 					+ method.name;
 			if (method.params.nonEmpty())
-				for (JCVariableDecl param : method.params) {
+				for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail){
+					JCVariableDecl param = l.head;
 					constantName = constantName + "$"
 							+ param.vartype;
 				}
@@ -917,7 +918,7 @@ public class CapsuleInternal extends Internal {
 		finishParams.add(var(mods(0), "t", make.Ident(restype)));
 		JCMethodDecl finishMethod = method(
 				mods(PUBLIC | FINAL),
-				names.fromString(PaniniConstants.PANINI_FINISH),
+				names.panini.PaniniFinish,
 				make.Type(syms.voidType),
 				finishParams,
 				body(sync(

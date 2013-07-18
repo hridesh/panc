@@ -189,30 +189,27 @@ public final class Attr extends CapsuleInternal {
 			attr.attribClassBody(env, tree.sym);
 			if((tree.sym.flags_field & TASK) !=0)
 				tree.computeMethod.body = generateTaskCapsuleComputeMethodBody(tree);
-			else{
+			else
 				tree.computeMethod.body = generateThreadCapsuleComputeMethodBody(tree);
-			}
 			attr.attribStat(tree.computeMethod, env);
 		}
 		else {
 			attr.attribClassBody(env, tree.sym);
-			if(tree.computeMethod!=null) {
+			if (tree.computeMethod != null) {
 				tree.computeMethod.body.stats = tree.computeMethod.body.stats
 						.prepend(make.Exec(make.Apply(
 								List.<JCExpression> nil(),
-								make.Ident(names
-										.fromString(PaniniConstants.PANINI_CAPSULE_INIT)),
+								make.Ident(names.panini.PaniniCapsuleInit),
 								List.<JCExpression> nil())));
 				if ((tree.sym.flags_field & ACTIVE) != 0) {
 					// Reference count disconnect()
 					ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
 					blockStats = createCapsuleMemberDisconnects(tree.params);
-					List<JCCatch> catchers = List
-							.<JCCatch> of(make.Catch(
-									make.VarDef(make.Modifiers(0), names
-											.fromString("e"), make.Ident(names
-											.fromString("Exception")), null), make
-											.Block(0, List.<JCStatement> nil())));
+					List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make
+							.VarDef(make.Modifiers(0), names.fromString("e"),
+									make.Ident(names.fromString("Exception")),
+									null), make.Block(0,
+							List.<JCStatement> nil())));
 					ListBuffer<JCStatement> body = new ListBuffer<JCStatement>();
 					body.add(make.Try(
 							make.Block(0, tree.computeMethod.body.stats),
@@ -238,12 +235,12 @@ public final class Attr extends CapsuleInternal {
 				JCMethodDecl disconnectMeth = null;
 				MethodSymbol msym = null;
 				msym = new MethodSymbol(PUBLIC | FINAL | Flags.SYNCHRONIZED,
-						names.fromString(PaniniConstants.PANINI_DISCONNECT),
+						names.panini.PaniniDisconnect,
 						new MethodType(List.<Type> nil(), syms.voidType,
 								List.<Type> nil(), syms.methodClass), tree.sym);
 				disconnectMeth = make.MethodDef(
 						make.Modifiers(PUBLIC | FINAL | Flags.SYNCHRONIZED),
-						names.fromString(PaniniConstants.PANINI_DISCONNECT),
+						names.panini.PaniniDisconnect,
 						make.TypeIdent(TypeTags.VOID),
 						List.<JCTypeParameter> nil(),
 						List.<JCVariableDecl> nil(), List.<JCExpression> nil(),
@@ -253,16 +250,20 @@ public final class Attr extends CapsuleInternal {
 				attr.attribStat(disconnectMeth, env);
 			}
 		}
-		for(JCTree def : tree.defs){
-			if(def instanceof JCMethodDecl){
-				for(JCVariableDecl param : ((JCMethodDecl)def).params){
-					if((param.type.tsym.flags_field & Flags.CAPSULE) != 0 &&!((JCMethodDecl)def).name.toString().contains("$Original")){
-						log.error("procedure.argument.illegal", param, ((JCMethodDecl)def).name.toString(), tree.sym);
+		for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail){
+			JCTree def = l.head;
+			if(def.getTag() == Tag.METHODDEF){
+				JCMethodDecl mdecl = (JCMethodDecl)def;
+				for (List<JCVariableDecl> p = mdecl.params; p.nonEmpty(); p = p.tail){
+					JCVariableDecl param = p.head;
+					if((param.type.tsym.flags_field & Flags.CAPSULE) != 0 &&!mdecl.name.toString().contains("$Original")){
+						log.error("procedure.argument.illegal", param, mdecl.name.toString(), tree.sym);
 					}
 				}
 			}else if(def.getTag() == Tag.VARDEF){
-				if((((JCVariableDecl)def).type.tsym.flags_field & Flags.CAPSULE) != 0)
-					((JCVariableDecl)def).mods.flags |= FINAL;
+				JCVariableDecl vdecl = (JCVariableDecl)def;
+				if((vdecl.type.tsym.flags_field & Flags.CAPSULE) != 0)
+					vdecl.mods.flags |= FINAL;
 			}
 		}
 	}
@@ -280,7 +281,7 @@ public final class Attr extends CapsuleInternal {
 												make.Ident(names
 														.fromString(PaniniConstants.PANINI_QUEUE)),
 												make.Ident(jcVariableDecl.name)),
-										names.fromString(PaniniConstants.PANINI_DISCONNECT)),
+										names.panini.PaniniDisconnect),
 								List.<JCExpression> nil()));
 
 				blockStats.append(stmt);
@@ -306,7 +307,7 @@ public final class Attr extends CapsuleInternal {
 															.fromString(PaniniConstants.PANINI_QUEUE)),
 															make.Indexed(make.Ident(jcVariableDecl.name), 
 																	make.Ident(names.fromString("index$")))),
-											names.fromString(PaniniConstants.PANINI_DISCONNECT)),
+																	names.panini.PaniniDisconnect),
 									List.<JCExpression> nil())));
 			        JCForLoop floop =
 			                make.ForLoop(List.<JCStatement>of(arraycache),
@@ -391,7 +392,6 @@ public final class Attr extends CapsuleInternal {
 		sca.potentialPathCheck();
 
 		rewritenTree.switchToClass();
-
 		memberEnter.memberEnter(maindecl, env);
 	}
 
@@ -406,16 +406,19 @@ public final class Attr extends CapsuleInternal {
 	// Helper functions
 	private void processSystemAnnotation(JCSystemDecl tree, ListBuffer<JCStatement> stats, Env<AttrContext> env){
 		int numberOfPools = 1;
-		for(JCAnnotation annotation : tree.mods.annotations){
-			if(annotation.annotationType.toString().equals("Parallelism")){
-				if(annotation.args.isEmpty())
-					log.error(tree.pos(), "annotation.missing.default.value", annotation, "value");
-				else if (annotation.args.size()==1 && annotation.args.head.getTag()==ASSIGN){
+		for (List<JCAnnotation> l = tree.mods.annotations; l.nonEmpty(); l = l.tail) {
+			JCAnnotation annotation = l.head;
+			if (annotation.annotationType.toString().equals("Parallelism")) {
+				if (annotation.args.isEmpty())
+					log.error(tree.pos(), "annotation.missing.default.value",
+							annotation, "value");
+				else if (annotation.args.size() == 1
+						&& annotation.args.head.getTag() == ASSIGN) {
 					if (annotate.enterAnnotation(annotation,
 							syms.annotationType, env).member(names.value).type == syms.intType)
 						numberOfPools = (Integer) annotate
-						.enterAnnotation(annotation,
-								syms.annotationType, env)
+								.enterAnnotation(annotation,
+										syms.annotationType, env)
 								.member(names.value).getValue();
 				}
 			}

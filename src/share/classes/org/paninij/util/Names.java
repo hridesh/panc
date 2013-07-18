@@ -39,6 +39,8 @@ public class Names {
     public final Name Capsule;
     public final Name Wiring;
     public final Name PaniniFinish;
+    public final Name PaniniDuckFuture;
+    public final Name PaniniDisconnect;
 
     /**
      * Construct more names, using an exitings Names table.
@@ -53,5 +55,7 @@ public class Names {
         Capsule = names.fromString("Capsule");
         Wiring = names.fromString("Wiring");
         PaniniFinish = names.fromString(PaniniConstants.PANINI_FINISH);
+        PaniniDuckFuture = names.fromString(PaniniConstants.PANINI_DUCK_TYPE);
+        PaniniDisconnect = names.fromString(PaniniConstants.PANINI_DISCONNECT);
     }
 }

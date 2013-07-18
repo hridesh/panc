@@ -361,12 +361,14 @@ public class Enter extends JCTree.Visitor {
     private List<JCTree> capsuleSplitter(List<JCTree> defs){
     	ListBuffer<JCTree> copiedDefs = new ListBuffer<JCTree>();
     	TreeCopier<Void> tc = new TreeCopier<Void>(make);
-    	for(JCTree def : defs){
+    	for (List<JCTree> l = defs; l.nonEmpty(); l = l.tail){
+    		JCTree def = l.head;
     		if(def.getTag() == CAPSULEDEF && (((JCCapsuleDecl)def).mods.flags & INTERFACE)==0 ){
     			JCCapsuleDecl capsule = (JCCapsuleDecl)def;
     			ListBuffer<JCTree> interfaceBody = new ListBuffer<JCTree>();
     			boolean hasRun = false;
-    			for(JCTree capsuleDefs : capsule.defs){
+    			for (List<JCTree> c = capsule.defs; c.nonEmpty(); c = c.tail){
+    				JCTree capsuleDefs = c.head;
     				if(capsuleDefs.getTag() == METHODDEF){
     					JCMethodDecl mdecl = (JCMethodDecl)capsuleDefs;
     					if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty())
@@ -764,22 +766,29 @@ public class Enter extends JCTree.Visitor {
             //FIXME: OR IN THE CAPSULE FLAG
 	        c.flags_field = processCapsuleAnnotations(tree, c);
 	        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
-	        if((c.flags_field & SERIAL)!=0){
-	        	definitions = translateSerialCapsule(tree, c, localEnv);
-	        	tree.parentCapsule.sym.capsule_info.translated_serial = c;
-	        }else if((c.flags_field & ACTIVE)!=0){
-	        	definitions = translateActiveCapsule(tree, c, localEnv);
-	        	tree.parentCapsule.sym.capsule_info.translated_thread = c;
-	        }else if((c.flags_field & TASK)!=0){
-	        	definitions = translateTaskCapsule(tree, c, localEnv);
-	        	tree.parentCapsule.sym.capsule_info.translated_task = c;
-	        }else if((c.flags_field & MONITOR)!=0){
-	        	definitions = translateMonitorCapsule(tree, c, localEnv);
-	        	tree.parentCapsule.sym.capsule_info.translated_monitor = c;
-	        }else{ //default action
-	        	definitions = translateActiveCapsule(tree, c, localEnv);
-	        	tree.parentCapsule.sym.capsule_info.translated_thread = c;
-	        }
+			if ((c.flags_field & SERIAL) != 0) {
+				definitions = translateSerialCapsule(tree, c, localEnv, false);
+				tree.extending = make.Ident(names
+						.fromString(PaniniConstants.PANINI_CAPSULE_SEQUENTIAL));
+				tree.parentCapsule.sym.capsule_info.translated_serial = c;
+			} else if ((c.flags_field & TASK) != 0) {
+				definitions = translateConcurrentCapsule(tree, c, localEnv,
+						true);
+				tree.extending = make.Ident(names
+						.fromString(PaniniConstants.PANINI_CAPSULE_TASK));
+				tree.parentCapsule.sym.capsule_info.translated_task = c;
+			} else if ((c.flags_field & MONITOR) != 0) {
+				definitions = translateSerialCapsule(tree, c, localEnv, true);
+				tree.extending = make.Ident(names
+						.fromString(PaniniConstants.PANINI_CAPSULE_SEQUENTIAL));
+				tree.parentCapsule.sym.capsule_info.translated_monitor = c;
+			} else { // default action
+				definitions = translateConcurrentCapsule(tree, c, localEnv,
+						false);
+				tree.extending = make.Ident(names
+						.fromString(PaniniConstants.PANINI_CAPSULE_THREAD));
+				tree.parentCapsule.sym.capsule_info.translated_thread = c;
+			}
 	        c.capsule_info.parentCapsule = tree.parentCapsule.sym;
 	    	List<JCVariableDecl> fields = tree.getParameters();
 	    	while(fields.nonEmpty()){
@@ -834,450 +843,258 @@ public class Enter extends JCTree.Visitor {
     	return stats.toList();
     }
     
-    public ListBuffer<JCTree> translateSerialCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
-    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_SEQUENTIAL));
-        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
-        for(int i=0;i<tree.defs.length();i++){
-        	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
-        		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
-        		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
-        			log.error(tree.pos(), "serialize.active.capsules");
-        		}else if((mdecl.mods.flags & PRIVATE) ==0
-        					&&(mdecl.mods.flags & PROTECTED) ==0){
-                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC|FINAL),
-                    		mdecl.name,
-                    		mdecl.restype,
-                    		mdecl.typarams,
-                    		mdecl.params,
-                    		mdecl.thrown,
-                    		mdecl.body,
-                    		null
-                    		);
-                    p.switchToMethod();
-                    tree.publicMethods = tree.publicMethods.append(p);
-        		}else
-        			definitions.add(mdecl);
-        	} else if(tree.defs.get(i).getTag() == VARDEF){
-    			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
-    			if(mdecl.mods.flags!=0)
-    				log.error(mdecl.pos(), "illegal.state.modifiers");
-    			mdecl.mods.flags |=PRIVATE;
-    			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, mdecl.vartype, mdecl.init);
-    			state.switchToVar();
-    			definitions.add(state);
-    		}else definitions.add(tree.defs.get(i));
-        }
-        c.capsule_info.definedRun = false;
-        for(JCMethodDecl d : tree.publicMethods){
-    		definitions.add(d);
-    	}
-        tree.needsDefaultRun = false;
-        return definitions;
-    }
+	private ListBuffer<JCTree> translateSerialCapsule(JCCapsuleDecl tree,
+			ClassSymbol c, Env<AttrContext> localEnv, boolean isMonitor) {
+		ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+		for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
+			JCTree def = l.head;
+			if (def.getTag() == Tag.METHODDEF) {
+				JCMethodDecl mdecl = (JCMethodDecl) def;
+				if (mdecl.name.toString().equals("run")
+						&& mdecl.params.isEmpty()) {
+					log.error(tree.pos(), "serialize.active.capsules");
+				} else if ((mdecl.mods.flags & PRIVATE) == 0
+						&& (mdecl.mods.flags & PROTECTED) == 0) {
+					JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC | FINAL),
+							mdecl.name, mdecl.restype, mdecl.typarams,
+							mdecl.params, mdecl.thrown, mdecl.body, null);
+					if (isMonitor)
+						p.mods.flags |= Flags.SYNCHRONIZED;
+					p.switchToMethod();
+					tree.publicMethods = tree.publicMethods.append(p);
+					definitions.add(p);
+				} else
+					definitions.add(mdecl);
+			} else if (def.getTag() == VARDEF) {
+				JCVariableDecl vdecl = (JCVariableDecl) def;
+				if (vdecl.mods.flags != 0)
+					log.error(vdecl.pos(), "illegal.state.modifiers");
+				vdecl.mods.flags |= PRIVATE;
+				JCStateDecl state = make.at(vdecl.pos).StateDef(
+						make.Modifiers(PRIVATE), vdecl.name, vdecl.vartype,
+						vdecl.init);
+				state.switchToVar();
+				definitions.add(state);
+			} else
+				definitions.add(def);
+		}
+		c.capsule_info.definedRun = false;
+		tree.needsDefaultRun = false;
+		return definitions;
+	}
     
-    public ListBuffer<JCTree> translateMonitorCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
-    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_SEQUENTIAL));
-        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
-        for(int i=0;i<tree.defs.length();i++){
-        	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
-        		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
-        		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
-        			log.error(tree.pos(), "serialize.active.capsules");
-        		}else if((mdecl.mods.flags & PRIVATE) ==0
-        					&&(mdecl.mods.flags & PROTECTED) ==0){
-                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC|Flags.SYNCHRONIZED|FINAL),
-                    		mdecl.name,
-                    		mdecl.restype,
-                    		mdecl.typarams,
-                    		mdecl.params,
-                    		mdecl.thrown,
-                    		mdecl.body,
-                    		null
-                    		);
-                    p.switchToMethod();
-                    tree.publicMethods = tree.publicMethods.append(p);
-        		}else
-        			definitions.add(mdecl);
-        	} else if(tree.defs.get(i).getTag() == VARDEF){
-    			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
-    			if(mdecl.mods.flags!=0)
-    				log.error(mdecl.pos(), "illegal.state.modifiers");
-    			mdecl.mods.flags |=PRIVATE;
-    			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, mdecl.vartype, mdecl.init);
-    			state.switchToVar();
-    			definitions.add(state);
-    		}else definitions.add(tree.defs.get(i));
-        }
-        c.capsule_info.definedRun = false;
-        for(JCMethodDecl d : tree.publicMethods){
-    		definitions.add(d);
-    	}
-        tree.needsDefaultRun = false;
-        return definitions;
-    }
+	private ListBuffer<JCTree> translateConcurrentCapsule(JCCapsuleDecl tree,
+			ClassSymbol c, Env<AttrContext> localEnv, boolean isTask) {
+		int indexer = 0;
+		boolean hasRun = false;
+		ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+		TreeCopier<Void> tc = new TreeCopier<Void>(make);
+		for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
+			JCTree def = l.head;
+			if (def.getTag() == Tag.METHODDEF) {
+				JCMethodDecl mdecl = (JCMethodDecl) def;
+				if (mdecl.name.equals(names.panini.Run)
+						&& mdecl.params.isEmpty()) {
+					if (isTask)
+						log.error(tree.pos(), "serialize.active.capsules");
+					else {
+						MethodSymbol msym = new MethodSymbol(PUBLIC | FINAL,
+								names.panini.Run, new MethodType(
+										List.<Type> nil(), syms.voidType,
+										List.<Type> nil(), syms.methodClass),
+								tree.sym);
+						JCMethodDecl computeDecl = make.MethodDef(msym,
+								mdecl.body);
+						computeDecl.params = List.<JCVariableDecl> nil();
+						memberEnter.memberEnter(computeDecl, localEnv);
+						definitions.add(computeDecl);
+						tree.computeMethod = computeDecl;
+						hasRun = true;
+					}
+				} else if ((mdecl.mods.flags & PRIVATE) == 0
+						&& (mdecl.mods.flags & PROTECTED) == 0) {
+					String constantName = PaniniConstants.PANINI_METHOD_CONST
+							+ mdecl.name;
+					if (mdecl.params.nonEmpty())
+						for (List<JCVariableDecl> p = mdecl.params; p.nonEmpty(); p = p.tail){
+							JCVariableDecl param = p.head;
+							constantName = constantName + "$"
+									+ param.vartype.toString();
+						}
+					mdecl.mods.flags |= PUBLIC;
+					JCVariableDecl v = make.VarDef(
+							make.Modifiers(PUBLIC | STATIC | FINAL),
+							names.fromString(constantName),
+							make.TypeIdent(TypeTags.INT),
+							make.Literal(indexer++));
+					JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC),
+							mdecl.name, tc.copy(mdecl.restype),
+							tc.copy(mdecl.typarams), tc.copy(mdecl.params),
+							tc.copy(mdecl.thrown), tc.copy(mdecl.body), null);
+					p.mods.annotations = tc.copy(mdecl.mods.annotations);
+					p.switchToMethod();
+					definitions.prepend(v);
+					tree.publicMethods = tree.publicMethods.append(p);
+				} else
+					definitions.add(tc.copy(mdecl));
+			} else if (def.getTag() == VARDEF) {
+				JCVariableDecl vdecl = (JCVariableDecl) def;
+				if (vdecl.mods.flags != 0)
+					log.error(vdecl.pos(), "illegal.state.modifiers");
+				if (vdecl.init == null)
+					log.warning(vdecl.pos(), "state.not.initialized");
+				vdecl.mods.flags |= PRIVATE;
+				JCStateDecl state = make.at(vdecl.pos).StateDef(
+						make.Modifiers(PRIVATE), vdecl.name,
+						tc.copy(vdecl.vartype), tc.copy(vdecl.init));
+				state.switchToVar();
+				definitions.add(state);
+			} else
+				definitions.add(tc.copy(def));
+		}
+		if (!hasRun) {
+			definitions.appendList(copyAndAlternativePublicMethods(tree, c));
+			JCMethodDecl m = runMethodPlaceholder(tree, isTask);
+			memberEnter.memberEnter(m, localEnv);
+			definitions.add(m);
+			hasRun = true;
+			tree.needsDefaultRun = true;
+			tree.computeMethod = m;
+		} else {
+			definitions.appendList(copyPublicMethods(tree, c));
+			c.capsule_info.definedRun = true;
+		}
+		return definitions;
+	}
     
-    public ListBuffer<JCTree> translateActiveCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
-    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_THREAD));
-    	int indexer = 0;
-        boolean hasRun = false;
-        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
-        TreeCopier<Void> tc = new TreeCopier<Void>(make);
-        for(int i=0;i<tree.defs.length();i++){
-        	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
-        		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
-				if(mdecl.name.equals(names.panini.Run) && mdecl.params.isEmpty()){
-            		MethodSymbol msym = new MethodSymbol(
-            				PUBLIC|FINAL,
-							names.panini.Run,
-            				new MethodType(
-            						List.<Type>nil(),
-            						syms.voidType,
-            						List.<Type>nil(),
-            						syms.methodClass
-            						),
-            						tree.sym
-            				);
-            		JCMethodDecl computeDecl = make.MethodDef(msym,
-            				mdecl.body);
-            		computeDecl.params = List.<JCVariableDecl>nil();
-            		memberEnter.memberEnter(computeDecl, localEnv);
-            		definitions.add(computeDecl);
-                    tree.computeMethod = computeDecl;
-            		hasRun=true;
-        		}
-        		else if((mdecl.mods.flags & PRIVATE) ==0
-        					&&(mdecl.mods.flags & PROTECTED) ==0){
-        			String constantName = PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString();
-            		if(mdecl.params.nonEmpty())
-            			for(JCVariableDecl param: mdecl.params){
-            				constantName = constantName + "$" + param.vartype.toString();
-            			}
-    				mdecl.mods.flags |= PUBLIC;
-    				JCVariableDecl v = make.VarDef(make.Modifiers(PUBLIC | STATIC | FINAL),
-    						names.fromString(constantName),
-    						make.TypeIdent(TypeTags.INT),
-    					    make.Literal(indexer++));
-                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC),
-                    		mdecl.name,
-                    		tc.copy(mdecl.restype),
-                    		tc.copy(mdecl.typarams),
-                    		tc.copy(mdecl.params),
-                    		tc.copy(mdecl.thrown),
-                    		tc.copy(mdecl.body),
-                    		null
-                    		);
-                    p.mods.annotations = tc.copy(mdecl.mods.annotations);
-                    p.switchToMethod();
-                    definitions.prepend(v);
-                    tree.publicMethods = tree.publicMethods.append(p);
-        		}else 
-        			definitions.add(tc.copy(mdecl));
-        	} else if(tree.defs.get(i).getTag() == VARDEF){
-    			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
-    			if(mdecl.mods.flags!=0)
-    				log.error(mdecl.pos(), "illegal.state.modifiers");
-    			if(mdecl.init ==null)
-    				log.warning(mdecl.pos(), "state.not.initialized");
-    			mdecl.mods.flags |=PRIVATE;
-    			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, tc.copy(mdecl.vartype), tc.copy(mdecl.init));
-    			state.switchToVar();
-    			definitions.add(state);
-    		}else definitions.add(tc.copy(tree.defs.get(i)));
-        }
-        if(!hasRun){
-        	for(JCMethodDecl mdecl : tree.publicMethods){
-        		String constantName = PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString();
-        		if(mdecl.params.nonEmpty())
-        			for(JCVariableDecl param: mdecl.params){
-        				constantName = constantName + "$" + param.vartype.toString();
-        			}
-        		c.capsule_info.definedRun = false;
-	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
-	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString(PaniniConstants.PANINI_PUSH)), List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))))));
-	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
-	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
-	        	args.add(make.Ident(names.fromString(constantName)));
-	            for(JCVariableDecl v : mdecl.params){
-	            	vars.add(make.VarDef(tc.copy(v.mods), v.name, tc.copy(v.vartype), null));
-	            	args.append(make.Ident(v.name));
-	            }
-	            JCExpression duckType = getDuckType(tree, mdecl);
-				copyBody.prepend(make.Try(
-						make.Block(
-								0,
-								List.<JCStatement> of(make.Exec(make.Assign(
-										make.Ident(names
-												.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
-										make.NewClass(null, List
-												.<JCExpression> nil(), duckType,
-												args.toList(), null))))),
-						List.<JCCatch> of(make.Catch(
-								make.VarDef(make.Modifiers(0), names
-										.fromString("e"), make.Ident(names
-										.fromString("Exception")), null),
-								make.Block(
-										0,
-										List.<JCStatement> of(make.Throw(make.NewClass(
-												null,
-												List.<JCExpression> nil(),
-												make.Ident(names
-														.fromString("DuckException")),
-												List.<JCExpression> of(make.Ident(names
-														.fromString("e"))),
-												null))))// this is catch clause
-														// body
-						)), null));
-				copyBody.prepend(make.VarDef(make.Modifiers(0),
-						names.fromString(PaniniConstants.PANINI_DUCK_TYPE),
-						duckType,
-						make.Literal(TypeTags.BOT, null)));
-	            if(!mdecl.restype.toString().equals("void"))
-	            	copyBody.append(procedureReturnStatement(mdecl));
-	            
-	            JCMethodDecl methodCopy = make.MethodDef(
-	            		make.Modifiers(PRIVATE|FINAL), 
-	            		mdecl.name.append(names.fromString("$Original")), 
-	            		tc.copy(mdecl.restype), 
-	            		tc.copy(mdecl.typarams), 
-	            		vars.toList(),
-	            		tc.copy(mdecl.thrown), 
-	            		tc.copy(mdecl.body), 
-	            		null);
-	            methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name, mdecl.restype.type, tree.sym);
-	            mdecl.mods.flags |= FINAL;
-	            mdecl.body = make.Block(0, copyBody.toList());
-	            definitions.add(methodCopy);
-	            definitions.add(mdecl);
-        	}
-            MethodSymbol msym = new MethodSymbol(
-                PUBLIC|FINAL,
-                names.fromString("run"),
-                new MethodType(
-                    List.<Type>nil(),
-                    syms.voidType,
-                    List.<Type>nil(),
-                    syms.methodClass
-                    ),
-                tree.sym
-                );
-			JCMethodDecl m = make.MethodDef(msym,
-                                            make.Block(0, List.<JCStatement>nil()));
-			m.mods = make.Modifiers(PUBLIC|FINAL, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("SuppressWarnings")), 
-        			List.<JCExpression>of(make.Literal("unchecked")))));
-            m.params = List.<JCVariableDecl>nil();
-            m.sym = msym;
-            memberEnter.memberEnter(m, localEnv);
-            definitions.add(m);
-    		hasRun=true;
-            tree.needsDefaultRun = true;
-            tree.computeMethod = m;
-    	}
-        else{
-        	c.capsule_info.definedRun = true;
-        	for(JCMethodDecl d : tree.publicMethods){
-        		definitions.add(d);
-        	}
+	private ListBuffer<JCTree> copyPublicMethods(final JCCapsuleDecl tree,
+			final ClassSymbol c) {
+		ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+		TreeCopier<Void> tc = new TreeCopier<Void>(make);
+		for (List<JCMethodDecl> l = tree.publicMethods; l.nonEmpty(); l = l.tail) {
+			JCMethodDecl mdecl = l.head;
+			ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
+			ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+			args.add(make.Ident(names
+					.fromString(PaniniConstants.PANINI_METHOD_CONST
+							+ mdecl.name)));
+			for (List<JCVariableDecl> vl = mdecl.params; vl.nonEmpty(); vl = vl.tail) {
+				JCVariableDecl v = vl.head;
+				vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
+				args.append(make.Ident(v.name));
+			}
 
-        	for(JCMethodDecl mdecl : tree.publicMethods){
-                ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
-	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
-	        	args.add(make.Ident(names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString())));
-	            for(JCVariableDecl v : mdecl.params){
-	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
-	            	args.append(make.Ident(v.name));
-	            }
+			JCMethodDecl methodCopy = make.MethodDef(
+					make.Modifiers(PRIVATE | FINAL),
+					mdecl.name.append(names.fromString("$Original")),
+					tc.copy(mdecl.restype), tc.copy(mdecl.typarams),
+					tc.copy(vars.toList()), tc.copy(mdecl.thrown),
+					tc.copy(mdecl.body), null);
+			methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name,
+					mdecl.restype.type, tree.sym);
+			definitions.add(methodCopy);
+			definitions.add(mdecl);
+		}
+		return definitions;
+	}
 
-	            JCMethodDecl methodCopy = make.MethodDef(
-	            		make.Modifiers(PRIVATE|FINAL), 
-	            		mdecl.name.append(names.fromString("$Original")), 
-	            		tc.copy(mdecl.restype),
-	            		tc.copy(mdecl.typarams), 
-	            		tc.copy(vars.toList()),
-	            		tc.copy(mdecl.thrown), 
-	            		tc.copy(mdecl.body),
-	            		null);
-	            methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name, mdecl.restype.type, tree.sym);
-	            definitions.add(methodCopy);
-        	}
-        	//add from public methods
-        }
-        return definitions;
-    }
-    
-    public ListBuffer<JCTree> translateTaskCapsule(JCCapsuleDecl tree, ClassSymbol c, Env<AttrContext> localEnv){
-    	tree.extending = make.Ident(names.fromString(PaniniConstants.PANINI_CAPSULE_TASK));
-    	int indexer = 0;
-        boolean hasRun = false;
-        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
-        TreeCopier<Void> tc = new TreeCopier<Void>(make);
-        for(int i=0;i<tree.defs.length();i++){
-        	if(tree.defs.get(i).getTag() == Tag.METHODDEF){
-        		JCMethodDecl mdecl = (JCMethodDecl)tree.defs.get(i);
-        		if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty()){
-        			log.error(tree.pos(), "serialize.active.capsules");
-        		}
-        		else if((mdecl.mods.flags & PRIVATE) ==0
-        					&&(mdecl.mods.flags & PROTECTED) ==0){
-        			String constantName = PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString();
-            		if(mdecl.params.nonEmpty())
-            			for(JCVariableDecl param: mdecl.params){
-            				constantName = constantName + "$" + param.vartype.toString();
-            			}
-    				mdecl.mods.flags |= PUBLIC;
-    				JCVariableDecl v = make.VarDef(make.Modifiers(PUBLIC | STATIC | FINAL),
-    						names.fromString(constantName),
-    						make.TypeIdent(TypeTags.INT),
-    					    make.Literal(indexer++));
-                    JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC|FINAL),
-                    		mdecl.name,
-                    		tc.copy(mdecl.restype),
-                    		tc.copy(mdecl.typarams),
-                    		tc.copy(mdecl.params),
-                    		tc.copy(mdecl.thrown),
-                    		tc.copy(mdecl.body),
-                    		null
-                    		);
-                    p.mods.annotations = tc.copy(mdecl.mods.annotations);
-                    p.switchToMethod();
-                    definitions.prepend(v);
-                    tree.publicMethods = tree.publicMethods.append(p);
-        		}else 
-        			definitions.add(mdecl);
-        	} else if(tree.defs.get(i).getTag() == VARDEF){
-    			JCVariableDecl mdecl = (JCVariableDecl)tree.defs.get(i);
-    			if(mdecl.mods.flags!=0)
-    				log.error(mdecl.pos(), "illegal.state.modifiers");
-    			mdecl.mods.flags |=PRIVATE;
-    			JCStateDecl state = make.at(mdecl.pos).StateDef(make.Modifiers(PRIVATE), mdecl.name, mdecl.vartype, mdecl.init);
-    			state.switchToVar();
-    			definitions.add(state);
-    		}else definitions.add(tree.defs.get(i));
-        }
-        if(!hasRun){
-        	for(JCMethodDecl mdecl : tree.publicMethods){
-        		String constantName = PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString();
-        		if(mdecl.params.nonEmpty())
-        			for(JCVariableDecl param: mdecl.params){
-        				constantName = constantName + "$" + param.vartype.toString();
-        			}
-        		c.capsule_info.definedRun = false;
-	        	ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
-	        	copyBody.append(make.Exec(make.Apply(List.<JCExpression>nil(), make.Ident(names.fromString(PaniniConstants.PANINI_PUSH)), List.<JCExpression>of(make.Ident(names.fromString(PaniniConstants.PANINI_DUCK_TYPE))))));
-	        	ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
-	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
-	        	args.add(make.Ident(names.fromString(constantName)));
-	            for(JCVariableDecl v : mdecl.params){
-	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
-	            	args.append(make.Ident(v.name));
-	            }
-	            JCExpression duckType = getDuckType(tree, mdecl);
-				copyBody.prepend(make.Try(
-						make.Block(
-								0,
-								List.<JCStatement> of(make.Exec(make.Assign(
-										make.Ident(names
-												.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
-										make.NewClass(null, List
-												.<JCExpression> nil(), duckType,
-												args.toList(), null))))),
-						List.<JCCatch> of(make.Catch(
-								make.VarDef(make.Modifiers(0), names
-										.fromString("e"), make.Ident(names
-										.fromString("Exception")), null),
-								make.Block(
-										0,
-										List.<JCStatement> of(make.Throw(make.NewClass(
-												null,
-												List.<JCExpression> nil(),
-												make.Ident(names
-														.fromString("DuckException")),
-												List.<JCExpression> of(make.Ident(names
-														.fromString("e"))),
-												null))))// this is catch clause
-														// body
-						)), null));
-				copyBody.prepend(make.VarDef(make.Modifiers(0),
-						names.fromString(PaniniConstants.PANINI_DUCK_TYPE),
-						duckType,
-						make.Literal(TypeTags.BOT, null)));
-				if(!mdecl.restype.toString().equals("void")){
-	            	copyBody.append(procedureReturnStatement(mdecl));
-	            }
-	            
-	            JCMethodDecl methodCopy = make.MethodDef(
-	            		make.Modifiers(PRIVATE|FINAL), 
-	            		mdecl.name.append(names.fromString("$Original")), 
-	            		tc.copy(mdecl.restype), 
-	            		tc.copy(mdecl.typarams), 
-	            		vars.toList(),
-	            		tc.copy(mdecl.thrown), 
-	            		tc.copy(mdecl.body), 
-	            		null);
-	            methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name, mdecl.restype.type, tree.sym);
-	            mdecl.mods.flags |= FINAL;
-	            mdecl.body = make.Block(0, copyBody.toList());
-	            definitions.add(methodCopy);
-	            definitions.add(mdecl);
-        	}
-            MethodSymbol msym = new MethodSymbol(
-                PUBLIC|FINAL,
-                names.fromString("run"),
-                new MethodType(
-                    List.<Type>nil(),
-                    syms.booleanType,
-                    List.<Type>nil(),
-                    syms.methodClass
-                    ),
-                tree.sym
-                );
-			JCMethodDecl m = make.MethodDef(msym,
-                                            make.Block(0, List.<JCStatement>nil()));
-			m.mods = make.Modifiers(PUBLIC|FINAL, List.<JCAnnotation>of(make.Annotation(make.Ident(names.fromString("SuppressWarnings")), 
-        			List.<JCExpression>of(make.Literal("unchecked")))));
-            m.params = List.<JCVariableDecl>nil();
-            m.sym = msym;
-            memberEnter.memberEnter(m, localEnv);
-            definitions.add(m);
-    		hasRun=true;
-            tree.needsDefaultRun = true;
-            tree.computeMethod = m;
-    	}
-        else{
-        	c.capsule_info.definedRun = true;
-        	for(JCMethodDecl d : tree.publicMethods){
-        		definitions.add(d);
-        	}
+	private ListBuffer<JCTree> copyAndAlternativePublicMethods(
+			final JCCapsuleDecl tree, final ClassSymbol c) {
+		ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+		TreeCopier<Void> tc = new TreeCopier<Void>(make);
+		for (List<JCMethodDecl> l = tree.publicMethods; l.nonEmpty(); l = l.tail) {
+			JCMethodDecl mdecl = l.head;
+			String constantName = PaniniConstants.PANINI_METHOD_CONST
+					+ mdecl.name;
+			if (mdecl.params.nonEmpty())
+				for (JCVariableDecl param : mdecl.params) {
+					constantName = constantName + "$" + param.vartype;
+				}
+			c.capsule_info.definedRun = false;
+			ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
+			copyBody.append(make.Exec(make.Apply(List.<JCExpression> nil(),
+					make.Ident(names.fromString(PaniniConstants.PANINI_PUSH)),
+					List.<JCExpression> of(make
+							.Ident(names.panini.PaniniDuckFuture)))));
+			ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
+			ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+			args.add(make.Ident(names.fromString(constantName)));
+			for (List<JCVariableDecl> vl = mdecl.params; vl.nonEmpty(); vl = vl.tail) {
+				JCVariableDecl v = vl.head;
+				vars.add(make.VarDef(tc.copy(v.mods), v.name,
+						tc.copy(v.vartype), null));
+				args.append(make.Ident(v.name));
+			}
+			JCExpression duckType = getDuckType(tree, mdecl);
+			copyBody.prepend(make.Try(
+					make.Block(0, List.<JCStatement> of(make.Exec(make.Assign(
+							make.Ident(names.panini.PaniniDuckFuture), make
+									.NewClass(null, List.<JCExpression> nil(),
+											duckType, args.toList(), null))))),
+					List.<JCCatch> of(make.Catch(
+							make.VarDef(make.Modifiers(0),
+									names.fromString("e"),
+									make.Ident(names.fromString("Exception")),
+									null),
+							make.Block(
+									0,
+									List.<JCStatement> of(make.Throw(make.NewClass(
+											null,
+											List.<JCExpression> nil(),
+											make.Ident(names
+													.fromString("DuckException")),
+											List.<JCExpression> of(make
+													.Ident(names
+															.fromString("e"))),
+											null)))))), null));
+			copyBody.prepend(make.VarDef(make.Modifiers(0),
+					names.panini.PaniniDuckFuture, duckType,
+					make.Literal(TypeTags.BOT, null)));
+			if (!mdecl.restype.toString().equals("void"))
+				copyBody.append(procedureReturnStatement(mdecl));
 
-        	for(JCMethodDecl mdecl : tree.publicMethods){
-                ListBuffer<JCVariableDecl> vars = new ListBuffer<JCVariableDecl>();
-	        	ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
-	        	args.add(make.Ident(names.fromString(PaniniConstants.PANINI_METHOD_CONST + mdecl.name.toString())));
-	            for(JCVariableDecl v : mdecl.params){
-	            	vars.add(make.VarDef(v.mods, v.name, v.vartype, null));
-	            	args.append(make.Ident(v.name));
-	            }
-
-	            JCMethodDecl methodCopy = make.MethodDef(
-	            		make.Modifiers(PRIVATE|FINAL), 
-	            		mdecl.name.append(names.fromString("$Original")), 
-	            		tc.copy(mdecl.restype),
-	            		tc.copy(mdecl.typarams), 
-	            		tc.copy(vars.toList()),
-	            		tc.copy(mdecl.thrown), 
-	            		tc.copy(mdecl.body)
-,
-	            		null);
-	            methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name, mdecl.restype.type, tree.sym);
-	            definitions.add(methodCopy);
-        	}
-
-        	//add from public methods
-        }
-        return definitions;
-    }
+			JCMethodDecl methodCopy = make.MethodDef(
+					make.Modifiers(PRIVATE | FINAL),
+					mdecl.name.append(names.fromString("$Original")),
+					tc.copy(mdecl.restype), tc.copy(mdecl.typarams),
+					vars.toList(), tc.copy(mdecl.thrown), tc.copy(mdecl.body),
+					null);
+			methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name,
+					mdecl.restype.type, tree.sym);
+			mdecl.mods.flags |= FINAL;
+			mdecl.body = make.Block(0, copyBody.toList());
+			definitions.add(methodCopy);
+			definitions.add(mdecl);
+		}
+		return definitions;
+	}
+	
+	private JCMethodDecl runMethodPlaceholder(final JCCapsuleDecl tree,
+			final boolean isTask) {
+		MethodSymbol msym;
+		if (isTask)
+			msym = new MethodSymbol(PUBLIC | FINAL, names.fromString("run"),
+					new MethodType(List.<Type> nil(), syms.booleanType,
+							List.<Type> nil(), syms.methodClass), tree.sym);
+		else
+			msym = new MethodSymbol(PUBLIC | FINAL, names.fromString("run"),
+					new MethodType(List.<Type> nil(), syms.voidType,
+							List.<Type> nil(), syms.methodClass), tree.sym);
+		JCMethodDecl m = make.MethodDef(msym,
+				make.Block(0, List.<JCStatement> nil()));
+		m.mods = make.Modifiers(
+				PUBLIC | FINAL,
+				List.<JCAnnotation> of(make.Annotation(
+						make.Ident(names.fromString("SuppressWarnings")),
+						List.<JCExpression> of(make.Literal("unchecked")))));
+		m.params = List.<JCVariableDecl> nil();
+		m.sym = msym;
+		return m;
+	}
     
     public long processCapsuleAnnotations(JCCapsuleDecl tree, ClassSymbol c){
-    	for(JCAnnotation annotation : tree.mods.annotations){
+    	for (List<JCAnnotation> l = tree.mods.annotations; l.nonEmpty(); l = l.tail){
+    		JCAnnotation annotation = l.head;
     		if(annotation.annotationType.toString().equals("CapsuleKind")){
     			Object arg = "";
     			if(annotation.args.isEmpty())
@@ -1311,63 +1128,54 @@ public class Enter extends JCTree.Visitor {
     private JCStatement procedureReturnStatement(final JCMethodDecl mdecl){
 		String returnType = mdecl.restype.toString();
 		JCStatement returnStat;
+		Name duckFuture = names.panini.PaniniDuckFuture;
 		if (returnType.equals("long")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
-					.Select(make.Ident(names
-							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+					.Select(make.Ident(duckFuture),
 							names.fromString("longValue")), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("boolean")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
-					.Select(make.Ident(names
-							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+					.Select(make.Ident(duckFuture),
 							names.fromString("booleanValue")), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("byte")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
-					.Select(make.Ident(names
-							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+					.Select(make.Ident(duckFuture),
 							names.fromString("byteValue")), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("char")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
-					.Select(make.Ident(names
-							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+					.Select(make.Ident(duckFuture),
 							names.fromString("charValue")), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("double")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
-					.Select(make.Ident(names
-							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+					.Select(make.Ident(duckFuture),
 							names.fromString("doubleValue")), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("float")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
-					.Select(make.Ident(names
-							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+					.Select(make.Ident(duckFuture),
 							names.fromString("floatValue")), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("int")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
-					.Select(make.Ident(names
-							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+					.Select(make.Ident(duckFuture),
 							names.fromString("intValue")), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("short")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
-					.Select(make.Ident(names
-							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+					.Select(make.Ident(duckFuture),
 							names.fromString("shortValue")), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("String")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
-					.Select(make.Ident(names
-							.fromString(PaniniConstants.PANINI_DUCK_TYPE)),
+					.Select(make.Ident(duckFuture),
 							names.fromString("toString")), List
 					.<JCExpression> nil()));
 		} else {
-			returnStat = make.Return(make.Ident(names
-					.fromString(PaniniConstants.PANINI_DUCK_TYPE)));
+			returnStat = make.Return(make.Ident(duckFuture));
 		}
 		return returnStat;
     }
@@ -1375,8 +1183,8 @@ public class Enter extends JCTree.Visitor {
     private JCExpression getDuckType(final JCCapsuleDecl tree, final JCMethodDecl mdecl){
 		JCExpression duck = make.Ident(names
 					.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$"
-							+ mdecl.restype.toString() + "$"
-							+ tree.name.toString()));
+							+ mdecl.restype + "$"
+							+ tree.name));
 		return duck;
     }
     
@@ -1397,7 +1205,7 @@ public class Enter extends JCTree.Visitor {
 	 					    CapsuleExtras.asCapsuleSymbol(classSymbol);
 	 					}
 	 					annotationProcessor.translateCapsuleAnnotations(classSymbol, compound);
-	 				syms.capsules.put(classSymbol.name, classSymbol);
+	 					syms.capsules.put(classSymbol.name, classSymbol);
     				}
     			}
     		}
