@@ -956,6 +956,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		public JCMethodDecl computeMethod;
 		public JCCapsuleDecl parentCapsule;
 		public boolean needsDefaultRun;
+		/**
+		 * Store the visibility flags until the lower phase.
+		 * Can't have public flags during initial phase.
+		 */
 		public JCModifiers accessMods;
 
 		public JCCapsuleDecl(JCModifiers mods, Name name,
