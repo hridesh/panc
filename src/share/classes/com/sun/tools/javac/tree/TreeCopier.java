@@ -540,15 +540,31 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 	}
 
 	public JCTree visitStar(StarTree node, P p){
-		return null; //FIXME
+		JCStar t = (JCStar)node;
+		//JCExpression center = copy(t.center, p);
+		//JCExpression others = copy(t.others, p);
+		List<JCExpression> args = copy(t.args, p);
+		//return M.at(t.pos).Star(center, others, args);
+		return M.at(t.pos).Star(args);
 	}
 
 	public JCTree visitRing(RingTree node, P p){
-		return null; //FIXME
+		JCRing t = (JCRing)node;
+		//JCExpression capsules = copy(t.capsules, p);
+		List<JCExpression> args = copy(t.args, p);
+		//return M.at(t.pos).Ring(capsules, args);
+		return M.at(t.pos).Ring(args);
 	}
 
 	public JCTree visitAssociate(AssociateTree node, P p){
-		return null; //FIXME
+		JCAssociate t = (JCAssociate)node;
+		JCExpression src = copy(t.src, p);
+		JCExpression srcPos = copy(t.srcPos, p);
+		JCExpression dest = copy(t.dest, p);
+		JCExpression destPos = copy(t.destPos, p);
+		JCExpression len = copy(t.len, p);
+		List<JCExpression> args = copy(t.args, p);
+		return M.at(t.pos).Associate(src, srcPos, dest, destPos, len, args);
 	};
 	// end Panini code
 }
