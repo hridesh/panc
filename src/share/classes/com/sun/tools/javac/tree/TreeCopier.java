@@ -27,6 +27,7 @@ package com.sun.tools.javac.tree;
 
 import com.sun.source.tree.*;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
+import com.sun.tools.javac.tree.JCTree.JCWireall;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
@@ -532,7 +533,10 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 	}
 
 	public JCTree visitWireall(WireallTree node, P p) {
-	    return null; //FIXME
+	    JCWireall t = (JCWireall)node;
+	    JCExpression many = copy(t.many, p);
+	    List<JCExpression> args = copy(t.args, p);
+	    return M.at(t.pos).ManyToOne(many, args);
 	}
 
 	public JCTree visitStar(StarTree node, P p){

@@ -154,6 +154,12 @@ public class TreeMaker implements JCTree.Factory {
 		return tree;
 	}
 
+	public JCWireall ManyToOne(JCExpression many, List<JCExpression> args){
+        JCWireall tree = new JCWireall(many, args);
+        tree.pos = pos;
+        return tree;
+    }
+
 	@Deprecated
 	public JCStar Star(JCExpression center, JCExpression others, List<JCExpression> args){
 		JCStar tree = new JCStar(center, others, args);
