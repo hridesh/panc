@@ -953,7 +953,7 @@ public class Enter extends JCTree.Visitor {
 				definitions.add(tc.copy(def));
 		}
 		if (!hasRun) {
-			definitions.appendList(copyAndAlternativePublicMethods(tree, c));
+			definitions.appendList(copyAndAlternatePublicMethods(tree, c));
 			JCMethodDecl m = runMethodPlaceholder(tree, isTask);
 			memberEnter.memberEnter(m, localEnv);
 			definitions.add(m);
@@ -998,7 +998,7 @@ public class Enter extends JCTree.Visitor {
 		return definitions;
 	}
 
-	private ListBuffer<JCTree> copyAndAlternativePublicMethods(
+	private ListBuffer<JCTree> copyAndAlternatePublicMethods(
 			final JCCapsuleDecl tree, final ClassSymbol c) {
 		ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
 		TreeCopier<Void> tc = new TreeCopier<Void>(make);

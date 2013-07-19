@@ -60,9 +60,11 @@ public class AnnotationProcessor extends Internal{
 	
 	//Can only be called if capsule annotation is defined.
 	public void setDefinedRun(JCCapsuleDecl capsule, boolean definedRun){
-		for(JCAnnotation ann : capsule.mods.annotations){
+		for (List<JCAnnotation> l = capsule.mods.annotations; l.nonEmpty(); l = l.tail){
+			JCAnnotation ann = l.head;
 			if(ann.toString().contains("PaniniCapsuleDecl")){
-				for(JCExpression exp : ann.args){
+				for (List<JCExpression> e = ann.args; e.nonEmpty(); e = e.tail){
+					JCExpression exp = e.head;
 					if(exp.getTag() == Tag.ASSIGN && ((JCAssign)exp).lhs.toString().equals("definedRun"))
 						((JCAssign)exp).rhs = make.Literal(new Boolean(definedRun));
 				}
@@ -291,7 +293,8 @@ public class AnnotationProcessor extends Internal{
 	
 	private void setEffects(JCMethodDecl mdecl, String[] effects) {
 		boolean annotated = false;
-		for (JCAnnotation annotation : mdecl.mods.annotations) {
+		for (List<JCAnnotation> l = mdecl.mods.annotations; l.nonEmpty(); l = l.tail){
+			JCAnnotation annotation = l.head;
 			if (annotation.annotationType.toString().equals("Effects"))
 				annotated = true;
 		}
@@ -319,7 +322,8 @@ public class AnnotationProcessor extends Internal{
         c.capsule_info.capsuleParameters = params;
 
         ListBuffer<Type> wts = new ListBuffer<Type>();
-        for (JCVariableDecl p : params) {
+        for (List<JCVariableDecl> l = params; l.nonEmpty(); l = l.tail){
+        	JCVariableDecl p = l.head;
             Symbol fs = findField(c, p.name);
             Type t = fs.type;
             Assert.checkNonNull(t, "No type for capsule " + c + " parameter " + p);
