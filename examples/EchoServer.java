@@ -62,6 +62,5 @@ capsule Worker(Host l) {
 }
 system EchoServer {
   Host h; Worker workers[10];
-  for (Worker w: workers) 
-    w(h);
+  wireall(workers, h);
 }
