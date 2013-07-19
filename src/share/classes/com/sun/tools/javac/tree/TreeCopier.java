@@ -539,21 +539,23 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 	    return M.at(t.pos).ManyToOne(many, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	public JCTree visitStar(StarTree node, P p){
 		JCStar t = (JCStar)node;
-		//JCExpression center = copy(t.center, p);
-		//JCExpression others = copy(t.others, p);
+		JCExpression center = copy(t.center, p);
+		JCExpression others = copy(t.others, p);
 		List<JCExpression> args = copy(t.args, p);
-		//return M.at(t.pos).Star(center, others, args);
-		return M.at(t.pos).Star(args);
+		return M.at(t.pos).Star(center, others, args);
+		//return M.at(t.pos).Star(args); 
 	}
 
+	@SuppressWarnings("deprecation")
 	public JCTree visitRing(RingTree node, P p){
 		JCRing t = (JCRing)node;
-		//JCExpression capsules = copy(t.capsules, p);
+		JCExpression capsules = copy(t.capsules, p);
 		List<JCExpression> args = copy(t.args, p);
-		//return M.at(t.pos).Ring(capsules, args);
-		return M.at(t.pos).Ring(args);
+		return M.at(t.pos).Ring(capsules, args);
+		//return M.at(t.pos).Ring(args); 
 	}
 
 	public JCTree visitAssociate(AssociateTree node, P p){
