@@ -31,9 +31,11 @@ capsule C2() {
 }
 
 
-system S {
-    C1 c1s[2];
-    C2 c2s[4];
+capsule S {
+    =>= {
+        C1 c1s[2];
+        C2 c2s[4];
 
-    associate(c1s, 0, c2s, 2, 2, "foobar");
+        associate(c1s, 0, c2s, 2, 2, "foobar");
+    }
 }

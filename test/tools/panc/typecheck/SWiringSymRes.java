@@ -23,7 +23,9 @@
  * @compile SWiringSymRes.java CWiringSymRes.java
  */
 
-system SWiringSymRes {
-    CWiringSymRes c;
-    c("hello");
+capsule SWiringSymRes {
+    =>= {
+        CWiringSymRes c;
+        c("hello");
+    }
 }

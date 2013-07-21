@@ -31,11 +31,13 @@ capsule M(O o, int fortyTwo){
 capsule O{
 }
 
-system ManyToOne {
-    M many[5];
-    O one;
+capsule ManyToOne {
+    =>= {
+        M many[5];
+        O one;
 
-    one();
-    wireall(many, one, 42);
+        one();
+        wireall(many, one, 42);
+    }
 }
 

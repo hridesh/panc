@@ -24,7 +24,9 @@
  * @compile Greeter.java
  * @compile HelloWorld.java
  */
-system HelloWorld {
-	Console c; Greeter g;
-	g(c);
+capsule HelloWorld {
+    =>= {
+        Console c; Greeter g;
+        g(c);
+    }
 }

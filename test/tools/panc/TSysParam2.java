@@ -28,7 +28,9 @@ capsule C() {
 }
 
 
-system S(String[] args) {
-    C c;
-    c();
+capsule S(String[] args) {
+    =>= {
+        C c;
+        c();
+    }
 }

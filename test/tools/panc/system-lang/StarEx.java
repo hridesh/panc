@@ -29,9 +29,11 @@ capsule C2() {
     void bar() {}
 }
 
-system S {
-    C c;
-    C2 c2s[3];
+capsule S {
+    =>= {
+        C c;
+        C2 c2s[3];
 
-    star(c, c2s, 1);
+        star(c, c2s, 1);
+    }
 }

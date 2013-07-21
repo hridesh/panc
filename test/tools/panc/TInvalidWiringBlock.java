@@ -21,8 +21,10 @@
  * @test
  * @summary Compile an incorrect wiring operator example. Should
  *          fail if it doesn't catch a type checking error.
- * @compile/fail/ref=TInvalidSystemDecl.out -XDrawDiagnostics TInvalidSystemDecl.java
+ * @compile/fail/ref=TInvalidWiringBlock.out -XDrawDiagnostics TInvalidWiringBlock.java
  */
-system TInvalidSystemInit[] {
-    C c[5];
+capsule TInvalidWiringBlock () {
+    =>= [] {
+        TInvalidWiringBlock tw;
+    }
 }

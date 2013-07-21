@@ -93,9 +93,11 @@ capsule PrimitiveGetter(PrimitiveGiver p){
 
 }
 
-system PrimitiveTest{
-	PrimitiveGiver pgiver;
-	PrimitiveGetter pgetter;
-	pgiver(true, 127, 'C', 123.4d, 432.1f, 2147483647, 9223372036854775807L, 32767, "Success!");
-	pgetter(pgiver);
+capsule PrimitiveTest{
+    =>= {
+        PrimitiveGiver pgiver;
+        PrimitiveGetter pgetter;
+        pgiver(true, 127, 'C', 123.4d, 432.1f, 2147483647, 9223372036854775807L, 32767, "Success!");
+        pgetter(pgiver);
+    }
 }

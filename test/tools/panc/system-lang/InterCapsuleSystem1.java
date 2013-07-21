@@ -17,9 +17,25 @@
  * Contributor(s): Sean L. Mooney
  */
 
-/* @test
- * @summary Fail system type check if there are more than 1 system params
- * @compile/fail/ref=TExtraSystemParams.out -XDrawDiagnostics TExtraSystemParams.java
+/*
+ * @test
+ * @summary Simple test of declaring a wiring block inside a capsule
+ *          instead of requiring a system.
+ * @compile InterCapsuleSystem1.java
  */
-system SysParamTest(String[] args, Object foo) {
+capsule C1 () {
+    int myInt = 5;
+
+    void foo() {
+        c12.baz(myInt);
+    }
+
+    =>= {
+        C2 c12;
+    }
+
+}
+
+capsule C2() {
+    public void baz(int i) {}
 }
