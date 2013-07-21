@@ -25,7 +25,9 @@ import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
+import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCTypeParameter;
+import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.*;
 
@@ -54,10 +56,12 @@ public class CapsuleInternal extends Internal {
 	protected Symtab syms;
 	protected Enter enter;
 	protected MemberEnter memberEnter;
+	protected Types types;
 
-	public CapsuleInternal(TreeMaker make, Names names, Enter enter,
+	public CapsuleInternal(TreeMaker make, Names names, Types types, Enter enter,
 			MemberEnter memberEnter, Symtab syms) {
 		super(make, names);
+		this.types = types;
 		this.enter = enter;
 		this.syms = syms;
 		this.memberEnter = memberEnter;
@@ -1104,6 +1108,82 @@ public class CapsuleInternal extends Internal {
 						returnt(nullv())));
 		return value;
 	}
+
+	/**
+	 * Create a main method for a closed capsule.
+	 *
+	 * @param tree
+	 * @return
+	 */
+	protected JCTree createMainMethod(JCCapsuleDecl tree) {
+        /* main looks like:
+        CapsuleType c = new CapsuleType();
+        (c.args = args)? //only if the capsule has a sing paramater of type String[]
+        c.run(); or c.start();
+        */
+
+	    Type arrayType = new ArrayType(syms.stringType, syms.arrayClass);
+        // /*synthetic*/ public static void main(String[] args)
+        MethodSymbol msym = new MethodSymbol(
+                PUBLIC | STATIC | SYNTHETIC,
+                names.panini.Main,
+                new MethodType(List.<Type> of(arrayType),
+                               syms.voidType,
+                               List.<Type> nil(),
+                               syms.methodClass),
+                tree.sym);
+
+        ListBuffer<JCStatement> mainStmts = new ListBuffer<JCTree.JCStatement>();
+
+        Name c = names.fromString("c$0");
+        //Generated elems. there isn't a source code position.
+        make.at(Position.NOPOS);
+        // CapsuleType c = new CapsuleType();
+        mainStmts.add(
+                make.VarDef(make.Modifiers(0),
+                        c, make.Ident(tree.name),
+                        make.NewClass(null, null,
+                                make.Ident(tree.name), List.<JCExpression>nil(), null))
+                );
+
+
+
+        Name sysArgs = names.fromString("args");
+        // String[] args parameter.
+        JCVariableDecl mainArg = make.Param(sysArgs, arrayType, msym);
+        final int numParams = tree.params.length();
+        //wire the command line args, if the capsule needs them.
+        if (numParams == 1) {
+            JCVariableDecl pDecl = tree.params.head;
+            if (types.isArray(pDecl.vartype.type)
+                    && types.elemtype(pDecl.vartype.type).equals(
+                            syms.stringType)) {
+
+            }
+            mainStmts.add( // c$0.args = args;
+                    make.Exec(make.Assign(
+                            make.Select(make.Ident(c), pDecl.name),
+                            make.Ident(sysArgs))));
+        }
+
+        // run | start
+        // Active capsules use run, serial capsules use start
+        Name initMethod =
+                ((tree.sym.flags_field & Flags.ACTIVE) != 0 || (tree.sym.flags_field & Flags.TASK) != 0)
+                        ? names.panini.Run
+                        : names.panini.Start ;
+        mainStmts.add( //c$0.start(); or c$0.run();
+                make.Exec(
+                        make.Apply(List.<JCExpression>nil(),
+                                make.Select(make.Ident(c), initMethod),
+                                List.<JCExpression>nil())) );
+
+        //Add the statements to the method tree.
+        JCMethodDecl maindecl = make.MethodDef(msym, make.Block(0, mainStmts.toList()));
+        maindecl.params = List.<JCVariableDecl> of(mainArg);
+
+        return maindecl;
+    }
 
 	private ClassSymbol checkAndResolveReturnType(Env<AttrContext> env,
 			Resolve rs, Type restype) {

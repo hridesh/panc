@@ -989,6 +989,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 			else
 				return v.visitClass(this, d);
 		}
+
 	}
 
 	public static class JCFree extends JCExpression implements FreeTree {

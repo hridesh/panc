@@ -437,7 +437,6 @@ public class Enter extends JCTree.Visitor {
     	return copiedDefs.toList();
     }
 
-
     /**
      * @param capsule
      */
@@ -663,6 +662,11 @@ public class Enter extends JCTree.Visitor {
         c.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, c, tree);
         c.sourcefile = env.toplevel.sourcefile;
         c.members_field = new Scope(c);
+        ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
+        params.appendList(tree.params);
+        c.capsule_info.capsuleParameters = params.toList();
+        tree.sym = c;
+        syms.capsules.put(c.name, c);
 
         ClassType ct = (ClassType)c.type;
         if (owner.kind != PCK && (c.flags_field & STATIC) == 0) {
@@ -715,6 +719,7 @@ public class Enter extends JCTree.Visitor {
 						.fromString(PaniniConstants.PANINI_CAPSULE_THREAD));
 				tree.parentCapsule.sym.capsule_info.translated_thread = c;
 			}
+
 	        c.capsule_info.parentCapsule = tree.parentCapsule.sym;
 	    	List<JCVariableDecl> fields = tree.getParameters();
 	    	while(fields.nonEmpty()){
@@ -742,11 +747,7 @@ public class Enter extends JCTree.Visitor {
 	    	}
         	c.capsule_info.definedRun = true;
         }
-        ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
-        params.appendList(tree.params);
-        c.capsule_info.capsuleParameters = params.toList();
-        tree.sym = c;
-        syms.capsules.put(c.name, c);
+
         classEnter(tree.defs, localEnv);
         result = c.type;
         annotationProcessor.setDefinedRun(tree, c.capsule_info.definedRun);

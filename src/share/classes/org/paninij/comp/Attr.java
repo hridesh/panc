@@ -93,7 +93,6 @@ public final class Attr extends CapsuleInternal {
 	Annotate annotate;
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
-	Types types;
 	final Check pck;
 
 	/**
@@ -106,7 +105,7 @@ public final class Attr extends CapsuleInternal {
     public Attr(TreeMaker make, Names names, Types types, Enter enter,
             MemberEnter memberEnter, Symtab syms, Log log,
             Annotate annotate, Context context) {
-        super(make, names, enter, memberEnter, syms);
+        super(make, names, types, enter, memberEnter, syms);
         this.types = types;
         this.log = log;
         this.annotate = annotate;
@@ -216,8 +215,8 @@ public final class Attr extends CapsuleInternal {
 			attr.attribStat(tree.computeMethod, env);
 		}
 		else {
-			attr.attribClassBody(env, tree.sym);
-			if (tree.computeMethod != null) {
+		    attr.attribClassBody(env, tree.sym);
+		    if (tree.computeMethod != null) {
 				tree.computeMethod.body.stats = tree.computeMethod.body.stats
 						.prepend(make.Exec(make.Apply(
 								List.<JCExpression> nil(),
@@ -275,6 +274,11 @@ public final class Attr extends CapsuleInternal {
 				attr.attribStat(disconnectMeth, env);
 			}
 		}
+
+		if (needsMainMethod(tree)) {
+            createMainMethod(tree);
+        }
+
 		for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail){
 			JCTree def = l.head;
 			if(def.getTag() == Tag.METHODDEF){
@@ -372,7 +376,41 @@ public final class Attr extends CapsuleInternal {
 			assigns.append(refCountAssignStmt);
 		}
 	}
-	
+
+    /**
+     * Capsule kinds need a main method if they are closed and define their own run method
+     * or are serial. Capsules are assumed to define their own run method if the
+     * method referenced by {@link #computeMethod} is not marked as synthetic.
+     * <p>
+     * Closed capsules have either no params, or a single param of type String[].
+     * <p>
+     * Either the Active or the Serial version of the capsule gets a main method,
+     * not both. The Active capsule is the 'main' capsule kind in the case of
+     * defining a run method. The serial kind is the 'main' capsule otherwise.
+     * Task kind and Monitor kind capsules never need a main method.
+     * <b>
+     * Auto-Generated run methods must be marked with the sythentic flag.
+     * </b>
+     */
+    protected boolean needsMainMethod(JCCapsuleDecl tree) {
+        boolean isClosedCapsule = tree.params.isEmpty()
+                || (tree.params.size() == 1 //Check for a String[] type parameter.
+                        && types.isArray(tree.params.head.vartype.type)
+                        && types.elemtype(tree.params.head.vartype.type).equals(syms.stringType));
+
+        if (isClosedCapsule) {
+            if(tree.computeMethod == null) {
+                return false;
+            }
+            if ((tree.computeMethod.sym.flags_field & Flags.SYNTHETIC) == 0) {
+                return (tree.sym.flags_field & Flags.ACTIVE) != 0;
+            } else {
+                return (tree.sym.flags_field & Flags.SERIAL) != 0;
+            }
+        } else {
+            return false;
+        }
+    }
 
 	public final void visitSystemDef(JCWiringBlock tree, Resolve rs,
 			com.sun.tools.javac.comp.Attr jAttr, // Javac Attributer.
