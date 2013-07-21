@@ -51,6 +51,8 @@ import static com.sun.tools.javac.tree.JCTree.Tag.*;
 import com.sun.tools.javac.parser.ParserFactory;
 import org.paninij.comp.AnnotationProcessor;
 import org.paninij.util.PaniniConstants;
+import org.paninij.util.ListUtils;
+import org.paninij.util.Predicate;
 // end Panini code
 
 /** This class enters symbols for all encountered definitions into
@@ -366,6 +368,7 @@ public class Enter extends JCTree.Visitor {
     		if(def.getTag() == CAPSULEDEF && (((JCCapsuleDecl)def).mods.flags & INTERFACE)==0 ){
     			JCCapsuleDecl capsule = (JCCapsuleDecl)def;
     			ListBuffer<JCTree> interfaceBody = new ListBuffer<JCTree>();
+    			reorderDefs(capsule);
     			boolean hasRun = false;
     			for (List<JCTree> c = capsule.defs; c.nonEmpty(); c = c.tail){
     				JCTree capsuleDefs = c.head;
@@ -432,8 +435,21 @@ public class Enter extends JCTree.Visitor {
     	}
     	return copiedDefs.toList();
     }
-    // end Panini code
 
+
+    /**
+     * @param capsule
+     */
+    private void reorderDefs(JCCapsuleDecl capsule) {
+        Predicate<JCTree> wiringIsFirst = new Predicate<JCTree>() {
+            @Override
+            public final boolean apply(JCTree t) {
+                return t.getTag() == METHODDEF && t instanceof JCWiringBlock;
+            }
+        };
+        capsule.defs = ListUtils.moveToFirst(capsule.defs, wiringIsFirst);
+    }
+    // end Panini code
     @Override
     public void visitClassDef(JCClassDecl tree) {
         Symbol owner = env.info.scope.owner;
