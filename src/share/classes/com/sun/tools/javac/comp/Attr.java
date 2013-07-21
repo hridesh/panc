@@ -1292,9 +1292,11 @@ public class Attr extends JCTree.Visitor {
             chk.setLint(prevLint);
         }
         // Panini code
-        if(env.enclClass.sym.isCapsule() && tree.init!=null){
-        	if(syms.capsules.containsKey(names.fromString(tree.init.type.toString())))
-        		log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
+        if( (tree.sym.owner.flags_field & SYNTHETIC) == 0 //Ignore assigns in generated blocks.
+                && env.enclClass.sym.isCapsule() && tree.init!=null){
+            if(syms.capsules.containsKey(names.fromString(tree.init.type.toString()))) {
+                log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
+            }
         }
         //end Panini code
     }
@@ -2384,11 +2386,15 @@ public class Attr extends JCTree.Visitor {
     public void visitAssign(JCAssign tree) {
         Type owntype = attribTree(tree.lhs, env.dup(tree), varInfo);
         Type capturedType = capture(owntype);
-        attribExpr(tree.rhs, env, owntype);
+        Type rhsType = attribExpr(tree.rhs, env, owntype);
         result = check(tree, capturedType, VAL, resultInfo);
         // Panini code
-        if(env.enclClass.sym.isCapsule()){
-        	if(syms.capsules.containsKey(names.fromString(tree.rhs.type.toString())))
+        // Assigning the a capsule type is not allowed
+        // in CapsuleDecls, unless the assign is in a wiring method.
+        if( env.enclClass.sym.isCapsule()
+           && rhsType.tsym.isCapsule()
+           && env.enclMethod != null
+           && env.enclMethod.sym.name != names.panini.InternalCapsuleWiring) {
         		log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
         }
         // end Panini code
@@ -2767,9 +2773,10 @@ public class Attr extends JCTree.Visitor {
         env.info.tvars = List.nil();
         
         // Panini code
-        if (tree.selected.type.tsym.isCapsule() &&!tree.type.getKind().toString().equals("EXECUTABLE")
+        if ( pAttr.checkCapStateAcc
+             && tree.selected.type.tsym.isCapsule() &&!tree.type.getKind().toString().equals("EXECUTABLE")
         		&&env.enclClass.sym.isCapsule() &&!tree.selected.toString().equals("this")){
-        	log.error(tree.pos, "invalid.access.of.capsules.states");
+			log.error(tree.pos, "invalid.access.of.capsules.states");
         }
         // end Panini code
     }

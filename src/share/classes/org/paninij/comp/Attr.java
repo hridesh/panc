@@ -96,6 +96,13 @@ public final class Attr extends CapsuleInternal {
 	Types types;
 	final Check pck;
 
+	/**
+	 * Whether or not capsule state access should be reported as an error.
+	 * Used to the keep errors from being reported once a wiring block is
+	 * convertted to actual wiring statements.
+	 */
+	public boolean checkCapStateAcc = true;
+
     public Attr(TreeMaker make, Names names, Types types, Enter enter,
             MemberEnter memberEnter, Symtab syms, Log log,
             Annotate annotate, Context context) {
@@ -407,8 +414,13 @@ public final class Attr extends CapsuleInternal {
         toAttr.addAll(assigns);
         toAttr.addAll(starts);
         toAttr.addAll(joins);
-        for (List<JCStatement> l = toAttr.toList(); l.nonEmpty(); l = l.tail) {
-            jAttr.attribStat(l.head, env);
+        try {
+            checkCapStateAcc = false;
+            for (List<JCStatement> l = toAttr.toList(); l.nonEmpty(); l = l.tail) {
+                jAttr.attribStat(l.head, env);
+            }
+        } finally {
+            checkCapStateAcc = true;
         }
 		
 		List<JCStatement> mainStmts;
