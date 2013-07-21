@@ -46,6 +46,7 @@ import org.paninij.systemgraph.SystemGraphBuilder;
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Symtab;
@@ -68,6 +69,8 @@ import com.sun.tools.javac.tree.JCTree.JCWiringBlock;
 import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
+import com.sun.tools.javac.util.Assert;
+import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
@@ -90,16 +93,18 @@ public final class Attr extends CapsuleInternal {
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
 	Types types;
+	final Check pck;
 
     public Attr(TreeMaker make, Names names, Types types, Enter enter,
             MemberEnter memberEnter, Symtab syms, Log log,
-            Annotate annotate) {
+            Annotate annotate, Context context) {
         super(make, names, enter, memberEnter, syms);
         this.types = types;
         this.log = log;
         this.annotate = annotate;
         this.annotationProcessor = new AnnotationProcessor(names, make, log);
         this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
+        pck = Check.instance(context);
     }
 
     void attribSystemDecl(JCWiringBlock tree, Resolve rs, Env<AttrContext> env ) {
@@ -353,7 +358,13 @@ public final class Attr extends CapsuleInternal {
 		}
 	}
 	
-	public final void visitSystemDef(JCWiringBlock tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
+
+	public final void visitSystemDef(JCWiringBlock tree, Resolve rs,
+			com.sun.tools.javac.comp.Attr jAttr, // Javac Attributer.
+			Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
+
+	    tree.sym.flags_field= pck.checkFlags(tree, tree.sym.flags(), tree.sym);
+
 	    attribSystemDecl(tree, rs, env);
 
 	    ListBuffer<JCStatement> decls;
@@ -379,15 +390,28 @@ public final class Attr extends CapsuleInternal {
         joins = mt.joins;
         sysGraph = mt.sysGraph;
 
-		if(rewritenTree.hasTaskCapsule)
+        if(rewritenTree.hasTaskCapsule)
 			processSystemAnnotation(rewritenTree, inits, env);
 
-		initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph);
+        initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph);
+
+        //attribute the new statement.
+        ListBuffer<JCStatement> toAttr = new ListBuffer<JCTree.JCStatement>();
+        toAttr.addAll(decls);
+        toAttr.addAll(inits);
+        toAttr.addAll(assigns);
+        toAttr.addAll(starts);
+        toAttr.addAll(joins);
+        for (List<JCStatement> l = toAttr.toList(); l.nonEmpty(); l = l.tail) {
+            jAttr.attribStat(l.head, env);
+        }
 		
 		List<JCStatement> mainStmts;
-		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).toList();
-		JCMethodDecl maindecl = createMainMethod(rewritenTree.sym, rewritenTree.body, rewritenTree.params, mainStmts);
-		rewritenTree.defs = rewritenTree.defs.append(maindecl);
+		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).toList();
+
+		//TODO-XX: Still need to create a main method somewhere.
+		//JCMethodDecl maindecl = createMainMethod(rewritenTree.sym.owner, rewritenTree.body, rewritenTree.params, mainStmts);
+
 
 		systemGraphBuilder.completeEdges(sysGraph, annotationProcessor, env, rs);
 
@@ -396,8 +420,8 @@ public final class Attr extends CapsuleInternal {
 		    ConsistencyUtil.createChecker(seqConstAlg, sysGraph, log);
 		sca.potentialPathCheck();
 
-		rewritenTree.switchToClass();
-		memberEnter.memberEnter(maindecl, env);
+		//replace the systemDef/wiring block with the new body.
+		tree.body.stats = mainStmts;
 	}
 
 	public final void visitProcDef(JCProcDecl tree){

@@ -151,7 +151,7 @@ public class Attr extends JCTree.Visitor {
         unknownTypeInfo = new ResultInfo(TYP, Type.noType);
 
         // Panini code
-        pAttr = new org.paninij.comp.Attr(make, names, types, enter, memberEnter, syms, log, annotate);
+        pAttr = new org.paninij.comp.Attr(make, names, types, enter, memberEnter, syms, log, annotate, context);
         // end Panini code
     }
 
@@ -903,9 +903,11 @@ public class Attr extends JCTree.Visitor {
             }
 
             // visit the system def for rewriting and analysis.
-            pAttr.visitSystemDef(tree, rs, localEnv, doGraphs, seqConstAlg);
+            // will re-write the body before doing the 'main' statement attribution.
+            pAttr.visitSystemDef(tree, rs, this, localEnv, doGraphs, seqConstAlg);
 
             localEnv.info.scope.leave();
+            result = tree.type = m.type;
         } finally {
             chk.setLint(prevLint);
         }

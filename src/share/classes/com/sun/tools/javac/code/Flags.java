@@ -257,6 +257,10 @@ public class Flags {
     public static final long TASK = 1L<<45;
     public static final long MONITOR = 1L<<46;
     public static final long CAPSULE = 1L<<47;
+    /**
+     * Wiring blocks are always private final.
+     */
+    public static final long WIRING_BLOCK_FLAGS = PROTECTED | FINAL;
     // end Panini code
 
     /** Modifier masks.
