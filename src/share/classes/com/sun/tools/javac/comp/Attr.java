@@ -856,20 +856,14 @@ public class Attr extends JCTree.Visitor {
     /**
      * Adapted from {@link #visitMethodDef(JCMethodDecl)}.
      */
-    public final void visitSystemDef(final JCSystemDecl tree){
-        final ClassSymbol treeSym = tree.sym;
-
-        //Make the sym look like a method kind.
-        // Otherwise visiting the local vardefs fails.
-        // But reset it at the end, or Lower fails.
-        final int oldKind = treeSym.kind;
-        treeSym.kind = MTH;
+    public final void visitSystemDef(final JCWiringBlock tree){
+        final MethodSymbol m = tree.sym;
 
         // Create a new environment with local scope
         // for attributing the method.
-        Env<AttrContext> localEnv = memberEnter.systemEnv(tree, env);
+        Env<AttrContext> localEnv = memberEnter.methodEnv(tree, env);
 
-        Lint lint = env.info.lint.augment(treeSym.attributes_field, treeSym.flags());
+        Lint lint = env.info.lint.augment(m.attributes_field, m.flags());
         Lint prevLint = chk.setLint(lint);
 
         try {
@@ -913,7 +907,6 @@ public class Attr extends JCTree.Visitor {
 
             localEnv.info.scope.leave();
         } finally {
-            treeSym.kind = oldKind;
             chk.setLint(prevLint);
         }
     }
@@ -3504,14 +3497,6 @@ public class Attr extends JCTree.Visitor {
                     log.error(env.tree.pos(), "enum.types.not.extensible");
                 }
                 // Panini code
-                if(c instanceof SystemSymbol){
-                	Env<AttrContext> oldEnv = this.env;
-                	this.env = env;
-                	((JCSystemDecl)env.tree).switchtoSystem();
-                	env.tree.accept(this);
-                	((JCSystemDecl)env.tree).switchToClass();
-                	this.env = oldEnv;
-                }
                 //Do not attrib classBody for capsules.
                 //Visiting a capsule def will cause the class body to be attributed.
                 if(c.isCapsule()){

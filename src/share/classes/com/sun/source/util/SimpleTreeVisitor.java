@@ -294,7 +294,7 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 		return defaultAction(node, p);
 	}
 
-	public R visitSystem(SystemTree node, P p) {
+	public R visitWiringBlock(InternalWiringMethod node, P p) {
 		return defaultAction(node, p);
 	}
 

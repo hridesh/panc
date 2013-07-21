@@ -45,7 +45,7 @@ import com.sun.tools.javac.tree.JCTree.JCProcInvocation;
 import com.sun.tools.javac.tree.JCTree.JCRing;
 import com.sun.tools.javac.tree.JCTree.JCStar;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
-import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
+import com.sun.tools.javac.tree.JCTree.JCWiringBlock;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.Tag;
 import com.sun.tools.javac.tree.TreeCopier;
@@ -77,8 +77,8 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     final TreeCopier<Void> copy;
 
-    public JCSystemDecl rewrite(JCSystemDecl tree) {
-        JCSystemDecl translated = super.translate(tree);
+    public JCWiringBlock rewrite(JCWiringBlock tree) {
+        JCWiringBlock translated = super.translate(tree);
         translated.body.stats = unrollStatementsFromBodyStats(translated.body.stats);
         return translated;
     }
@@ -426,7 +426,7 @@ public class SystemDeclRewriter extends TreeTranslator {
     }
 
     @Override
-    public void visitSystemDef(JCSystemDecl tree) {
+    public void visitSystemDef(JCWiringBlock tree) {
         valueEnv = new InterpEnv<Name, JCTree>();
         varDefToAstNodeEnv = new InterpEnv<Name, JCVariableDecl>();
 

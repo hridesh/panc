@@ -635,6 +635,12 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
 		// end Panini code
     }
 
+    // Panini code
+    public void visitSystemDef(JCWiringBlock tree) {
+        visitMethodDef(tree);
+    }
+    // end Panini code
+
     /** Create a fresh environment for method bodies.
      *  @param tree     The method definition.
      *  @param env      The environment current outside of the method definition.
@@ -649,17 +655,6 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
     }
 
     // Panini code
-    /**Create an environment to attribute the system block in.
-     * @param tree The definition
-     * @param env  The environment out side the system.
-     */
-    Env<AttrContext> systemEnv(JCSystemDecl tree, Env<AttrContext> env) {
-        Env<AttrContext> localEnv =
-                env.dup(tree, env.info.dup(env.info.scope.dupUnshared()));
-        localEnv.enclClass=tree;
-        localEnv.info.scope.owner = tree.sym;
-        return localEnv;
-    }
 
     /**
      * Finish a CapsuleDecl by partially entering the capsule parameters

@@ -43,6 +43,11 @@ public class Names {
     public final Name PaniniDisconnect;
 
     /**
+     * Name of the method used to wire internal 'systems' in a capsule.
+     */
+    public final Name InternalCapsuleWiring;
+
+    /**
      * Construct more names, using an exitings Names table.
      * @param names
      */
@@ -57,5 +62,6 @@ public class Names {
         PaniniFinish = names.fromString(PaniniConstants.PANINI_FINISH);
         PaniniDuckFuture = names.fromString(PaniniConstants.PANINI_DUCK_TYPE);
         PaniniDisconnect = names.fromString(PaniniConstants.PANINI_DISCONNECT);
+        InternalCapsuleWiring = names.fromString(PaniniConstants.CAPSULE_SYS_WIRE);
     }
 }

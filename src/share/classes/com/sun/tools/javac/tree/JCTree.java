@@ -875,75 +875,33 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	}
 
-	public static class JCSystemDecl extends JCClassDecl implements SystemTree {
-		public Name name;
-		public Kind kind;
-		public Tag tag;
-		public JCBlock body;
-		public List<JCVariableDecl> params;
+	public static class JCWiringBlock extends JCMethodDecl implements InternalWiringMethod {
 		public boolean hasTaskCapsule;
 		public int activeCapsuleCount;
+		/**
+		 * A list of capsules decls declared in the wiring block, which
+		 * are actually accessible to all procedures and methods in the
+		 * capsule.
+		 * <b>Will be null until the {@link JCWiringBlock} is attributed.</b>
+		 */
+		public List<JCVariableDecl> capsuleDecls;
 
-		public JCSystemDecl(JCModifiers mods, Name name, JCBlock body,
-				List<JCVariableDecl> params) {
-			super(mods, name, List.<JCTypeParameter> nil(), null, List
-					.<JCExpression> nil(), List.<JCTree> nil(), null);
-			this.body = body;
-			this.name = name;
-			this.params = params;
-			kind = Kind.SYSTEM;
-			tag = Tag.SYSTEMDEF;
+		public JCWiringBlock(JCModifiers mods, Name name, JCExpression restype,
+                List<JCTypeParameter> typarams, List<JCVariableDecl> params,
+                List<JCExpression> thrown, JCBlock body, JCExpression defaultValue,
+                MethodSymbol sym) {
+			super(mods, name, restype, typarams, params, thrown, body, defaultValue, sym);
 		}
 
-		public JCBlock getBody() {
-			return body;
-		}
+        @Override
+        public void accept(Visitor v) {
+            v.visitSystemDef(this);
+        }
 
-		public Kind getKind() {
-			return kind;
-		}
-
-		public void switchToClass() {
-			kind = Kind.CLASS;
-			tag = Tag.CLASSDEF;
-		}
-
-		public void switchtoSystem() {
-			kind = Kind.SYSTEM;
-			tag = Tag.SYSTEMDEF;
-		}
-
-		public Name getName() {
-			return name;
-		}
-
-		public List<JCTree> getMembers() {
-			return defs;
-		}
-
-		public Tag getTag() {
-			return tag;
-		}
-
-		public List<JCVariableDecl> getParams() {
-			return params;
-		}
-
-		@Override
-		public void accept(Visitor v) {
-			if (tag != CLASSDEF)
-				v.visitSystemDef(this);
-			else
-				v.visitClassDef(this);
-		}
-
-		@Override
-		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-			if (tag != CLASSDEF)
-				return v.visitSystem(this, d);
-			else
-				return v.visitClass(this, d);
-		}
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            return v.visitWiringBlock(this, d);
+        }
 	}
 
 	public static class JCCapsuleDecl extends JCClassDecl implements CapsuleTree {
@@ -3437,7 +3395,12 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitCapsuleWiring(JCCapsuleWiring that) { visitTree(that); }
         public void visitIndexedCapsuleWiring(JCCapsuleArrayCall that) { visitTree(that); }
         public void visitCapsuleArray(JCCapsuleArray that)   { visitTree(that); }
-        public void visitSystemDef(JCSystemDecl that)	     { visitTree(that); }
+        /**
+         * Wiring blocks/system decls delegate to visitMethodDef unless specifically
+         * overriden for a reason. Keeps the common case of 'this is a method decl'.
+         * @param that
+         */
+        public void visitSystemDef(JCWiringBlock that)	     { visitMethodDef(that); }
         public void visitCapsuleDef(JCCapsuleDecl that)	     { visitTree(that); }
         public void visitFree(JCFree that)	                 { visitTree(that); }
         public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }

@@ -61,6 +61,11 @@ import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.MemberEnter;
 import com.sun.tools.javac.comp.Resolve;
 import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
+import com.sun.tools.javac.tree.JCTree.JCStatement;
+import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
+import com.sun.tools.javac.tree.JCTree.JCWiringBlock;
+import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.util.List;
@@ -97,7 +102,7 @@ public final class Attr extends CapsuleInternal {
         this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
     }
 
-    void attribSystemDecl(JCSystemDecl tree, Resolve rs, Env<AttrContext> env ) {
+    void attribSystemDecl(JCWiringBlock tree, Resolve rs, Env<AttrContext> env ) {
         //This is where the systemDecl attribution will go, when
         //pulled in from sun.tools.javac.comp.Attr.visitSystemDecl
     }
@@ -348,7 +353,7 @@ public final class Attr extends CapsuleInternal {
 		}
 	}
 	
-	public final void visitSystemDef(JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
+	public final void visitSystemDef(JCWiringBlock tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
 	    attribSystemDecl(tree, rs, env);
 
 	    ListBuffer<JCStatement> decls;
@@ -360,7 +365,7 @@ public final class Attr extends CapsuleInternal {
         SystemGraph sysGraph;
 
         SystemDeclRewriter interp = new SystemDeclRewriter(make, log);
-        JCSystemDecl rewritenTree = interp.rewrite(tree);
+        JCWiringBlock rewritenTree = interp.rewrite(tree);
 
         SystemMainTransformer mt = new SystemMainTransformer(syms, names, types, log,
                 rs, env, make, systemGraphBuilder);
@@ -404,7 +409,7 @@ public final class Attr extends CapsuleInternal {
 	}
 	
 	// Helper functions
-	private void processSystemAnnotation(JCSystemDecl tree, ListBuffer<JCStatement> stats, Env<AttrContext> env){
+	private void processSystemAnnotation(JCWiringBlock tree, ListBuffer<JCStatement> stats, Env<AttrContext> env){
 		int numberOfPools = 1;
 		for (List<JCAnnotation> l = tree.mods.annotations; l.nonEmpty(); l = l.tail) {
 			JCAnnotation annotation = l.head;

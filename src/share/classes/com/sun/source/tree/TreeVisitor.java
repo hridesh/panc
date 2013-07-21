@@ -115,7 +115,7 @@ public interface TreeVisitor<R,P> {
     R visitCapsuleWiring(CapsuleWiringTree node, P p);
     R visitIndexedCapsuleWiring(CapsuleArrayCallTree tree, P p);
     R visitCapsuleArray(CapsuleArrayTree tree, P p);
-    R visitSystem(SystemTree node, P p);
+    R visitWiringBlock(InternalWiringMethod node, P p);
     R visitCapsule(CapsuleTree node, P p);
     R visitFree(FreeTree node, P p);
     R visitForAll(ForAllTree node, P p);

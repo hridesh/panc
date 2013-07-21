@@ -566,15 +566,23 @@ public class Pretty extends JCTree.Visitor {
     
     
     
-    public void visitSystemDef(JCSystemDecl tree){
-    	try{
-    		println();align();
-    		print("system ");
-    		print(tree.name);
-    		print(tree.body);
-    	} catch (IOException e){
-    		throw new UncheckedIOException(e);
-    	}
+    @Override
+    public void visitSystemDef(JCWiringBlock tree) {
+        try {
+            println(); align();
+            printDocComment(tree);
+            if (sourceOutput) {
+                printFlags(tree.sym.flags());
+                print(" " + tree.restype);
+                print(" " + tree.name.table.names.panini.InternalCapsuleWiring);
+                print("()"); //Always empty parameters.
+            } else {
+                print("=>=");
+            }
+            visitBlock(tree.body);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
         
     public void visitCapsuleDef(JCCapsuleDecl tree){

@@ -73,7 +73,7 @@ import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 import com.sun.tools.javac.tree.JCTree.JCNewArray;
 import com.sun.tools.javac.tree.JCTree.JCNewClass;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
-import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
+import com.sun.tools.javac.tree.JCTree.JCWiringBlock;
 import com.sun.tools.javac.tree.JCTree.JCUnary;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.Tag;
@@ -118,7 +118,7 @@ public class SystemMainTransformer extends TreeTranslator {
      * The system decl being transformed.
      * Some the helper methods need a reference to it.
      */
-    JCSystemDecl systemDecl;
+    JCWiringBlock systemDecl;
 
     public SystemMainTransformer(Symtab syms, Names names, Types types, Log log,
             Resolve rs, Env<AttrContext> env,
@@ -136,7 +136,7 @@ public class SystemMainTransformer extends TreeTranslator {
     }
 
     @Override
-    public void visitSystemDef(JCSystemDecl tree) {
+    public void visitSystemDef(JCWiringBlock tree) {
         systemDecl = tree;
         //Only visit the body. We can ignore defs (they get handled
         //in the panini Attr, and we can ignore the params, they just
@@ -469,7 +469,7 @@ public class SystemMainTransformer extends TreeTranslator {
         return assigns.toList();
     }
 
-    private void processCapsuleArray(JCSystemDecl tree, JCVariableDecl vdecl, Env<AttrContext> env) {
+    private void processCapsuleArray(JCWiringBlock tree, JCVariableDecl vdecl, Env<AttrContext> env) {
         JCCapsuleArray mat = (JCCapsuleArray)vdecl.vartype;
         String initName = mat.elemtype.toString()+"$thread";
         if((vdecl.mods.flags & Flags.TASK) !=0){
@@ -549,7 +549,7 @@ public class SystemMainTransformer extends TreeTranslator {
         modArrays.put(vdecl.name, mat.size);
     }
 
-    private void processCapsuleDef(JCSystemDecl tree, JCVariableDecl vdecl) {
+    private void processCapsuleDef(JCWiringBlock tree, JCVariableDecl vdecl) {
         String initName = vdecl.vartype.toString()+"$thread";
         if((vdecl.mods.flags & Flags.TASK) !=0){
             initName = vdecl.vartype.toString()+"$task";

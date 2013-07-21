@@ -493,9 +493,16 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         return M.at(t.pos).CapsuleArray(elemtype, t.sizeExpr);
 	}
     
-	public JCTree visitSystem(SystemTree node, P p) {
-		JCSystemDecl t = (JCSystemDecl)node;
-		return M.at(t.pos).SystemDef(t.getModifiers(), t.getName(), t.getBody(), t.getParams());
+	public JCTree visitWiringBlock(InternalWiringMethod node, P p) {
+		JCWiringBlock t = (JCWiringBlock)node;
+        JCModifiers mods = copy(t.mods, p);
+        JCExpression restype = copy(t.restype, p);
+        List<JCTypeParameter> typarams = copy(t.typarams, p);
+        List<JCVariableDecl> params = copy(t.params, p);
+        List<JCExpression> thrown = copy(t.thrown, p);
+        JCBlock body = copy(t.body, p);
+        JCExpression defaultValue = copy(t.defaultValue, p);
+		return M.at(t.pos).WiringBlock(mods, t.name, restype, typarams, params, thrown, body, defaultValue);
 	}
 
 	@Override

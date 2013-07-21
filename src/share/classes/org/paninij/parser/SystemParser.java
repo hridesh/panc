@@ -39,7 +39,7 @@ import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCModifiers;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
-import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
+import com.sun.tools.javac.tree.JCTree.JCWiringBlock;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.util.JCDiagnostic;
@@ -967,9 +967,9 @@ public class SystemParser {
     public class SystemParserResult {
         public final Token token;
         public final int errorEndPos;
-        public final JCSystemDecl systemDeclaration;
+        public final JCWiringBlock systemDeclaration;
 
-        protected SystemParserResult(JCSystemDecl systemDeclaration) {
+        protected SystemParserResult(JCWiringBlock systemDeclaration) {
             this.token = SystemParser.this.token;
             this.errorEndPos = endPosTable.errorEndPos;
             this.systemDeclaration = systemDeclaration;

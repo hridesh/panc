@@ -431,7 +431,7 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 		return r;
 	}
     
-	public R visitSystem(SystemTree node, P p) {
+	public R visitWiringBlock(InternalWiringMethod node, P p) {
 		R r = scan(node.getBody(), p);
 		return r;
 	}
