@@ -66,7 +66,15 @@ public abstract class PaniniCapsuleSequential implements PaniniCapsule{
 
   	protected void panini$capsule$init(){}
 
+    /**
+     * Initialize the 'internal' system in a capsule.
+     * <p>
+     * Must be called <em>BEFORE</em> {@link #panini$capsule$init()}.
+     */
+	protected void panini$wire$sys() {}
+
   	public final void start(){
+		panini$wire$sys();
   		panini$capsule$init();
   	}
   	
