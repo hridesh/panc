@@ -49,6 +49,7 @@ import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.code.Scope;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ArrayType;
@@ -110,6 +111,10 @@ public final class Attr extends CapsuleInternal {
     void attribSystemDecl(JCWiringBlock tree, Resolve rs, Env<AttrContext> env ) {
         //This is where the systemDecl attribution will go, when
         //pulled in from sun.tools.javac.comp.Attr.visitSystemDecl
+
+        //Use the scope of the out capsule, not the current system decl.
+        Scope scope = enterSystemScope(env);
+        moveWiringDecls(tree, scope);
     }
 
 	public void visitTopLevel(JCCompilationUnit tree) { /* SKIPPED */ }
@@ -465,27 +470,68 @@ public final class Attr extends CapsuleInternal {
 												List.<JCStatement> nil()))), null));
 	}
 
-	private JCMethodDecl createMainMethod(final ClassSymbol containingClass, final JCBlock methodBody, final List<JCVariableDecl> params, final List<JCStatement> mainStmts) {
-		Type arrayType = new ArrayType(syms.stringType, syms.arrayClass);
-		MethodSymbol msym = new MethodSymbol(
-				PUBLIC|STATIC,
-				names.fromString("main"),
-				new MethodType(
-						List.<Type>of(arrayType),
-						syms.voidType,
-						List.<Type>nil(),
-						syms.methodClass
-						),
-						containingClass
-				);
-		JCMethodDecl maindecl = make.MethodDef(msym, methodBody);
-		JCVariableDecl mainArg = null; 
-		if(params.length() == 0) {
-			mainArg = make.Param( names.fromString("args"), arrayType, msym);
-			maindecl.params = List.<JCVariableDecl>of(mainArg);
-		} else maindecl.params = params;
+    /**
+     * @param tree
+     * @return
+     */
+    private List<JCVariableDecl> extractWiringBlockDecls(JCWiringBlock tree) {
+        class VarDeclCollector extends TreeScanner { //Helper visitor to collect var defs.
+            final ListBuffer<JCVariableDecl> varDecls = new ListBuffer<JCVariableDecl>();
+            @Override
+            public final void visitVarDef(JCVariableDecl tree) {
+                Type t = tree.vartype.type;
+                if( t.tsym.isCapsule() ||
+                        (types.isArray(t) && types.elemtype(t).tsym.isCapsule())) {
+                    varDecls.add(tree);
+                }
+            }
+        }
+        VarDeclCollector vdc = new VarDeclCollector();
+        tree.accept(vdc);
+        return vdc.varDecls.toList();
+    }
 
-		maindecl.body.stats = mainStmts;
-		return maindecl;
-	}
+    private void moveWiringDecls(JCWiringBlock wire, Scope capScope) {
+        wire.capsuleDecls = extractWiringBlockDecls(wire);
+
+        // Enter the symbols into the capusle scope.
+        // Allows the symbols to be visible for other procedures
+        // and allows the symbols to be emitted as fields in the bytecode
+        for(List<JCVariableDecl> l = wire.capsuleDecls;  l.nonEmpty(); l = l.tail) {
+            l.head.sym.owner = capScope.owner;
+            capScope.enter(l.head.sym);
+        }
+
+        //TODO: Generics are being annoying. Find a way to not copy the list.
+        ListBuffer<JCTree> capFields = new ListBuffer<JCTree>();
+        for(List<JCVariableDecl> l = wire.capsuleDecls; l.nonEmpty(); l = l.tail) {
+            capFields.add(l.head);
+            // Mark as private. Do not mark synthetic. Will cause other
+            // name resolution to fail.
+            l.head.sym.flags_field =  Flags.PRIVATE;
+            //Update the AST Modifiers for pretty printing.
+            l.head.mods = make.Modifiers(l.head.sym.flags_field);
+        }
+
+        // Copy the capsules over to the tree defs so they show up with
+        // print-flat flag.
+        JCCapsuleDecl tree = (JCCapsuleDecl)wire.sym.owner.tree;
+        tree.defs = tree.defs.prependList(capFields.toList());
+    }
+
+    /** Get back to the 'class' level members scope from the current environment.
+     * Fails if a class symbol cannot be found.
+     * @param env
+     */
+    protected Scope enterSystemScope(Env<AttrContext> env) {
+        while(env != null && !env.tree.hasTag(JCTree.Tag.CAPSULEDEF)) {
+            env = env.next;
+        }
+
+        if(env != null) {
+            return ((JCClassDecl)env.tree).sym.members_field;
+        }
+        Assert.error();
+        return null;
+    }
 }

@@ -88,12 +88,13 @@ import org.paninij.util.PaniniConstants;
 /**
  * @author Sean L. Mooney
  * @since panini-0.9.2
- *
- * TODO: This should merge with the system decl intrepretor eventually.
  */
 public class SystemMainTransformer extends TreeTranslator {
 
-
+    /**
+     * Decls to copy into the rewritten body. This list <b>will not</b> include
+     * capsule decls. They are moved out as 'field' scope elements.
+     */
     public final ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
