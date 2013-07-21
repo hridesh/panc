@@ -224,6 +224,9 @@ public final class Attr extends CapsuleInternal {
 								make.Ident(names.panini.PaniniCapsuleInit),
 								List.<JCExpression> nil())));
 				if ((tree.sym.flags_field & ACTIVE) != 0) {
+				    //Wire the system
+				    tree.computeMethod.body.stats = tree.computeMethod.body.stats
+	                        .prepend(make.Exec(createSimpleMethodCall(names.panini.InternalCapsuleWiring)));
 					// Reference count disconnect()
 					ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
 					blockStats = createCapsuleMemberDisconnects(tree.params);

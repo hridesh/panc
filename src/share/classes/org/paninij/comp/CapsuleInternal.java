@@ -141,10 +141,10 @@ public class CapsuleInternal extends Internal {
 
 		JCBlock b = body(
 				make.Try(body(
-						make.Exec(make.Apply(
-								List.<JCExpression> nil(),
-								make.Ident(names.panini.PaniniCapsuleInit),
-								List.<JCExpression> nil())),
+						//Call capsule Wiring
+						make.Exec(createSimpleMethodCall(names.panini.InternalCapsuleWiring)),
+						//Call capsule Initialize
+						make.Exec(createSimpleMethodCall(names.panini.PaniniCapsuleInit)),
 						var(mods(0), PaniniConstants.PANINI_TERMINATE,
 								make.TypeIdent(TypeTags.BOOLEAN), falsev()),
 						whilel(nott(id(PaniniConstants.PANINI_TERMINATE)),
@@ -300,6 +300,15 @@ public class CapsuleInternal extends Internal {
 			final ListBuffer<JCExpression> args) {
 		TreeCopier<Void> tc = new TreeCopier<Void>(make);
 		return apply(thist(), method.name + "$Original", tc.copy(args.toList()));
+	}
+
+	/** Create a simple method invocation for the method name.
+	 * @param methodName
+	 */
+	protected JCMethodInvocation createSimpleMethodCall(final Name methodName) {
+	    return make.Apply( List.<JCExpression> nil(),
+							make.Ident(methodName),
+							List.<JCExpression> nil());
 	}
 
 	private ListBuffer<JCStatement> createShutdownLogic() {
