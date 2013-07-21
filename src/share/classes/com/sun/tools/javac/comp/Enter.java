@@ -376,9 +376,10 @@ public class Enter extends JCTree.Visitor {
     					JCMethodDecl mdecl = (JCMethodDecl)capsuleDefs;
     					if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty())
     						hasRun = true;
-    					if((mdecl.mods.flags & PRIVATE)==0 && !mdecl.name.equals(names.panini.PaniniCapsuleInit)){
+    					if((mdecl.mods.flags & PRIVATE)==0 && !mdecl.name.equals(names.panini.PaniniCapsuleInit)
+    					&& !mdecl.name.equals(names.panini.InternalCapsuleWiring)){
 	    					interfaceBody.add(make.MethodDef(tc.copy(mdecl.mods), 
-	    							((JCMethodDecl)capsuleDefs).name, 
+	    					        mdecl.name,
 	    							tc.copy(mdecl.restype), 
 	    							tc.copy(mdecl.typarams), 
 	    							tc.copy(mdecl.params), 
@@ -778,6 +779,10 @@ public class Enter extends JCTree.Visitor {
 				if (mdecl.name.toString().equals("run")
 						&& mdecl.params.isEmpty()) {
 					log.error(tree.pos(), "serialize.active.capsules");
+				} else if(mdecl.name.equals(names.panini.InternalCapsuleWiring)) {
+					//Don't change capsule wiring. It needs to be handled
+					//as a special case
+					definitions.add(mdecl);
 				} else if ((mdecl.mods.flags & PRIVATE) == 0
 						&& (mdecl.mods.flags & PROTECTED) == 0) {
 					JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC | FINAL),
@@ -836,6 +841,10 @@ public class Enter extends JCTree.Visitor {
 						tree.computeMethod = computeDecl;
 						hasRun = true;
 					}
+				} else if(mdecl.name.equals(names.panini.InternalCapsuleWiring)) {
+					//Don't change capsule wiring. It needs to be handled
+					//as a special case
+					definitions.add(mdecl);
 				} else if ((mdecl.mods.flags & PRIVATE) == 0
 						&& (mdecl.mods.flags & PROTECTED) == 0) {
 					String constantName = PaniniConstants.PANINI_METHOD_CONST
