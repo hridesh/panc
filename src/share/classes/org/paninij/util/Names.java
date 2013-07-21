@@ -19,6 +19,7 @@
 package org.paninij.util;
 
 import com.sun.tools.javac.util.Name;
+import org.paninij.util.PaniniConstants;
 
 /**
  * Names for the panc compiler. Parallel to {@link com.sun.tools.javac.util.Names}.
@@ -36,7 +37,18 @@ public class Names {
     */
     public final Name Run;
 
+    /** Name a start method. */
+    public final Name Start;
+
+    /**
+     * main
+     */
+    public final Name Main;
+
     public final Name Capsule;
+    /**
+     * Name used for a capsule (external) wiring symbol.
+     */
     public final Name Wiring;
     public final Name PaniniFinish;
     public final Name PaniniDuckFuture;
@@ -55,6 +67,8 @@ public class Names {
         //Method Names
         PaniniCapsuleInit = names.fromString(PaniniConstants.PANINI_CAPSULE_INIT);
         Run = names.fromString("run");
+        Start = names.fromString(PaniniConstants.PANINI_START);
+        Main = names.fromString("main");
 
         //Capsule related
         Capsule = names.fromString("Capsule");
