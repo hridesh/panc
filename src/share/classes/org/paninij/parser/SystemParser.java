@@ -200,6 +200,7 @@ public class SystemParser {
             case DOUBLE:
             case BOOLEAN:
             case VOID:
+            case WIRE:
                 if (stopAtMemberDecl)
                     return;
                 break;
@@ -482,30 +483,30 @@ public class SystemParser {
     /**
      * <pre>
      *    SystemDecl = 
-     *       "system" Identifier JavacFormalParamaters? Block
+     *       "=>=" Block
      * </pre>
      * 
-     * @param mods
-     *            Any modifiers starting the class or interface declaration
+     *
      * @return
      */
-    public SystemParserResult parseSystemDecl(JCModifiers mod) {
-        accept(IDENTIFIER);
+    public SystemParserResult parseSystemDecl(JCModifiers mods) {
+        accept(WIRE);
         int pos = token.pos;
-        Name systemName = ident();
-
-        List<JCVariableDecl> params;
-        // Only parse params if there is an LPAREN. Otherwise
-        // try to parse a system block
-        if ( token.kind == LPAREN ) {
-            params = parseFormalParametersWithJavaC();
-        } else {
-            params = List.<JCVariableDecl>nil();
+        JCWiringBlock result;
+        JCBlock body = null;
+        if (token.kind == LBRACE) {
+            pos = token.pos;
+            body = systemBlock();
+        }else {
+            reportSyntaxError(token.pos, "expected", LBRACE);
+            //syntaxError(token.pos, "expected", LBRACE);
+            // error recovery
+            skip(false, true, false, false);
+            if (token.kind == LBRACE) {
+                body = systemBlock();
+            }
         }
-
-        JCBlock body = systemBlock();
-        JCSystemDecl result = toP(F.at(pos).SystemDef(mod, systemName, body,
-                params));
+        result = toP(F.at(pos).WiringBlock(mods, body));
         return new SystemParserResult(result);
     }
 

@@ -147,6 +147,7 @@ public class Tokens {
         IMPORT("import"),
         // Panini code
         INIT("=>"),
+        WIRE("=>="),
         // end Panini code
         INSTANCEOF("instanceof"),
         INT("int", Tag.NAMED),
