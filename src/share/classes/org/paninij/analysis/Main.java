@@ -35,8 +35,9 @@ public final class Main {
 						 * System.out.println("m = " + m.name + "\tc = " +
 						 * root.name); System.out.println(m);
 						 */
+					    String graphName = m.sym.owner.name + "." + m.sym.name;
 						if (Attr.doGraphs) {
-							System.out.println("digraph G {");
+							System.out.println("digraph \""+ graphName + "\" {");
 							m.body.accept(new
 									org.paninij.analysis.ASTCFGPrinter());
 							System.out.println("}"); System.out.println();
