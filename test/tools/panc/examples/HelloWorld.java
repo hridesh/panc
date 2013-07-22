@@ -21,6 +21,7 @@
  * @test
  * @summary Complie the HelloWorld example.
  * @compile HelloWorld.java
+ * @compile/ref=HelloWorld.java.dot -graphs HelloWorld.java
  */
 
 capsule Console () { //Capsule declaration

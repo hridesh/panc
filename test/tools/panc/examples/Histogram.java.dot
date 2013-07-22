@@ -1,0 +1,202 @@
+digraph "Reader$thread.run" {
+"2 0" -> "3 args.length == 0"
+"0 args" -> "1 args.length"
+"1 args.length" -> "2 0"
+"6 \"shaks12.txt\"" -> "7 process(\"shaks12.txt\")"
+"3 args.length == 0" -> "5 process"
+"5 process" -> "6 \"shaks12.txt\""
+"9 args" -> "14 for (String fileName : args) process(fileName);"
+"12 process(fileName)" -> "14 for (String fileName : args) process(fileName);"
+"3 args.length == 0" -> "9 args"
+"11 fileName" -> "12 process(fileName)"
+"12 process(fileName)" -> "10 process"
+"10 process" -> "11 fileName"
+}
+
+digraph "Reader$thread.process" {
+"2 new FileInputStream(new File(fileName))" -> "3 FileInputStream stream = new FileInputStream(new File(fileName))"
+"1 new File(fileName)" -> "2 new FileInputStream(new File(fileName))"
+"11 \"READER: input file \" + fileName + \" successfully opened. Starting processing ...\"" -> "12 System.out.println(\"READER: input file \" + fileName + \" successfully opened. Starting processing ...\")"
+"5 System.out" -> "6 System.out.println"
+"4 System" -> "5 System.out"
+"3 FileInputStream stream = new FileInputStream(new File(fileName))" -> "4 System"
+"10 \" successfully opened. Starting processing ...\"" -> "11 \"READER: input file \" + fileName + \" successfully opened. Starting processing ...\""
+"8 fileName" -> "9 \"READER: input file \" + fileName"
+"6 System.out.println" -> "7 \"READER: input file \""
+"7 \"READER: input file \"" -> "8 fileName"
+"9 \"READER: input file \" + fileName" -> "10 \" successfully opened. Starting processing ...\""
+"12 System.out.println(\"READER: input file \" + fileName + \" successfully opened. Starting processing ...\")" -> "14 int r"
+"21 -1" -> "22 (r = stream.read()) != -1"
+"18 stream.read()" -> "19 r = stream.read()"
+"29 buckets[(char)r].bump()" -> "15 r"
+"14 int r" -> "15 r"
+"17 stream.read" -> "18 stream.read()"
+"16 stream" -> "17 stream.read"
+"15 r" -> "16 stream"
+"19 r = stream.read()" -> "21 -1"
+"28 buckets[(char)r].bump" -> "29 buckets[(char)r].bump()"
+"27 buckets[(char)r]" -> "28 buckets[(char)r].bump"
+"26 (char)r" -> "27 buckets[(char)r]"
+"22 (r = stream.read()) != -1" -> "24 buckets"
+"25 r" -> "26 (char)r"
+"24 buckets" -> "25 r"
+"36 \"READER: Reading complete. Asking buckets to print count.\"" -> "37 System.out.println(\"READER: Reading complete. Asking buckets to print count.\")"
+"34 System.out" -> "35 System.out.println"
+"33 System" -> "34 System.out"
+"22 (r = stream.read()) != -1" -> "33 System"
+"35 System.out.println" -> "36 \"READER: Reading complete. Asking buckets to print count.\""
+"37 System.out.println(\"READER: Reading complete. Asking buckets to print count.\")" -> "40 IOException e"
+"44 e" -> "45 System.out.println(e)"
+"42 System.out" -> "43 System.out.println"
+"41 System" -> "42 System.out"
+"40 IOException e" -> "41 System"
+"43 System.out.println" -> "44 e"
+"50 0" -> "51 int i = 0"
+"37 System.out.println(\"READER: Reading complete. Asking buckets to print count.\")" -> "50 0"
+"45 System.out.println(e)" -> "50 0"
+"54 buckets.length" -> "55 i < buckets.length"
+"51 int i = 0" -> "52 i"
+"64 i++" -> "52 i"
+"61 buckets[i].finish(i)" -> "52 i"
+"53 buckets" -> "54 buckets.length"
+"52 i" -> "53 buckets"
+"63 i" -> "64 i++"
+"61 buckets[i].finish(i)" -> "63 i"
+"60 i" -> "61 buckets[i].finish(i)"
+"58 buckets[i]" -> "59 buckets[i].finish"
+"57 i" -> "58 buckets[i]"
+"55 i < buckets.length" -> "56 buckets"
+"56 buckets" -> "57 i"
+"59 buckets[i].finish" -> "60 i"
+"70 \"READER: work complete.\"" -> "71 System.out.println(\"READER: work complete.\")"
+"68 System.out" -> "69 System.out.println"
+"67 System" -> "68 System.out"
+"55 i < buckets.length" -> "67 System"
+"69 System.out.println" -> "70 \"READER: work complete.\""
+}
+
+digraph "Reader$thread.<init>" {
+}
+
+digraph "Bucket$thread.bump$Original" {
+"0 count" -> "1 count++"
+}
+
+digraph "Bucket$thread.bump" {
+}
+
+digraph "Bucket$thread.finish$Original" {
+"8 \"\" + index + \":\" + count" -> "9 p.print(\"\" + index + \":\" + count)"
+"0 p" -> "1 p.print"
+"7 count" -> "8 \"\" + index + \":\" + count"
+"5 \":\"" -> "6 \"\" + index + \":\""
+"3 index" -> "4 \"\" + index"
+"1 p.print" -> "2 \"\""
+"2 \"\"" -> "3 index"
+"4 \"\" + index" -> "5 \":\""
+"6 \"\" + index + \":\"" -> "7 count"
+}
+
+digraph "Bucket$thread.finish" {
+}
+
+digraph "Bucket$thread.run" {
+}
+
+digraph "Bucket$thread.<init>" {
+}
+
+digraph "Bucket$task.bump$Original" {
+}
+
+digraph "Bucket$task.bump" {
+}
+
+digraph "Bucket$task.finish$Original" {
+}
+
+digraph "Bucket$task.finish" {
+}
+
+digraph "Bucket$task.run" {
+}
+
+digraph "Bucket$task.<init>" {
+}
+
+digraph "Bucket$serial.bump" {
+}
+
+digraph "Bucket$serial.finish" {
+}
+
+digraph "Bucket$serial.<init>" {
+}
+
+digraph "Bucket$serial.panini$disconnect" {
+}
+
+digraph "Bucket$monitor.bump" {
+}
+
+digraph "Bucket$monitor.finish" {
+}
+
+digraph "Bucket$monitor.<init>" {
+}
+
+digraph "Bucket$monitor.panini$disconnect" {
+}
+
+digraph "Printer$thread.print$Original" {
+"3 output" -> "4 System.out.println(output)"
+"1 System.out" -> "2 System.out.println"
+"0 System" -> "1 System.out"
+"2 System.out.println" -> "3 output"
+}
+
+digraph "Printer$thread.print" {
+}
+
+digraph "Printer$thread.run" {
+}
+
+digraph "Printer$thread.<init>" {
+}
+
+digraph "Printer$task.print$Original" {
+}
+
+digraph "Printer$task.print" {
+}
+
+digraph "Printer$task.run" {
+}
+
+digraph "Printer$task.<init>" {
+}
+
+digraph "Printer$serial.print" {
+}
+
+digraph "Printer$serial.<init>" {
+}
+
+digraph "Printer$serial.panini$disconnect" {
+}
+
+digraph "Printer$monitor.print" {
+}
+
+digraph "Printer$monitor.<init>" {
+}
+
+digraph "Printer$monitor.panini$disconnect" {
+}
+
+digraph "Histogram.<init>" {
+}
+
+digraph "Histogram.main" {
+}
+

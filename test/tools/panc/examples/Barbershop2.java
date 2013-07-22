@@ -23,6 +23,7 @@ import java.util.LinkedList;
  * @test
  * @summary Complie the Barbershop2 example.
  * @compile Barbershop2.java
+ * @compile/ref=Barbershop2.java.dot -graphs Barbershop2.java
  */
 
 class Customer {

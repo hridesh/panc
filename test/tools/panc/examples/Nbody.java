@@ -19,7 +19,10 @@
 
 /*
  * @test
- * @summary Complie the Nbody example.
+ * @summary Compile the Nbody example. This test is not as thorough as 
+ *          most of the tests in the examples folder. It does not check
+ *          the expected graph, and does not check the seq consistency
+ *          warnings -- can't get the output to match expected out files.
  * @compile Nbody.java
  */
 
