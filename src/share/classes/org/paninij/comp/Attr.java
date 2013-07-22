@@ -63,6 +63,7 @@ import com.sun.tools.javac.comp.Resolve;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
+import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
@@ -85,16 +86,18 @@ public final class Attr extends CapsuleInternal {
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
 	Types types;
+	public final Check pck;
 
     public Attr(TreeMaker make, Names names, Types types, Enter enter,
             MemberEnter memberEnter, Symtab syms, Log log,
-            Annotate annotate) {
+            Annotate annotate, Context context) {
         super(make, names, enter, memberEnter, syms);
         this.types = types;
         this.log = log;
         this.annotate = annotate;
         this.annotationProcessor = new AnnotationProcessor(names, make, log);
         this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
+        this.pck = Check.instance(context);
     }
 
     void attribSystemDecl(JCSystemDecl tree, Resolve rs, Env<AttrContext> env ) {

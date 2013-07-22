@@ -20,7 +20,7 @@
 /* 
  * @test
  * @summary Complie the SequentialConsistency example.
- * @compile SequentialConsistency.java
+ * @compile/fail/ref=SequentialConsistency.out -XDrawDiagnostics -Werror SequentialConsistency.java
  */
 
 class IntegerC {
@@ -29,6 +29,8 @@ class IntegerC {
 }
 
 capsule Main (Indirection i1, Indirection i2) {
+	void run() { doSomething(3); }
+
 	void doSomething(int i) {
 		if(i<12) i1.set(new IntegerC(1));
 		else i2.set(new IntegerC(2));
