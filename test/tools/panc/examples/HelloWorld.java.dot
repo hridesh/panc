@@ -1,0 +1,71 @@
+digraph "Console$thread.write$Original" {
+"3 s" -> "4 System.out.println(s)"
+"1 System.out" -> "2 System.out.println"
+"0 System" -> "1 System.out"
+"2 System.out.println" -> "3 s"
+}
+
+digraph "Console$thread.write" {
+}
+
+digraph "Console$thread.run" {
+}
+
+digraph "Console$thread.<init>" {
+}
+
+digraph "Console$task.write$Original" {
+}
+
+digraph "Console$task.write" {
+}
+
+digraph "Console$task.run" {
+}
+
+digraph "Console$task.<init>" {
+}
+
+digraph "Console$serial.write" {
+}
+
+digraph "Console$serial.<init>" {
+}
+
+digraph "Console$serial.panini$disconnect" {
+}
+
+digraph "Console$monitor.write" {
+}
+
+digraph "Console$monitor.<init>" {
+}
+
+digraph "Console$monitor.panini$disconnect" {
+}
+
+digraph "Greeter$thread.run" {
+"2 \"Panini: Hello World!\"" -> "3 c.write(\"Panini: Hello World!\")"
+"0 c" -> "1 c.write"
+"1 c.write" -> "2 \"Panini: Hello World!\""
+"7 System.currentTimeMillis()" -> "8 long time = System.currentTimeMillis()"
+"6 System.currentTimeMillis" -> "7 System.currentTimeMillis()"
+"5 System" -> "6 System.currentTimeMillis"
+"3 c.write(\"Panini: Hello World!\")" -> "5 System"
+"13 \"Time is now: \" + time" -> "14 c.write(\"Time is now: \" + time)"
+"9 c" -> "10 c.write"
+"8 long time = System.currentTimeMillis()" -> "9 c"
+"12 time" -> "13 \"Time is now: \" + time"
+"10 c.write" -> "11 \"Time is now: \""
+"11 \"Time is now: \"" -> "12 time"
+}
+
+digraph "Greeter$thread.<init>" {
+}
+
+digraph "HelloWorld.<init>" {
+}
+
+digraph "HelloWorld.main" {
+}
+

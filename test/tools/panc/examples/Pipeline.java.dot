@@ -1,0 +1,351 @@
+digraph "Source$thread.run" {
+"0 0" -> "1 int j = 0"
+"3 num" -> "4 j < num"
+"1 int j = 0" -> "2 j"
+"17 j++" -> "2 j"
+"13 next.consume(n)" -> "2 j"
+"2 j" -> "3 num"
+"16 j" -> "17 j++"
+"13 next.consume(n)" -> "16 j"
+"8 prng.nextInt(1024)" -> "9 long n = prng.nextInt(1024)"
+"7 1024" -> "8 prng.nextInt(1024)"
+"5 prng" -> "6 prng.nextInt"
+"4 j < num" -> "5 prng"
+"6 prng.nextInt" -> "7 1024"
+"12 n" -> "13 next.consume(n)"
+"10 next" -> "11 next.consume"
+"9 long n = prng.nextInt(1024)" -> "10 next"
+"11 next.consume" -> "12 n"
+"22 -1" -> "23 next.consume(-1)"
+"20 next" -> "21 next.consume"
+"4 j < num" -> "20 next"
+"21 next.consume" -> "22 -1"
+"26 2" -> "27 yield(2)"
+"23 next.consume(-1)" -> "25 yield"
+"25 yield" -> "26 2"
+}
+
+digraph "Source$thread.<init>" {
+}
+
+digraph "Average$thread.consume$Original" {
+"2 n" -> "3 next.consume(n)"
+"0 next" -> "1 next.consume"
+"1 next.consume" -> "2 n"
+"6 -1" -> "7 n != -1"
+"3 next.consume(n)" -> "5 n"
+"5 n" -> "6 -1"
+"21 ((count * average) + n) / (count + 1)" -> "22 average = ((count * average) + n) / (count + 1)"
+"7 n != -1" -> "9 average"
+"19 count + 1" -> "21 ((count * average) + n) / (count + 1)"
+"14 n" -> "15 (count * average) + n"
+"11 average" -> "12 count * average"
+"9 average" -> "10 count"
+"10 count" -> "11 average"
+"12 count * average" -> "14 n"
+"18 1" -> "19 count + 1"
+"15 (count * average) + n" -> "17 count"
+"17 count" -> "18 1"
+"24 count" -> "25 count++"
+"22 average = ((count * average) + n) / (count + 1)" -> "24 count"
+"39 \"Average of \" + count + \" numbers was \" + average + \".\"" -> "40 System.out.println(\"Average of \" + count + \" numbers was \" + average + \".\")"
+"29 System.out" -> "30 System.out.println"
+"28 System" -> "29 System.out"
+"7 n != -1" -> "28 System"
+"38 \".\"" -> "39 \"Average of \" + count + \" numbers was \" + average + \".\""
+"36 average" -> "37 \"Average of \" + count + \" numbers was \" + average"
+"34 \" numbers was \"" -> "35 \"Average of \" + count + \" numbers was \""
+"32 count" -> "33 \"Average of \" + count"
+"30 System.out.println" -> "31 \"Average of \""
+"31 \"Average of \"" -> "32 count"
+"33 \"Average of \" + count" -> "34 \" numbers was \""
+"35 \"Average of \" + count + \" numbers was \"" -> "36 average"
+"37 \"Average of \" + count + \" numbers was \" + average" -> "38 \".\""
+}
+
+digraph "Average$thread.consume" {
+}
+
+digraph "Average$thread.run" {
+}
+
+digraph "Average$thread.<init>" {
+}
+
+digraph "Average$task.consume$Original" {
+}
+
+digraph "Average$task.consume" {
+}
+
+digraph "Average$task.run" {
+}
+
+digraph "Average$task.<init>" {
+}
+
+digraph "Average$serial.consume" {
+}
+
+digraph "Average$serial.<init>" {
+}
+
+digraph "Average$serial.panini$disconnect" {
+}
+
+digraph "Average$monitor.consume" {
+}
+
+digraph "Average$monitor.<init>" {
+}
+
+digraph "Average$monitor.panini$disconnect" {
+}
+
+digraph "Sum$thread.consume$Original" {
+"2 n" -> "3 next.consume(n)"
+"0 next" -> "1 next.consume"
+"1 next.consume" -> "2 n"
+"6 -1" -> "7 n != -1"
+"3 next.consume(n)" -> "5 n"
+"5 n" -> "6 -1"
+"10 n" -> "11 sum += n"
+"7 n != -1" -> "9 sum"
+"9 sum" -> "10 n"
+"21 \"Sum of numbers was \" + sum + \".\"" -> "22 System.out.println(\"Sum of numbers was \" + sum + \".\")"
+"15 System.out" -> "16 System.out.println"
+"14 System" -> "15 System.out"
+"7 n != -1" -> "14 System"
+"20 \".\"" -> "21 \"Sum of numbers was \" + sum + \".\""
+"18 sum" -> "19 \"Sum of numbers was \" + sum"
+"16 System.out.println" -> "17 \"Sum of numbers was \""
+"17 \"Sum of numbers was \"" -> "18 sum"
+"19 \"Sum of numbers was \" + sum" -> "20 \".\""
+}
+
+digraph "Sum$thread.consume" {
+}
+
+digraph "Sum$thread.run" {
+}
+
+digraph "Sum$thread.<init>" {
+}
+
+digraph "Sum$task.consume$Original" {
+}
+
+digraph "Sum$task.consume" {
+}
+
+digraph "Sum$task.run" {
+}
+
+digraph "Sum$task.<init>" {
+}
+
+digraph "Sum$serial.consume" {
+}
+
+digraph "Sum$serial.<init>" {
+}
+
+digraph "Sum$serial.panini$disconnect" {
+}
+
+digraph "Sum$monitor.consume" {
+}
+
+digraph "Sum$monitor.<init>" {
+}
+
+digraph "Sum$monitor.panini$disconnect" {
+}
+
+digraph "Min$thread.consume$Original" {
+"2 n" -> "3 next.consume(n)"
+"0 next" -> "1 next.consume"
+"1 next.consume" -> "2 n"
+"6 -1" -> "7 n != -1"
+"3 next.consume(n)" -> "5 n"
+"5 n" -> "6 -1"
+"10 min" -> "11 n < min"
+"7 n != -1" -> "9 n"
+"9 n" -> "10 min"
+"14 n" -> "15 min = n"
+"11 n < min" -> "13 min"
+"13 min" -> "14 n"
+"26 \"Min of numbers was \" + min + \".\"" -> "27 System.out.println(\"Min of numbers was \" + min + \".\")"
+"20 System.out" -> "21 System.out.println"
+"19 System" -> "20 System.out"
+"7 n != -1" -> "19 System"
+"25 \".\"" -> "26 \"Min of numbers was \" + min + \".\""
+"23 min" -> "24 \"Min of numbers was \" + min"
+"21 System.out.println" -> "22 \"Min of numbers was \""
+"22 \"Min of numbers was \"" -> "23 min"
+"24 \"Min of numbers was \" + min" -> "25 \".\""
+}
+
+digraph "Min$thread.consume" {
+}
+
+digraph "Min$thread.run" {
+}
+
+digraph "Min$thread.<init>" {
+}
+
+digraph "Min$task.consume$Original" {
+}
+
+digraph "Min$task.consume" {
+}
+
+digraph "Min$task.run" {
+}
+
+digraph "Min$task.<init>" {
+}
+
+digraph "Min$serial.consume" {
+}
+
+digraph "Min$serial.<init>" {
+}
+
+digraph "Min$serial.panini$disconnect" {
+}
+
+digraph "Min$monitor.consume" {
+}
+
+digraph "Min$monitor.<init>" {
+}
+
+digraph "Min$monitor.panini$disconnect" {
+}
+
+digraph "Max$thread.consume$Original" {
+"2 n" -> "3 next.consume(n)"
+"0 next" -> "1 next.consume"
+"1 next.consume" -> "2 n"
+"6 -1" -> "7 n != -1"
+"3 next.consume(n)" -> "5 n"
+"5 n" -> "6 -1"
+"10 max" -> "11 n > max"
+"7 n != -1" -> "9 n"
+"9 n" -> "10 max"
+"14 n" -> "15 max = n"
+"11 n > max" -> "13 max"
+"13 max" -> "14 n"
+"26 \"Max of numbers was \" + max + \".\"" -> "27 System.out.println(\"Max of numbers was \" + max + \".\")"
+"20 System.out" -> "21 System.out.println"
+"19 System" -> "20 System.out"
+"7 n != -1" -> "19 System"
+"25 \".\"" -> "26 \"Max of numbers was \" + max + \".\""
+"23 max" -> "24 \"Max of numbers was \" + max"
+"21 System.out.println" -> "22 \"Max of numbers was \""
+"22 \"Max of numbers was \"" -> "23 max"
+"24 \"Max of numbers was \" + max" -> "25 \".\""
+}
+
+digraph "Max$thread.consume" {
+}
+
+digraph "Max$thread.run" {
+}
+
+digraph "Max$thread.<init>" {
+}
+
+digraph "Max$task.consume$Original" {
+}
+
+digraph "Max$task.consume" {
+}
+
+digraph "Max$task.run" {
+}
+
+digraph "Max$task.<init>" {
+}
+
+digraph "Max$serial.consume" {
+}
+
+digraph "Max$serial.<init>" {
+}
+
+digraph "Max$serial.panini$disconnect" {
+}
+
+digraph "Max$monitor.consume" {
+}
+
+digraph "Max$monitor.<init>" {
+}
+
+digraph "Max$monitor.panini$disconnect" {
+}
+
+digraph "Sink$thread.consume$Original" {
+"1 -1" -> "2 n != -1"
+"0 n" -> "1 -1"
+"4 count" -> "5 count++"
+"2 n != -1" -> "4 count"
+"15 \"Successful \" + count + \" runs!!\"" -> "16 System.out.println(\"Successful \" + count + \" runs!!\")"
+"9 System.out" -> "10 System.out.println"
+"8 System" -> "9 System.out"
+"2 n != -1" -> "8 System"
+"14 \" runs!!\"" -> "15 \"Successful \" + count + \" runs!!\""
+"12 count" -> "13 \"Successful \" + count"
+"10 System.out.println" -> "11 \"Successful \""
+"11 \"Successful \"" -> "12 count"
+"13 \"Successful \" + count" -> "14 \" runs!!\""
+}
+
+digraph "Sink$thread.consume" {
+}
+
+digraph "Sink$thread.run" {
+}
+
+digraph "Sink$thread.<init>" {
+}
+
+digraph "Sink$task.consume$Original" {
+}
+
+digraph "Sink$task.consume" {
+}
+
+digraph "Sink$task.run" {
+}
+
+digraph "Sink$task.<init>" {
+}
+
+digraph "Sink$serial.consume" {
+}
+
+digraph "Sink$serial.<init>" {
+}
+
+digraph "Sink$serial.panini$disconnect" {
+}
+
+digraph "Sink$monitor.consume" {
+}
+
+digraph "Sink$monitor.<init>" {
+}
+
+digraph "Sink$monitor.panini$disconnect" {
+}
+
+digraph "Pipeline.<init>" {
+}
+
+digraph "Pipeline.main" {
+}
+

@@ -1,0 +1,61 @@
+digraph "Console$thread.write$Original" {
+"3 s" -> "4 System.out.println(s)"
+"1 System.out" -> "2 System.out.println"
+"0 System" -> "1 System.out"
+"2 System.out.println" -> "3 s"
+}
+
+digraph "Console$thread.write" {
+}
+
+digraph "Console$thread.run" {
+}
+
+digraph "Console$thread.<init>" {
+}
+
+digraph "Console$task.write$Original" {
+}
+
+digraph "Console$task.write" {
+}
+
+digraph "Console$task.run" {
+}
+
+digraph "Console$task.<init>" {
+}
+
+digraph "Console$serial.write" {
+}
+
+digraph "Console$serial.<init>" {
+}
+
+digraph "Console$serial.panini$disconnect" {
+}
+
+digraph "Console$monitor.write" {
+}
+
+digraph "Console$monitor.<init>" {
+}
+
+digraph "Console$monitor.panini$disconnect" {
+}
+
+digraph "Greeter$thread.run" {
+"2 \"Hello World, Signature Style!\"" -> "3 s.write(\"Hello World, Signature Style!\")"
+"0 s" -> "1 s.write"
+"1 s.write" -> "2 \"Hello World, Signature Style!\""
+}
+
+digraph "Greeter$thread.<init>" {
+}
+
+digraph "SignatureExample.<init>" {
+}
+
+digraph "SignatureExample.main" {
+}
+

@@ -33,8 +33,9 @@ import java.util.Random;
 
 /* 
  * @test
- * @summary Complie the Pipeline example.
+ * @summary Compile the Pipeline example.
  * @compile Pipeline.java
+ * @compile/ref=Pipeline.java.dot -graphs Pipeline.java
  */
 
 signature Stage {

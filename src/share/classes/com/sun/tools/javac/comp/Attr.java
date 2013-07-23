@@ -96,10 +96,7 @@ public class Attr extends JCTree.Visitor {
     final DeferredLintHandler deferredLintHandler;
     // Panini code
     org.paninij.comp.Attr pAttr;
-    /*Defult to FULL, unless otherwise specified.*/
-    public static ConsistencyUtil.SEQ_CONST_ALG seqConstAlg =
-        ConsistencyUtil.SEQ_CONST_ALG.TRANS;
-    public static boolean doGraphs = false;
+    public boolean doGraphs = false;
     // end Panini code
 
     public static Attr instance(Context context) {
@@ -151,7 +148,8 @@ public class Attr extends JCTree.Visitor {
         unknownTypeInfo = new ResultInfo(TYP, Type.noType);
 
         // Panini code
-        pAttr = new org.paninij.comp.Attr(make, names, types, enter, memberEnter, syms, log, annotate);
+        pAttr = new org.paninij.comp.Attr(make, names, types, enter, memberEnter, syms, log, annotate, context);
+        doGraphs = options.isSet("-graphs");
         // end Panini code
     }
 
@@ -909,7 +907,7 @@ public class Attr extends JCTree.Visitor {
             }
 
             // visit the system def for rewriting and analysis.
-            pAttr.visitSystemDef(tree, rs, localEnv, doGraphs, seqConstAlg);
+            pAttr.visitSystemDef(tree, rs, localEnv, doGraphs);
 
             localEnv.info.scope.leave();
         } finally {

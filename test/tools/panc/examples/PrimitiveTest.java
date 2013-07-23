@@ -21,6 +21,7 @@
  * @test
  * @summary Compile the auto-boxing primitives examples.
  * @compile PrimitiveTest.java
+ * @compile/ref=PrimitiveTest.java.dot -graphs PrimitiveTest.java
  */
 
 

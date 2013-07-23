@@ -1,0 +1,161 @@
+digraph "Number.<init>" {
+}
+
+digraph "Number.<init>" {
+}
+
+digraph "Number.incr" {
+}
+
+digraph "Number.value" {
+}
+
+digraph "Number.total" {
+}
+
+digraph "Worker$thread.compute$Original" {
+"1 new Number(0)" -> "2 Number _circleCount = new Number(0)"
+"0 0" -> "1 new Number(0)"
+"3 0" -> "4 double j = 0"
+"2 Number _circleCount = new Number(0)" -> "3 0"
+"6 num" -> "7 j < num"
+"4 double j = 0" -> "5 j"
+"34 j++" -> "5 j"
+"29 _circleCount.incr()" -> "5 j"
+"25 (x * x + y * y) < 1" -> "5 j"
+"5 j" -> "6 num"
+"33 j" -> "34 j++"
+"29 _circleCount.incr()" -> "33 j"
+"25 (x * x + y * y) < 1" -> "33 j"
+"10 prng.nextDouble()" -> "11 double x = prng.nextDouble()"
+"9 prng.nextDouble" -> "10 prng.nextDouble()"
+"8 prng" -> "9 prng.nextDouble"
+"7 j < num" -> "8 prng"
+"14 prng.nextDouble()" -> "15 double y = prng.nextDouble()"
+"13 prng.nextDouble" -> "14 prng.nextDouble()"
+"12 prng" -> "13 prng.nextDouble"
+"11 double x = prng.nextDouble()" -> "12 prng"
+"24 1" -> "25 (x * x + y * y) < 1"
+"21 y * y" -> "22 x * x + y * y"
+"17 x" -> "18 x * x"
+"15 double y = prng.nextDouble()" -> "16 x"
+"16 x" -> "17 x"
+"20 y" -> "21 y * y"
+"18 x * x" -> "19 y"
+"19 y" -> "20 y"
+"22 x * x + y * y" -> "24 1"
+"28 _circleCount.incr" -> "29 _circleCount.incr()"
+"27 _circleCount" -> "28 _circleCount.incr"
+"25 (x * x + y * y) < 1" -> "27 _circleCount"
+"37 _circleCount" -> "38 return _circleCount;"
+"7 j < num" -> "37 _circleCount"
+}
+
+digraph "Worker$thread.compute" {
+}
+
+digraph "Worker$thread.run" {
+}
+
+digraph "Worker$thread.<init>" {
+}
+
+digraph "Worker$task.compute$Original" {
+}
+
+digraph "Worker$task.compute" {
+}
+
+digraph "Worker$task.run" {
+}
+
+digraph "Worker$task.<init>" {
+}
+
+digraph "Worker$serial.compute" {
+}
+
+digraph "Worker$serial.<init>" {
+}
+
+digraph "Worker$serial.panini$disconnect" {
+}
+
+digraph "Worker$monitor.compute" {
+}
+
+digraph "Worker$monitor.<init>" {
+}
+
+digraph "Worker$monitor.panini$disconnect" {
+}
+
+digraph "Master$thread.run" {
+"2 System.currentTimeMillis()" -> "3 double startTime = System.currentTimeMillis()"
+"1 System.currentTimeMillis" -> "2 System.currentTimeMillis()"
+"0 System" -> "1 System.currentTimeMillis"
+"7 w.compute" -> "8 w.compute()"
+"6 w" -> "7 w.compute"
+"3 double startTime = System.currentTimeMillis()" -> "6 w"
+"10 0" -> "11 double total = 0"
+"9 Number[] results = foreach(Worker w : workers) w.compute()" -> "10 0"
+"12 0" -> "13 int i = 0"
+"11 double total = 0" -> "12 0"
+"16 workers.length" -> "17 i < workers.length"
+"13 int i = 0" -> "14 i"
+"27 i++" -> "14 i"
+"24 total += results[i].value()" -> "14 i"
+"15 workers" -> "16 workers.length"
+"14 i" -> "15 workers"
+"26 i" -> "27 i++"
+"24 total += results[i].value()" -> "26 i"
+"23 results[i].value()" -> "24 total += results[i].value()"
+"17 i < workers.length" -> "18 total"
+"22 results[i].value" -> "23 results[i].value()"
+"21 results[i]" -> "22 results[i].value"
+"20 i" -> "21 results[i]"
+"18 total" -> "19 results"
+"19 results" -> "20 i"
+"34 4.0 * total / totalCount" -> "35 double pi = 4.0 * total / totalCount"
+"33 totalCount" -> "34 4.0 * total / totalCount"
+"31 total" -> "32 4.0 * total"
+"17 i < workers.length" -> "30 4.0"
+"30 4.0" -> "31 total"
+"32 4.0 * total" -> "33 totalCount"
+"41 \"Pi : \" + pi" -> "42 System.out.println(\"Pi : \" + pi)"
+"37 System.out" -> "38 System.out.println"
+"36 System" -> "37 System.out"
+"35 double pi = 4.0 * total / totalCount" -> "36 System"
+"40 pi" -> "41 \"Pi : \" + pi"
+"38 System.out.println" -> "39 \"Pi : \""
+"39 \"Pi : \"" -> "40 pi"
+"46 System.currentTimeMillis()" -> "47 double endTime = System.currentTimeMillis()"
+"45 System.currentTimeMillis" -> "46 System.currentTimeMillis()"
+"44 System" -> "45 System.currentTimeMillis"
+"42 System.out.println(\"Pi : \" + pi)" -> "44 System"
+"62 \"Time to compute Pi using \" + totalCount + \" samples was:\" + (endTime - startTime) + \"ms.\"" -> "63 System.out.println(\"Time to compute Pi using \" + totalCount + \" samples was:\" + (endTime - startTime) + \"ms.\")"
+"49 System.out" -> "50 System.out.println"
+"48 System" -> "49 System.out"
+"47 double endTime = System.currentTimeMillis()" -> "48 System"
+"61 \"ms.\"" -> "62 \"Time to compute Pi using \" + totalCount + \" samples was:\" + (endTime - startTime) + \"ms.\""
+"58 endTime - startTime" -> "60 \"Time to compute Pi using \" + totalCount + \" samples was:\" + (endTime - startTime)"
+"54 \" samples was:\"" -> "55 \"Time to compute Pi using \" + totalCount + \" samples was:\""
+"52 totalCount" -> "53 \"Time to compute Pi using \" + totalCount"
+"50 System.out.println" -> "51 \"Time to compute Pi using \""
+"51 \"Time to compute Pi using \"" -> "52 totalCount"
+"53 \"Time to compute Pi using \" + totalCount" -> "54 \" samples was:\""
+"57 startTime" -> "58 endTime - startTime"
+"55 \"Time to compute Pi using \" + totalCount + \" samples was:\"" -> "56 endTime"
+"56 endTime" -> "57 startTime"
+"60 \"Time to compute Pi using \" + totalCount + \" samples was:\" + (endTime - startTime)" -> "61 \"ms.\""
+}
+
+digraph "Master$thread.<init>" {
+}
+
+digraph "Pi.<init>" {
+}
+
+digraph "Pi.main" {
+}
+

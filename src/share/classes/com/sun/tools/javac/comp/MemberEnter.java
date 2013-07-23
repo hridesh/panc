@@ -698,7 +698,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
 
         VarSymbol v = new VarSymbol(0, tree.name, tree.vartype.type, tree.sym);
         v.owner = owner;
-        v.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, v, tree);
+        v.flags_field = attr.pAttr.pck.checkCapsuleParamFlags(tree.pos(), tree.mods.flags);
         tree.sym = v;
 
         if (chk.checkUnique(tree.pos(), v, enclScope)) {

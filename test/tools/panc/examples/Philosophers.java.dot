@@ -1,0 +1,186 @@
+digraph "Bool.<init>" {
+}
+
+digraph "Bool.value" {
+}
+
+digraph "Fork$thread.take$Original" {
+"3 new Bool(false)" -> "4 return new Bool(false);"
+"2 false" -> "3 new Bool(false)"
+"6 true" -> "7 isTaken = true"
+"0 isTaken" -> "5 isTaken"
+"5 isTaken" -> "6 true"
+"10 new Bool(true)" -> "11 return new Bool(true);"
+"9 true" -> "10 new Bool(true)"
+}
+
+digraph "Fork$thread.take" {
+}
+
+digraph "Fork$thread.giveBack$Original" {
+"1 false" -> "2 isTaken = false"
+"0 isTaken" -> "1 false"
+}
+
+digraph "Fork$thread.giveBack" {
+}
+
+digraph "Fork$thread.run" {
+}
+
+digraph "Fork$thread.<init>" {
+}
+
+digraph "Fork$task.take$Original" {
+}
+
+digraph "Fork$task.take" {
+}
+
+digraph "Fork$task.giveBack$Original" {
+}
+
+digraph "Fork$task.giveBack" {
+}
+
+digraph "Fork$task.run" {
+}
+
+digraph "Fork$task.<init>" {
+}
+
+digraph "Fork$serial.take" {
+}
+
+digraph "Fork$serial.giveBack" {
+}
+
+digraph "Fork$serial.<init>" {
+}
+
+digraph "Fork$serial.panini$disconnect" {
+}
+
+digraph "Fork$monitor.take" {
+}
+
+digraph "Fork$monitor.giveBack" {
+}
+
+digraph "Fork$monitor.<init>" {
+}
+
+digraph "Fork$monitor.panini$disconnect" {
+}
+
+digraph "Philosopher$thread.run" {
+"0 3" -> "1 int count = 3"
+"3 0" -> "4 count > 0"
+"1 int count = 3" -> "2 count"
+"13 count--" -> "2 count"
+"9 tryEat()" -> "2 count"
+"2 count" -> "3 0"
+"12 count" -> "13 count--"
+"9 tryEat()" -> "12 count"
+"5 think" -> "6 think()"
+"4 count > 0" -> "5 think"
+"8 tryEat" -> "9 tryEat()"
+"6 think()" -> "8 tryEat"
+}
+
+digraph "Philosopher$thread.think" {
+"5 name + \" is thinking\"" -> "6 System.out.println(name + \" is thinking\")"
+"1 System.out" -> "2 System.out.println"
+"0 System" -> "1 System.out"
+"4 \" is thinking\"" -> "5 name + \" is thinking\""
+"2 System.out.println" -> "3 name"
+"3 name" -> "4 \" is thinking\""
+"9 1000" -> "10 yield(1000)"
+"6 System.out.println(name + \" is thinking\")" -> "8 yield"
+"8 yield" -> "9 1000"
+}
+
+digraph "Philosopher$thread.tryEat" {
+"5 name + \" is hungry so they are trying to take fork 1.\"" -> "6 System.out.println(name + \" is hungry so they are trying to take fork 1.\")"
+"1 System.out" -> "2 System.out.println"
+"0 System" -> "1 System.out"
+"4 \" is hungry so they are trying to take fork 1.\"" -> "5 name + \" is hungry so they are trying to take fork 1.\""
+"2 System.out.println" -> "3 name"
+"3 name" -> "4 \" is hungry so they are trying to take fork 1.\""
+"8 false" -> "9 boolean ate = false"
+"6 System.out.println(name + \" is hungry so they are trying to take fork 1.\")" -> "8 false"
+"10 ate" -> "11 !ate"
+"81 yield(100)" -> "10 ate"
+"77 !ate" -> "10 ate"
+"17 left.take().value()" -> "10 ate"
+"9 boolean ate = false" -> "10 ate"
+"16 left.take().value" -> "17 left.take().value()"
+"15 left.take()" -> "16 left.take().value"
+"14 left.take" -> "15 left.take()"
+"13 left" -> "14 left.take"
+"11 !ate" -> "13 left"
+"24 name + \" acquired fork 1 so now they are trying to take fork 2.\"" -> "25 System.out.println(name + \" acquired fork 1 so now they are trying to take fork 2.\")"
+"20 System.out" -> "21 System.out.println"
+"19 System" -> "20 System.out"
+"17 left.take().value()" -> "19 System"
+"23 \" acquired fork 1 so now they are trying to take fork 2.\"" -> "24 name + \" acquired fork 1 so now they are trying to take fork 2.\""
+"21 System.out.println" -> "22 name"
+"22 name" -> "23 \" acquired fork 1 so now they are trying to take fork 2.\""
+"30 right.take().value" -> "31 right.take().value()"
+"29 right.take()" -> "30 right.take().value"
+"28 right.take" -> "29 right.take()"
+"27 right" -> "28 right.take"
+"25 System.out.println(name + \" acquired fork 1 so now they are trying to take fork 2.\")" -> "27 right"
+"38 name + \" acquired both forks so now they are eating.\"" -> "39 System.out.println(name + \" acquired both forks so now they are eating.\")"
+"34 System.out" -> "35 System.out.println"
+"33 System" -> "34 System.out"
+"31 right.take().value()" -> "33 System"
+"37 \" acquired both forks so now they are eating.\"" -> "38 name + \" acquired both forks so now they are eating.\""
+"35 System.out.println" -> "36 name"
+"36 name" -> "37 \" acquired both forks so now they are eating.\""
+"41 0" -> "42 int eat = 0"
+"39 System.out.println(name + \" acquired both forks so now they are eating.\")" -> "41 0"
+"43 0" -> "44 int temp = 0"
+"42 int eat = 0" -> "43 0"
+"46 10000" -> "47 eat < 10000"
+"44 int temp = 0" -> "45 eat"
+"59 eat++" -> "45 eat"
+"56 temp = eat * eat * eat * eat" -> "45 eat"
+"45 eat" -> "46 10000"
+"58 eat" -> "59 eat++"
+"56 temp = eat * eat * eat * eat" -> "58 eat"
+"55 eat * eat * eat * eat" -> "56 temp = eat * eat * eat * eat"
+"47 eat < 10000" -> "48 temp"
+"54 eat" -> "55 eat * eat * eat * eat"
+"52 eat" -> "53 eat * eat * eat"
+"50 eat" -> "51 eat * eat"
+"48 temp" -> "49 eat"
+"49 eat" -> "50 eat"
+"51 eat * eat" -> "52 eat"
+"53 eat * eat * eat" -> "54 eat"
+"63 true" -> "64 ate = true"
+"47 eat < 10000" -> "62 ate"
+"62 ate" -> "63 true"
+"67 right.giveBack" -> "68 right.giveBack()"
+"66 right" -> "67 right.giveBack"
+"64 ate = true" -> "66 right"
+"73 left.giveBack" -> "74 left.giveBack()"
+"72 left" -> "73 left.giveBack"
+"68 right.giveBack()" -> "72 left"
+"31 right.take().value()" -> "72 left"
+"76 ate" -> "77 !ate"
+"74 left.giveBack()" -> "76 ate"
+"80 100" -> "81 yield(100)"
+"77 !ate" -> "79 yield"
+"79 yield" -> "80 100"
+}
+
+digraph "Philosopher$thread.<init>" {
+}
+
+digraph "Philosophers.<init>" {
+}
+
+digraph "Philosophers.main" {
+}
+

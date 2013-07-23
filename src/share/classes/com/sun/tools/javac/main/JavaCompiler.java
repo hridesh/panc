@@ -1290,7 +1290,8 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 		}
 
 		// Panini code
-		org.paninij.analysis.Main.attribute(env, log);
+		org.paninij.analysis.Main.attribute(attr.doGraphs, env, log
+		        );
 		// end Panini code
 
 		return env;

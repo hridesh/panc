@@ -60,14 +60,18 @@ import com.sun.tools.javac.comp.Enter;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.MemberEnter;
 import com.sun.tools.javac.comp.Resolve;
+import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
+import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
+import com.sun.tools.javac.util.Options;
+
 import org.paninij.util.PaniniConstants;
 
 /***
@@ -85,16 +89,22 @@ public final class Attr extends CapsuleInternal {
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
 	Types types;
+	public final Check pck;
+
+    final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
 
     public Attr(TreeMaker make, Names names, Types types, Enter enter,
             MemberEnter memberEnter, Symtab syms, Log log,
-            Annotate annotate) {
+            Annotate annotate, Context context) {
         super(make, names, enter, memberEnter, syms);
         this.types = types;
         this.log = log;
         this.annotate = annotate;
         this.annotationProcessor = new AnnotationProcessor(names, make, log);
         this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
+        this.pck = Check.instance(context);
+
+        this.seqConstAlg = SEQ_CONST_ALG.instance(context);
     }
 
     void attribSystemDecl(JCSystemDecl tree, Resolve rs, Env<AttrContext> env ) {
@@ -348,7 +358,7 @@ public final class Attr extends CapsuleInternal {
 		}
 	}
 	
-	public final void visitSystemDef(JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
+	public final void visitSystemDef(JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs){
 	    attribSystemDecl(tree, rs, env);
 
 	    ListBuffer<JCStatement> decls;

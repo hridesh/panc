@@ -1,0 +1,211 @@
+digraph "IntegerC.<init>" {
+}
+
+digraph "IntegerC.value" {
+}
+
+digraph "Main$thread.run" {
+"1 3" -> "2 doSomething$Original(3)"
+"0 doSomething$Original" -> "1 3"
+}
+
+digraph "Main$thread.doSomething$Original" {
+"1 12" -> "2 i < 12"
+"0 i" -> "1 12"
+"7 new IntegerC(1)" -> "8 i1.set(new IntegerC(1))"
+"4 i1" -> "5 i1.set"
+"2 i < 12" -> "4 i1"
+"6 1" -> "7 new IntegerC(1)"
+"13 new IntegerC(2)" -> "14 i2.set(new IntegerC(2))"
+"10 i2" -> "11 i2.set"
+"2 i < 12" -> "10 i2"
+"12 2" -> "13 new IntegerC(2)"
+"20 i1.get().value" -> "21 i1.get().value()"
+"19 i1.get()" -> "20 i1.get().value"
+"18 i1.get" -> "19 i1.get()"
+"17 i1" -> "18 i1.get"
+"8 i1.set(new IntegerC(1))" -> "17 i1"
+"14 i2.set(new IntegerC(2))" -> "17 i1"
+}
+
+digraph "Main$thread.doSomething" {
+"1 12" -> "2 i < 12"
+"0 i" -> "1 12"
+"7 new IntegerC(1)" -> "8 i1.set(new IntegerC(1))"
+"4 i1" -> "5 i1.set"
+"2 i < 12" -> "4 i1"
+"6 1" -> "7 new IntegerC(1)"
+"13 new IntegerC(2)" -> "14 i2.set(new IntegerC(2))"
+"10 i2" -> "11 i2.set"
+"2 i < 12" -> "10 i2"
+"12 2" -> "13 new IntegerC(2)"
+"20 i1.get().value" -> "21 i1.get().value()"
+"19 i1.get()" -> "20 i1.get().value"
+"18 i1.get" -> "19 i1.get()"
+"17 i1" -> "18 i1.get"
+"8 i1.set(new IntegerC(1))" -> "17 i1"
+"14 i2.set(new IntegerC(2))" -> "17 i1"
+}
+
+digraph "Main$thread.<init>" {
+}
+
+digraph "Store$thread.set$Original" {
+"3 newState.value()" -> "4 state = newState.value()"
+"2 newState.value" -> "3 newState.value()"
+"1 newState" -> "2 newState.value"
+"0 state" -> "1 newState"
+}
+
+digraph "Store$thread.set" {
+}
+
+digraph "Store$thread.get$Original" {
+"1 new IntegerC(state)" -> "2 return new IntegerC(state);"
+"0 state" -> "1 new IntegerC(state)"
+}
+
+digraph "Store$thread.get" {
+}
+
+digraph "Store$thread.run" {
+}
+
+digraph "Store$thread.<init>" {
+}
+
+digraph "Store$task.set$Original" {
+}
+
+digraph "Store$task.set" {
+}
+
+digraph "Store$task.get$Original" {
+}
+
+digraph "Store$task.get" {
+}
+
+digraph "Store$task.run" {
+}
+
+digraph "Store$task.<init>" {
+}
+
+digraph "Store$serial.set" {
+}
+
+digraph "Store$serial.get" {
+}
+
+digraph "Store$serial.<init>" {
+}
+
+digraph "Store$serial.panini$disconnect" {
+}
+
+digraph "Store$monitor.set" {
+}
+
+digraph "Store$monitor.get" {
+}
+
+digraph "Store$monitor.<init>" {
+}
+
+digraph "Store$monitor.panini$disconnect" {
+}
+
+digraph "Indirection$thread.set$Original" {
+"7 (long)(Math.random() * 1000)" -> "8 yield((long)(Math.random() * 1000))"
+"5 Math.random() * 1000" -> "7 (long)(Math.random() * 1000)"
+"4 1000" -> "5 Math.random() * 1000"
+"2 Math.random" -> "3 Math.random()"
+"1 Math" -> "2 Math.random"
+"0 yield" -> "1 Math"
+"3 Math.random()" -> "4 1000"
+"12 newStore" -> "13 s.set(newStore)"
+"10 s" -> "11 s.set"
+"8 yield((long)(Math.random() * 1000))" -> "10 s"
+"11 s.set" -> "12 newStore"
+}
+
+digraph "Indirection$thread.set" {
+}
+
+digraph "Indirection$thread.get$Original" {
+"7 (long)(Math.random() * 1000)" -> "8 yield((long)(Math.random() * 1000))"
+"5 Math.random() * 1000" -> "7 (long)(Math.random() * 1000)"
+"4 1000" -> "5 Math.random() * 1000"
+"2 Math.random" -> "3 Math.random()"
+"1 Math" -> "2 Math.random"
+"0 yield" -> "1 Math"
+"3 Math.random()" -> "4 1000"
+"12 s.get()" -> "13 return s.get();"
+"11 s.get" -> "12 s.get()"
+"10 s" -> "11 s.get"
+"8 yield((long)(Math.random() * 1000))" -> "10 s"
+}
+
+digraph "Indirection$thread.get" {
+}
+
+digraph "Indirection$thread.run" {
+}
+
+digraph "Indirection$thread.<init>" {
+}
+
+digraph "Indirection$task.set$Original" {
+}
+
+digraph "Indirection$task.set" {
+}
+
+digraph "Indirection$task.get$Original" {
+}
+
+digraph "Indirection$task.get" {
+}
+
+digraph "Indirection$task.run" {
+}
+
+digraph "Indirection$task.<init>" {
+}
+
+digraph "Indirection$serial.set" {
+}
+
+digraph "Indirection$serial.get" {
+}
+
+digraph "Indirection$serial.<init>" {
+}
+
+digraph "Indirection$serial.panini$disconnect" {
+}
+
+digraph "Indirection$monitor.set" {
+}
+
+digraph "Indirection$monitor.get" {
+}
+
+digraph "Indirection$monitor.<init>" {
+}
+
+digraph "Indirection$monitor.panini$disconnect" {
+}
+
+digraph "SequentialConsistency.<init>" {
+}
+
+digraph "SequentialConsistency.main" {
+}
+
+warning: Found 1 path(s) which may violate sequential consistency
+warning: The paths: 
+  path1 Main.m.run()-37-> 
+  path2 Main.m.run()-38-> may violate sequential consistency.
+2 warnings
