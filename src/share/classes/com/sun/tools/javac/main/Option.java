@@ -203,29 +203,6 @@ public enum Option {
 
     XSCLEVEL("-Xseq.const.alg:", "opt.panini.sclevel",
             EXTENDED, BASIC, ONEOF, "base", "+sync", "+inorder", "+trans") {
-        @Override
-        public boolean process(OptionHelper helper, String option) {
-            boolean r = super.process(helper, option);
-            String sclevel = helper.get(this);
-
-            //preprocess the sclevel to get it to one of SEQ_CONST_ALG values.
-            if( sclevel.startsWith("+") ) {
-                sclevel=sclevel.substring(1);
-            }
-            sclevel = sclevel.toUpperCase();
-
-            // The valid options for the flags are the same as the
-            // enum names. Quick way to set the value is use the enum valueOf
-            // command.
-            try{
-                Attr.seqConstAlg =
-                    org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG.valueOf(sclevel);
-            } catch (IllegalArgumentException iae) {
-                System.err.println("Unknown Sequential Consistency option " + sclevel);
-            }
-
-            return r;
-        }
     },
     // end Panini code
 
