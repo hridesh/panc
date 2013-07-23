@@ -62,6 +62,7 @@ import com.sun.tools.javac.comp.Enter;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.MemberEnter;
 import com.sun.tools.javac.comp.Resolve;
+import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
@@ -77,6 +78,8 @@ import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
+import com.sun.tools.javac.util.Options;
+
 import org.paninij.util.PaniniConstants;
 
 /***
@@ -93,7 +96,10 @@ public final class Attr extends CapsuleInternal {
 	Annotate annotate;
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
-	final Check pck;
+    Types types;	
+	public final Check pck;
+
+    final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
 
 	/**
 	 * Whether or not capsule state access should be reported as an error.
@@ -111,7 +117,9 @@ public final class Attr extends CapsuleInternal {
         this.annotate = annotate;
         this.annotationProcessor = new AnnotationProcessor(names, make, log);
         this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
-        pck = Check.instance(context);
+        this.pck = Check.instance(context);
+
+        this.seqConstAlg = SEQ_CONST_ALG.instance(context);
     }
 
     void attribSystemDecl(JCWiringBlock tree, Resolve rs, Env<AttrContext> env ) {
@@ -414,7 +422,7 @@ public final class Attr extends CapsuleInternal {
 
 	public final void visitSystemDef(JCWiringBlock tree, Resolve rs,
 			com.sun.tools.javac.comp.Attr jAttr, // Javac Attributer.
-			Env<AttrContext> env, boolean doGraphs, SEQ_CONST_ALG seqConstAlg){
+			Env<AttrContext> env, boolean doGraphs){
 
 	    tree.sym.flags_field= pck.checkFlags(tree, tree.sym.flags(), tree.sym);
 

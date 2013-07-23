@@ -114,4 +114,20 @@ public class Check {
 
         return flags & (mask | ~StandardFlags) | implicit;
     }
+
+    /** Check the flags for capasule parameters
+     * @param pos
+     * @param flags
+     * @return 0. No flags needed.
+     */
+    public long checkCapsuleParamFlags(DiagnosticPosition pos, long flags) {
+        //Make sure there aren't any visibility modifiers on param.
+        long illegal = flags & StandardFlags;
+        if( illegal != 0) {
+            log.error(pos,
+                    "mod.not.allowed.here", asFlagSet(illegal));
+        }
+
+        return 0;
+    }
 }

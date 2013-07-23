@@ -1,7 +1,10 @@
 package org.paninij.consistency;
 
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.main.Option;
+import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.Log;
+import com.sun.tools.javac.util.Options;
 
 import org.paninij.systemgraph.SystemGraph;
 import org.paninij.systemgraph.SystemGraph.Edge;
@@ -38,13 +41,49 @@ public class ConsistencyUtil {
     /**
      * Enumerate the types of detection
      * algorithms that exist. Base, Sync, Inorder and Trans
-     *  each add one more piece to the detection.
+     * each add one more piece to the detection.
+     *
+     * Instance and lookup logic based on {@link com.sun.tools.javac.code.Source}.
      */
     public static enum SEQ_CONST_ALG {
-        BASE,
-        SYNC,
-        INORDER,
-        TRANS
+        BASE("base"),
+        SYNC("+sync"),
+        INORDER("+inorder"),
+        TRANS("+trans");
+
+        private static final Context.Key<SEQ_CONST_ALG> seqConstAlgKey
+            = new Context.Key<SEQ_CONST_ALG>();
+
+        private static final SEQ_CONST_ALG DEFAULT = TRANS;
+
+        public static SEQ_CONST_ALG instance(Context context) {
+            SEQ_CONST_ALG instance = context.get(seqConstAlgKey);
+            if (instance == null) {
+                Options options = Options.instance(context);
+                String seqConstAlg = options.get(Option.XSCLEVEL);
+                if(seqConstAlg != null) instance = lookup(seqConstAlg);
+                if(instance == null) instance = DEFAULT;
+                context.put(seqConstAlgKey, instance);
+            }
+            return instance;
+        }
+
+        private final String name;
+
+        private static HashMap<String, SEQ_CONST_ALG> tab = new HashMap<String, ConsistencyUtil.SEQ_CONST_ALG>();
+        static {
+            for (SEQ_CONST_ALG a: values()) {
+                tab.put(a.name, a);
+            }
+        }
+
+        private static SEQ_CONST_ALG lookup(String name) {
+            return tab.get(name);
+        }
+
+        private SEQ_CONST_ALG(String name) {
+            this.name = name;
+        }
     }
 
     // trim the warnings.

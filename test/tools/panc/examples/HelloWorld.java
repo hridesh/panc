@@ -19,8 +19,9 @@
 
 /* 
  * @test
- * @summary Complie the HelloWorld example.
- * @compile HelloWorld.java
+ * @summary Compile the HelloWorld example.
+ * @compile/ref=HelloWorld.java.dot -graphs HelloWorld.java
+ * @run main HelloWorld
  */
 
 capsule Console () { //Capsule declaration
@@ -37,7 +38,7 @@ capsule Greeter (Console c) { //Requires an instance of capsule Console to work
 	}
 }
 
-capsule HelloWorld () {
+public capsule HelloWorld () {
 	=>= {
 		Console c; //Capsule instance declaration
 		Greeter g; //Another capsule instance declaration

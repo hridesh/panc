@@ -1,0 +1,313 @@
+digraph "PrimitiveGiver$thread.getBoolean$Original" {
+"0 bool" -> "1 return bool;"
+}
+
+digraph "PrimitiveGiver$thread.getBoolean" {
+}
+
+digraph "PrimitiveGiver$thread.getByte$Original" {
+"0 by" -> "1 return by;"
+}
+
+digraph "PrimitiveGiver$thread.getByte" {
+}
+
+digraph "PrimitiveGiver$thread.getChar$Original" {
+"0 ch" -> "1 return ch;"
+}
+
+digraph "PrimitiveGiver$thread.getChar" {
+}
+
+digraph "PrimitiveGiver$thread.getDouble$Original" {
+"0 d" -> "1 return d;"
+}
+
+digraph "PrimitiveGiver$thread.getDouble" {
+}
+
+digraph "PrimitiveGiver$thread.getFloat$Original" {
+"0 f" -> "1 return f;"
+}
+
+digraph "PrimitiveGiver$thread.getFloat" {
+}
+
+digraph "PrimitiveGiver$thread.getInteger$Original" {
+"0 i" -> "1 return i;"
+}
+
+digraph "PrimitiveGiver$thread.getInteger" {
+}
+
+digraph "PrimitiveGiver$thread.getLong$Original" {
+"0 l" -> "1 return l;"
+}
+
+digraph "PrimitiveGiver$thread.getLong" {
+}
+
+digraph "PrimitiveGiver$thread.getShort$Original" {
+"0 s" -> "1 return s;"
+}
+
+digraph "PrimitiveGiver$thread.getShort" {
+}
+
+digraph "PrimitiveGiver$thread.getString$Original" {
+"0 str" -> "1 return str;"
+}
+
+digraph "PrimitiveGiver$thread.getString" {
+}
+
+digraph "PrimitiveGiver$thread.run" {
+}
+
+digraph "PrimitiveGiver$thread.<init>" {
+}
+
+digraph "PrimitiveGiver$task.getBoolean$Original" {
+}
+
+digraph "PrimitiveGiver$task.getBoolean" {
+}
+
+digraph "PrimitiveGiver$task.getByte$Original" {
+}
+
+digraph "PrimitiveGiver$task.getByte" {
+}
+
+digraph "PrimitiveGiver$task.getChar$Original" {
+}
+
+digraph "PrimitiveGiver$task.getChar" {
+}
+
+digraph "PrimitiveGiver$task.getDouble$Original" {
+}
+
+digraph "PrimitiveGiver$task.getDouble" {
+}
+
+digraph "PrimitiveGiver$task.getFloat$Original" {
+}
+
+digraph "PrimitiveGiver$task.getFloat" {
+}
+
+digraph "PrimitiveGiver$task.getInteger$Original" {
+}
+
+digraph "PrimitiveGiver$task.getInteger" {
+}
+
+digraph "PrimitiveGiver$task.getLong$Original" {
+}
+
+digraph "PrimitiveGiver$task.getLong" {
+}
+
+digraph "PrimitiveGiver$task.getShort$Original" {
+}
+
+digraph "PrimitiveGiver$task.getShort" {
+}
+
+digraph "PrimitiveGiver$task.getString$Original" {
+}
+
+digraph "PrimitiveGiver$task.getString" {
+}
+
+digraph "PrimitiveGiver$task.run" {
+}
+
+digraph "PrimitiveGiver$task.<init>" {
+}
+
+digraph "PrimitiveGiver$serial.getBoolean" {
+}
+
+digraph "PrimitiveGiver$serial.getByte" {
+}
+
+digraph "PrimitiveGiver$serial.getChar" {
+}
+
+digraph "PrimitiveGiver$serial.getDouble" {
+}
+
+digraph "PrimitiveGiver$serial.getFloat" {
+}
+
+digraph "PrimitiveGiver$serial.getInteger" {
+}
+
+digraph "PrimitiveGiver$serial.getLong" {
+}
+
+digraph "PrimitiveGiver$serial.getShort" {
+}
+
+digraph "PrimitiveGiver$serial.getString" {
+}
+
+digraph "PrimitiveGiver$serial.<init>" {
+}
+
+digraph "PrimitiveGiver$serial.panini$disconnect" {
+}
+
+digraph "PrimitiveGiver$monitor.getBoolean" {
+}
+
+digraph "PrimitiveGiver$monitor.getByte" {
+}
+
+digraph "PrimitiveGiver$monitor.getChar" {
+}
+
+digraph "PrimitiveGiver$monitor.getDouble" {
+}
+
+digraph "PrimitiveGiver$monitor.getFloat" {
+}
+
+digraph "PrimitiveGiver$monitor.getInteger" {
+}
+
+digraph "PrimitiveGiver$monitor.getLong" {
+}
+
+digraph "PrimitiveGiver$monitor.getShort" {
+}
+
+digraph "PrimitiveGiver$monitor.getString" {
+}
+
+digraph "PrimitiveGiver$monitor.<init>" {
+}
+
+digraph "PrimitiveGiver$monitor.panini$disconnect" {
+}
+
+digraph "PrimitiveGetter$thread.panini$capsule$init" {
+}
+
+digraph "PrimitiveGetter$thread.run" {
+"2 p.getBoolean()" -> "3 boolean bool = p.getBoolean()"
+"1 p.getBoolean" -> "2 p.getBoolean()"
+"0 p" -> "1 p.getBoolean"
+"6 p.getByte()" -> "7 byte by = p.getByte()"
+"5 p.getByte" -> "6 p.getByte()"
+"4 p" -> "5 p.getByte"
+"3 boolean bool = p.getBoolean()" -> "4 p"
+"10 p.getChar()" -> "11 char ch = p.getChar()"
+"9 p.getChar" -> "10 p.getChar()"
+"8 p" -> "9 p.getChar"
+"7 byte by = p.getByte()" -> "8 p"
+"14 p.getDouble()" -> "15 double d = p.getDouble()"
+"13 p.getDouble" -> "14 p.getDouble()"
+"12 p" -> "13 p.getDouble"
+"11 char ch = p.getChar()" -> "12 p"
+"18 p.getFloat()" -> "19 float f = p.getFloat()"
+"17 p.getFloat" -> "18 p.getFloat()"
+"16 p" -> "17 p.getFloat"
+"15 double d = p.getDouble()" -> "16 p"
+"22 p.getInteger()" -> "23 int i = p.getInteger()"
+"21 p.getInteger" -> "22 p.getInteger()"
+"20 p" -> "21 p.getInteger"
+"19 float f = p.getFloat()" -> "20 p"
+"26 p.getLong()" -> "27 long l = p.getLong()"
+"25 p.getLong" -> "26 p.getLong()"
+"24 p" -> "25 p.getLong"
+"23 int i = p.getInteger()" -> "24 p"
+"30 p.getShort()" -> "31 short s = p.getShort()"
+"29 p.getShort" -> "30 p.getShort()"
+"28 p" -> "29 p.getShort"
+"27 long l = p.getLong()" -> "28 p"
+"34 p.getString()" -> "35 String str = p.getString()"
+"33 p.getString" -> "34 p.getString()"
+"32 p" -> "33 p.getString"
+"31 short s = p.getShort()" -> "32 p"
+"41 \"boolean: \" + bool" -> "42 System.out.println(\"boolean: \" + bool)"
+"37 System.out" -> "38 System.out.println"
+"36 System" -> "37 System.out"
+"35 String str = p.getString()" -> "36 System"
+"40 bool" -> "41 \"boolean: \" + bool"
+"38 System.out.println" -> "39 \"boolean: \""
+"39 \"boolean: \"" -> "40 bool"
+"49 \"byte: \" + by" -> "50 System.out.println(\"byte: \" + by)"
+"45 System.out" -> "46 System.out.println"
+"44 System" -> "45 System.out"
+"42 System.out.println(\"boolean: \" + bool)" -> "44 System"
+"48 by" -> "49 \"byte: \" + by"
+"46 System.out.println" -> "47 \"byte: \""
+"47 \"byte: \"" -> "48 by"
+"57 \"char: \" + ch" -> "58 System.out.println(\"char: \" + ch)"
+"53 System.out" -> "54 System.out.println"
+"52 System" -> "53 System.out"
+"50 System.out.println(\"byte: \" + by)" -> "52 System"
+"56 ch" -> "57 \"char: \" + ch"
+"54 System.out.println" -> "55 \"char: \""
+"55 \"char: \"" -> "56 ch"
+"65 \"double: \" + d" -> "66 System.out.println(\"double: \" + d)"
+"61 System.out" -> "62 System.out.println"
+"60 System" -> "61 System.out"
+"58 System.out.println(\"char: \" + ch)" -> "60 System"
+"64 d" -> "65 \"double: \" + d"
+"62 System.out.println" -> "63 \"double: \""
+"63 \"double: \"" -> "64 d"
+"73 \"float: \" + f" -> "74 System.out.println(\"float: \" + f)"
+"69 System.out" -> "70 System.out.println"
+"68 System" -> "69 System.out"
+"66 System.out.println(\"double: \" + d)" -> "68 System"
+"72 f" -> "73 \"float: \" + f"
+"70 System.out.println" -> "71 \"float: \""
+"71 \"float: \"" -> "72 f"
+"81 \"int: \" + i" -> "82 System.out.println(\"int: \" + i)"
+"77 System.out" -> "78 System.out.println"
+"76 System" -> "77 System.out"
+"74 System.out.println(\"float: \" + f)" -> "76 System"
+"80 i" -> "81 \"int: \" + i"
+"78 System.out.println" -> "79 \"int: \""
+"79 \"int: \"" -> "80 i"
+"89 \"long: \" + l" -> "90 System.out.println(\"long: \" + l)"
+"85 System.out" -> "86 System.out.println"
+"84 System" -> "85 System.out"
+"82 System.out.println(\"int: \" + i)" -> "84 System"
+"88 l" -> "89 \"long: \" + l"
+"86 System.out.println" -> "87 \"long: \""
+"87 \"long: \"" -> "88 l"
+"97 \"short: \" + s" -> "98 System.out.println(\"short: \" + s)"
+"93 System.out" -> "94 System.out.println"
+"92 System" -> "93 System.out"
+"90 System.out.println(\"long: \" + l)" -> "92 System"
+"96 s" -> "97 \"short: \" + s"
+"94 System.out.println" -> "95 \"short: \""
+"95 \"short: \"" -> "96 s"
+"105 \"String: \" + str" -> "106 System.out.println(\"String: \" + str)"
+"101 System.out" -> "102 System.out.println"
+"100 System" -> "101 System.out"
+"98 System.out.println(\"short: \" + s)" -> "100 System"
+"104 str" -> "105 \"String: \" + str"
+"102 System.out.println" -> "103 \"String: \""
+"103 \"String: \"" -> "104 str"
+"111 \"Ending primitive type procedure test...\"" -> "112 System.out.println(\"Ending primitive type procedure test...\")"
+"109 System.out" -> "110 System.out.println"
+"108 System" -> "109 System.out"
+"106 System.out.println(\"String: \" + str)" -> "108 System"
+"110 System.out.println" -> "111 \"Ending primitive type procedure test...\""
+}
+
+digraph "PrimitiveGetter$thread.<init>" {
+}
+
+digraph "PrimitiveTest.<init>" {
+}
+
+digraph "PrimitiveTest.main" {
+}
+

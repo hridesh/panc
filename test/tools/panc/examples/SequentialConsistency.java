@@ -19,8 +19,9 @@
 
 /* 
  * @test
- * @summary Complie the SequentialConsistency example.
- * @compile SequentialConsistency.java
+ * @summary Compile the SequentialConsistency example. Do not check the graphs.
+ *          May cause spurious failures depending on how the graph output and the Seq inconsistency warnings (from stdout and err) are interleaved.
+ * @compile/fail/ref=SequentialConsistency.out -XDrawDiagnostics -Werror SequentialConsistency.java
  */
 
 class IntegerC {
@@ -29,6 +30,8 @@ class IntegerC {
 }
 
 capsule Main (Indirection i1, Indirection i2) {
+	void run() { doSomething(3); }
+
 	void doSomething(int i) {
 		if(i<12) i1.set(new IntegerC(1));
 		else i2.set(new IntegerC(2));

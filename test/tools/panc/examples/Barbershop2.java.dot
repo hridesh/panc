@@ -1,0 +1,213 @@
+digraph "Customer.<init>" {
+}
+
+digraph "Customer.getName" {
+}
+
+digraph "Barber$thread.run" {
+"0 0" -> "1 int totalHairCuts = 0"
+"3 totalCustomers" -> "4 totalHairCuts < totalCustomers"
+"30 totalHairCuts++" -> "2 totalHairCuts"
+"41 isSleeping = true" -> "2 totalHairCuts"
+"48 yield(1000)" -> "2 totalHairCuts"
+"1 int totalHairCuts = 0" -> "2 totalHairCuts"
+"2 totalHairCuts" -> "3 totalCustomers"
+"6 isSleeping" -> "7 !isSleeping"
+"4 totalHairCuts < totalCustomers" -> "6 isSleeping"
+"11 r.whosNext()" -> "12 Customer c = r.whosNext()"
+"10 r.whosNext" -> "11 r.whosNext()"
+"9 r" -> "10 r.whosNext"
+"7 !isSleeping" -> "9 r"
+"16 c.equals(null)" -> "17 !c.equals(null)"
+"15 null" -> "16 c.equals(null)"
+"13 c" -> "14 c.equals"
+"12 Customer c = r.whosNext()" -> "13 c"
+"14 c.equals" -> "15 null"
+"26 \"Barber working on customer \" + c.getName()" -> "27 System.out.println(\"Barber working on customer \" + c.getName())"
+"20 System.out" -> "21 System.out.println"
+"19 System" -> "20 System.out"
+"17 !c.equals(null)" -> "19 System"
+"25 c.getName()" -> "26 \"Barber working on customer \" + c.getName()"
+"21 System.out.println" -> "22 \"Barber working on customer \""
+"24 c.getName" -> "25 c.getName()"
+"23 c" -> "24 c.getName"
+"22 \"Barber working on customer \"" -> "23 c"
+"29 totalHairCuts" -> "30 totalHairCuts++"
+"27 System.out.println(\"Barber working on customer \" + c.getName())" -> "29 totalHairCuts"
+"36 \"Barber went to sleep\"" -> "37 System.out.println(\"Barber went to sleep\")"
+"34 System.out" -> "35 System.out.println"
+"33 System" -> "34 System.out"
+"17 !c.equals(null)" -> "33 System"
+"35 System.out.println" -> "36 \"Barber went to sleep\""
+"40 true" -> "41 isSleeping = true"
+"37 System.out.println(\"Barber went to sleep\")" -> "39 isSleeping"
+"39 isSleeping" -> "40 true"
+"47 1000" -> "48 yield(1000)"
+"7 !isSleeping" -> "46 yield"
+"46 yield" -> "47 1000"
+}
+
+digraph "Barber$thread.wakeIfSleeping$Original" {
+"3 false" -> "4 isSleeping = false"
+"0 isSleeping" -> "2 isSleeping"
+"2 isSleeping" -> "3 false"
+"9 \"Barber Woke up\"" -> "10 System.out.println(\"Barber Woke up\")"
+"7 System.out" -> "8 System.out.println"
+"6 System" -> "7 System.out"
+"4 isSleeping = false" -> "6 System"
+"8 System.out.println" -> "9 \"Barber Woke up\""
+}
+
+digraph "Barber$thread.wakeIfSleeping" {
+"3 false" -> "4 isSleeping = false"
+"0 isSleeping" -> "2 isSleeping"
+"2 isSleeping" -> "3 false"
+"9 \"Barber Woke up\"" -> "10 System.out.println(\"Barber Woke up\")"
+"7 System.out" -> "8 System.out.println"
+"6 System" -> "7 System.out"
+"4 isSleeping = false" -> "6 System"
+"8 System.out.println" -> "9 \"Barber Woke up\""
+}
+
+digraph "Barber$thread.<init>" {
+}
+
+digraph "WaitingRoom$thread.sit$Original" {
+"3 cap" -> "4 queue.size() < cap"
+"1 queue.size" -> "2 queue.size()"
+"0 queue" -> "1 queue.size"
+"2 queue.size()" -> "3 cap"
+"8 c" -> "9 queue.offer(c)"
+"6 queue" -> "7 queue.offer"
+"4 queue.size() < cap" -> "6 queue"
+"7 queue.offer" -> "8 c"
+"20 \"Customer \" + c.getName() + \" Sitting in waiting room\"" -> "21 System.out.println(\"Customer \" + c.getName() + \" Sitting in waiting room\")"
+"12 System.out" -> "13 System.out.println"
+"11 System" -> "12 System.out"
+"9 queue.offer(c)" -> "11 System"
+"19 \" Sitting in waiting room\"" -> "20 \"Customer \" + c.getName() + \" Sitting in waiting room\""
+"17 c.getName()" -> "18 \"Customer \" + c.getName()"
+"13 System.out.println" -> "14 \"Customer \""
+"16 c.getName" -> "17 c.getName()"
+"15 c" -> "16 c.getName"
+"14 \"Customer \"" -> "15 c"
+"18 \"Customer \" + c.getName()" -> "19 \" Sitting in waiting room\""
+"35 \"Waiting room is full, so \" + \"customer\" + c.getName() + \" is leaving\"" -> "36 System.out.println(\"Waiting room is full, so \" + \"customer\" + c.getName() + \" is leaving\")"
+"25 System.out" -> "26 System.out.println"
+"24 System" -> "25 System.out"
+"4 queue.size() < cap" -> "24 System"
+"34 \" is leaving\"" -> "35 \"Waiting room is full, so \" + \"customer\" + c.getName() + \" is leaving\""
+"32 c.getName()" -> "33 \"Waiting room is full, so \" + \"customer\" + c.getName()"
+"28 \"customer\"" -> "29 \"Waiting room is full, so \" + \"customer\""
+"26 System.out.println" -> "27 \"Waiting room is full, so \""
+"27 \"Waiting room is full, so \"" -> "28 \"customer\""
+"31 c.getName" -> "32 c.getName()"
+"30 c" -> "31 c.getName"
+"29 \"Waiting room is full, so \" + \"customer\"" -> "30 c"
+"33 \"Waiting room is full, so \" + \"customer\" + c.getName()" -> "34 \" is leaving\""
+}
+
+digraph "WaitingRoom$thread.sit" {
+}
+
+digraph "WaitingRoom$thread.whosNext$Original" {
+"2 queue.poll()" -> "3 return queue.poll();"
+"1 queue.poll" -> "2 queue.poll()"
+"0 queue" -> "1 queue.poll"
+}
+
+digraph "WaitingRoom$thread.whosNext" {
+}
+
+digraph "WaitingRoom$thread.run" {
+}
+
+digraph "WaitingRoom$thread.<init>" {
+}
+
+digraph "WaitingRoom$task.sit$Original" {
+}
+
+digraph "WaitingRoom$task.sit" {
+}
+
+digraph "WaitingRoom$task.whosNext$Original" {
+}
+
+digraph "WaitingRoom$task.whosNext" {
+}
+
+digraph "WaitingRoom$task.run" {
+}
+
+digraph "WaitingRoom$task.<init>" {
+}
+
+digraph "WaitingRoom$serial.sit" {
+}
+
+digraph "WaitingRoom$serial.whosNext" {
+}
+
+digraph "WaitingRoom$serial.<init>" {
+}
+
+digraph "WaitingRoom$serial.panini$disconnect" {
+}
+
+digraph "WaitingRoom$monitor.sit" {
+}
+
+digraph "WaitingRoom$monitor.whosNext" {
+}
+
+digraph "WaitingRoom$monitor.<init>" {
+}
+
+digraph "WaitingRoom$monitor.panini$disconnect" {
+}
+
+digraph "Customers$thread.run" {
+"0 0" -> "1 int i = 0"
+"4 customerNames.length" -> "5 i < customerNames.length"
+"1 int i = 0" -> "2 i"
+"38 i++" -> "2 i"
+"34 yield(1000)" -> "2 i"
+"3 customerNames" -> "4 customerNames.length"
+"2 i" -> "3 customerNames"
+"37 i" -> "38 i++"
+"34 yield(1000)" -> "37 i"
+"9 new Customer(customerNames[i])" -> "10 Customer c = new Customer(customerNames[i])"
+"8 customerNames[i]" -> "9 new Customer(customerNames[i])"
+"20 \"Customer \" + c.getName() + \" wants haircut.\"" -> "21 System.out.println(\"Customer \" + c.getName() + \" wants haircut.\")"
+"12 System.out" -> "13 System.out.println"
+"11 System" -> "12 System.out"
+"10 Customer c = new Customer(customerNames[i])" -> "11 System"
+"19 \" wants haircut.\"" -> "20 \"Customer \" + c.getName() + \" wants haircut.\""
+"17 c.getName()" -> "18 \"Customer \" + c.getName()"
+"13 System.out.println" -> "14 \"Customer \""
+"16 c.getName" -> "17 c.getName()"
+"15 c" -> "16 c.getName"
+"14 \"Customer \"" -> "15 c"
+"18 \"Customer \" + c.getName()" -> "19 \" wants haircut.\""
+"24 b.wakeIfSleeping" -> "25 b.wakeIfSleeping()"
+"23 b" -> "24 b.wakeIfSleeping"
+"21 System.out.println(\"Customer \" + c.getName() + \" wants haircut.\")" -> "23 b"
+"29 c" -> "30 r.sit(c)"
+"27 r" -> "28 r.sit"
+"25 b.wakeIfSleeping()" -> "27 r"
+"28 r.sit" -> "29 c"
+"33 1000" -> "34 yield(1000)"
+"30 r.sit(c)" -> "32 yield"
+"32 yield" -> "33 1000"
+}
+
+digraph "Customers$thread.<init>" {
+}
+
+digraph "Barbershop.<init>" {
+}
+
+digraph "Barbershop.main" {
+}
+

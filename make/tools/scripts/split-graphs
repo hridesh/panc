@@ -1,0 +1,12 @@
+# This file is part of the Panini project at Iowa State University.
+# From: http://stackoverflow.com/questions/15034885/how-to-split-a-dot-file-with-multiple-graphs-into-multiple-dot-files-using-gvpr
+
+# Useage: $> gvpr -f split-graphs [input files]
+#         $> for f in *.dot ; do dot -Tpdf -o "$f.pdf" "$f"; done
+
+# Assumes each graph in the input file has a unique name.
+
+BEG_G {
+    fname = sprintf("%s.dot", $G.name);
+    writeG($G, fname);
+}
