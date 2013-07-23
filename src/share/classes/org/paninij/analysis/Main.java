@@ -19,7 +19,7 @@ public final class Main {
 	 * 
 	 * @returns the attributed parse tree
 	 */
-	public static Env<AttrContext> attribute(Env<AttrContext> env, Log log) {
+	public static Env<AttrContext> attribute(boolean doGraphs, Env<AttrContext> env, Log log) {
 		JCClassDecl root = env.enclClass;
 
 		// eliminate processing of duck classes
@@ -36,7 +36,7 @@ public final class Main {
 						 * root.name); System.out.println(m);
 						 */
 					    String graphName = m.sym.owner.name + "." + m.sym.name;
-						if (Attr.doGraphs) {
+						if (doGraphs) {
 							System.out.println("digraph \""+ graphName + "\" {");
 							m.body.accept(new
 									org.paninij.analysis.ASTCFGPrinter());
@@ -60,7 +60,7 @@ public final class Main {
 		// Compilation strategy analysis, 
 		// make sure this pass is called after CFG and SytemGraph construction
 		// phases
-		if (Attr.doGraphs) {
+		if (doGraphs) {
 			analyzeCapsule(root);
 		}
 

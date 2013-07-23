@@ -99,7 +99,7 @@ public class Attr extends JCTree.Visitor {
     /*Defult to FULL, unless otherwise specified.*/
     public static ConsistencyUtil.SEQ_CONST_ALG seqConstAlg =
         ConsistencyUtil.SEQ_CONST_ALG.TRANS;
-    public static boolean doGraphs = false;
+    public boolean doGraphs = false;
     // end Panini code
 
     public static Attr instance(Context context) {
@@ -152,6 +152,7 @@ public class Attr extends JCTree.Visitor {
 
         // Panini code
         pAttr = new org.paninij.comp.Attr(make, names, types, enter, memberEnter, syms, log, annotate, context);
+        doGraphs = options.isSet("-graphs");
         // end Panini code
     }
 

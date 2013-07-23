@@ -198,14 +198,8 @@ public enum Option {
         }
     },
 
-        // Panini code
-        GRAPHS("-graphs", "opt.panini.graphs", STANDARD, BASIC) {
-            @Override
-            public boolean process(OptionHelper helper, String option) {
-                Attr.doGraphs = true;
-                return super.process(helper, option);
-            }
-        },
+    // Panini code
+    GRAPHS("-graphs", "opt.panini.graphs", STANDARD, BASIC),
 
     XSCLEVEL("-Xseq.const.alg:", "opt.panini.sclevel",
             EXTENDED, BASIC, ONEOF, "base", "+sync", "+inorder", "+trans") {
@@ -233,8 +227,7 @@ public enum Option {
             return r;
         }
     },
-
-        // end Panini code
+    // end Panini code
 
     VERSION("-version", "opt.version", STANDARD, INFO) {
         @Override
