@@ -19,7 +19,7 @@
 
 /* 
  * @test
- * @summary Complie the SequentialConsistency example. Do not check the graphs.
+ * @summary Compile the SequentialConsistency example. Do not check the graphs.
  *          May cause spurious failures depending on how the graph output and the Seq inconsistency warnings (from stdout and err) are interleaved.
  * @compile/fail/ref=SequentialConsistency.out -XDrawDiagnostics -Werror SequentialConsistency.java
  */

@@ -19,7 +19,7 @@
 
 /* 
  * @test
- * @summary Complie the Philosophers example.
+ * @summary Compile the Philosophers example.
  * @compile Philosophers.java
  * @compile/ref=Philosophers.java.dot -graphs Philosophers.java
  */

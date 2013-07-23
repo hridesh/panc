@@ -19,7 +19,7 @@
 
 /* 
  * @test
- * @summary Complie the HelloWorld example.
+ * @summary Compile the HelloWorld example.
  * @compile/ref=HelloWorld.java.dot -graphs HelloWorld.java
  * @run main HelloWorld
  */

@@ -26,7 +26,7 @@ import java.util.Random;
 
 /* 
  * @test
- * @summary Complie the Pi example.
+ * @summary Compile the Pi example.
  * @compile Pi.java
  * @compile/ref=Pi.java.dot -graphs Pi.java
  */

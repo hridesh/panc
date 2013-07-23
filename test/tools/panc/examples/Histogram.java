@@ -26,7 +26,7 @@ import java.io.*;
 
 /* 
  * @test
- * @summary Complie the Histogram example.
+ * @summary Compile the Histogram example.
  * @compile Histogram.java
  * @compile/ref=Histogram.java.dot -graphs Histogram.java
  */
