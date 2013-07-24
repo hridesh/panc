@@ -21,7 +21,7 @@
  * @test
  * @summary Compile the SignatureExample example.
  * @compile SignatureExample.java
- * @compile/ref=SignatureExample.java.dot -graphs SignatureExample.java
+
  */
 
 signature Stream {

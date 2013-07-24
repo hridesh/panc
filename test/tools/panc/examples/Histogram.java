@@ -28,7 +28,7 @@ import java.io.*;
  * @test
  * @summary Compile the Histogram example.
  * @compile Histogram.java
- * @compile/ref=Histogram.java.dot -graphs Histogram.java
+
  */
 
 capsule Reader(String[] args, Bucket[] buckets) {
