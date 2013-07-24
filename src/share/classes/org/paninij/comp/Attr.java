@@ -284,8 +284,17 @@ public final class Attr extends CapsuleInternal {
 		}
 
 		if (needsMainMethod(tree)) {
-            createMainMethod(tree);
-        }
+		    JCMethodDecl mainMeth = createMainMethod(tree, env);
+		    try{
+		        checkCapStateAcc = false;
+		        Scope sysScope = enterSystemScope(env);
+		        sysScope.enterIfAbsent(mainMeth.sym);
+		        attr.attribStat(mainMeth, env);
+		    } finally {
+		        checkCapStateAcc = true;
+		    }
+		    tree.defs = tree.defs.append(mainMeth);
+		}
 
 		for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail){
 			JCTree def = l.head;

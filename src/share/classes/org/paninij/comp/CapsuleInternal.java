@@ -1115,23 +1115,23 @@ public class CapsuleInternal extends Internal {
 	 * @param tree
 	 * @return
 	 */
-	protected JCTree createMainMethod(JCCapsuleDecl tree) {
+	protected JCMethodDecl createMainMethod(JCCapsuleDecl tree, Env<AttrContext> env) {
         /* main looks like:
         CapsuleType c = new CapsuleType();
         (c.args = args)? //only if the capsule has a sing paramater of type String[]
         c.run(); or c.start();
         */
 
-	    Type arrayType = new ArrayType(syms.stringType, syms.arrayClass);
+	    Type stringArrayType = new ArrayType(syms.stringType, syms.arrayClass);
         // /*synthetic*/ public static void main(String[] args)
         MethodSymbol msym = new MethodSymbol(
                 PUBLIC | STATIC | SYNTHETIC,
                 names.panini.Main,
-                new MethodType(List.<Type> of(arrayType),
-                               syms.voidType,
-                               List.<Type> nil(),
-                               syms.methodClass),
-                tree.sym);
+                new MethodType(List.<Type>of(stringArrayType),
+                        syms.voidType,
+                        List.<Type>nil(),
+                        syms.methodClass),
+               tree.sym);
 
         ListBuffer<JCStatement> mainStmts = new ListBuffer<JCTree.JCStatement>();
 
@@ -1150,7 +1150,8 @@ public class CapsuleInternal extends Internal {
 
         Name sysArgs = names.fromString("args");
         // String[] args parameter.
-        JCVariableDecl mainArg = make.Param(sysArgs, arrayType, msym);
+        JCVariableDecl mainArg = make.VarDef(
+                new VarSymbol(0, sysArgs, stringArrayType, null), null);
         final int numParams = tree.params.length();
         //wire the command line args, if the capsule needs them.
         if (numParams == 1) {
@@ -1182,6 +1183,7 @@ public class CapsuleInternal extends Internal {
         JCMethodDecl maindecl = make.MethodDef(msym, make.Block(0, mainStmts.toList()));
         maindecl.params = List.<JCVariableDecl> of(mainArg);
 
+        memberEnter.memberEnter(maindecl, env);
         return maindecl;
     }
 
