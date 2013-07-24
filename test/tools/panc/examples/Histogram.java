@@ -28,7 +28,7 @@ import java.io.*;
  * @test
  * @summary Compile the Histogram example.
  * @compile Histogram.java
- * @compile/ref=Histogram.java.dot -graphs Histogram.java
+
  */
 
 capsule Reader(String[] args, Bucket[] buckets) {
@@ -65,13 +65,15 @@ capsule Printer() {
 	void print(String output) { System.out.println(output); }
 }
 
-system Histogram (String[] args){
-	Reader r; 
-	task Bucket buckets[128];
-	sequential Printer p;
-	
-	r(args, buckets);
-	wireall(buckets, p);
+capsule Histogram (String[] args){
+    design {
+        Reader r;
+        task Bucket buckets[128];
+        sequential Printer p;
+
+        r(args, buckets);
+        wireall(buckets, p);
+    }
 }
 
 

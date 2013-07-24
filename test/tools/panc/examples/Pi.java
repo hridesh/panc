@@ -28,7 +28,7 @@ import java.util.Random;
  * @test
  * @summary Compile the Pi example.
  * @compile Pi.java
- * @compile/ref=Pi.java.dot -graphs Pi.java
+
  */
 
 class Number {
@@ -73,9 +73,11 @@ capsule Master (double totalCount, Worker[] workers) {
 	}
 }
 
-system Pi (String[] args) {
-    double totalSamples = Math.pow(10,Integer.parseInt(args[0]));
-	Master master; Worker workers[10];
-	master(totalSamples, workers);
-	wireall(workers, totalSamples/workers.length);
+capsule Pi (String[] args) {
+    design {
+        double totalSamples = Math.pow(10,Integer.parseInt(args[0]));
+        Master master; Worker workers[10];
+        master(totalSamples, workers);
+        wireall(workers, totalSamples/workers.length);
+    }
 }

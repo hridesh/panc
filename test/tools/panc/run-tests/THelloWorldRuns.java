@@ -14,19 +14,12 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  *
- * Contributor(s): Hridesh Rajan, Eric Lin
+ * Contributor(s): Sean L. Mooney
  */
 
-/*
- * @test
- * @summary Test separate compilation.
- * @compile Console.java
- * @compile Greeter.java
- * @compile HelloWorld.java
+/* @test
+ * @ignore
+ * @summary Make sure the HelloWorld example runs.
+ * @compile ../examples/HelloWorld.java
+ * @run main MainHarness HelloWorld$thread
  */
-capsule HelloWorld {
-    design {
-        Console c; Greeter g;
-        g(c);
-    }
-}

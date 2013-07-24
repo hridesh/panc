@@ -2675,12 +2675,12 @@ public class JavacParser implements Parser {
         this.endPosTable.errorEndPos = result.errorEndPos;
     }
     
-    private JCStatement systemDecl(JCModifiers mods, String dc){
+    private JCWiringBlock systemDecl(JCModifiers mods, String dc){
         SystemParser systemParser = new SystemParser(F, log, names, S, getInitialEndPosTable(), token, mode,this.lastmode, this);
         SystemParserResult result = systemParser.parseSystemDecl(mods);
         
         restoreParserState(result);
-        JCStatement systemDecl = result.systemDeclaration;
+        JCWiringBlock systemDecl = result.systemDeclaration;
         attach(systemDecl, dc);
         return systemDecl;
     }
@@ -2698,10 +2698,7 @@ public class JavacParser implements Parser {
             return interfaceDeclaration(mods, dc);
         } // Panini code
         else if(token.kind == IDENTIFIER){
-        	if(token.name().toString().equals("system")){
-                return systemDecl(mods, dc);
-        	}
-         	else if(token.name().toString().equals("capsule")) 
+            if(token.name().toString().equals("capsule"))
          		return capsuleDecl(mods, dc);
          	else if(token.name().toString().equals("signature"))
          		return signatureDecl(mods, dc);
@@ -2820,6 +2817,11 @@ public class JavacParser implements Parser {
                  }else
                 	 return List.<JCTree>of(syntaxError(token.pos, null, "expected", LBRACE));
             	 return List.<JCTree>of(to(F.at(pos).InitDef(to(F.at(pos).Modifiers(Flags.PROTECTED)), body)));
+             } else if (token.kind == IDENTIFIER
+                     && token.name().toString().equals("design")
+                     ) {
+                 JCTree wiringBlock = systemDecl(mods, dc);
+                 return List.<JCTree>of(wiringBlock);
              } else {
                  pos = token.pos;
                  List<JCTypeParameter> typarams = typeParametersOpt();

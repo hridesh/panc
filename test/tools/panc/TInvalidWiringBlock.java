@@ -17,9 +17,14 @@
  * Contributor(s): Sean L. Mooney
  */
 
-/* @test
- * @summary Fail system type check if the parameter is not a String[] type.
- * @compile/fail/ref=TInvalidSystemParam.out -XDrawDiagnostics TInvalidSystemParam.java
+/*
+ * @test
+ * @summary Compile an incorrect wiring operator example. Should
+ *          fail if it doesn't catch a type checking error.
+ * @compile/fail/ref=TInvalidWiringBlock.out -XDrawDiagnostics TInvalidWiringBlock.java
  */
-system SysParamTest(String args) {
+capsule TInvalidWiringBlock () {
+    design [] {
+        TInvalidWiringBlock tw;
+    }
 }

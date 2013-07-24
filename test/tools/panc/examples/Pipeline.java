@@ -35,7 +35,7 @@ import java.util.Random;
  * @test
  * @summary Compile the Pipeline example.
  * @compile Pipeline.java
- * @compile/ref=Pipeline.java.dot -graphs Pipeline.java
+
  */
 
 signature Stage {
@@ -110,7 +110,9 @@ capsule Sink(long num) implements Stage {
 	}
 }
 
-system Pipeline {
-	Source src; Average avg; Sum sum; Min min; Max max; Sink snk;
-	src(avg,500); avg(sum); sum(min); min(max); max(snk); snk(500);
+capsule Pipeline {
+    design {
+        Source src; Average avg; Sum sum; Min min; Max max; Sink snk;
+        src(avg,500); avg(sum); sum(min); min(max); max(snk); snk(500);
+    }
 }

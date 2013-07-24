@@ -21,7 +21,7 @@
  * @test
  * @summary Compile the SignatureExample example.
  * @compile SignatureExample.java
- * @compile/ref=SignatureExample.java.dot -graphs SignatureExample.java
+
  */
 
 signature Stream {
@@ -36,7 +36,9 @@ capsule Greeter (Stream s) {
 	void run(){ s.write("Hello World, Signature Style!"); }
 }
 
-system SignatureExample {
-	Console c; Greeter g;
-	g(c);
+capsule SignatureExample {
+    design {
+        Console c; Greeter g;
+        g(c);
+    }
 }

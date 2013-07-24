@@ -29,7 +29,9 @@ capsule Greeter (Stream s) {
 	void run(){ s.write("Hello World, Signature Style!"); }
 }
 
-system SignatureExample {
-	Console c; Greeter g;
-	g(c);
+capsule SignatureExample {
+    design {
+        Console c; Greeter g;
+        g(c);
+    }
 }

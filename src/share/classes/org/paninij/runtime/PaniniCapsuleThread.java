@@ -207,6 +207,13 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
    	if(panini$capsule$size==numItems) notifyAll(); 
    }
 
+    /**
+     * Initialize the 'internal' system in a capsule.
+     * <p>
+     * Must be called <em>BEFORE</em> {@link #panini$capsule$init()}.
+     */
+    public void panini$wire$sys(){}
+
   	 protected void panini$capsule$init(){}
 
 }

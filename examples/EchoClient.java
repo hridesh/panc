@@ -51,6 +51,8 @@ capsule Client() {
 		} catch (IOException e) { e.printStackTrace(System.err); }
 	}
 }
-system EchoClient {
-  Client c;
+capsule EchoClient {
+    design {
+      Client c;
+    }
 }

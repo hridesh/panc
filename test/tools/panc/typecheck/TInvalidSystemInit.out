@@ -1,2 +1,2 @@
-TInvalidSystemInit.java:28:13: compiler.err.system.cannot.init.variable: c
+TInvalidSystemInit.java:29:17: compiler.err.system.cannot.init.variable: c
 1 error

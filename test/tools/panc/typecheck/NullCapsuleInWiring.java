@@ -31,8 +31,10 @@ capsule C(C2 other) {
 
 capsule C2() { void foo(){} }
 
-system Sys {
-    C c;
-    c(null);
+capsule Sys {
+    design {
+        C c;
+        c(null);
+    }
 }
 

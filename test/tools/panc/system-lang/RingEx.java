@@ -26,7 +26,9 @@ capsule C(C next, int i) {
     void foo() {}
 }
 
-system S {
-    C cs[3];
-    ring(cs, 3);
+capsule S {
+    design {
+        C cs[3];
+        ring(cs, 3);
+    }
 }

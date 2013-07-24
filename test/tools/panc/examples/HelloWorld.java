@@ -20,9 +20,8 @@
 /* 
  * @test
  * @summary Compile the HelloWorld example.
- * @compile/ref=HelloWorld.java.dot -graphs HelloWorld.java
- * @run main HelloWorld
- */
+ * @compile HelloWorld.java
+ * */
 
 capsule Console () { //Capsule declaration
 	void write(String s) { //Capsule procedure
@@ -30,16 +29,15 @@ capsule Console () { //Capsule declaration
 	}
 }
 
-capsule Greeter (Console c) { //Requires an instance of capsule Console to work
+
+public capsule HelloWorld () {
+	design {
+		Console c; //Capsule instance declaration
+	}
+
 	void run(){                  //An autonomous capsule procedure
-		c.write("Panini: Hello World!");          //Inter-capsule procedure call 
+		c.write("Panini: Hello World!");          //Inter-capsule procedure call
 		long time = System.currentTimeMillis();
 		c.write("Time is now: " + time);
 	}
-}
-
-public system HelloWorld {
-	Console c; //Capsule instance declaration 
-	Greeter g; //Another capsule instance declaration
-	g(c);      //Wiring, connecting capsule instance g to c 
 }

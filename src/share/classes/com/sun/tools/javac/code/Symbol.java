@@ -808,13 +808,17 @@ public abstract class Symbol implements Element {
     /**
      * A class for system symbols
      */
-    public static class SystemSymbol extends ClassSymbol{
+    public static class SystemSymbol extends MethodSymbol{
 		public SystemSymbol(long flags, Name name, Type type, Symbol owner) {
             super(flags, name, type, owner);
         }
 
-        public SystemSymbol(long flags, Name name, Symbol owner) {
-            super(flags, name, owner);
+        /** Clone this symbol with new owner.
+         */
+        public SystemSymbol clone(Symbol newOwner) {
+            SystemSymbol m = new SystemSymbol(flags_field, name, type, newOwner);
+            m.code = code;
+            return m;
         }
     }
     //end Panini code

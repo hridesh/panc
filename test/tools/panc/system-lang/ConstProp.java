@@ -23,12 +23,14 @@
  * @summary Simple test of constent propagataion
  * @compile ConstProp.java
  */
-system ConstProp {
-    int i1 = 3;
-    int i2 = 1;
-    int i3 = i1 + i2;
-    int i4 = i3 * i1;
+capsule ConstProp {
+    design {
+        int i1 = 3;
+        int i2 = 1;
+        int i3 = i1 + i2;
+        int i4 = i3 * i1;
 
-    i1 = i4;
+        i1 = i4;
+    }
 }
 

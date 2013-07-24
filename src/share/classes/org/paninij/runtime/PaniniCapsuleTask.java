@@ -202,6 +202,13 @@ public abstract class PaniniCapsuleTask implements PaniniCapsule{
 		PaniniTaskPool.init(size);
 	}
 
+    /**
+     * Initialize the 'internal' system in a capsule.
+     * <p>
+     * Must be called <em>BEFORE</em> {@link #panini$capsule$init()}.
+     */
+    public void panini$wire$sys() {}
+
 	protected void panini$capsule$init(){}
 
 	public final void start(){

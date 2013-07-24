@@ -31,14 +31,16 @@ capsule M(O o, int fortyTwo){
 capsule O{
 }
 
-system SysArgsInterpretation(String[] args) {
-    M many[5];
-    O one;
-    int value = 42;
-    
-    value = value + Integer.parseInt(args[0]);
-    
-    one();
-    wireall(many, one, value);
+capsule SysArgsInterpretation(String[] args) {
+    design {
+        M many[5];
+        O one;
+        int value = 42;
+
+        value = value + Integer.parseInt(args[0]);
+
+        one();
+        wireall(many, one, value);
+    }
 }
 

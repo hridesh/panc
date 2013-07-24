@@ -46,8 +46,10 @@ import org.paninij.systemgraph.SystemGraphBuilder;
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.code.Scope;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ArrayType;
@@ -62,8 +64,14 @@ import com.sun.tools.javac.comp.MemberEnter;
 import com.sun.tools.javac.comp.Resolve;
 import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
+import com.sun.tools.javac.tree.JCTree.JCStatement;
+import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
+import com.sun.tools.javac.tree.JCTree.JCWiringBlock;
+import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
+import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
@@ -88,15 +96,22 @@ public final class Attr extends CapsuleInternal {
 	Annotate annotate;
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
-	Types types;
+    Types types;	
 	public final Check pck;
 
     final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
 
+	/**
+	 * Whether or not capsule state access should be reported as an error.
+	 * Used to the keep errors from being reported once a wiring block is
+	 * convertted to actual wiring statements.
+	 */
+	public boolean checkCapStateAcc = true;
+
     public Attr(TreeMaker make, Names names, Types types, Enter enter,
             MemberEnter memberEnter, Symtab syms, Log log,
             Annotate annotate, Context context) {
-        super(make, names, enter, memberEnter, syms);
+        super(make, names, types, enter, memberEnter, syms);
         this.types = types;
         this.log = log;
         this.annotate = annotate;
@@ -107,9 +122,13 @@ public final class Attr extends CapsuleInternal {
         this.seqConstAlg = SEQ_CONST_ALG.instance(context);
     }
 
-    void attribSystemDecl(JCSystemDecl tree, Resolve rs, Env<AttrContext> env ) {
+    void attribSystemDecl(JCWiringBlock tree, Resolve rs, Env<AttrContext> env ) {
         //This is where the systemDecl attribution will go, when
         //pulled in from sun.tools.javac.comp.Attr.visitSystemDecl
+
+        //Use the scope of the out capsule, not the current system decl.
+        Scope scope = enterSystemScope(env);
+        moveWiringDecls(tree, scope);
     }
 
 	public void visitTopLevel(JCCompilationUnit tree) { /* SKIPPED */ }
@@ -204,14 +223,17 @@ public final class Attr extends CapsuleInternal {
 			attr.attribStat(tree.computeMethod, env);
 		}
 		else {
-			attr.attribClassBody(env, tree.sym);
-			if (tree.computeMethod != null) {
+		    attr.attribClassBody(env, tree.sym);
+		    if (tree.computeMethod != null) {
 				tree.computeMethod.body.stats = tree.computeMethod.body.stats
 						.prepend(make.Exec(make.Apply(
 								List.<JCExpression> nil(),
 								make.Ident(names.panini.PaniniCapsuleInit),
 								List.<JCExpression> nil())));
 				if ((tree.sym.flags_field & ACTIVE) != 0) {
+				    //Wire the system
+				    tree.computeMethod.body.stats = tree.computeMethod.body.stats
+	                        .prepend(make.Exec(createSimpleMethodCall(names.panini.InternalCapsuleWiring)));
 					// Reference count disconnect()
 					ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
 					blockStats = createCapsuleMemberDisconnects(tree.params);
@@ -260,6 +282,20 @@ public final class Attr extends CapsuleInternal {
 				attr.attribStat(disconnectMeth, env);
 			}
 		}
+
+		if (needsMainMethod(tree)) {
+		    JCMethodDecl mainMeth = createMainMethod(tree, env);
+		    try{
+		        checkCapStateAcc = false;
+		        Scope sysScope = enterSystemScope(env);
+		        sysScope.enterIfAbsent(mainMeth.sym);
+		        attr.attribStat(mainMeth, env);
+		    } finally {
+		        checkCapStateAcc = true;
+		    }
+		    tree.defs = tree.defs.append(mainMeth);
+		}
+
 		for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail){
 			JCTree def = l.head;
 			if(def.getTag() == Tag.METHODDEF){
@@ -357,8 +393,36 @@ public final class Attr extends CapsuleInternal {
 			assigns.append(refCountAssignStmt);
 		}
 	}
-	
-	public final void visitSystemDef(JCSystemDecl tree, Resolve rs, Env<AttrContext> env, boolean doGraphs){
+
+    /**
+     * Capsule kinds need a main method if they are closed and define their own run method
+     * or are serial. Capsules are assumed to define their own run method if the
+     * method referenced by {@link #computeMethod} is not marked as synthetic.
+     * <p>
+     * Closed capsules have either no params, or a single param of type String[].
+     * <p>
+     * Install a main method into all closed active capsule.
+     */
+    protected boolean needsMainMethod(JCCapsuleDecl tree) {
+        boolean isClosedCapsule = tree.params.isEmpty()
+                || (tree.params.size() == 1 //Check for a String[] type parameter.
+                        && types.isArray(tree.params.head.vartype.type)
+                        && types.elemtype(tree.params.head.vartype.type).equals(syms.stringType));
+
+        if (isClosedCapsule) {
+            //Simplification until I can fix tis.
+            return (tree.sym.flags_field & Flags.ACTIVE) != 0 ;
+        } else {
+            return false;
+        }
+    }
+
+	public final void visitSystemDef(JCWiringBlock tree, Resolve rs,
+			com.sun.tools.javac.comp.Attr jAttr, // Javac Attributer.
+			Env<AttrContext> env, boolean doGraphs){
+
+	    tree.sym.flags_field= pck.checkFlags(tree, tree.sym.flags(), tree.sym);
+
 	    attribSystemDecl(tree, rs, env);
 
 	    ListBuffer<JCStatement> decls;
@@ -370,7 +434,7 @@ public final class Attr extends CapsuleInternal {
         SystemGraph sysGraph;
 
         SystemDeclRewriter interp = new SystemDeclRewriter(make, log);
-        JCSystemDecl rewritenTree = interp.rewrite(tree);
+        JCWiringBlock rewritenTree = interp.rewrite(tree);
 
         SystemMainTransformer mt = new SystemMainTransformer(syms, names, types, log,
                 rs, env, make, systemGraphBuilder);
@@ -384,15 +448,33 @@ public final class Attr extends CapsuleInternal {
         joins = mt.joins;
         sysGraph = mt.sysGraph;
 
-		if(rewritenTree.hasTaskCapsule)
+        if(rewritenTree.hasTaskCapsule)
 			processSystemAnnotation(rewritenTree, inits, env);
 
-		initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph);
+        initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph);
+
+        //attribute the new statement.
+        ListBuffer<JCStatement> toAttr = new ListBuffer<JCTree.JCStatement>();
+        toAttr.addAll(decls);
+        toAttr.addAll(inits);
+        toAttr.addAll(assigns);
+        toAttr.addAll(starts);
+        toAttr.addAll(joins);
+        try {
+            checkCapStateAcc = false;
+            for (List<JCStatement> l = toAttr.toList(); l.nonEmpty(); l = l.tail) {
+                jAttr.attribStat(l.head, env);
+            }
+        } finally {
+            checkCapStateAcc = true;
+        }
 		
 		List<JCStatement> mainStmts;
-		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).appendList(joins).toList();
-		JCMethodDecl maindecl = createMainMethod(rewritenTree.sym, rewritenTree.body, rewritenTree.params, mainStmts);
-		rewritenTree.defs = rewritenTree.defs.append(maindecl);
+		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).toList();
+
+		//TODO-XX: Still need to create a main method somewhere.
+		//JCMethodDecl maindecl = createMainMethod(rewritenTree.sym.owner, rewritenTree.body, rewritenTree.params, mainStmts);
+
 
 		systemGraphBuilder.completeEdges(sysGraph, annotationProcessor, env, rs);
 
@@ -401,8 +483,8 @@ public final class Attr extends CapsuleInternal {
 		    ConsistencyUtil.createChecker(seqConstAlg, sysGraph, log);
 		sca.potentialPathCheck();
 
-		rewritenTree.switchToClass();
-		memberEnter.memberEnter(maindecl, env);
+		//replace the systemDef/wiring block with the new body.
+		tree.body.stats = mainStmts;
 	}
 
 	public final void visitProcDef(JCProcDecl tree){
@@ -414,7 +496,7 @@ public final class Attr extends CapsuleInternal {
 	}
 	
 	// Helper functions
-	private void processSystemAnnotation(JCSystemDecl tree, ListBuffer<JCStatement> stats, Env<AttrContext> env){
+	private void processSystemAnnotation(JCWiringBlock tree, ListBuffer<JCStatement> stats, Env<AttrContext> env){
 		int numberOfPools = 1;
 		for (List<JCAnnotation> l = tree.mods.annotations; l.nonEmpty(); l = l.tail) {
 			JCAnnotation annotation = l.head;
@@ -446,27 +528,68 @@ public final class Attr extends CapsuleInternal {
 												List.<JCStatement> nil()))), null));
 	}
 
-	private JCMethodDecl createMainMethod(final ClassSymbol containingClass, final JCBlock methodBody, final List<JCVariableDecl> params, final List<JCStatement> mainStmts) {
-		Type arrayType = new ArrayType(syms.stringType, syms.arrayClass);
-		MethodSymbol msym = new MethodSymbol(
-				PUBLIC|STATIC,
-				names.fromString("main"),
-				new MethodType(
-						List.<Type>of(arrayType),
-						syms.voidType,
-						List.<Type>nil(),
-						syms.methodClass
-						),
-						containingClass
-				);
-		JCMethodDecl maindecl = make.MethodDef(msym, methodBody);
-		JCVariableDecl mainArg = null; 
-		if(params.length() == 0) {
-			mainArg = make.Param( names.fromString("args"), arrayType, msym);
-			maindecl.params = List.<JCVariableDecl>of(mainArg);
-		} else maindecl.params = params;
+    /**
+     * @param tree
+     * @return
+     */
+    private List<JCVariableDecl> extractWiringBlockDecls(JCWiringBlock tree) {
+        class VarDeclCollector extends TreeScanner { //Helper visitor to collect var defs.
+            final ListBuffer<JCVariableDecl> varDecls = new ListBuffer<JCVariableDecl>();
+            @Override
+            public final void visitVarDef(JCVariableDecl tree) {
+                Type t = tree.vartype.type;
+                if( t.tsym.isCapsule() ||
+                        (types.isArray(t) && types.elemtype(t).tsym.isCapsule())) {
+                    varDecls.add(tree);
+                }
+            }
+        }
+        VarDeclCollector vdc = new VarDeclCollector();
+        tree.accept(vdc);
+        return vdc.varDecls.toList();
+    }
 
-		maindecl.body.stats = mainStmts;
-		return maindecl;
-	}
+    private void moveWiringDecls(JCWiringBlock wire, Scope capScope) {
+        wire.capsuleDecls = extractWiringBlockDecls(wire);
+
+        // Enter the symbols into the capusle scope.
+        // Allows the symbols to be visible for other procedures
+        // and allows the symbols to be emitted as fields in the bytecode
+        for(List<JCVariableDecl> l = wire.capsuleDecls;  l.nonEmpty(); l = l.tail) {
+            l.head.sym.owner = capScope.owner;
+            capScope.enter(l.head.sym);
+        }
+
+        //TODO: Generics are being annoying. Find a way to not copy the list.
+        ListBuffer<JCTree> capFields = new ListBuffer<JCTree>();
+        for(List<JCVariableDecl> l = wire.capsuleDecls; l.nonEmpty(); l = l.tail) {
+            capFields.add(l.head);
+            // Mark as private. Do not mark synthetic. Will cause other
+            // name resolution to fail.
+            l.head.sym.flags_field =  Flags.PRIVATE;
+            //Update the AST Modifiers for pretty printing.
+            l.head.mods = make.Modifiers(l.head.sym.flags_field);
+        }
+
+        // Copy the capsules over to the tree defs so they show up with
+        // print-flat flag.
+        JCCapsuleDecl tree = (JCCapsuleDecl)wire.sym.owner.tree;
+        tree.defs = tree.defs.prependList(capFields.toList());
+    }
+
+    /** Get back to the 'class' level members scope from the current environment.
+     * Fails if a class symbol cannot be found.
+     * @param env
+     */
+    protected Scope enterSystemScope(Env<AttrContext> env) {
+        while(env != null && !env.tree.hasTag(JCTree.Tag.CAPSULEDEF)) {
+            env = env.next;
+        }
+
+        if(env != null) {
+            return ((JCClassDecl)env.tree).sym.members_field;
+        }
+        Assert.error();
+        return null;
+    }
 }

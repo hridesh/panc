@@ -1,5 +1,9 @@
 - compiler.warn.deterministic.inconsistency.warning.count: 1
 - compiler.warn.deterministic.inconsistency.warning: Main.m.run()-37->, Main.m.run()-38->
-- compiler.err.warnings.and.werror
-1 error
-2 warnings
+- compiler.warn.deterministic.inconsistency.warning.count: 1
+- compiler.warn.deterministic.inconsistency.warning: Main.m.run()-37->, Main.m.run()-38->
+- compiler.warn.deterministic.inconsistency.warning.count: 1
+- compiler.warn.deterministic.inconsistency.warning: Main.m.run()-37->, Main.m.run()-38->
+- compiler.warn.deterministic.inconsistency.warning.count: 1
+- compiler.warn.deterministic.inconsistency.warning: Main.m.run()-37->, Main.m.run()-38->
+8 warnings

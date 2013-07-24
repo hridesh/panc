@@ -20,7 +20,9 @@ capsule M (C c) {
 	}
 }
 
-system ConfineTest {
-	C c; M m;
-	m(c);
+capsule ConfineTest {
+    design {
+        C c; M m;
+        m(c);
+    }
 }

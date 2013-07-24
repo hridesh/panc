@@ -32,6 +32,11 @@ import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 
+import com.sun.tools.javac.tree.JCTree.JCBlock;
+import com.sun.tools.javac.tree.JCTree.JCExpression;
+import com.sun.tools.javac.tree.JCTree.JCModifiers;
+import com.sun.tools.javac.tree.JCTree.JCTypeParameter;
+import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.*;
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -228,12 +233,27 @@ public class TreeMaker implements JCTree.Factory {
 		return tree;
 	}
 
-	public JCSystemDecl SystemDef(JCModifiers mods, Name name, JCBlock body,
-			List<JCVariableDecl> params) {
-		JCSystemDecl tree = new JCSystemDecl(mods, name, body, params);
-		tree.pos = pos;
+	public JCWiringBlock WiringBlock(JCModifiers mods, JCBlock body)  {
+        JCWiringBlock tree = new JCWiringBlock(mods,
+                names.panini.InternalCapsuleWiring, TypeIdent(TypeTags.VOID),
+                List.<JCTypeParameter> nil(), List.<JCVariableDecl> nil(),
+                List.<JCExpression> nil(), body, null, null);
+        tree.pos = pos;
 		return tree;
 	}
+
+	/**
+	 * Facilitate 'full' coping of internal capsule system wiring.
+	 */
+    public JCTree WiringBlock(JCModifiers mods, Name name,
+            JCExpression restype, List<JCTypeParameter> typarams,
+            List<JCVariableDecl> params, List<JCExpression> thrown,
+            JCBlock body, JCExpression defaultValue) {
+        JCWiringBlock tree = new JCWiringBlock(mods, name, restype, typarams,
+                params, thrown, body, defaultValue, null);
+        tree.pos = pos;
+        return tree;
+    }
 
 	public JCCapsuleDecl CapsuleDef(JCModifiers mods, Name name,
 			List<JCVariableDecl> params, List<JCExpression> implementing,
@@ -272,7 +292,7 @@ public class TreeMaker implements JCTree.Factory {
                 || node instanceof JCSkip
                 || node instanceof JCErroneous
                 // Panini code
-                || node instanceof JCSystemDecl
+                || node instanceof JCWiringBlock
                 || node instanceof JCCapsuleDecl
                 // end Panini code
                 || (node instanceof JCExpressionStatement

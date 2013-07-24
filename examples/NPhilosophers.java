@@ -110,15 +110,17 @@ capsule Philosopher (Fork left, Fork right, String name) {
 	}
 }
 
-system NPhilosophers {
-	Fork forks[100]; 
-	Philosopher phils[100];
-	Indexer i;
-	i(new Index());
+capsule NPhilosophers {
+    design {
+        Fork forks[100];
+        Philosopher phils[100];
+        Indexer i;
+        i(new Index());
 
-	for(Philosopher phil : phils) {
-		phil(forks[PhilUtil.getLeftForkIndex(i.get().get(), phils.length)], 
-				forks[PhilUtil.getRightForkIndex(i.get().get(), phils.length)], 
-				PhilUtil.getPhillyName(i.getAndInc().get())); 
-	}
+        for(Philosopher phil : phils) {
+            phil(forks[PhilUtil.getLeftForkIndex(i.get().get(), phils.length)],
+                    forks[PhilUtil.getRightForkIndex(i.get().get(), phils.length)],
+                    PhilUtil.getPhillyName(i.getAndInc().get()));
+        }
+    }
 }

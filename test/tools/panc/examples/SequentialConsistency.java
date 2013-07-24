@@ -21,7 +21,7 @@
  * @test
  * @summary Compile the SequentialConsistency example. Do not check the graphs.
  *          May cause spurious failures depending on how the graph output and the Seq inconsistency warnings (from stdout and err) are interleaved.
- * @compile/fail/ref=SequentialConsistency.out -XDrawDiagnostics -Werror SequentialConsistency.java
+ * @compile/ref=SequentialConsistency.out -XDrawDiagnostics SequentialConsistency.java
  */
 
 class IntegerC {
@@ -60,7 +60,9 @@ capsule Indirection (Store s) {
 	}
 }
 
-system SequentialConsistency {
-	Main m; Store s; Indirection i1; Indirection i2;
-	i1(s); i2(s); m(i1, i2);    
+capsule SequentialConsistency {
+    design {
+        Main m; Store s; Indirection i1; Indirection i2;
+        i1(s); i2(s); m(i1, i2);
+    }
 }

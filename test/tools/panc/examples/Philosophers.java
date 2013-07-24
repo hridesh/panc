@@ -21,7 +21,7 @@
  * @test
  * @summary Compile the Philosophers example.
  * @compile Philosophers.java
- * @compile/ref=Philosophers.java.dot -graphs Philosophers.java
+
  */
 
 class Bool {
@@ -74,14 +74,16 @@ capsule Philosopher (Fork left, Fork right, String name) {
 	}
 }
 
-system Philosophers {
-	Fork f1;
-    Fork f2;
-    Fork f3;
-    Philosopher p1;
-    Philosopher p2;
-    Philosopher p3;
-	p1(f1,f2, "Aristotle");
-	p2(f2,f3, "Demosthenes");
-	p3(f3,f1, "Socrates");
+capsule Philosophers {
+    design {
+        Fork f1;
+        Fork f2;
+        Fork f3;
+        Philosopher p1;
+        Philosopher p2;
+        Philosopher p3;
+        p1(f1,f2, "Aristotle");
+        p2(f2,f3, "Demosthenes");
+        p3(f3,f1, "Socrates");
+    }
 }

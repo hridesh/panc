@@ -1,2 +1,2 @@
-IncorrectWiring1.java:41:8: compiler.err.prob.found.req: java.lang.String, int
+IncorrectWiring1.java:42:12: compiler.err.prob.found.req: java.lang.String, int
 1 error

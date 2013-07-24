@@ -52,10 +52,12 @@ capsule Client2(BankAccount account) {
 	}
 }
 
-system Bank (){
-	Client1 c1; Client2 c2;
-	BankAccount a; 
-	c1(a); c2(a);						   
+capsule Bank (){
+    design {
+        Client1 c1; Client2 c2;
+        BankAccount a;
+        c1(a); c2(a);
+    }
 }
 
 /*

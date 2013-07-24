@@ -75,12 +75,14 @@ capsule Printer() {
 	void print(String output) { System.out.println(output); }
 }
 
-system Histogram (String[] args){
-	Reader r; 
-	task Bucket buckets[128];
-	sequential Printer p;
-	
-	r(args, buckets, p);
+capsule Histogram (String[] args){
+    design {
+        Reader r;
+        task Bucket buckets[128];
+        sequential Printer p;
+
+        r(args, buckets, p);
+    }
 }
 
 

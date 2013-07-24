@@ -24,6 +24,8 @@
  * @compile/fail/ref=TInvalidSystemInit.out -XDrawDiagnostics TInvalidSystemInit.java
  */
 capsule C() { void run() {} }
-system TInvalidSystemInit {
-    C c[5] = new C[5];
+capsule TInvalidSystemInit {
+    design {
+        C c[5] = new C[5];
+    }
 }

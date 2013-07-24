@@ -33,12 +33,14 @@ capsule C2(int i) {
     void foo() {}
 }
 
-system Sys {
-    //Should not find a capsule type.
-    C c;
-    C2 c2;
+capsule Sys {
+    design {
+        //Should not find a capsule type.
+        C c;
+        C2 c2;
 
-    c2("Wrong");
-    c(c2);
+        c2("Wrong");
+        c(c2);
+    }
 }
 

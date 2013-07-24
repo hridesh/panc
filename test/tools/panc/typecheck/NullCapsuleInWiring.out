@@ -1,2 +1,2 @@
-NullCapsuleInWiring.java:36:7: compiler.err.capsule.null.declare
+NullCapsuleInWiring.java:37:11: compiler.err.capsule.null.declare
 1 error

@@ -18,12 +18,19 @@
  */
 package org.paninij.comp;
 
+import static com.sun.tools.javac.code.Flags.INTERFACE;
+import static com.sun.tools.javac.code.Flags.PRIVATE;
 import static com.sun.tools.javac.code.Flags.StandardFlags;
 import static com.sun.tools.javac.code.Flags.asFlagSet;
 
+import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Kinds;
+import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.util.Context;
-import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.Log;
+import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
+import com.sun.tools.javac.util.Names;
 
 /**Type checking helper class for the attribution phase of panini code.
  * Companion/parallel to {@link com.sun.tools.javac.comp.Check}
@@ -36,6 +43,7 @@ public class Check {
             new Context.Key<Check>();
 
     private final Log log;
+    private final Names names;
 
     public static Check instance(Context context) {
         Check instance = context.get(checkKey);
@@ -48,6 +56,63 @@ public class Check {
         context.put(checkKey, this);
 
         log = Log.instance(context);
+        names = Names.instance(context);
+    }
+
+    /** Check that given modifiers are legal for given symbol and
+     *  return modifiers together with any implicit modififiers for that symbol.
+     *  Warning: we can't use flags() here since this method
+     *  is called during class enter, when flags() would cause a premature
+     *  completion.
+     *  <p>
+     *  Valid symbols that can be check are:
+     *  <ul>
+     *  <li><code>Kinds.MTH</code> if the name is
+     *  {@link org.paninij.util.Names.InterCapsuleWiring} </li>
+     *  </ul>
+     *
+     *  <p>
+     *  Follows the default behavior of
+     *  {@link com.sun.tools.javac.comp.Check#checkFlags}, which is
+     *  throw an unchecked {@link AssertionError} if the symbol is
+     *  something the method doesn't know what flags it should use.
+     *  Make sure the symbol is method before checking its flags.
+     *
+     *
+     *  @param pos           Position to be used for error reporting.
+     *  @param flags         The set of modifiers given in a definition.
+     *  @param sym           The defined symbol.
+     */
+    long checkFlags(DiagnosticPosition pos, long flags, Symbol sym) {
+        long mask = 0;
+        long implicit = 0;
+        switch (sym.kind) {
+        case Kinds.MTH:
+            if(sym.name == names.panini.InternalCapsuleWiring) {
+                implicit = Flags.WIRING_BLOCK_FLAGS;
+                mask = Flags.WIRING_BLOCK_FLAGS;
+            } else {
+                throw new AssertionError();
+            }
+
+        break;
+        default:
+            throw new AssertionError();
+        }
+
+        long illegal = flags & StandardFlags & ~mask;
+        if (illegal != 0) {
+            if ((illegal & INTERFACE) != 0) {
+                log.error(pos, "intf.not.allowed.here");
+                mask |= INTERFACE;
+            }
+            else {
+                log.error(pos,
+                          "mod.not.allowed.here", asFlagSet(illegal));
+            }
+        }
+
+        return flags & (mask | ~StandardFlags) | implicit;
     }
 
     /** Check the flags for capasule parameters

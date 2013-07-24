@@ -73,7 +73,7 @@ import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 import com.sun.tools.javac.tree.JCTree.JCNewArray;
 import com.sun.tools.javac.tree.JCTree.JCNewClass;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
-import com.sun.tools.javac.tree.JCTree.JCSystemDecl;
+import com.sun.tools.javac.tree.JCTree.JCWiringBlock;
 import com.sun.tools.javac.tree.JCTree.JCUnary;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.Tag;
@@ -88,12 +88,13 @@ import org.paninij.util.PaniniConstants;
 /**
  * @author Sean L. Mooney
  * @since panini-0.9.2
- *
- * TODO: This should merge with the system decl intrepretor eventually.
  */
 public class SystemMainTransformer extends TreeTranslator {
 
-
+    /**
+     * Decls to copy into the rewritten body. This list <b>will not</b> include
+     * capsule decls. They are moved out as 'field' scope elements.
+     */
     public final ListBuffer<JCStatement> decls = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
@@ -118,7 +119,7 @@ public class SystemMainTransformer extends TreeTranslator {
      * The system decl being transformed.
      * Some the helper methods need a reference to it.
      */
-    JCSystemDecl systemDecl;
+    JCWiringBlock systemDecl;
 
     public SystemMainTransformer(Symtab syms, Names names, Types types, Log log,
             Resolve rs, Env<AttrContext> env,
@@ -136,7 +137,7 @@ public class SystemMainTransformer extends TreeTranslator {
     }
 
     @Override
-    public void visitSystemDef(JCSystemDecl tree) {
+    public void visitSystemDef(JCWiringBlock tree) {
         systemDecl = tree;
         //Only visit the body. We can ignore defs (they get handled
         //in the panini Attr, and we can ignore the params, they just
@@ -151,39 +152,27 @@ public class SystemMainTransformer extends TreeTranslator {
     }
 
     public void visitVarDef(JCVariableDecl tree) {
-        /* Create a new VariableDef. Needed to properly attribute
-         * the main method that will get written. If not copied, the
-         * symbol gets aliased, which causes the scope resolution logic
-         * to think the name is defined in an inner class.
-         */
-        JCVariableDecl vdecl = make.VarDef(
-                tree.getModifiers(),
-                tree.name,
-                tree.vartype,
-                tree.init
-                );
-
-        env.info.getScope().enter(tree.sym);
+       env.info.getScope().enter(tree.sym);
 
         //Use the type from the previously attributed tree. It has a type
         //associated with it already, vdecl does not.
         if (syms.isCapsuleSym(tree.type.tsym.name)) {
-            processCapsuleDef(systemDecl, vdecl);
+            processCapsuleDef(systemDecl, tree);
         } else {
-            if (vdecl.vartype.getTag() == CAPSULEARRAY)
-                processCapsuleArray(systemDecl, vdecl, env);
+            if (tree.vartype.getTag() == CAPSULEARRAY)
+                processCapsuleArray(systemDecl, tree, env);
             else {
-                if (vdecl.vartype.getTag() == TYPEIDENT
-                        || vdecl.vartype.toString().equals("String")) {
+                if (tree.vartype.getTag() == TYPEIDENT
+                        || tree.vartype.toString().equals("String")) {
                     //vdecl.mods.flags |= FINAL;
-                    decls.add(vdecl);
+                    decls.add(tree);
                 } else
-                    log.error(vdecl.pos(),
+                    log.error(tree.pos(),
                             "only.primitive.types.or.strings.allowed");
             }
         }
 
-        result = vdecl;
+        result = tree;
     }
 
     @Override
@@ -469,7 +458,7 @@ public class SystemMainTransformer extends TreeTranslator {
         return assigns.toList();
     }
 
-    private void processCapsuleArray(JCSystemDecl tree, JCVariableDecl vdecl, Env<AttrContext> env) {
+    private void processCapsuleArray(JCWiringBlock tree, JCVariableDecl vdecl, Env<AttrContext> env) {
         JCCapsuleArray mat = (JCCapsuleArray)vdecl.vartype;
         String initName = mat.elemtype.toString()+"$thread";
         if((vdecl.mods.flags & Flags.TASK) !=0){
@@ -485,12 +474,14 @@ public class SystemMainTransformer extends TreeTranslator {
             log.error(vdecl.pos(), "capsule.array.type.error", mat.elemtype);
         }
         systemGraphBuilder.addMultipleNodes(sysGraph, vdecl.name, mat.size, c);
+
+        // Instantiate the capsule array.
         JCNewArray s= make.NewArray(make.Ident(c.type.tsym),
                 List.<JCExpression>of(make.Literal(mat.size)), null);
-        JCVariableDecl newArray =
-                make.VarDef(make.Modifiers(0),
-                        vdecl.name, make.TypeArray(make.Ident(c.type.tsym)), s);
-        decls.add(newArray);
+        JCAssign newArray =
+                make.at(vdecl.pos()).Assign(make.Ident(vdecl.name), s);
+        inits.add(make.Exec(newArray));
+
         ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
         JCVariableDecl arraycache = make.VarDef(make.Modifiers(0),
                 names.fromString("index$"),
@@ -549,7 +540,7 @@ public class SystemMainTransformer extends TreeTranslator {
         modArrays.put(vdecl.name, mat.size);
     }
 
-    private void processCapsuleDef(JCSystemDecl tree, JCVariableDecl vdecl) {
+    private void processCapsuleDef(JCWiringBlock tree, JCVariableDecl vdecl) {
         String initName = vdecl.vartype.toString()+"$thread";
         if((vdecl.mods.flags & Flags.TASK) !=0){
             initName = vdecl.vartype.toString()+"$task";
@@ -563,7 +554,6 @@ public class SystemMainTransformer extends TreeTranslator {
         if(c==null)
             log.error(vdecl.pos, "invalid.capsule.type");
         systemGraphBuilder.addSingleNode(sysGraph, vdecl.name, c);
-        decls.add(vdecl);
         JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null,
                 make.Ident(c.type.tsym), List.<JCExpression>nil(), null);
         newClass.constructor = rs.resolveConstructor
@@ -578,12 +568,9 @@ public class SystemMainTransformer extends TreeTranslator {
         JCExpressionStatement startAssign = make.Exec(make.Apply(List.<JCExpression>nil(),
                 make.Select(make.Ident(vdecl.name), names.fromString(PaniniConstants.PANINI_START)),
                 List.<JCExpression>nil()));
+        starts.prepend(startAssign);
         if(c.capsule_info.definedRun){
-            if(tree.activeCapsuleCount==0)
-                starts.append(make.Exec(make.Apply(List.<JCExpression>nil(),
-                        make.Select(make.Ident(vdecl.name), names.fromString("run")),
-                        List.<JCExpression>nil())));
-            else{
+            if(tree.activeCapsuleCount!=0) {
                 starts.prepend(startAssign);
                 joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(),
                         make.Select(make.Ident(vdecl.name),
@@ -593,9 +580,6 @@ public class SystemMainTransformer extends TreeTranslator {
                                         null), make.Block(0, List.<JCStatement>nil()))), null));
             }
             tree.activeCapsuleCount++;
-        }
-        else{
-            starts.prepend(startAssign);
         }
         variables.put(vdecl.name, c.name);
         if(c.capsule_info.capsuleParameters.nonEmpty())

@@ -14,19 +14,17 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  *
- * Contributor(s): Hridesh Rajan, Eric Lin
+ * Contributor(s):
  */
+package org.paninij.util;
 
-/*
- * @test
- * @summary Test separate compilation.
- * @compile Console.java
- * @compile Greeter.java
- * @compile HelloWorld.java
+/**
+ * Abstract predicate.
+ * <p>
+ * Defines a lambda function of type <code> T->boolean </code>.
+ * @author Sean L. Mooney
+ * @since panini-0.9.2
  */
-capsule HelloWorld {
-    design {
-        Console c; Greeter g;
-        g(c);
-    }
+public interface Predicate<T> {
+    public boolean apply(T t);
 }

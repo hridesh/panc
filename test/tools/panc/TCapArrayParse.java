@@ -25,6 +25,8 @@
 
 capsule C1() { void run() {} }
 
-system S(String[] args) {
-    C1 c1s[2];
+capsule S(String[] args) {
+    design {
+        C1 c1s[2];
+    }
 }

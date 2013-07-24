@@ -82,10 +82,6 @@ public class TreeScanner extends Visitor {
         scan(tree.elemtype);
     }
     
-    public void visitSystemDef(JCSystemDecl tree){
-    	visitClassDef(tree);
-    }
-        
     public void visitCapsuleDef(JCCapsuleDecl tree){
     	visitClassDef(tree);
     }

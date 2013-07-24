@@ -51,6 +51,8 @@ import static com.sun.tools.javac.tree.JCTree.Tag.*;
 import com.sun.tools.javac.parser.ParserFactory;
 import org.paninij.comp.AnnotationProcessor;
 import org.paninij.util.PaniniConstants;
+import org.paninij.util.ListUtils;
+import org.paninij.util.Predicate;
 // end Panini code
 
 /** This class enters symbols for all encountered definitions into
@@ -366,6 +368,7 @@ public class Enter extends JCTree.Visitor {
     		if(def.getTag() == CAPSULEDEF && (((JCCapsuleDecl)def).mods.flags & INTERFACE)==0 ){
     			JCCapsuleDecl capsule = (JCCapsuleDecl)def;
     			ListBuffer<JCTree> interfaceBody = new ListBuffer<JCTree>();
+    			reorderDefs(capsule);
     			boolean hasRun = false;
     			for (List<JCTree> c = capsule.defs; c.nonEmpty(); c = c.tail){
     				JCTree capsuleDefs = c.head;
@@ -373,9 +376,10 @@ public class Enter extends JCTree.Visitor {
     					JCMethodDecl mdecl = (JCMethodDecl)capsuleDefs;
     					if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty())
     						hasRun = true;
-    					if((mdecl.mods.flags & PRIVATE)==0 && !mdecl.name.equals(names.panini.PaniniCapsuleInit)){
+    					if((mdecl.mods.flags & PRIVATE)==0 && !mdecl.name.equals(names.panini.PaniniCapsuleInit)
+    					&& !mdecl.name.equals(names.panini.InternalCapsuleWiring)){
 	    					interfaceBody.add(make.MethodDef(tc.copy(mdecl.mods), 
-	    							((JCMethodDecl)capsuleDefs).name, 
+	    					        mdecl.name,
 	    							tc.copy(mdecl.restype), 
 	    							tc.copy(mdecl.typarams), 
 	    							tc.copy(mdecl.params), 
@@ -432,8 +436,20 @@ public class Enter extends JCTree.Visitor {
     	}
     	return copiedDefs.toList();
     }
-    // end Panini code
 
+    /**
+     * @param capsule
+     */
+    private void reorderDefs(JCCapsuleDecl capsule) {
+        Predicate<JCTree> wiringIsFirst = new Predicate<JCTree>() {
+            @Override
+            public final boolean apply(JCTree t) {
+                return t.getTag() == METHODDEF && t instanceof JCWiringBlock;
+            }
+        };
+        capsule.defs = ListUtils.moveToFirst(capsule.defs, wiringIsFirst);
+    }
+    // end Panini code
     @Override
     public void visitClassDef(JCClassDecl tree) {
         Symbol owner = env.info.scope.owner;
@@ -559,97 +575,6 @@ public class Enter extends JCTree.Visitor {
         result = null;
     }
     // Panini code
-    public void visitSystemDef(JCSystemDecl tree){
-    	Symbol owner = env.info.scope.owner;
-        Scope enclScope = enterScope(env);
-        SystemSymbol c;
-        if (owner.kind == PCK) {
-            // We are seeing a toplevel class.
-            PackageSymbol packge = (PackageSymbol)owner;
-            for (Symbol q = packge; q != null && q.kind == PCK; q = q.owner)
-                q.flags_field |= EXISTS;
-            c = reader.enterSystem(tree.name, packge);
-            packge.members().enterIfAbsent(c);
-            if ((tree.mods.flags & PUBLIC) != 0 && !classNameMatchesFileName(c, env)) {
-                log.error(tree.pos(),
-                          "class.public.should.be.in.file", tree.name);
-            }
-        } else {
-            if (!tree.name.isEmpty() &&
-                !chk.checkUniqueClassName(tree.pos(), tree.name, enclScope)) {
-                result = null;
-                return;
-            }
-            if (owner.kind == TYP) {
-                // We are seeing a member class.
-                c = reader.enterSystem(tree.name, (TypeSymbol)owner);
-                if ((owner.flags_field & INTERFACE) != 0) {
-                    tree.mods.flags |= PUBLIC | STATIC;
-                }
-            } else {
-                // We are seeing a local class.
-                c = reader.defineSystem(tree.name, owner);
-                c.flatname = chk.localClassName(c);
-                if (!c.name.isEmpty())
-                    chk.checkTransparentClass(tree.pos(), c, env.info.scope);
-            }
-        }
-        tree.sym = c;
-
-        // Enter class into `compiled' table and enclosing scope.
-        if (chk.compiled.get(c.flatname) != null) {
-            duplicateClass(tree.pos(), c);
-            result = types.createErrorType(tree.name, (TypeSymbol)owner, Type.noType);
-            tree.sym = (SystemSymbol)result.tsym;
-            return;
-        }
-        chk.compiled.put(c.flatname, c);
-        enclScope.enter(c);
-
-        // Set up an environment for class block and store in `typeEnvs'
-        // table, to be retrieved later in memberEnter and attribution.
-        Env<AttrContext> localEnv = classEnv(tree, env);
-        typeEnvs.put(c, localEnv);
-
-        // Fill out class fields.
-        c.completer = memberEnter;
-        c.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, c, tree);
-        c.sourcefile = env.toplevel.sourcefile;
-        c.members_field = new Scope(c);
-
-        ClassType ct = (ClassType)c.type;
-        if (owner.kind != PCK && (c.flags_field & STATIC) == 0) {
-            // We are seeing a local or inner class.
-            // Set outer_field of this class to closest enclosing class
-            // which contains this class in a non-static context
-            // (its "enclosing instance class"), provided such a class exists.
-            Symbol owner1 = owner;
-            while ((owner1.kind & (VAR | MTH)) != 0 &&
-                   (owner1.flags_field & STATIC) == 0) {
-                owner1 = owner1.owner;
-            }
-            if (owner1.kind == TYP) {
-                ct.setEnclosingType(owner1.type);
-            }
-        }
-
-        // Enter type parameters.
-        ct.typarams_field = classEnter(tree.typarams, localEnv);
-
-        // Add non-local class to uncompleted, to make sure it will be
-        // completed later.
-        if (!c.isLocal() && uncompleted != null) uncompleted.append(c);
-//      System.err.println("entering " + c.fullname + " in " + c.owner);//DEBUG
-
-        
-        // Recursively enter all member classes.
-//        classEnter(tree.defs, localEnv);
-
-        tree.sym = c;
-        result = c.type;
-        tree.switchToClass();
-    }
-        
     private void setRuntimeImports(Env<AttrContext> env){
     	JCExpression pid = make.Ident(names.fromString("java"));
     	pid = make.Select(pid, names.fromString("util"));
@@ -737,6 +662,11 @@ public class Enter extends JCTree.Visitor {
         c.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, c, tree);
         c.sourcefile = env.toplevel.sourcefile;
         c.members_field = new Scope(c);
+        ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
+        params.appendList(tree.params);
+        c.capsule_info.capsuleParameters = params.toList();
+        tree.sym = c;
+        syms.capsules.put(c.name, c);
 
         ClassType ct = (ClassType)c.type;
         if (owner.kind != PCK && (c.flags_field & STATIC) == 0) {
@@ -789,6 +719,7 @@ public class Enter extends JCTree.Visitor {
 						.fromString(PaniniConstants.PANINI_CAPSULE_THREAD));
 				tree.parentCapsule.sym.capsule_info.translated_thread = c;
 			}
+
 	        c.capsule_info.parentCapsule = tree.parentCapsule.sym;
 	    	List<JCVariableDecl> fields = tree.getParameters();
 	    	while(fields.nonEmpty()){
@@ -816,11 +747,7 @@ public class Enter extends JCTree.Visitor {
 	    	}
         	c.capsule_info.definedRun = true;
         }
-        ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
-        params.appendList(tree.params);
-        c.capsule_info.capsuleParameters = params.toList();
-        tree.sym = c;
-        syms.capsules.put(c.name, c);
+
         classEnter(tree.defs, localEnv);
         result = c.type;
         annotationProcessor.setDefinedRun(tree, c.capsule_info.definedRun);
@@ -853,6 +780,10 @@ public class Enter extends JCTree.Visitor {
 				if (mdecl.name.toString().equals("run")
 						&& mdecl.params.isEmpty()) {
 					log.error(tree.pos(), "serialize.active.capsules");
+				} else if(mdecl.name.equals(names.panini.InternalCapsuleWiring)) {
+					//Don't change capsule wiring. It needs to be handled
+					//as a special case
+					definitions.add(mdecl);
 				} else if ((mdecl.mods.flags & PRIVATE) == 0
 						&& (mdecl.mods.flags & PROTECTED) == 0) {
 					JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC | FINAL),
@@ -911,6 +842,10 @@ public class Enter extends JCTree.Visitor {
 						tree.computeMethod = computeDecl;
 						hasRun = true;
 					}
+				} else if(mdecl.name.equals(names.panini.InternalCapsuleWiring)) {
+					//Don't change capsule wiring. It needs to be handled
+					//as a special case
+					definitions.add(mdecl);
 				} else if ((mdecl.mods.flags & PRIVATE) == 0
 						&& (mdecl.mods.flags & PROTECTED) == 0) {
 					String constantName = PaniniConstants.PANINI_METHOD_CONST

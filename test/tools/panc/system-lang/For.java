@@ -31,14 +31,16 @@ capsule M(O o, int fortyTwo){
 capsule O{
 }
 
-system ForSys {
-   int size = 5;
-    M many[size];
-    O one;
-    int temp;
+capsule ForSys {
+    design {
+        int size = 5;
+        M many[size];
+        O one;
+        int temp;
 
-    one();
-    for(int i = 0; i < size; i = i + 1)
-        many[i](one, 42);
+        one();
+        for(int i = 0; i < size; i = i + 1)
+            many[i](one, 42);
+    }
 }
 

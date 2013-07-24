@@ -23,7 +23,7 @@ import java.util.LinkedList;
  * @test
  * @summary Compile the Barbershop2 example.
  * @compile Barbershop2.java
- * @compile/ref=Barbershop2.java.dot -graphs Barbershop2.java
+
  */
 
 class Customer {
@@ -84,14 +84,16 @@ capsule Customers(Barber b, WaitingRoom r, String[] customerNames) {
 	}
 }
 
-system Barbershop {
-	Barber b;
-	WaitingRoom w;
-	Customers gs[2];
+capsule Barbershop {
+    design {
+        Barber b;
+        WaitingRoom w;
+        Customers gs[2];
 
-	b(w, true, 8);
-	w(10);       
+        b(w, true, 8);
+        w(10);
 
-	gs[0](b,w, new String[]{"Hridesh", "Eric", "Steve", "Sarah"});
-	gs[1](b,w, new String[]{"Ganesha", "Rex", "Yuheng", "Lorand"});
+        gs[0](b,w, new String[]{"Hridesh", "Eric", "Steve", "Sarah"});
+        gs[1](b,w, new String[]{"Ganesha", "Rex", "Yuheng", "Lorand"});
+    }
 }

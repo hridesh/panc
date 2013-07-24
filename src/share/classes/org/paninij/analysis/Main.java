@@ -89,7 +89,8 @@ public final class Main {
 		}
 		// TODO: assumes that all capsules and system are in the same file
 		// All capsules are processed before the system
-		if (root.sym instanceof Symbol.SystemSymbol) {// inter-capsule cost update
+		System.out.println("Ignoring Finalize Cost for " + root.sym.name);
+		/*if (root.sym instanceof Symbol.SystemSymbol) {// inter-capsule cost update
 			org.paninij.analysis.StaticProfilePass.finalizeCost();
 
 			// Rules to decide execution model for capsules in the system
@@ -122,6 +123,7 @@ public final class Main {
 //				}
 //			}
 		}
+		*/
 	}
 
 //	private static void decide(org.paninij.systemgraphs.SystemGraphs.Node node) {

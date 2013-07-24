@@ -35,6 +35,10 @@ public class PaniniConstants {
 	public final static String CAPSULE_ARG_QUEUES = "panini$msgArgsQueue";
 	public final static String CAPSULE_RETURN_QUEUES = "panini$msgDuckQueue";
 	public final static String CAPSULE_METHOD_NAMES = "panini$methodConst";
+	/**
+	 * Name of the method used to wire an 'internal' system for a capsule.
+	 */
+	public final static String CAPSULE_SYS_WIRE = "panini$wire$sys";
 	public final static String DUCK_INTERFACE_NAME = "Panini$Duck";
 	public final static String PANINI_FINISH = "panini$finish";
 	public final static String PANINI_MESSAGE = "panini$message";

@@ -14,12 +14,11 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  *
- * Contributor(s): Sean L. Mooney
+ * Contributor(s):
  */
-
-/* @test
- * @summary Fail system type check if there are more than 1 system params
- * @compile/fail/ref=TExtraSystemParams.out -XDrawDiagnostics TExtraSystemParams.java
+/**
+ * Unit Tests for utility classes.
+ * @author Sean L. Mooney
+ * @since panini-0.9.2
  */
-system SysParamTest(String[] args, Object foo) {
-}
+package org.paninij.util.test;

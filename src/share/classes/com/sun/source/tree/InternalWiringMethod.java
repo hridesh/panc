@@ -14,19 +14,15 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  *
- * Contributor(s): Hridesh Rajan, Eric Lin
+ * Contributor(s): Eric Lin
  */
 
-/*
- * @test
- * @summary Test separate compilation.
- * @compile Console.java
- * @compile Greeter.java
- * @compile HelloWorld.java
+package com.sun.source.tree;
+
+/**
+ * 'Internal' wiring for capsules.
+ * Formerly a SystemTree.
+ *
+ * @since panini-0.9.2
  */
-capsule HelloWorld {
-    design {
-        Console c; Greeter g;
-        g(c);
-    }
-}
+public interface InternalWiringMethod extends MethodTree {}

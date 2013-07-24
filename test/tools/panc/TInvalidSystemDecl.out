@@ -1,4 +1,0 @@
-TInvalidSystemDecl.java:26:26: compiler.err.expected: '{'
-TInvalidSystemDecl.java:26:27: compiler.err.illegal.start.of.expr
-TInvalidSystemDecl.java:26:29: compiler.err.illegal.start.of.expr
-3 errors
