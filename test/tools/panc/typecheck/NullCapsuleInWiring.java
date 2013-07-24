@@ -32,7 +32,7 @@ capsule C(C2 other) {
 capsule C2() { void foo(){} }
 
 capsule Sys {
-    =>= {
+    design {
         C c;
         c(null);
     }

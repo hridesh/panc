@@ -67,7 +67,7 @@ capsule Master (double totalCount, Worker[] workers) {
 }
 
 capsule Pi (String[] args) {
-    =>= {
+    design {
         double totalSamples = Math.pow(10,Integer.parseInt(args[0]));
         Master master; Worker workers[10];
         master(totalSamples, workers);

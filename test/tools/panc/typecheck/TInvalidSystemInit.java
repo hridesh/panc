@@ -25,7 +25,7 @@
  */
 capsule C() { void run() {} }
 capsule TInvalidSystemInit {
-    =>= {
+    design {
         C c[5] = new C[5];
     }
 }

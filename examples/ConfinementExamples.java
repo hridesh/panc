@@ -21,7 +21,7 @@ capsule M (C c) {
 }
 
 capsule ConfineTest {
-    =>= {
+    design {
         C c; M m;
         m(c);
     }

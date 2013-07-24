@@ -34,7 +34,7 @@ capsule C2(int i) {
 }
 
 capsule Sys {
-    =>= {
+    design {
         //Should not find a capsule type.
         C c;
         C2 c2;

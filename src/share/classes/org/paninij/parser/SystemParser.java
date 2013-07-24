@@ -200,7 +200,6 @@ public class SystemParser {
             case DOUBLE:
             case BOOLEAN:
             case VOID:
-            case WIRE:
                 if (stopAtMemberDecl)
                     return;
                 break;
@@ -490,7 +489,7 @@ public class SystemParser {
      * @return
      */
     public SystemParserResult parseSystemDecl(JCModifiers mods) {
-        accept(WIRE);
+        nextToken();
         int pos = token.pos;
         JCWiringBlock result;
         JCBlock body = null;

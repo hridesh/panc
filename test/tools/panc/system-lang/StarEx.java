@@ -30,7 +30,7 @@ capsule C2() {
 }
 
 capsule S {
-    =>= {
+    design {
         C c;
         C2 c2s[3];
 

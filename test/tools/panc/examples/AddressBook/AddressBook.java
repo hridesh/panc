@@ -31,7 +31,7 @@
  * are decoupled.
  */
 capsule AddressBook {
-    =>= {
+    design {
         CSVBook csv; XMLBook xml; DexBook dex; YellowBook yellow; ISUBook isu;
         UI ui;
         csv("AddressBook.csv");

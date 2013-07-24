@@ -24,7 +24,7 @@
  * @compile ConstProp.java
  */
 capsule ConstProp {
-    =>= {
+    design {
         int i1 = 3;
         int i2 = 1;
         int i3 = i1 + i2;

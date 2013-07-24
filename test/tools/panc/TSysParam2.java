@@ -29,7 +29,7 @@ capsule C() {
 
 
 capsule S(String[] args) {
-    =>= {
+    design {
         C c;
         c();
     }

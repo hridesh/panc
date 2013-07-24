@@ -32,7 +32,7 @@ capsule O{
 }
 
 capsule SysArgsInterpretation(String[] args) {
-    =>= {
+    design {
         M many[5];
         O one;
         int value = 42;

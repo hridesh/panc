@@ -93,7 +93,7 @@ capsule Customers(Barber b, WaitingRoom r) {
 }
 
 capsule Barbershop {
-    =>= {
+    design {
         Barber b;
         WaitingRoom w;
         Customers cs[5];

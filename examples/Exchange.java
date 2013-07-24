@@ -92,7 +92,7 @@ capsule Writer (int LIST_SIZE, OutputStream out) implements Exchanger {
 	}
 }
 capsule Exchange {
-    =>= {
+    design {
         Reader r; Writer w;
         r(10000, System.in, w); w(10000, System.out);
     }

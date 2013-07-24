@@ -32,7 +32,7 @@ capsule O{
 }
 
 capsule ManyToOne {
-    =>= {
+    design {
         M many[5];
         O one;
 

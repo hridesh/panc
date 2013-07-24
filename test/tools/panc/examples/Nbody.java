@@ -87,7 +87,7 @@ capsule Controller (Body[] bodies, int n) {
 }
 
 capsule Nbody {
-    =>= {
+    design {
         Body b[5];
         Controller c;
 

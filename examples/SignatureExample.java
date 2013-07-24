@@ -30,7 +30,7 @@ capsule Greeter (Stream s) {
 }
 
 capsule SignatureExample {
-    =>= {
+    design {
         Console c; Greeter g;
         g(c);
     }

@@ -59,7 +59,7 @@ capsule Printer() {
 }
 
 capsule Histogram (String[] args){
-    =>= {
+    design {
         Reader r;
         task Bucket buckets[128];
         sequential Printer p;

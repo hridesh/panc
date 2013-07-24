@@ -32,7 +32,7 @@ capsule Greeter (Console c) { //Requires an instance of capsule Console to work
 }
 
 capsule HelloWorld() {
-	=>= {
+	design {
 		Console c; //Capsule instance declaration
 		Greeter g; //Another capsule instance declaration
 		g(c);      //Wiring, connecting capsule instance g to c

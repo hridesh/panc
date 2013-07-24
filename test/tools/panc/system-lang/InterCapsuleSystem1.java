@@ -30,7 +30,7 @@ capsule C1 () {
         c12.baz(myInt);
     }
 
-    =>= {
+    design {
         C2 c12;
     }
 

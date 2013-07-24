@@ -25,7 +25,7 @@
  * @compile HelloWorld.java
  */
 capsule HelloWorld {
-    =>= {
+    design {
         Console c; Greeter g;
         g(c);
     }

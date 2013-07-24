@@ -24,7 +24,7 @@
 capsule Indirection () { void run() {} }
 
 capsule TCapIdentList () {
-    =>= {
+    design {
         Indirection i1, i2;
         i1();i2();
 

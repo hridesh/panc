@@ -111,7 +111,7 @@ capsule Sink(long num) implements Stage {
 }
 
 capsule Pipeline {
-    =>= {
+    design {
         Source src; Average avg; Sum sum; Min min; Max max; Sink snk;
         src(avg,500); avg(sum); sum(min); min(max); max(snk); snk(500);
     }

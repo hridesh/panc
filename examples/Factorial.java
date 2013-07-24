@@ -44,7 +44,7 @@ capsule Main (Fact c) {
 }
 
 capsule Factorial {
-    =>= {
+    design {
         Main m; Fact c;
         m(c);
     }

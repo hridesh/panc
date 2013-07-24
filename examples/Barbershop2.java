@@ -79,7 +79,7 @@ capsule Customers(Barber b, WaitingRoom r, String[] customerNames) {
 }
 
 capsule Barbershop {
-    =>= {
+    design {
         Barber b;
         WaitingRoom w;
         Customers gs[2];

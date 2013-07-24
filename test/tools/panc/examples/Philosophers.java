@@ -75,7 +75,7 @@ capsule Philosopher (Fork left, Fork right, String name) {
 }
 
 capsule Philosophers {
-    =>= {
+    design {
         Fork f1;
         Fork f2;
         Fork f3;

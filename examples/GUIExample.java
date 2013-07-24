@@ -92,7 +92,7 @@ capsule UI {
 }
 
 capsule GUIExample {
-    =>= {
+    design {
         UI ui;
     }
 }

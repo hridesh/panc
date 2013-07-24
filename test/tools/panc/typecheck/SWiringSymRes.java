@@ -24,7 +24,7 @@
  */
 
 capsule SWiringSymRes {
-    =>= {
+    design {
         CWiringSymRes c;
         c("hello");
     }

@@ -60,7 +60,7 @@ capsule Producer(Ping ping) {
 }
 
 capsule PingPong () {
-    =>= {
+    design {
         Ping ping;
         Pong pong;
         Producer p;

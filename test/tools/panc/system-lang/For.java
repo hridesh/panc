@@ -32,7 +32,7 @@ capsule O{
 }
 
 capsule ForSys {
-    =>= {
+    design {
         int size = 5;
         M many[size];
         O one;

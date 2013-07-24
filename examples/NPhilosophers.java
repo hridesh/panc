@@ -111,7 +111,7 @@ capsule Philosopher (Fork left, Fork right, String name) {
 }
 
 capsule NPhilosophers {
-    =>= {
+    design {
         Fork forks[100];
         Philosopher phils[100];
         Indexer i;

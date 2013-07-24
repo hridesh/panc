@@ -24,7 +24,7 @@
  * @compile/fail/ref=TInvalidWiringBlock.out -XDrawDiagnostics TInvalidWiringBlock.java
  */
 capsule TInvalidWiringBlock () {
-    =>= [] {
+    design [] {
         TInvalidWiringBlock tw;
     }
 }

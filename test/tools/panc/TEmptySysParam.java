@@ -24,7 +24,7 @@
 capsule C () { void run() {} }
 
 capsule SysParamTest() {
-    =>= {
+    design {
         C  i2;
         i2();
     }

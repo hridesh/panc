@@ -296,9 +296,6 @@ public class JavacParser implements Parser {
                 case FLOAT:
                 case DOUBLE:
                 case BOOLEAN:
-                // Panini code
-                case WIRE:
-                // end Panini code
                 case VOID:
                     if (stopAtMemberDecl)
                         return;
@@ -2820,7 +2817,9 @@ public class JavacParser implements Parser {
                  }else
                 	 return List.<JCTree>of(syntaxError(token.pos, null, "expected", LBRACE));
             	 return List.<JCTree>of(to(F.at(pos).InitDef(to(F.at(pos).Modifiers(Flags.PROTECTED)), body)));
-             } else if (token.kind == TokenKind.WIRE) {
+             } else if (token.kind == IDENTIFIER
+                     && token.name().toString().equals("design")
+                     ) {
                  JCTree wiringBlock = systemDecl(mods, dc);
                  return List.<JCTree>of(wiringBlock);
              } else {

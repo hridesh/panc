@@ -61,7 +61,7 @@ capsule Worker(Host l) {
   }
 }
 capsule EchoServer {
-    =>= {
+    design {
       Host h; Worker workers[10];
       wireall(workers, h);
     }

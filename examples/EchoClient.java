@@ -52,7 +52,7 @@ capsule Client() {
 	}
 }
 capsule EchoClient {
-    =>= {
+    design {
       Client c;
     }
 }
