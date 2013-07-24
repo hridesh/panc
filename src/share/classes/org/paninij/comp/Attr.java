@@ -401,13 +401,7 @@ public final class Attr extends CapsuleInternal {
      * <p>
      * Closed capsules have either no params, or a single param of type String[].
      * <p>
-     * Either the Active or the Serial version of the capsule gets a main method,
-     * not both. The Active capsule is the 'main' capsule kind in the case of
-     * defining a run method. The serial kind is the 'main' capsule otherwise.
-     * Task kind and Monitor kind capsules never need a main method.
-     * <b>
-     * Auto-Generated run methods must be marked with the sythentic flag.
-     * </b>
+     * Install a main method into all closed active capsule.
      */
     protected boolean needsMainMethod(JCCapsuleDecl tree) {
         boolean isClosedCapsule = tree.params.isEmpty()
@@ -416,21 +410,8 @@ public final class Attr extends CapsuleInternal {
                         && types.elemtype(tree.params.head.vartype.type).equals(syms.stringType));
 
         if (isClosedCapsule) {
-            /*if(tree.computeMethod == null) {
-                return false;
-            }
-            if ((tree.computeMethod.sym.flags_field & Flags.SYNTHETIC) == 0) {
-                return (tree.sym.flags_field & Flags.ACTIVE) != 0;
-            } else {
-                return (tree.sym.flags_field & Flags.SERIAL) != 0;
-            }*/
             //Simplification until I can fix tis.
-            //Serial methods never have a compute method, which means.
-            //the first is computeMethod == null check never succeeds for Serial.
-            //Similarly, active capsules aren't correctly getting attributed with
-            //Synthetic, and all active capsules get main methods.
-            return (tree.sym.flags_field & Flags.ACTIVE) != 0 ||
-                   (tree.sym.flags_field & Flags.SERIAL) != 0;
+            return (tree.sym.flags_field & Flags.ACTIVE) != 0 ;
         } else {
             return false;
         }
