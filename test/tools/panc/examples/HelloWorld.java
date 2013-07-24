@@ -29,18 +29,15 @@ capsule Console () { //Capsule declaration
 	}
 }
 
-capsule Greeter (Console c) { //Requires an instance of capsule Console to work
-	void run(){                  //An autonomous capsule procedure
-		c.write("Panini: Hello World!");          //Inter-capsule procedure call 
-		long time = System.currentTimeMillis();
-		c.write("Time is now: " + time);
-	}
-}
 
 public capsule HelloWorld () {
 	design {
 		Console c; //Capsule instance declaration
-		Greeter g; //Another capsule instance declaration
-		g(c);      //Wiring, connecting capsule instance g to c
+	}
+
+	void run(){                  //An autonomous capsule procedure
+		c.write("Panini: Hello World!");          //Inter-capsule procedure call
+		long time = System.currentTimeMillis();
+		c.write("Time is now: " + time);
 	}
 }
