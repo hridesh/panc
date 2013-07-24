@@ -10,34 +10,16 @@
  * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
  * for the specific language governing rights and limitations under the
  * License.
- * 
+ *
  * For more details and the latest version of this code please see
  * http://paninij.org
- * 
- * Contributor(s): Hridesh Rajan
+ *
+ * Contributor(s): Sean L. Mooney
  */
 
-/* 
- * @test
- * @summary Compile the HelloWorld example.
- * @compile HelloWorld.java
- * */
-
-capsule Console () { //Capsule declaration
-	void write(String s) { //Capsule procedure
-		System.out.println(s); 
-	}
-}
-
-
-public capsule HelloWorld () {
-	design {
-		Console c; //Capsule instance declaration
-	}
-
-	void run(){                  //An autonomous capsule procedure
-		c.write("Panini: Hello World!");          //Inter-capsule procedure call
-		long time = System.currentTimeMillis();
-		c.write("Time is now: " + time);
-	}
-}
+/* @test
+ * @ignore
+ * @summary Make sure the HelloWorld example runs.
+ * @compile ../examples/HelloWorld.java
+ * @run main MainHarness HelloWorld$thread
+ */
