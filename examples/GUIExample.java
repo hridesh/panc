@@ -91,6 +91,8 @@ capsule UI {
 	}
 }
 
-system GUIExample {
-	UI ui;
+capsule GUIExample {
+    =>= {
+        UI ui;
+    }
 }

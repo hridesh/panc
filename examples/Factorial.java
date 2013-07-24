@@ -43,7 +43,9 @@ capsule Main (Fact c) {
 	void run(){ System.out.println(c.fact(10, 0).v()); }
 }
 
-system Factorial {
-	Main m; Fact c;
-	m(c);
+capsule Factorial {
+    =>= {
+        Main m; Fact c;
+        m(c);
+    }
 }

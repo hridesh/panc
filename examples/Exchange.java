@@ -91,9 +91,11 @@ capsule Writer (int LIST_SIZE, OutputStream out) implements Exchanger {
 		}
 	}
 }
-system Exchange {
-	Reader r; Writer w; 
-	r(10000, System.in, w); w(10000, System.out);
+capsule Exchange {
+    =>= {
+        Reader r; Writer w;
+        r(10000, System.in, w); w(10000, System.out);
+    }
 }
 
 //From: https://bitbucket.org/chinmaya/java-concurrent_response/

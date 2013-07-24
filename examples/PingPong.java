@@ -59,12 +59,14 @@ capsule Producer(Ping ping) {
 	}
 }
 
-system PingPong () {
-	Ping ping;
-	Pong pong;
-	Producer p;
+capsule PingPong () {
+    =>= {
+        Ping ping;
+        Pong pong;
+        Producer p;
 
-	ping(pong, 1000000);
-	pong(ping);
-	p(ping);
+        ping(pong, 1000000);
+        pong(ping);
+        p(ping);
+    }
 }

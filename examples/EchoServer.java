@@ -60,7 +60,9 @@ capsule Worker(Host l) {
 	  } catch (IOException e) { e.printStackTrace(System.err); }
   }
 }
-system EchoServer {
-  Host h; Worker workers[10];
-  wireall(workers, h);
+capsule EchoServer {
+    =>= {
+      Host h; Worker workers[10];
+      wireall(workers, h);
+    }
 }
