@@ -416,14 +416,21 @@ public final class Attr extends CapsuleInternal {
                         && types.elemtype(tree.params.head.vartype.type).equals(syms.stringType));
 
         if (isClosedCapsule) {
-            if(tree.computeMethod == null) {
+            /*if(tree.computeMethod == null) {
                 return false;
             }
             if ((tree.computeMethod.sym.flags_field & Flags.SYNTHETIC) == 0) {
                 return (tree.sym.flags_field & Flags.ACTIVE) != 0;
             } else {
                 return (tree.sym.flags_field & Flags.SERIAL) != 0;
-            }
+            }*/
+            //Simplification until I can fix tis.
+            //Serial methods never have a compute method, which means.
+            //the first is computeMethod == null check never succeeds for Serial.
+            //Similarly, active capsules aren't correctly getting attributed with
+            //Synthetic, and all active capsules get main methods.
+            return (tree.sym.flags_field & Flags.ACTIVE) != 0 ||
+                   (tree.sym.flags_field & Flags.SERIAL) != 0;
         } else {
             return false;
         }
