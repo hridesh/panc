@@ -383,7 +383,8 @@ public final class Attr extends CapsuleInternal {
 			}
 			if (accessStat == null)
 				continue;
-			JCAssign refCountAssign = make.Assign(accessStat, intlit(refCount));
+			JCAssignOp refCountAssign = make.Assignop(JCTree.Tag.PLUS_ASG,
+					accessStat, intlit(refCount));
 			JCExpressionStatement refCountAssignStmt = make
 					.Exec(refCountAssign);
 			assigns.append(refCountAssignStmt);

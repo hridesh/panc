@@ -21,6 +21,10 @@ package org.paninij.runtime;
 
 public abstract class PaniniCapsuleSequential implements PaniniCapsule{
 	public volatile int panini$ref$count;
+	
+	protected PaniniCapsuleSequential() {
+		panini$ref$count = 0;
+	}
   	/**
   	 * Causes the current capsule to sleep (temporarily cease execution) 
   	 * for the specified number of milliseconds, subject to the precision 

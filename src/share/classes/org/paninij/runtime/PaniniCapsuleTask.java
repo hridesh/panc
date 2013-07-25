@@ -35,6 +35,7 @@ public abstract class PaniniCapsuleTask implements PaniniCapsule{
 		panini$capsule$head = 0; 
 		panini$capsule$tail= 0; 
 		panini$capsule$size = 0;
+		panini$ref$count = 0;
 	}
 	
 	protected final void panini$extendQueue() {

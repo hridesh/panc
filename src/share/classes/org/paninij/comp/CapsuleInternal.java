@@ -1163,15 +1163,16 @@ public class CapsuleInternal extends Internal {
                             make.Ident(sysArgs))));
         }
         
+        mainStmts.add(make.Exec(make.Unary(JCTree.Tag.POSTINC, make.Select(make.Ident(c),
+        		names.fromString(PaniniConstants.PANINI_REF_COUNT))
+				)));
+        
         mainStmts.add(make
 				.Exec(make.Apply(
 						List.<JCExpression> nil(),
 						make.Select(
-								make.TypeCast(
-										make.Ident(names
-												.fromString(PaniniConstants.PANINI_QUEUE)),
-										make.Ident(c)),
-								names.fromString(PaniniConstants.PANINI_EXIT)),
+								make.Ident(c),
+								names.fromString(PaniniConstants.PANINI_DISCONNECT)),
 						List.<JCExpression> nil())));
 
         // run | start
