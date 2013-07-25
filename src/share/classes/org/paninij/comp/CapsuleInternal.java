@@ -20,6 +20,7 @@
 package org.paninij.comp;
 
 import com.sun.tools.javac.tree.*;
+import com.sun.tools.javac.tree.JCTree.JCCatch;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
@@ -138,11 +139,6 @@ public class CapsuleInternal extends Internal {
 		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
 		blockStats = createCapsuleMemberDisconnects(tree.params);
 		
-		List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make.VarDef(
-				make.Modifiers(0), names.fromString("e"),
-				make.Ident(names.fromString("Exception")), null),
-				make.Block(0, List.<JCStatement> nil())));
-
 		JCBlock b = body(
 				make.Try(body(
 						//Call capsule Wiring
@@ -152,7 +148,7 @@ public class CapsuleInternal extends Internal {
 						var(mods(0), PaniniConstants.PANINI_TERMINATE,
 								make.TypeIdent(TypeTags.BOOLEAN), falsev()),
 						whilel(nott(id(PaniniConstants.PANINI_TERMINATE)),
-								body(messageLoopBody))), catchers, body(blockStats)));
+								body(messageLoopBody))), List.<JCCatch> nil(), body(blockStats)));
 		return b;
 	}
 	
@@ -1166,6 +1162,17 @@ public class CapsuleInternal extends Internal {
                             make.Select(make.Ident(c), pDecl.name),
                             make.Ident(sysArgs))));
         }
+        
+        mainStmts.add(make
+				.Exec(make.Apply(
+						List.<JCExpression> nil(),
+						make.Select(
+								make.TypeCast(
+										make.Ident(names
+												.fromString(PaniniConstants.PANINI_QUEUE)),
+										make.Ident(c)),
+								names.fromString(PaniniConstants.PANINI_EXIT)),
+						List.<JCExpression> nil())));
 
         // run | start
         // Active capsules use run, serial capsules use start

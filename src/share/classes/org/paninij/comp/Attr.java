@@ -237,15 +237,10 @@ public final class Attr extends CapsuleInternal {
 					// Reference count disconnect()
 					ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
 					blockStats = createCapsuleMemberDisconnects(tree.params);
-					List<JCCatch> catchers = List.<JCCatch> of(make.Catch(make
-							.VarDef(make.Modifiers(0), names.fromString("e"),
-									make.Ident(names.fromString("Exception")),
-									null), make.Block(0,
-							List.<JCStatement> nil())));
 					ListBuffer<JCStatement> body = new ListBuffer<JCStatement>();
 					body.add(make.Try(
 							make.Block(0, tree.computeMethod.body.stats),
-							catchers, body(blockStats)));
+							List.<JCCatch> nil(), body(blockStats)));
 					tree.computeMethod.body.stats = body.toList();
 				}
 				attr.attribStat(tree.computeMethod, env);
@@ -258,9 +253,10 @@ public final class Attr extends CapsuleInternal {
 				methodStats.append(make.Exec(make.Unary(JCTree.Tag.POSTDEC, make.Ident(names
 						.fromString(PaniniConstants.PANINI_REF_COUNT)))));
 			
-				methodStats.append(make.If(make.Binary(JCTree.Tag.EQ, make.Ident(names
-						.fromString(PaniniConstants.PANINI_REF_COUNT)), make.Literal(TypeTags.INT, Integer.valueOf(0))), 
-						make.Block(0, blockStats.toList()), null));
+				if (blockStats.size() > 0)
+					methodStats.append(make.If(make.Binary(JCTree.Tag.EQ, make.Ident(names
+							.fromString(PaniniConstants.PANINI_REF_COUNT)), make.Literal(TypeTags.INT, Integer.valueOf(0))), 
+							make.Block(0, blockStats.toList()), null));
 				
 				JCBlock body = make.Block(0, methodStats.toList());
 				
