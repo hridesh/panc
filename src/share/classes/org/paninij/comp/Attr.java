@@ -46,11 +46,9 @@ import org.paninij.systemgraph.SystemGraphBuilder;
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Scope;
-import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.code.Type.MethodType;
@@ -58,11 +56,8 @@ import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.Annotate;
 import com.sun.tools.javac.comp.AttrContext;
-import com.sun.tools.javac.comp.Enter;
 import com.sun.tools.javac.comp.Env;
-import com.sun.tools.javac.comp.MemberEnter;
 import com.sun.tools.javac.comp.Resolve;
-import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
@@ -77,9 +72,6 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
-import com.sun.tools.javac.util.Names;
-import com.sun.tools.javac.util.Options;
-
 import org.paninij.util.PaniniConstants;
 
 /***
@@ -100,6 +92,16 @@ public final class Attr extends CapsuleInternal {
 
     final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
 
+    protected static final Context.Key<Attr> attrKey =
+            new Context.Key<Attr>();
+
+    public static Attr instance(Context context) {
+        Attr instance = context.get(attrKey);
+        if (instance == null)
+            instance = new Attr(context);
+        return instance;
+    }
+
 	/**
 	 * Whether or not capsule state access should be reported as an error.
 	 * Used to the keep errors from being reported once a wiring block is
@@ -119,13 +121,15 @@ public final class Attr extends CapsuleInternal {
 	 */
 	public boolean checkCapStateAcc = true;
 
-    public Attr(TreeMaker make, Names names, Types types, Enter enter,
-            MemberEnter memberEnter, Symtab syms, Log log,
-            Annotate annotate, Context context) {
-        super(make, names, types, enter, memberEnter, syms);
-        this.types = types;
-        this.log = log;
-        this.annotate = annotate;
+    protected Attr(Context context) {
+        super(TreeMaker.instance(context),
+                com.sun.tools.javac.util.Names.instance(context),
+                com.sun.tools.javac.code.Types.instance(context),
+                com.sun.tools.javac.comp.Enter.instance(context),
+                com.sun.tools.javac.comp.MemberEnter.instance(context),
+                com.sun.tools.javac.code.Symtab.instance(context));
+        this.log = com.sun.tools.javac.util.Log.instance(context);
+        this.annotate = Annotate.instance(context);
         this.annotationProcessor = new AnnotationProcessor(names, make, log);
         this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
         this.pck = Check.instance(context);

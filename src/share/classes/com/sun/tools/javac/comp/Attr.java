@@ -148,7 +148,7 @@ public class Attr extends JCTree.Visitor {
         unknownTypeInfo = new ResultInfo(TYP, Type.noType);
 
         // Panini code
-        pAttr = new org.paninij.comp.Attr(make, names, types, enter, memberEnter, syms, log, annotate, context);
+        pAttr = org.paninij.comp.Attr.instance(context);
         doGraphs = options.isSet("-graphs");
         // end Panini code
     }
