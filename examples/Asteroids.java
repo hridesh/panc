@@ -1,35 +1,5 @@
-/*
- * This file is part of the Panini project at Iowa State University.
- *
- * The contents of this file are subject to the Mozilla Public License
- * Version 1.1 (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- * 
- * For more details and the latest version of this code please see
- * http://paninij.org
- * 
- * Contributor(s): Hridesh Rajan
- */
 import java.util.*;
 import java.io.*;
-
-//A simplified version of the classic arcade game Asteroids.
-capsule Controller(Ship ship){
-	void run(){
-		while(ship.alive()) 
-			switch(System.in.read()) {
-				case 106: ship.moveLeft(); break;
-				case 108: ship.moveRight(); break;
-			 case 105: ship.fire(); break;
-			}
-	}
-}
 
 capsule Ship {
 	short state = 0;
@@ -46,51 +16,77 @@ capsule Ship {
 	void moveRight() { if (x<10) x++; }
 }
 
-capsule Space(Ship s) {
+capsule Asteroids {
+	design {
+		Ship s; UI ui; Logic l; Input i;
+		ui(l); i(s);
+	}
 	void run() {
-		int lastFired = -1, points = 0, asteroidPos = -1;
+		int points = 0;
 		while(s.alive()) {
-			yield(1000);
 			int shipPos = s.getPos();
 			boolean isFiring = s.isFiring(); 
-			if(asteroidPos == lastFired) points++;
-			else if (asteroidPos == shipPos) s.die();
-			if(isFiring) lastFired = shipPos;
-			else lastFired = -1;
-			Screen.repaint(shipPos, isFiring, asteroidPos, lastFired, points, asteroidPositions);
-			asteroidPos = nextAsteroid();
+			int result = l.step(shipPos, isFiring);
+			if(result>0) points += result;
+			else if (result<0) s.die();
+			ui.repaint(shipPos, isFiring, points);
+			yield(1000);
 		}
-		Screen.endGame(); 
+		ui.endGame(); 
 	}
-	int[] asteroidPositions = new int[] {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+}
+
+capsule Input (Ship ship) {
+	public void run(){
+		try {
+			while(ship.alive())
+				switch(System.in.read()) {
+					case 106: ship.moveLeft(); break;
+					case 108: ship.moveRight(); break;
+					case 105: ship.fire(); break;
+				}
+		} catch (IOException ioe) {}
+	}
+}
+
+capsule Logic () {
+	int step(int shipPos, boolean isFiring){
+		int result = 0;
+		if(asteroidPos == lastFired) result = 1;
+		else if (asteroidPos == shipPos) result = -1;
+		if(isFiring) lastFired = shipPos;
+		else lastFired = -1;
+		asteroidPos = nextAsteroid();
+		return result;
+	}
+	short[] asteroidPositions = new short[] {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 	private int nextAsteroid() {
 		for(int i=9; i>0; i--)
 			asteroidPositions[i] = asteroidPositions[i-1];
-		asteroidPositions[0] = prng.nextInt(10);
+		asteroidPositions[0] = (short) prng.nextInt(10);
 		return asteroidPositions[9];
 	}
+	short getAsteroidPosition(int index) { return asteroidPositions[index]; }
+	int asteroidPos = -1;
+	int lastFired = -1;
+	int getLastFired() { return lastFired; }
 	Random prng = new Random ();
 }
 
-system Asteroids {
-	Controller c; Ship s; Space p;
-	c(s); p(s);
-}
-
-class Screen {
-	static void repaint(int shipPos, boolean isFiring, int asteroidPos, int lastFired, int points, int[] asteroidPositions) {
+capsule UI (Logic l){
+	void repaint(int shipPos, boolean isFiring, int points) {
 		paintHorizBorder();
-		for(int i = 0; i<WIDTH; i++) {
-			for(int j = 0; j<HEIGHT-1; j++) {
-				if(j == asteroidPositions[i]) 
+		for(int i = 0; i<Constants.WIDTH; i++) {
+			for(int j = 0; j<Constants.HEIGHT-1; j++) {
+				if(j == l.getAsteroidPosition(i)) 
 					System.out.print('@');
 				else 	System.out.print(' ');
 			}
 			System.out.print('\n');
 		}
 		for(int i = 0; i<=10; i++) {
-			if(i == asteroidPos) {
-				if (i == lastFired) {
+			if(i == l.getAsteroidPosition(Constants.HEIGHT-1)) {
+				if (i == l.getLastFired()) {
 					System.out.print('#');
 				} else if (i == shipPos) {
 					System.out.print('X');
@@ -106,14 +102,19 @@ class Screen {
 		System.out.print('\n');
 		paintHorizBorder();
 	}
-	static void endGame() {
+	
+	void endGame() {
 		System.out.println("Game ended. Press any key to exit.");
 	}
-	static void paintHorizBorder() {
-		for(int i = 0; i<=WIDTH; i++)
+	
+	private void paintHorizBorder() {
+		for(int i = 0; i<=Constants.WIDTH; i++)
 			System.out.print('-');
 		System.out.println("");
 	}
+}
+
+class Constants {
 	static final int HEIGHT = 10;
 	static final int WIDTH = 10;
 }
