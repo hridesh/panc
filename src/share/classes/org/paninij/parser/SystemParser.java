@@ -513,8 +513,7 @@ public class SystemParser {
      * VariableDeclarations = OptModifiers JavacType VariableDeclaration
      * {,VariableDeclaration}*
      */
-    private List<JCStatement> variableDeclarations() {
-        JCModifiers mods = parseOptModifiers();
+    private List<JCStatement> variableDeclarations(JCModifiers mods) {
         JCExpression varType = parseTypeWithJavac();
         ListBuffer<JCStatement> variableDecls = new ListBuffer<JCStatement>();
         variableDecls.add(variableDeclaration(mods, varType));
@@ -649,7 +648,7 @@ public class SystemParser {
         } else if (isIndexedCapsuleWiringStart()) {
             return returnNullOrNonEmptyList(parseIndexedCapsuleWiringStatement());
         } else if (isVariableDeclStart()) {
-            List<JCStatement> variableDeclarations = variableDeclarations();
+            List<JCStatement> variableDeclarations = variableDeclarations(parseOptModifiers());
             accept(SEMI);
             return variableDeclarations;
         } else {

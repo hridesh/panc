@@ -577,7 +577,7 @@ public final class Attr extends CapsuleInternal {
             capFields.add(l.head);
             // Mark as private. Do not mark synthetic. Will cause other
             // name resolution to fail.
-            l.head.sym.flags_field =  Flags.PRIVATE;
+            l.head.sym.flags_field |= Flags.PRIVATE;
             //Update the AST Modifiers for pretty printing.
             l.head.mods = make.Modifiers(l.head.sym.flags_field);
         }
