@@ -84,6 +84,12 @@ public class Flags {
         if ((mask&ACYCLIC) != 0) flags.add(Flag.ACYCLIC);
         if ((mask&PARAMETER) != 0) flags.add(Flag.PARAMETER);
         if ((mask&VARARGS) != 0) flags.add(Flag.VARARGS);
+        // Panini code
+        if ((mask&SERIAL) != 0) flags.add(Flag.SERIAL);
+        if ((mask&MONITOR) != 0) flags.add(Flag.MONITOR);
+        if ((mask&TASK) != 0) flags.add(Flag.TASK);
+        if ((mask&ACTIVE) != 0) flags.add(Flag.ACTIVE);
+        // end Panini code
         return flags;
     }
 
@@ -261,6 +267,9 @@ public class Flags {
      * Wiring blocks are always private final.
      */
     public static final long WIRING_BLOCK_FLAGS = PROTECTED | FINAL;
+    /**Valid capsule kind mask.
+     */
+    public static final long CapsuleKindFlags = SERIAL | ACTIVE | TASK | MONITOR;
     // end Panini code
 
     /** Modifier masks.
@@ -321,6 +330,12 @@ public class Flags {
     public enum Flag {
         // Panini code
         CAPSULE("capsule"),
+        //Wrap these in comment block. Won't cause
+        // compile errors when trying to compile a 'printflat' translation.
+        SERIAL("/*serial*/"),
+        MONITOR("/*monitor*/"),
+        TASK("/*task*/"),
+        ACTIVE("/*active*/"),
         // end Panini code
 
         PUBLIC("public"),

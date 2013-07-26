@@ -104,7 +104,19 @@ public final class Attr extends CapsuleInternal {
 	/**
 	 * Whether or not capsule state access should be reported as an error.
 	 * Used to the keep errors from being reported once a wiring block is
-	 * convertted to actual wiring statements.
+	 * converted to actual wiring statements.
+	 *<p>
+	 * Any logic which toggles this off must ensure it's state is restored
+	 * after the specific case for turning it off has finished. e.g.
+	 * <pre>
+	 * boolean prevCheckCapState = checkCapStateAcc;
+	 * try {
+	 *     checkCapStateAcc = false;
+	 *     ...rest of checks...
+	 * } finally {
+	 *     checkCapStateAcc = prevCheckCapState;
+	 * }
+	 * </pre>
 	 */
 	public boolean checkCapStateAcc = true;
 
@@ -281,13 +293,14 @@ public final class Attr extends CapsuleInternal {
 
 		if (needsMainMethod(tree)) {
 		    JCMethodDecl mainMeth = createMainMethod(tree, env);
+		    final boolean prevCheckCapState = checkCapStateAcc;
 		    try{
 		        checkCapStateAcc = false;
 		        Scope sysScope = enterSystemScope(env);
 		        sysScope.enterIfAbsent(mainMeth.sym);
 		        attr.attribStat(mainMeth, env);
 		    } finally {
-		        checkCapStateAcc = true;
+		        checkCapStateAcc = prevCheckCapState;
 		    }
 		    tree.defs = tree.defs.append(mainMeth);
 		}
@@ -457,13 +470,14 @@ public final class Attr extends CapsuleInternal {
         toAttr.addAll(assigns);
         toAttr.addAll(starts);
         toAttr.addAll(joins);
+        final boolean prevCheckCapState = checkCapStateAcc;
         try {
             checkCapStateAcc = false;
             for (List<JCStatement> l = toAttr.toList(); l.nonEmpty(); l = l.tail) {
                 jAttr.attribStat(l.head, env);
             }
         } finally {
-            checkCapStateAcc = true;
+            checkCapStateAcc = prevCheckCapState;
         }
 		
 		List<JCStatement> mainStmts;
@@ -563,7 +577,7 @@ public final class Attr extends CapsuleInternal {
             capFields.add(l.head);
             // Mark as private. Do not mark synthetic. Will cause other
             // name resolution to fail.
-            l.head.sym.flags_field =  Flags.PRIVATE;
+            l.head.sym.flags_field |= Flags.PRIVATE;
             //Update the AST Modifiers for pretty printing.
             l.head.mods = make.Modifiers(l.head.sym.flags_field);
         }
