@@ -482,7 +482,7 @@ public class SystemParser {
     /**
      * <pre>
      *    SystemDecl = 
-     *       "=>=" Block
+     *       "design" Block
      * </pre>
      * 
      *

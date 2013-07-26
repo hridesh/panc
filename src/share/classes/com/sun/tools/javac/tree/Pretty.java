@@ -577,7 +577,7 @@ public class Pretty extends JCTree.Visitor {
                 print(" " + tree.name.table.names.panini.InternalCapsuleWiring);
                 print("()"); //Always empty parameters.
             } else {
-                print("=>=");
+                print("design");
             }
             visitBlock(tree.body);
         } catch (IOException e) {
