@@ -219,6 +219,12 @@ public class Pretty extends JCTree.Visitor {
      */
     public void printFlags(long flags) throws IOException {
         if ((flags & SYNTHETIC) != 0) print("/*synthetic*/ ");
+        // Panini code
+        if ((flags & CapsuleKindFlags) != 0) {
+            print(TreeInfo.capsuleFlagNames(flags));
+            print(" ");
+        }
+        // end Panini code
         print(TreeInfo.flagNames(flags));
         if ((flags & StandardFlags) != 0) print(" ");
         if ((flags & ANNOTATION) != 0) print("@");
@@ -577,7 +583,7 @@ public class Pretty extends JCTree.Visitor {
                 print(" " + tree.name.table.names.panini.InternalCapsuleWiring);
                 print("()"); //Always empty parameters.
             } else {
-                print("=>=");
+                print("design");
             }
             visitBlock(tree.body);
         } catch (IOException e) {

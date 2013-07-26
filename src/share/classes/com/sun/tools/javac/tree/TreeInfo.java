@@ -762,6 +762,14 @@ public class TreeInfo {
         return Flags.toString(flags & StandardFlags).trim();
     }
 
+    // Panini code
+    /** Return just {@link CapsuleKindFlags} as string, separated by " ".
+     */
+    public static String capsuleFlagNames(long flags) {
+        return Flags.toString(flags & CapsuleKindFlags).trim();
+    }
+    // end Panini code
+
     /** Operator precedences values.
      */
     public static final int
