@@ -729,12 +729,6 @@ public class Enter extends JCTree.Visitor {
 	    				null));
 	    		fields = fields.tail;
 	    	}
-	    	definitions.add(make.MethodDef(make.Modifiers(PUBLIC), names.init, null, 
-	        		List.<JCTypeParameter>nil(), 
-	        		List.<JCVariableDecl>nil(), 
-	                List.<JCExpression>nil(),
-	                make.Block(0, List.<JCStatement>nil()),
-	                null));
 	    	tree.defs = definitions.toList();
         }else {
         	List<JCVariableDecl> fields = tree.getParameters();

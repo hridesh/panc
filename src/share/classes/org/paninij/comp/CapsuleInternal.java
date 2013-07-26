@@ -578,11 +578,9 @@ public class CapsuleInternal extends Internal {
 						alreadedAddedDuckClasses.put(restype.toString(),
 								wrappedClass);
 					} else {
-						if (!method.params.isEmpty()) {
-							JCClassDecl duckClass = alreadedAddedDuckClasses
-									.get(restype.toString());
-								adaptDuckClass(method, null, duckClass, true);
-						}
+						JCClassDecl duckClass = alreadedAddedDuckClasses
+								.get(restype.toString());
+							adaptDuckClass(method, null, duckClass, true);
 					}
 				}
 			}
