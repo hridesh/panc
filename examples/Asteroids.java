@@ -18,15 +18,15 @@ capsule Ship {
 
 capsule Asteroids {
 	design {
-		Ship s; UI ui; Logic l; Input i;
-		ui(l); i(s);
+		Ship s; UI ui; Game g; Input i;
+		ui(g); i(s);
 	}
 	void run() {
 		int points = 0;
 		while(s.alive()) {
 			int shipPos = s.getPos();
 			boolean isFiring = s.isFiring(); 
-			int result = l.step(shipPos, isFiring);
+			int result = g.step(shipPos, isFiring);
 			if(result>0) points += result;
 			else if (result<0) s.die();
 			ui.repaint(shipPos, isFiring, points);
@@ -49,7 +49,7 @@ capsule Input (Ship ship) {
 	}
 }
 
-capsule Logic () {
+capsule Game () {
 	int step(int shipPos, boolean isFiring){
 		int result = 0;
 		if(asteroidPos == lastFired) result = 1;
@@ -73,20 +73,20 @@ capsule Logic () {
 	Random prng = new Random ();
 }
 
-capsule UI (Logic l){
+capsule UI (Game g){
 	void repaint(int shipPos, boolean isFiring, int points) {
 		paintHorizBorder();
 		for(int i = 0; i<Constants.WIDTH; i++) {
 			for(int j = 0; j<Constants.HEIGHT-1; j++) {
-				if(j == l.getAsteroidPosition(i)) 
+				if(j == g.getAsteroidPosition(i)) 
 					System.out.print('@');
 				else 	System.out.print(' ');
 			}
 			System.out.print('\n');
 		}
 		for(int i = 0; i<=10; i++) {
-			if(i == l.getAsteroidPosition(Constants.HEIGHT-1)) {
-				if (i == l.getLastFired()) {
+			if(i == g.getAsteroidPosition(Constants.HEIGHT-1)) {
+				if (i == g.getLastFired()) {
 					System.out.print('#');
 				} else if (i == shipPos) {
 					System.out.print('X');
