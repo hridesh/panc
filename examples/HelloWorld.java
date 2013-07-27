@@ -17,24 +17,48 @@
  * Contributor(s): Hridesh Rajan
  */
 
-capsule Console () { //Capsule declaration
+// Short version: 
+// To test compile this file and run this capsule.
+//    $PATH_TO_PANC$/panc HelloWorld.java
+//    $PATH_TO_PANINI$/panini HelloWorldShort
+
+capsule HelloWorldShort() {
+	void run() { 
+		System.out.println("Panini: Hello World!");
+	}
+}
+
+//Longer version that illustrates most Panini features.
+//To test compile this file and run this capsule.
+//$PATH_TO_PANC$/panc HelloWorld.java
+//$PATH_TO_PANINI$/panini HelloWorld
+
+signature Stream { //A signature declaration
+	void write(String s);
+}
+
+capsule Console () implements Stream { //Capsule declaration
 	void write(String s) { //Capsule procedure
 		System.out.println(s); 
 	}
 }
 
-capsule Greeter (Console c) { //Requires an instance of capsule Console to work
-	void run(){                  //An autonomous capsule procedure
-		c.write("Panini: Hello World!");          //Inter-capsule procedure call 
+capsule Greeter (Stream s) { //Requires an instance of Stream to work
+	String message = "Panini: Hello World!"; // State declaration
+	void greet(){                  //Capsule procedure
+		s.write(message);  //Inter-capsule procedure call 
 		long time = System.currentTimeMillis();
-		c.write("Time is now: " + time);
+		s.write("Time is now: " + time);
 	}
 }
 
 capsule HelloWorld() {
-	design {
+	design {       //Design declaration
 		Console c; //Capsule instance declaration
 		Greeter g; //Another capsule instance declaration
 		g(c);      //Wiring, connecting capsule instance g to c
+	}
+	void run() { //An autonomous procedure
+		g.greet(); //Inter-capsule procedure call 
 	}
 }
