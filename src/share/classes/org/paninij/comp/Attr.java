@@ -96,7 +96,6 @@ public final class Attr extends CapsuleInternal {
 	Annotate annotate;
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
-    Types types;	
 	public final Check pck;
 
     final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
