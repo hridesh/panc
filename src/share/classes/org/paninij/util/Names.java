@@ -59,6 +59,11 @@ public class Names {
      */
     public final Name InternalCapsuleWiring;
 
+    public final Name Org;
+    public final Name Paninij;
+    public final Name Runtime;
+    public final Name UnrunnableCapsuleExceptionClass;
+
     /**
      * Construct more names, using an exitings Names table.
      * @param names
@@ -77,5 +82,11 @@ public class Names {
         PaniniDuckFuture = names.fromString(PaniniConstants.PANINI_DUCK_TYPE);
         PaniniDisconnect = names.fromString(PaniniConstants.PANINI_DISCONNECT);
         InternalCapsuleWiring = names.fromString(PaniniConstants.CAPSULE_SYS_WIRE);
+
+        //Class and package Names
+        Org = names.fromString("org");
+        Paninij = names.fromString("paninij");
+        Runtime = names.fromString("runtime");
+        UnrunnableCapsuleExceptionClass = names.fromString(PaniniConstants.UNRUNNABLE_EXCEPTION_CLASS);
     }
 }
