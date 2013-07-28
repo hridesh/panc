@@ -762,6 +762,13 @@ public abstract class Symbol implements Element {
     	public ClassSymbol translated_thread;
     	public ClassSymbol parentCapsule;
     	public WiringSymbol wiringSym;
+    	/**
+    	 * Number of capsules 'this' capsule is
+    	 * connected to. Mirrors the runtime panini$ref$count
+    	 * value, but is from the point of view of 'this' in
+    	 * a design block.
+    	 */
+    	public int refCount = 0;
     	
     	public boolean definedRun;
     	public List<JCTree.JCVariableDecl> capsuleParameters;

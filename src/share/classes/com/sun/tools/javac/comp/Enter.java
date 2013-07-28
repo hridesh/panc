@@ -895,6 +895,7 @@ public class Enter extends JCTree.Visitor {
 			hasRun = true;
 			tree.needsDefaultRun = true;
 			tree.computeMethod = m;
+			tree.hasSynthRunMethod = true;
 		} else {
 			definitions.appendList(copyPublicMethods(tree, c));
 			c.capsule_info.definedRun = true;

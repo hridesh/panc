@@ -915,6 +915,12 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		public JCCapsuleDecl parentCapsule;
 		public boolean needsDefaultRun;
 		/**
+		 * Whether or not the capsule defined a run method.
+		 * true if the compiler generated the run method -- e.g. for
+		 * an active capsule that only processes messages.
+		 */
+		public boolean hasSynthRunMethod;
+		/**
 		 * Store the visibility flags until the lower phase.
 		 * Can't have public flags during initial phase.
 		 */
@@ -935,6 +941,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 			this.tag = Tag.CAPSULEDEF;
 			this.publicMethods = List.<JCMethodDecl> nil();
 			this.needsDefaultRun = false;
+			this.hasSynthRunMethod = false;
 		}
 
 		public Kind getKind() {

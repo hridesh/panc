@@ -53,6 +53,7 @@ public class Names {
     public final Name PaniniFinish;
     public final Name PaniniDuckFuture;
     public final Name PaniniDisconnect;
+    public final Name PaniniRefCountField;
 
     /**
      * Name of the method used to wire internal 'systems' in a capsule.
@@ -82,6 +83,7 @@ public class Names {
         PaniniDuckFuture = names.fromString(PaniniConstants.PANINI_DUCK_TYPE);
         PaniniDisconnect = names.fromString(PaniniConstants.PANINI_DISCONNECT);
         InternalCapsuleWiring = names.fromString(PaniniConstants.CAPSULE_SYS_WIRE);
+        PaniniRefCountField = names.fromString(PaniniConstants.PANINI_REF_COUNT);
 
         //Class and package Names
         Org = names.fromString("org");
