@@ -19,10 +19,8 @@ set TOOL_OPTS=%TOOL_OPTS% %arg%
 SHIFT
 GOTO Loop
 :Append
-set TOOL_OPTS=%TOOL_OPTS% %arg%
 SHIFT
 set arg=%1
-set TOOL_OPTS=%TOOL_OPTS% %arg%
 SHIFT
 set CP=%CP%:%arg%
 GOTO Loop
