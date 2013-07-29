@@ -39,80 +39,93 @@ import java.util.Random;
  */
 
 signature Stage {
-	void consume(long n);
+    void consume(long n);
+    void report();
 }
 
-capsule Source (Stage next, long num) {
-	Random prng = new Random ();
-	void run() {
-		for (int j = 0; j < num; j++) {
-			long n = prng.nextInt(1024);
-			next.consume(n);
-		}
-		next.consume(-1);
-		yield(2);
-	}
+capsule Pipeline () {
+    int num = 500;
+
+    design {
+        Average avg; Sum sum; Min min; Max max; Sink snk;
+        avg(sum); sum(min); min(max); max(snk); snk(num);
+    }
+
+    Random prng = new Random ();
+    void run() {
+        for (int j = 0; j < num; j++) {
+            long n = prng.nextInt(1024);
+            avg.consume(n);
+        }
+        avg.report();
+        }
 }
 
 capsule Average (Stage next) implements Stage {
-	long average = 0; 
-	long count = 0; 
-	void consume(long n) {
-		next.consume(n);
-		if (n != -1) {
-			average = ((count * average) + n) / (count + 1);
-			count++;
-		} else 
-			System.out.println("Average of " + count + " numbers was " + average + ".");
-	}
+    long average = 0; 
+    long count = 0; 
+
+    void consume(long n) {
+        next.consume(n);
+        average = ((count * average) + n) / (count + 1);
+        count++;
+    }
+
+    void report(){
+        next.report();
+        System.out.println("Average of " + count + " numbers was " + average + ".");
+    }
 }
 
 capsule Sum (Stage next) implements Stage {
-	long sum = 0; 
-	void consume(long n) {
-		next.consume(n);
-		if (n != -1) {
-			sum += n;
-		} else 
-			System.out.println("Sum of numbers was " + sum + ".");
-	}
+    long sum = 0; 
+    void consume(long n) {
+        next.consume(n);
+        sum += n;
+    }
+
+    void report(){
+        next.report();
+        System.out.println("Sum of numbers was " + sum + ".");
+    }
 }
 
 capsule Min (Stage next) implements Stage {
-	long min = Long.MAX_VALUE; 
-	void consume(long n) {
-		next.consume(n);
-		if (n != -1) {
-			if(n < min) min = n;
-		} else 
-			System.out.println("Min of numbers was " + min + ".");
-	}
+    long min = Long.MAX_VALUE; 
+    void consume(long n) {
+        next.consume(n);
+        if(n < min) min = n;
+    }
+
+    void report(){
+        next.report();
+        System.out.println("Min of numbers was " + min + ".");
+    }
 }
 
 capsule Max (Stage next) implements Stage {
-	long max = 0; 
-	void consume(long n) {
-		next.consume(n);
-		if (n != -1) {
-			if ( n > max) max = n;
-		} else 
-			System.out.println("Max of numbers was " + max + ".");
-	}
+    long max = 0; 
+    void consume(long n) {
+        next.consume(n);
+        if ( n > max) max = n;
+    }
+
+    void report(){
+        next.report();
+        System.out.println("Max of numbers was " + max + ".");
+    }
 }
 
 capsule Sink(long num) implements Stage {
-	long count = 0;
-	void consume(long n) {
-		if (n != -1) {
-			count++;
-		} else 
-			System.out.println("Successful " + count + " runs!!");
-	}
-}
+    long count = 0;
+    void consume(long n) {
+        count++;
+    }
 
-capsule Pipeline {
-    design {
-        Source src; Average avg; Sum sum; Min min; Max max; Sink snk;
-        src(avg,500); avg(sum); sum(min); min(max); max(snk); snk(500);
+    void report(){
+        if (count != num)
+            throw new RuntimeException("count should be: " + num + "; but was: " + count);
+        System.out.println("Successful " + count + " runs!!");
     }
 }
+

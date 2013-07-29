@@ -227,7 +227,9 @@ public class Lower {
         boolean isClosedCapsule = tree.params.isEmpty()
                 || (tree.params.size() == 1 //Check for a String[] type parameter.
                         && types.isArray(tree.params.head.vartype.type)
-                        && types.elemtype(tree.params.head.vartype.type).equals(syms.stringType));
+                        && types.isSameType( //Check for String
+                                types.elemtype(tree.params.head.vartype.type),
+                                syms.stringType));
 
         if (isClosedCapsule) {
             return (tree.sym.flags_field & Flags.ACTIVE) != 0 ;
