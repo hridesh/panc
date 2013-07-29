@@ -129,6 +129,8 @@ public final class Attr extends CapsuleInternal {
                 com.sun.tools.javac.comp.Enter.instance(context),
                 com.sun.tools.javac.comp.MemberEnter.instance(context),
                 com.sun.tools.javac.code.Symtab.instance(context));
+        context.put(attrKey, this);
+
         this.log = com.sun.tools.javac.util.Log.instance(context);
         this.annotate = Annotate.instance(context);
         this.annotationProcessor = new AnnotationProcessor(names, make, log);
