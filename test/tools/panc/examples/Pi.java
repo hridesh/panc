@@ -31,53 +31,39 @@ import java.util.Random;
 
  */
 
-class Number {
-	double value;
-	Number (){ this.value = 0; }
-	Number (double value){ this.value = value; }
-	void incr() { value ++; }
-	double value() { return value; }
-	static double total(Number[] numbers) {
-	       double total = 0;
-	       for(Number n: numbers) total += n.value();
-		return total;
-        }
-}
-
-capsule Worker (double num) {
+capsule Worker (double batchSize) {
 	Random prng = new Random ();
-	Number compute() {
-		Number _circleCount = new Number(0);
-		for (double j = 0; j < num; j++) {
+	int computeNumberOfPointsWithinCircle() {
+		int _circleCount = 0;
+		for (int j = 0; j < batchSize; j++) {
 			double x = prng.nextDouble();
 			double y = prng.nextDouble();
-			if ((x * x + y * y) < 1) _circleCount.incr();
+			if ((x * x + y * y) < 1) _circleCount++;
 		}
 		return _circleCount;
 	}
 }
 
-capsule Master (double totalCount, Worker[] workers) {
+capsule Pi (String[] args) {
+	double totalSamples = 0;
+
+	design {
+		totalSamples = Math.pow(10,Integer.parseInt(args[0]));
+		Worker workers[10];	
+		wireall(workers, totalSamples/workers.length);
+    }
+
 	void run(){
-		double startTime = System.currentTimeMillis();
-		Number[] results = foreach(Worker w: workers) w.compute();
+	 	double startTime = System.currentTimeMillis();
+		int[] results = foreach(Worker w: workers) w.computeNumberOfPointsWithinCircle();
 
-		double total = 0;
+		int total = 0;
 		for (int i=0; i < workers.length; i++)
-			total += results[i].value();
+		 	total += results[i];
 
-		double pi = 4.0 * total / totalCount;
+		double pi = 4.0 * ((double)total) / ((double)totalSamples);
 		System.out.println("Pi : " + pi);
 		double endTime = System.currentTimeMillis();
-		System.out.println("Time to compute Pi using " + totalCount + " samples was:" + (endTime - startTime) + "ms.");
+		System.out.println("Time to compute Pi using " + totalSamples + " samples was:" + (endTime - startTime) + "ms.");
 	}
-}
-
-capsule Pi (String[] args) {
-    design {
-        double totalSamples = Math.pow(10,Integer.parseInt(args[0]));
-        Master master; Worker workers[10];
-        master(totalSamples, workers);
-        wireall(workers, totalSamples/workers.length);
-    }
 }
