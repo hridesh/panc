@@ -878,13 +878,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 	public static class JCWiringBlock extends JCMethodDecl implements InternalWiringMethod {
 		public boolean hasTaskCapsule;
 		public int activeCapsuleCount;
-		/**
-		 * A list of capsules decls declared in the wiring block, which
-		 * are actually accessible to all procedures and methods in the
-		 * capsule.
-		 * <b>Will be null until the {@link JCWiringBlock} is attributed.</b>
-		 */
-		public List<JCVariableDecl> capsuleDecls;
 
 		public JCWiringBlock(JCModifiers mods, Name name, JCExpression restype,
                 List<JCTypeParameter> typarams, List<JCVariableDecl> params,

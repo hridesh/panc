@@ -773,6 +773,13 @@ public abstract class Symbol implements Element {
     	public boolean definedRun;
     	public List<JCTree.JCVariableDecl> capsuleParameters;
     	
+        /**
+         * Reference to each capsule instance this capsule is connected to.
+         * Connections happen either via parameters or from the internal
+         * capsules declared in design blocks.
+         */
+        public List<JCTree.JCVariableDecl> connectedCapsules = List.<JCTree.JCVariableDecl>nil();
+
     	public ClassSymbol getTranslatedSerial(){
     		return translated_serial;
     	}

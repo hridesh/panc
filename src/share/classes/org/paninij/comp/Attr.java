@@ -229,6 +229,9 @@ public final class Attr extends CapsuleInternal {
 	public void visitSelect(JCFieldAccess tree) {  /* SKIPPED */ }
 	
 	public final void visitCapsuleDef(final JCCapsuleDecl tree, final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env, Resolve rs){
+	    tree.sym.capsule_info.connectedCapsules =
+	            tree.sym.capsule_info.connectedCapsules.appendList(tree.params);
+
 		if (tree.needsDefaultRun){
 			List<JCClassDecl> wrapperClasses = generateClassWrappers(tree, env, rs);
 			enter.classEnter(wrapperClasses, env.outer);
@@ -254,7 +257,8 @@ public final class Attr extends CapsuleInternal {
 	                        .prepend(make.Exec(createSimpleMethodCall(names.panini.InternalCapsuleWiring)));
 					// Reference count disconnect()
 					ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
-					blockStats = createCapsuleMemberDisconnects(tree.params);
+					blockStats = createCapsuleMemberDisconnects(
+					                tree.sym.capsule_info.connectedCapsules);
 					ListBuffer<JCStatement> body = new ListBuffer<JCStatement>();
 					body.add(make.Try(
 							make.Block(0, tree.computeMethod.body.stats),
@@ -266,7 +270,8 @@ public final class Attr extends CapsuleInternal {
 			if ((tree.sym.flags_field & SERIAL) != 0 || (tree.sym.flags_field & MONITOR) != 0) {
 				// For serial capsule version
 				ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
-				blockStats = createCapsuleMemberDisconnects(tree.params);
+				blockStats = createCapsuleMemberDisconnects(
+				                tree.sym.capsule_info.connectedCapsules);
 				ListBuffer<JCStatement> methodStats = new ListBuffer<JCStatement>();
 				methodStats.append(make.Exec(make.Unary(JCTree.Tag.POSTDEC, make.Ident(names
 						.fromString(PaniniConstants.PANINI_REF_COUNT)))));
@@ -534,20 +539,30 @@ public final class Attr extends CapsuleInternal {
         return vdc.varDecls.toList();
     }
 
+    /**
+     * Move the capsule declarations in a wiring/design block out to the
+     * 'field' scope and record the capsules decls in
+     * {@link ClassSymbol#capsule_info#connectedCapsules}
+     * @param wire
+     * @param capScope
+     */
     private void moveWiringDecls(JCWiringBlock wire, Scope capScope) {
-        wire.capsuleDecls = extractWiringBlockDecls(wire);
+        List<JCVariableDecl> capsuleDecls = extractWiringBlockDecls(wire);
+        ClassSymbol capSym = wire.sym.ownerCapsule();
+        capSym.capsule_info.connectedCapsules =
+                capSym.capsule_info.connectedCapsules.appendList(capsuleDecls);
 
         // Enter the symbols into the capusle scope.
         // Allows the symbols to be visible for other procedures
         // and allows the symbols to be emitted as fields in the bytecode
-        for(List<JCVariableDecl> l = wire.capsuleDecls;  l.nonEmpty(); l = l.tail) {
+        for(List<JCVariableDecl> l = capsuleDecls;  l.nonEmpty(); l = l.tail) {
             l.head.sym.owner = capScope.owner;
             capScope.enter(l.head.sym);
         }
 
         //TODO: Generics are being annoying. Find a way to not copy the list.
         ListBuffer<JCTree> capFields = new ListBuffer<JCTree>();
-        for(List<JCVariableDecl> l = wire.capsuleDecls; l.nonEmpty(); l = l.tail) {
+        for(List<JCVariableDecl> l = capsuleDecls; l.nonEmpty(); l = l.tail) {
             capFields.add(l.head);
             // Mark as private. Do not mark synthetic. Will cause other
             // name resolution to fail.

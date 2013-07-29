@@ -137,7 +137,8 @@ public class CapsuleInternal extends Internal {
 						PaniniConstants.PANINI_MESSAGE_ID), cases));
 
 		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
-		blockStats = createCapsuleMemberDisconnects(tree.params);
+		blockStats = createCapsuleMemberDisconnects(
+		        tree.sym.capsule_info.connectedCapsules);
 		
 		JCBlock b = body(
 				make.Try(body(
@@ -275,7 +276,8 @@ public class CapsuleInternal extends Internal {
 								returnt(falsev())))));
 
 		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
-		blockStats = createCapsuleMemberDisconnects(tree.params);
+		blockStats = createCapsuleMemberDisconnects(
+		            tree.sym.capsule_info.connectedCapsules);
 
 		blockStats.append(es(assign(PaniniConstants.PANINI_TERMINATE, truev())));
 		blockStats.append(returnt(truev()));
