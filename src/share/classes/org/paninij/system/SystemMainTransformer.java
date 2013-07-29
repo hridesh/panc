@@ -525,21 +525,16 @@ public class SystemMainTransformer extends TreeTranslator {
         assigns.append(floop);
         if(c.capsule_info.definedRun){
             for(int j = mat.size-1; j>=0;j--){
-                if(tree.activeCapsuleCount==0)
-                    starts.append(make.Exec(make.Apply(List.<JCExpression>nil(),
-                            make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString("run")),
-                            List.<JCExpression>nil())));
-                else{
-                    starts.prepend(make.Exec(make.Apply(List.<JCExpression>nil(),
-                            make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString(PaniniConstants.PANINI_START)),
-                            List.<JCExpression>nil())));
-                    joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(),
-                            make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
-                                    names.fromString(PaniniConstants.PANINI_JOIN)), List.<JCExpression>nil())))),
-                                    List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0),
-                                            names.fromString("e"), make.Ident(names.fromString("InterruptedException")),
-                                            null), make.Block(0, List.<JCStatement>nil()))), null));
-                }
+                starts.prepend(make.Exec(make.Apply(List.<JCExpression>nil(),
+                        make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString(PaniniConstants.PANINI_START)),
+                        List.<JCExpression>nil())));
+                joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(),
+                        make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
+                                names.fromString(PaniniConstants.PANINI_JOIN)), List.<JCExpression>nil())))),
+                                List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0),
+                                        names.fromString("e"), make.Ident(names.fromString("InterruptedException")),
+                                        null), make.Block(0, List.<JCStatement>nil()))), null));
+
                 tree.activeCapsuleCount += mat.size;
             }
         }
