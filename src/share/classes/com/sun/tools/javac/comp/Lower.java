@@ -88,6 +88,10 @@ public class Lower extends TreeTranslator {
     private boolean debugLower;
     private PkgInfo pkginfoOpt;
 
+    // Panini code
+    private final org.paninij.comp.Lower pLower;
+    // end Panini code
+
     protected Lower(Context context) {
         context.put(lowerKey, this);
         names = Names.instance(context);
@@ -115,6 +119,7 @@ public class Lower extends TreeTranslator {
         
         // Panini code
         feNameGen = new ForeachHelperMethNameGen("foreachHelper");
+        pLower = org.paninij.comp.Lower.instance(context);
         // end Panini code
     }
     // Panini code
@@ -2311,11 +2316,15 @@ public class Lower extends TreeTranslator {
         List<VarSymbol> prevOuterThisStack = outerThisStack;
         // Panini code
         if((tree.mods.flags & CAPSULE) != 0){
-        	//reapply access flags
-        	if(((JCCapsuleDecl)tree).accessMods!=null){
+            JCCapsuleDecl capTree = (JCCapsuleDecl)tree;
+            //reapply access flags
+        	if((capTree).accessMods!=null){
 	        	tree.mods.flags |= ((JCCapsuleDecl)tree).accessMods.flags;
 	        	tree.sym.flags_field |= ((JCCapsuleDecl)tree).accessMods.flags;
         	}
+    
+        	pLower.visitCapsuleDef(capTree, attrEnv);
+
         }
         // end Panini code
 

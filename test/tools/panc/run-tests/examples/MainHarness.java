@@ -17,6 +17,8 @@
  * Contributor(s): Sean L. Mooney
  */
 
+package examples;
+
 import java.lang.reflect.*;
 
 /**

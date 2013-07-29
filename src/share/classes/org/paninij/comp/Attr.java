@@ -41,16 +41,15 @@ import org.paninij.consistency.SeqConstCheckAlgorithm;
 import org.paninij.system.SystemDeclRewriter;
 import org.paninij.system.SystemMainTransformer;
 import org.paninij.systemgraph.SystemGraph;
+import org.paninij.systemgraph.SystemGraph.Node;
 import org.paninij.systemgraph.SystemGraphBuilder;
 
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Scope;
-import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.code.Type.MethodType;
@@ -58,11 +57,8 @@ import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.Annotate;
 import com.sun.tools.javac.comp.AttrContext;
-import com.sun.tools.javac.comp.Enter;
 import com.sun.tools.javac.comp.Env;
-import com.sun.tools.javac.comp.MemberEnter;
 import com.sun.tools.javac.comp.Resolve;
-import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
@@ -77,9 +73,6 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
-import com.sun.tools.javac.util.Names;
-import com.sun.tools.javac.util.Options;
-
 import org.paninij.util.PaniniConstants;
 
 /***
@@ -96,10 +89,19 @@ public final class Attr extends CapsuleInternal {
 	Annotate annotate;
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
-    Types types;	
 	public final Check pck;
 
     final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
+
+    protected static final Context.Key<Attr> attrKey =
+            new Context.Key<Attr>();
+
+    public static Attr instance(Context context) {
+        Attr instance = context.get(attrKey);
+        if (instance == null)
+            instance = new Attr(context);
+        return instance;
+    }
 
 	/**
 	 * Whether or not capsule state access should be reported as an error.
@@ -120,13 +122,15 @@ public final class Attr extends CapsuleInternal {
 	 */
 	public boolean checkCapStateAcc = true;
 
-    public Attr(TreeMaker make, Names names, Types types, Enter enter,
-            MemberEnter memberEnter, Symtab syms, Log log,
-            Annotate annotate, Context context) {
-        super(make, names, types, enter, memberEnter, syms);
-        this.types = types;
-        this.log = log;
-        this.annotate = annotate;
+    protected Attr(Context context) {
+        super(TreeMaker.instance(context),
+                com.sun.tools.javac.util.Names.instance(context),
+                com.sun.tools.javac.code.Types.instance(context),
+                com.sun.tools.javac.comp.Enter.instance(context),
+                com.sun.tools.javac.comp.MemberEnter.instance(context),
+                com.sun.tools.javac.code.Symtab.instance(context));
+        this.log = com.sun.tools.javac.util.Log.instance(context);
+        this.annotate = Annotate.instance(context);
         this.annotationProcessor = new AnnotationProcessor(names, make, log);
         this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
         this.pck = Check.instance(context);
@@ -291,20 +295,6 @@ public final class Attr extends CapsuleInternal {
 			}
 		}
 
-		if (needsMainMethod(tree)) {
-		    JCMethodDecl mainMeth = createMainMethod(tree, env);
-		    final boolean prevCheckCapState = checkCapStateAcc;
-		    try{
-		        checkCapStateAcc = false;
-		        Scope sysScope = enterSystemScope(env);
-		        sysScope.enterIfAbsent(mainMeth.sym);
-		        attr.attribStat(mainMeth, env);
-		    } finally {
-		        checkCapStateAcc = prevCheckCapState;
-		    }
-		    tree.defs = tree.defs.append(mainMeth);
-		}
-
 		for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail){
 			JCTree def = l.head;
 			if(def.getTag() == Tag.METHODDEF){
@@ -378,12 +368,16 @@ public final class Attr extends CapsuleInternal {
 
 	private void initRefCount(Map<Name, Name> variables,
 			Map<Name, JCFieldAccess> refCountStats,
-			ListBuffer<JCStatement> assigns, SystemGraph sysGraph) {
+			ListBuffer<JCStatement> assigns, SystemGraph sysGraph,
+			Env<AttrContext> env) {
 		Set<Name> vars = sysGraph.nodes.keySet();
+		final Name _this = names._this;
+		final Name paniniRCField = names.panini.PaniniRefCountField;
 		for (Name vdeclName : vars) {
-			// Reference count update
+		    // Reference count update
 			int refCount = 0;
 			refCount = sysGraph.nodes.get(vdeclName).indegree;
+
 			JCFieldAccess accessStat = null;
 			if (refCountStats.containsKey(vdeclName)) {
 				accessStat = refCountStats.get(vdeclName);
@@ -391,41 +385,19 @@ public final class Attr extends CapsuleInternal {
 				Name capsule = variables.get(vdeclName);
 				accessStat = make.Select(
 						make.TypeCast(make.Ident(capsule),
-								make.Ident(vdeclName)),
-						names.fromString(PaniniConstants.PANINI_REF_COUNT));
-			}
+								make.Ident(vdeclName)), paniniRCField);
+			} else if (_this.equals(vdeclName)) {
+			    accessStat = make.Select(make.Ident(_this), paniniRCField);
+		        env.enclClass.sym.capsule_info.refCount = refCount;
+		    }
 			if (accessStat == null)
 				continue;
-			JCAssignOp refCountAssign = make.Assignop(JCTree.Tag.PLUS_ASG,
-					accessStat, intlit(refCount));
+			JCAssign refCountAssign = make.Assign(accessStat, intlit(refCount));
 			JCExpressionStatement refCountAssignStmt = make
 					.Exec(refCountAssign);
 			assigns.append(refCountAssignStmt);
 		}
 	}
-
-    /**
-     * Capsule kinds need a main method if they are closed and define their own run method
-     * or are serial. Capsules are assumed to define their own run method if the
-     * method referenced by {@link #computeMethod} is not marked as synthetic.
-     * <p>
-     * Closed capsules have either no params, or a single param of type String[].
-     * <p>
-     * Install a main method into all closed active capsule.
-     */
-    protected boolean needsMainMethod(JCCapsuleDecl tree) {
-        boolean isClosedCapsule = tree.params.isEmpty()
-                || (tree.params.size() == 1 //Check for a String[] type parameter.
-                        && types.isArray(tree.params.head.vartype.type)
-                        && types.elemtype(tree.params.head.vartype.type).equals(syms.stringType));
-
-        if (isClosedCapsule) {
-            //Simplification until I can fix tis.
-            return (tree.sym.flags_field & Flags.ACTIVE) != 0 ;
-        } else {
-            return false;
-        }
-    }
 
 	public final void visitSystemDef(JCWiringBlock tree, Resolve rs,
 			com.sun.tools.javac.comp.Attr jAttr, // Javac Attributer.
@@ -461,8 +433,8 @@ public final class Attr extends CapsuleInternal {
         if(rewritenTree.hasTaskCapsule)
 			processSystemAnnotation(rewritenTree, inits, env);
 
-        initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph);
-
+        initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph, env);
+        
         //attribute the new statement.
         ListBuffer<JCStatement> toAttr = new ListBuffer<JCTree.JCStatement>();
         toAttr.addAll(decls);

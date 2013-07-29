@@ -17,8 +17,23 @@
  * Contributor(s): Sean L. Mooney
  */
 
-/* @test
- * @summary Make sure the HelloWorld example runs.
- * @build examples.HelloWorld
- * @run main examples.MainHarness examples.HelloWorld$thread
- */
+package examples;
+
+capsule Client(MediatorExample m) {
+    void run() {
+        m.foo("Hello mediator");
+    }
+}
+
+public capsule MediatorExample() {
+    design{
+        Client c;
+        c(this);
+    }
+
+    void foo(String s) {
+        System.out.println("Hello World");
+    }
+}
+
+

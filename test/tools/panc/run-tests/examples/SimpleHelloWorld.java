@@ -17,8 +17,11 @@
  * Contributor(s): Sean L. Mooney
  */
 
-/* @test
- * @summary Make sure the HelloWorld example runs.
- * @build examples.HelloWorld
- * @run main examples.MainHarness examples.HelloWorld$thread
- */
+package examples;
+
+capsule SimpleHelloWorld() {
+	void run() {
+		System.out.println("Panini: Hello World!");
+	}
+}
+

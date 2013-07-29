@@ -14,11 +14,31 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  *
- * Contributor(s): Sean L. Mooney
+ * Contributor(s): Hridesh Rajan
  */
+package examples;
 
-/* @test
- * @summary Make sure the HelloWorld example runs.
- * @build examples.HelloWorld
- * @run main examples.MainHarness examples.HelloWorld$thread
- */
+/*
+ * @test
+ * @summary Compile the HelloWorld example.
+ * @compile HelloWorld.java
+ * */
+
+capsule Console () { //Capsule declaration
+	void write(String s) { //Capsule procedure
+		System.out.println(s);
+	}
+}
+
+
+public capsule HelloWorld () {
+	design {
+		Console c; //Capsule instance declaration
+	}
+
+	void run(){                  //An autonomous capsule procedure
+		c.write("Panini: Hello World!");          //Inter-capsule procedure call
+		long time = System.currentTimeMillis();
+		c.write("Time is now: " + time);
+	}
+}

@@ -18,7 +18,14 @@
  */
 
 /* @test
- * @summary Make sure the HelloWorld example runs.
- * @build examples.HelloWorld
- * @run main examples.MainHarness examples.HelloWorld$thread
+ * @summary Make sure the Simple HelloWorld example runs.
+ * @build examples.SimpleHelloWorld
+ * @run main examples.MainHarness examples.SimpleHelloWorld$thread
  */
+
+capsule TSimpleHelloWorld() {
+	void run() {
+		System.out.println("Panini: Hello World!");
+	}
+}
+

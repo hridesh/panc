@@ -18,7 +18,9 @@
  */
 
 /* @test
- * @summary Make sure the HelloWorld example runs.
- * @build examples.HelloWorld
- * @run main examples.MainHarness examples.HelloWorld$thread
+ * @summary Test that a 'mediator' type capsule gets a main method, runs
+ *          and shutdown.
+ * @build examples.MediatorExample
+ * @run main examples.MainHarness examples.MediatorExample$thread
  */
+

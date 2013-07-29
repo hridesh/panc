@@ -68,4 +68,7 @@ public class PaniniConstants {
 	
 	public final static String PANINI_REF_COUNT = "panini$ref$count";
 	public final static String PANINI_DISCONNECT = "panini$disconnect";
+
+	public final static String UNRUNNABLE_EXCEPTION_CLASS =
+	        "UnrunnableCapsuleException";
 }

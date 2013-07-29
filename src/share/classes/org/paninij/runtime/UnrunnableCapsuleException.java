@@ -14,11 +14,18 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  *
- * Contributor(s): Sean L. Mooney
+ * Contributor(s):
  */
+package org.paninij.runtime;
 
-/* @test
- * @summary Make sure the HelloWorld example runs.
- * @build examples.HelloWorld
- * @run main examples.MainHarness examples.HelloWorld$thread
+/**
+ * @author Sean L. Mooney
+ * @since panini-0.9.2
  */
+public class UnrunnableCapsuleException extends RuntimeException{
+    public UnrunnableCapsuleException() {
+        super("Attempting to run is non-executable capsule.");
+    }
+
+    private static final long serialVersionUID = 4656797864230486711L;
+}
