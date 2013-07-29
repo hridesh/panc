@@ -1,5 +1,4 @@
 #!/bin/bash
-
 mydir=`dirname $0`
 case `uname -s` in
     CYGWIN*)
@@ -11,6 +10,7 @@ export PANC_HOME=$mydir/..
 # pass classpath argument through to inner java call
 CP=.
 NON_CP=""
+FIRST=1
 while [ $# -gt 0 ]
 do
     ARG="$1"
@@ -19,11 +19,10 @@ do
             CP=$CP:$2
             shift 2
             ;;
-        *)
+        *)  [[ ${ARG#-} = $ARG && $FIRST = 1 ]] && ARG="$ARG\$thread" && FIRST=0
             NON_CP="$NON_CP $ARG"
             shift
             ;;
     esac
 done
-
 java -cp $CP:$PANC_HOME/lib/panini_rt.jar $NON_CP
