@@ -393,12 +393,7 @@ public class CapsuleMainTransformer extends TreeTranslator {
     }
 
     private void processCapsuleWiring(final JCCapsuleWiring wiring, Env<AttrContext> env) {
-        try{
-            assigns.appendList(transWiring(wiring, env, false));
-        }catch (NullPointerException e){
-            //FIXME: Should be caught by typechecking.
-            log.error(wiring.pos(), "only.capsule.types.allowed");
-        }
+        assigns.appendList(transWiring(wiring, env, false));
     }
 
     private List<JCStatement> transWiring(final JCCapsuleWiring mi, Env<AttrContext> env, boolean forEachLoop){
