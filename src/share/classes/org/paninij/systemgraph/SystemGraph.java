@@ -47,11 +47,18 @@ public class SystemGraph {
 		}
 		@Override
 		public String toString(){
-			String s = nodes.get(0).name.toString();
-			for(int i=1;i<nodes.size();i++){
-				s += " --> "+ nodes.get(i).name; 
-			}
-			return s;
+			StringBuilder sb = new StringBuilder();
+			toString(sb);
+			return sb.toString();
+		}
+
+		public void toString(StringBuilder sb) {
+		    sb.append(nodes.get(0).name);
+		    final int size = nodes.size();
+            for(int i=1; i<size; i++){
+                sb.append(" --> ");
+                sb.append(nodes.get(i).name);
+            }
 		}
 	}
 	public static class Node{
@@ -115,9 +122,16 @@ public class SystemGraph {
 		}
 
 		public String toString(){
-			String s = fromNode.name + "." + fromProcedure + " --> " +
-			toNode.name + "."+ toProcedure + "\n";
-			return s;
+			StringBuilder sb = new StringBuilder();
+			toString(sb);
+			return sb.toString();
+		}
+
+		public void toString(StringBuilder sb) {
+		    sb.append(fromNode.name); sb.append(".");sb.append(fromProcedure);
+		    sb.append(" --> ");
+		    sb.append(toNode.name); sb.append("."); sb.append(toProcedure);
+		    sb.append("\n");
 		}
 
 		public final int hashCode() {
@@ -142,6 +156,7 @@ public class SystemGraph {
 	public HashMap<Name, Integer> capsuleArrays = new HashMap<Name, Integer>();//this is to save size of arrays. maybe view arrays as an whole instead.
 	
 	void addNode(Name name, ClassSymbol sym){
+	    Assert.check(!nodes.containsKey(name), "Graph already contains node for " + name);
 		nodes.put(name, new Node(name, sym));
 	}
 	
@@ -159,22 +174,31 @@ public class SystemGraph {
 	
 	@Override
 	public String toString(){
-		String s = "Nodes: \n";
+		StringBuilder s = new StringBuilder();
+		s.append("Nodes: \n");
 		for(Node node : nodes.values()){
-			s += "\t"+node+"\n";
+			s.append("\t");
+			s.append(node);
+			s.append("\n");
 		}
-		s += "Connections: \n";
+		s.append("Connections: \n");
 		for(Node node : nodes.values()){
-			s += "\tNode "+node.name+ ":\n";
+		    s.append("\tNode ");
+		    s.append(node.name);
+		    s.append(":\n");
 			for(Entry<Name, Node> c : node.connections.entrySet()){
-				s += "\t\t"+c.getKey() + " --> " + c.getValue().name + "\n"; 
+				s.append("\t\t");
+				s.append(c.getKey());
+				s.append(" --> ");
+				s.append(c.getValue().name);
+				s.append("\n");;
 			}
 		}
-		s += "Edges: \n";
+		s.append("Edges: \n");
 		for(Edge edge : edges){
-			s += edge.toString(); 
+			edge.toString(s);
 		}
-		return s;
+		return s.toString();
 	}
 
 	public List<Edge> getEdges(Node head, MethodSymbol fromSym, List<Node> tail) {
