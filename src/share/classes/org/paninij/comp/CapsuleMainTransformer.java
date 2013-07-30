@@ -233,10 +233,6 @@ public class CapsuleMainTransformer extends TreeTranslator {
                 JCExpressionStatement assignAssign = make
                         .Exec(newAssign);
                 assigns.append(assignAssign);
-                if (names.fromString(mi.arguments.get(j).toString()).equals(names.fromString("this"))) {
-                	systemGraphBuilder.addSingleNode(sysGraph, 
-                			names.fromString(mi.arguments.get(j).toString()), mi.arguments.get(j).type.tsym.enclClass());
-                }
                 if(c.capsule_info.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
                     if(syms.capsules.containsKey(names
                             .fromString(((JCArrayTypeTree)c.capsule_info.capsuleParameters.get(j).vartype).elemtype
@@ -314,10 +310,6 @@ public class CapsuleMainTransformer extends TreeTranslator {
                     log.error(mi.pos(), "arguments.of.wiring.mismatch");
                 } else {
                     for(int j=0;j<mi.args.length();j++){
-                    	if (names.fromString(mi.args.get(j).toString()).equals(names.fromString("this"))) {
-                        	systemGraphBuilder.addSingleNode(sysGraph, 
-                        			names.fromString(mi.args.get(j).toString()), mi.args.get(j).type.tsym.enclClass());
-                        }
                         if(c.capsule_info.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
                             if(syms.capsules.containsKey(names
                                     .fromString(((JCArrayTypeTree)c.capsule_info.capsuleParameters.get(j).vartype).elemtype
@@ -352,10 +344,6 @@ public class CapsuleMainTransformer extends TreeTranslator {
                 log.error(mi.pos(), "arguments.of.wiring.mismatch");
             } else {
                 for(int j=0;j<mi.args.length();j++){
-                	if (names.fromString(mi.args.get(j).toString()).equals(names.fromString("this"))) {
-                    	systemGraphBuilder.addSingleNode(sysGraph, 
-                    			names.fromString(mi.args.get(j).toString()), mi.args.get(j).type.tsym.enclClass());
-                    }
                     if(c.capsule_info.capsuleParameters.get(j).vartype.getTag()== Tag.TYPEARRAY){
                         if(syms.capsules.containsKey(names
                                 .fromString(((JCArrayTypeTree)c.capsule_info.capsuleParameters.get(j).vartype).elemtype
@@ -429,10 +417,6 @@ public class CapsuleMainTransformer extends TreeTranslator {
             JCExpressionStatement assignAssign = make
                     .Exec(newAssign);
             assigns.append(assignAssign);
-            if (names.fromString(args.head.toString()).equals(names.fromString("this"))) {
-            	systemGraphBuilder.addSingleNode(sysGraph, 
-            			names.fromString(args.head.toString()), args.head.type.tsym.enclClass());
-            }
             if(!forEachLoop){
                 if(cparams.head.vartype.getTag()== Tag.TYPEARRAY){
                     if(args.head.getTag()!=Tag.NEWARRAY)
