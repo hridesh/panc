@@ -599,6 +599,12 @@ public class Enter extends JCTree.Visitor {
     	pid = make.Select(pid, names.fromString("types"));
     	pid = make.Select(pid, names.fromString("Panini$Duck$Void"));
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	pid = make.Ident(names.fromString("org"));
+    	pid = make.Select(pid, names.fromString("paninij"));
+    	pid = make.Select(pid, names.fromString("runtime"));
+    	pid = make.Select(pid, names.fromString("types"));
+    	pid = make.Select(pid, names.fromString("Panini$Duck$Array$Types"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     }
     
     public void visitCapsuleDef(JCCapsuleDecl tree){
@@ -1110,6 +1116,11 @@ public class Enter extends JCTree.Visitor {
 					.Select(make.Ident(duckFuture),
 							names.fromString("toString")), List
 					.<JCExpression> nil()));
+		} else if (returnType.contains("[") && returnType.contains("]")) {
+			returnStat = make.Return(make.TypeCast(mdecl.restype, make.Apply(List.<JCExpression> nil(), make
+					.Select(make.Ident(duckFuture),
+							names.fromString("arrayValue")), List
+					.<JCExpression> nil())));
 		} else {
 			returnStat = make.Return(make.Ident(duckFuture));
 		}
@@ -1117,9 +1128,16 @@ public class Enter extends JCTree.Visitor {
     }
     
     private JCExpression getDuckType(final JCCapsuleDecl tree, final JCMethodDecl mdecl){
-		JCExpression duck = make.Ident(names
+    	JCExpression duck;
+    	String restype = mdecl.restype.toString();
+    	if(restype.contains("[")&&restype.contains("]"))
+    		duck = make.Ident(names
 					.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$"
-							+ mdecl.restype + "$"
+							+ PaniniConstants.ARRAY_DUCKS + "$"
+							+ tree.name));
+    	else duck = make.Ident(names
+					.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$"
+							+ restype + "$"
 							+ tree.name));
 		return duck;
     }

@@ -40,6 +40,7 @@ public class PaniniConstants {
 	 */
 	public final static String CAPSULE_SYS_WIRE = "panini$wire$sys";
 	public final static String DUCK_INTERFACE_NAME = "Panini$Duck";
+	public final static String ARRAY_DUCKS = "Array$Types";
 	public final static String PANINI_FINISH = "panini$finish";
 	public final static String PANINI_MESSAGE = "panini$message";
 	public final static String PANINI_DUCK_GET = "panini$get";
