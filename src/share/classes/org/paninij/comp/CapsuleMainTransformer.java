@@ -126,6 +126,10 @@ public class CapsuleMainTransformer extends TreeTranslator {
         this.systemGraphBuilder = builder;
         //create a system graph for this transformer.
         this.sysGraph = systemGraphBuilder.createSystemGraph();
+        //Add a node for 'this'. The 'this' ref is never declared
+        //and will not be added 'automatically' by the visitVarDef method.
+        systemGraphBuilder.addSingleNode(this.sysGraph,
+                names._this, env.enclClass.sym);
     }
 
     @Override
