@@ -505,6 +505,10 @@ public class CapsuleMainTransformer extends TreeTranslator {
                     make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString(PaniniConstants.PANINI_START)),
                     List.<JCExpression>nil())));
 
+            final Name connectCapIdx = names.fromString(vdecl.name.toString()+"["+j+"]");
+            systemGraphBuilder.addConnection(sysGraph, names._this,
+                    connectCapIdx, connectCapIdx);
+
             if (capTypeDefinedRun) {
                 joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(),
                         make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
@@ -539,6 +543,9 @@ public class CapsuleMainTransformer extends TreeTranslator {
         if(c==null)
             log.error(vdecl.pos, "invalid.capsule.type");
         systemGraphBuilder.addSingleNode(sysGraph, vdecl.name, c);
+        //Implicit link from this to the design capsule decl.
+        systemGraphBuilder.addConnection(sysGraph, names._this, vdecl.name, vdecl.name);
+
         JCNewClass newClass = make.at(vdecl.pos()).NewClass(null, null,
                 make.Ident(c.type.tsym), List.<JCExpression>nil(), null);
         newClass.constructor = rs.resolveConstructor
