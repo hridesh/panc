@@ -18,24 +18,19 @@
  */
 package org.paninij.comp;
 
-import static com.sun.tools.javac.code.Flags.FINAL;
 import static com.sun.tools.javac.code.TypeTags.INT;
 import static com.sun.tools.javac.tree.JCTree.Tag.APPLY;
 import static com.sun.tools.javac.tree.JCTree.Tag.CAPSULEARRAY;
 import static com.sun.tools.javac.tree.JCTree.Tag.EXEC;
-import static com.sun.tools.javac.tree.JCTree.Tag.FOREACHLOOP;
 import static com.sun.tools.javac.tree.JCTree.Tag.LT;
-import static com.sun.tools.javac.tree.JCTree.Tag.MAAPPLY;
 import static com.sun.tools.javac.tree.JCTree.Tag.PREINC;
 import static com.sun.tools.javac.tree.JCTree.Tag.TYPEIDENT;
-import static com.sun.tools.javac.tree.JCTree.Tag.VARDEF;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.paninij.code.Type.WiringType;
 import org.paninij.systemgraph.SystemGraph;
 import org.paninij.systemgraph.SystemGraphBuilder;
 
@@ -43,10 +38,8 @@ import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Kinds;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
-import com.sun.tools.javac.code.Symbol.WiringSymbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.code.Symbol.CapsuleExtras;
 import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
@@ -69,7 +62,6 @@ import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCForLoop;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
-import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 import com.sun.tools.javac.tree.JCTree.JCNewArray;
 import com.sun.tools.javac.tree.JCTree.JCNewClass;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
