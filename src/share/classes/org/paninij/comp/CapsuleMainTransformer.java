@@ -16,7 +16,7 @@
  *
  * Contributor(s): Hridesh Rajan, Eric Lin, Sean L. Mooney
  */
-package org.paninij.system;
+package org.paninij.comp;
 
 import static com.sun.tools.javac.code.Flags.FINAL;
 import static com.sun.tools.javac.code.TypeTags.INT;
@@ -73,7 +73,7 @@ import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 import com.sun.tools.javac.tree.JCTree.JCNewArray;
 import com.sun.tools.javac.tree.JCTree.JCNewClass;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
-import com.sun.tools.javac.tree.JCTree.JCWiringBlock;
+import com.sun.tools.javac.tree.JCTree.JCDesignBlock;
 import com.sun.tools.javac.tree.JCTree.JCUnary;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.Tag;
@@ -89,7 +89,7 @@ import org.paninij.util.PaniniConstants;
  * @author Sean L. Mooney
  * @since panini-0.9.2
  */
-public class SystemMainTransformer extends TreeTranslator {
+public class CapsuleMainTransformer extends TreeTranslator {
 
     /**
      * Decls to copy into the rewritten body. This list <b>will not</b> include
@@ -119,9 +119,9 @@ public class SystemMainTransformer extends TreeTranslator {
      * The system decl being transformed.
      * Some the helper methods need a reference to it.
      */
-    JCWiringBlock systemDecl;
+    JCDesignBlock systemDecl;
 
-    public SystemMainTransformer(Symtab syms, Names names, Types types, Log log,
+    public CapsuleMainTransformer(Symtab syms, Names names, Types types, Log log,
             Resolve rs, Env<AttrContext> env,
             TreeMaker make, SystemGraphBuilder builder) {
         this.syms = syms;
@@ -137,7 +137,7 @@ public class SystemMainTransformer extends TreeTranslator {
     }
 
     @Override
-    public void visitSystemDef(JCWiringBlock tree) {
+    public void visitDesignBlock(JCDesignBlock tree) {
         systemDecl = tree;
         //Only visit the body. We can ignore defs (they get handled
         //in the panini Attr, and we can ignore the params, they just
@@ -474,7 +474,7 @@ public class SystemMainTransformer extends TreeTranslator {
         return assigns.toList();
     }
 
-    private void processCapsuleArray(JCWiringBlock tree, JCVariableDecl vdecl, Env<AttrContext> env) {
+    private void processCapsuleArray(JCDesignBlock tree, JCVariableDecl vdecl, Env<AttrContext> env) {
         JCCapsuleArray mat = (JCCapsuleArray)vdecl.vartype;
         String initName = mat.elemtype.toString()+"$thread";
         if((vdecl.mods.flags & Flags.TASK) !=0){
@@ -551,7 +551,7 @@ public class SystemMainTransformer extends TreeTranslator {
         modArrays.put(vdecl.name, mat.size);
     }
 
-    private void processCapsuleDef(JCWiringBlock tree, JCVariableDecl vdecl) {
+    private void processCapsuleDef(JCDesignBlock tree, JCVariableDecl vdecl) {
         String initName = vdecl.vartype.toString()+"$thread";
         if((vdecl.mods.flags & Flags.TASK) !=0){
             initName = vdecl.vartype.toString()+"$task";

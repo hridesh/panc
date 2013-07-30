@@ -16,7 +16,7 @@
  *
  * Contributor(s): Sean L. Mooney, Lorand Szakacs
  */
-package org.paninij.system;
+package org.paninij.comp;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,7 +45,7 @@ import com.sun.tools.javac.tree.JCTree.JCProcInvocation;
 import com.sun.tools.javac.tree.JCTree.JCRing;
 import com.sun.tools.javac.tree.JCTree.JCStar;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
-import com.sun.tools.javac.tree.JCTree.JCWiringBlock;
+import com.sun.tools.javac.tree.JCTree.JCDesignBlock;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.Tag;
 import com.sun.tools.javac.tree.TreeCopier;
@@ -63,7 +63,7 @@ import com.sun.tools.javac.util.Name;
  * @author Sean L. Mooney, Lorand Szakacs
  * 
  */
-public class SystemDeclRewriter extends TreeTranslator {
+public class DesignBlockRewriter extends TreeTranslator {
 
     InterpEnv<Name, JCTree> valueEnv;
 
@@ -77,8 +77,8 @@ public class SystemDeclRewriter extends TreeTranslator {
 
     final TreeCopier<Void> copy;
 
-    public JCWiringBlock rewrite(JCWiringBlock tree) {
-        JCWiringBlock translated = super.translate(tree);
+    public JCDesignBlock rewrite(JCDesignBlock tree) {
+        JCDesignBlock translated = super.translate(tree);
         translated.body.stats = unrollStatementsFromBodyStats(translated.body.stats);
         return translated;
     }
@@ -124,7 +124,7 @@ public class SystemDeclRewriter extends TreeTranslator {
         return result;
     }
 
-    public SystemDeclRewriter(TreeMaker treeMaker, Log log) {
+    public DesignBlockRewriter(TreeMaker treeMaker, Log log) {
         this.log = log;
         this.make = treeMaker;
         this.copy = new TreeCopier<Void>(make);
@@ -426,7 +426,7 @@ public class SystemDeclRewriter extends TreeTranslator {
     }
 
     @Override
-    public void visitSystemDef(JCWiringBlock tree) {
+    public void visitDesignBlock(JCDesignBlock tree) {
         valueEnv = new InterpEnv<Name, JCTree>();
         varDefToAstNodeEnv = new InterpEnv<Name, JCVariableDecl>();
 

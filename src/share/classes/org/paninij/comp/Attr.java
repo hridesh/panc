@@ -38,8 +38,6 @@ import org.paninij.analysis.ASTCFGBuilder;
 import org.paninij.consistency.ConsistencyUtil;
 import org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
 import org.paninij.consistency.SeqConstCheckAlgorithm;
-import org.paninij.system.SystemDeclRewriter;
-import org.paninij.system.SystemMainTransformer;
 import org.paninij.systemgraph.SystemGraph;
 import org.paninij.systemgraph.SystemGraph.Node;
 import org.paninij.systemgraph.SystemGraphBuilder;
@@ -63,7 +61,7 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
-import com.sun.tools.javac.tree.JCTree.JCWiringBlock;
+import com.sun.tools.javac.tree.JCTree.JCDesignBlock;
 import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
@@ -369,6 +367,7 @@ public final class Attr extends CapsuleInternal {
 			ListBuffer<JCStatement> assigns, SystemGraph sysGraph,
 			Env<AttrContext> env) {
 		Set<Name> vars = sysGraph.nodes.keySet();
+		System.out.println("Vars for ref$count: " + vars);
 		final Name _this = names._this;
 		final Name paniniRCField = names.panini.PaniniRefCountField;
 		for (Name vdeclName : vars) {
@@ -397,15 +396,15 @@ public final class Attr extends CapsuleInternal {
 		}
 	}
 
-	public final void visitSystemDef(JCWiringBlock tree, Resolve rs,
+	public final void visitSystemDef(JCDesignBlock tree, Resolve rs,
 			com.sun.tools.javac.comp.Attr jAttr, // Javac Attributer.
 			Env<AttrContext> env, boolean doGraphs){
 
 	    tree.sym.flags_field= pck.checkFlags(tree, tree.sym.flags(), tree.sym);
 
 	    //Use the scope of the out capsule, not the current system decl.
-		Scope scope = enterSystemScope(env);
-		moveWiringDecls(tree, scope);
+        Scope scope = enterSystemScope(env);
+        moveWiringDecls(tree, scope);
 
 	    ListBuffer<JCStatement> decls;
         ListBuffer<JCStatement> inits;
@@ -415,10 +414,10 @@ public final class Attr extends CapsuleInternal {
 
         SystemGraph sysGraph;
 
-        SystemDeclRewriter interp = new SystemDeclRewriter(make, log);
-        JCWiringBlock rewritenTree = interp.rewrite(tree);
+        DesignBlockRewriter interp = new DesignBlockRewriter(make, log);
+        JCDesignBlock rewritenTree = interp.rewrite(tree);
 
-        SystemMainTransformer mt = new SystemMainTransformer(syms, names, types, log,
+        CapsuleMainTransformer mt = new CapsuleMainTransformer(syms, names, types, log,
                 rs, env, make, systemGraphBuilder);
         rewritenTree = mt.translate(rewritenTree);
 
@@ -479,7 +478,7 @@ public final class Attr extends CapsuleInternal {
 	}
 	
 	// Helper functions
-	private void processSystemAnnotation(JCWiringBlock tree, ListBuffer<JCStatement> stats, Env<AttrContext> env){
+	private void processSystemAnnotation(JCDesignBlock tree, ListBuffer<JCStatement> stats, Env<AttrContext> env){
 		int numberOfPools = 1;
 		for (List<JCAnnotation> l = tree.mods.annotations; l.nonEmpty(); l = l.tail) {
 			JCAnnotation annotation = l.head;
@@ -515,7 +514,7 @@ public final class Attr extends CapsuleInternal {
      * @param tree
      * @return
      */
-    private List<JCVariableDecl> extractWiringBlockDecls(JCWiringBlock tree) {
+    private List<JCVariableDecl> extractWiringBlockDecls(JCDesignBlock tree) {
         class VarDeclCollector extends TreeScanner { //Helper visitor to collect var defs.
             final ListBuffer<JCVariableDecl> varDecls = new ListBuffer<JCVariableDecl>();
             @Override
@@ -539,7 +538,7 @@ public final class Attr extends CapsuleInternal {
      * @param wire
      * @param capScope
      */
-    private void moveWiringDecls(JCWiringBlock wire, Scope capScope) {
+    private void moveWiringDecls(JCDesignBlock wire, Scope capScope) {
         List<JCVariableDecl> capsuleDecls = extractWiringBlockDecls(wire);
         ClassSymbol capSym = wire.sym.ownerCapsule();
         capSym.capsule_info.connectedCapsules =

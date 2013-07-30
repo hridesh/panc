@@ -2675,12 +2675,12 @@ public class JavacParser implements Parser {
         this.endPosTable.errorEndPos = result.errorEndPos;
     }
     
-    private JCWiringBlock systemDecl(JCModifiers mods, String dc){
+    private JCDesignBlock systemDecl(JCModifiers mods, String dc){
         SystemParser systemParser = new SystemParser(F, log, names, S, getInitialEndPosTable(), token, mode,this.lastmode, this);
         SystemParserResult result = systemParser.parseSystemDecl(mods);
         
         restoreParserState(result);
-        JCWiringBlock systemDecl = result.systemDeclaration;
+        JCDesignBlock systemDecl = result.systemDeclaration;
         attach(systemDecl, dc);
         return systemDecl;
     }

@@ -494,7 +494,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 	}
     
 	public JCTree visitWiringBlock(InternalWiringMethod node, P p) {
-		JCWiringBlock t = (JCWiringBlock)node;
+		JCDesignBlock t = (JCDesignBlock)node;
         JCModifiers mods = copy(t.mods, p);
         JCExpression restype = copy(t.restype, p);
         List<JCTypeParameter> typarams = copy(t.typarams, p);

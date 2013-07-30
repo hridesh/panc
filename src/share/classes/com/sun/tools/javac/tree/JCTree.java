@@ -875,11 +875,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	}
 
-	public static class JCWiringBlock extends JCMethodDecl implements InternalWiringMethod {
+	public static class JCDesignBlock extends JCMethodDecl implements InternalWiringMethod {
 		public boolean hasTaskCapsule;
 		public int activeCapsuleCount;
 
-		public JCWiringBlock(JCModifiers mods, Name name, JCExpression restype,
+		public JCDesignBlock(JCModifiers mods, Name name, JCExpression restype,
                 List<JCTypeParameter> typarams, List<JCVariableDecl> params,
                 List<JCExpression> thrown, JCBlock body, JCExpression defaultValue,
                 MethodSymbol sym) {
@@ -888,7 +888,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
         @Override
         public void accept(Visitor v) {
-            v.visitSystemDef(this);
+            v.visitDesignBlock(this);
         }
 
         @Override
@@ -3401,7 +3401,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
          * overriden for a reason. Keeps the common case of 'this is a method decl'.
          * @param that
          */
-        public void visitSystemDef(JCWiringBlock that)	     { visitMethodDef(that); }
+        public void visitDesignBlock(JCDesignBlock that)     { visitMethodDef(that); }
         public void visitCapsuleDef(JCCapsuleDecl that)	     { visitTree(that); }
         public void visitFree(JCFree that)	                 { visitTree(that); }
         public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }

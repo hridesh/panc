@@ -636,7 +636,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
     }
 
     // Panini code
-    public void visitSystemDef(JCWiringBlock tree) {
+    public void visitDesignBlock(JCDesignBlock tree) {
         visitMethodDef(tree);
     }
     // end Panini code

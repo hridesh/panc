@@ -444,7 +444,7 @@ public class Enter extends JCTree.Visitor {
         Predicate<JCTree> wiringIsFirst = new Predicate<JCTree>() {
             @Override
             public final boolean apply(JCTree t) {
-                return t.getTag() == METHODDEF && t instanceof JCWiringBlock;
+                return t.getTag() == METHODDEF && t instanceof JCDesignBlock;
             }
         };
         capsule.defs = ListUtils.moveToFirst(capsule.defs, wiringIsFirst);

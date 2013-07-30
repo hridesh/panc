@@ -854,7 +854,7 @@ public class Attr extends JCTree.Visitor {
     /**
      * Adapted from {@link #visitMethodDef(JCMethodDecl)}.
      */
-    public final void visitSystemDef(final JCWiringBlock tree){
+    public final void visitDesignBlock(final JCDesignBlock tree){
         final MethodSymbol m = tree.sym;
 
         // Create a new environment with local scope

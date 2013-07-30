@@ -573,7 +573,7 @@ public class Pretty extends JCTree.Visitor {
     
     
     @Override
-    public void visitSystemDef(JCWiringBlock tree) {
+    public void visitDesignBlock(JCDesignBlock tree) {
         try {
             println(); align();
             printDocComment(tree);

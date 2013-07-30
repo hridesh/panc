@@ -233,8 +233,8 @@ public class TreeMaker implements JCTree.Factory {
 		return tree;
 	}
 
-	public JCWiringBlock WiringBlock(JCModifiers mods, JCBlock body)  {
-        JCWiringBlock tree = new JCWiringBlock(mods,
+	public JCDesignBlock WiringBlock(JCModifiers mods, JCBlock body)  {
+        JCDesignBlock tree = new JCDesignBlock(mods,
                 names.panini.InternalCapsuleWiring, TypeIdent(TypeTags.VOID),
                 List.<JCTypeParameter> nil(), List.<JCVariableDecl> nil(),
                 List.<JCExpression> nil(), body, null, null);
@@ -249,7 +249,7 @@ public class TreeMaker implements JCTree.Factory {
             JCExpression restype, List<JCTypeParameter> typarams,
             List<JCVariableDecl> params, List<JCExpression> thrown,
             JCBlock body, JCExpression defaultValue) {
-        JCWiringBlock tree = new JCWiringBlock(mods, name, restype, typarams,
+        JCDesignBlock tree = new JCDesignBlock(mods, name, restype, typarams,
                 params, thrown, body, defaultValue, null);
         tree.pos = pos;
         return tree;
@@ -292,7 +292,7 @@ public class TreeMaker implements JCTree.Factory {
                 || node instanceof JCSkip
                 || node instanceof JCErroneous
                 // Panini code
-                || node instanceof JCWiringBlock
+                || node instanceof JCDesignBlock
                 || node instanceof JCCapsuleDecl
                 // end Panini code
                 || (node instanceof JCExpressionStatement
