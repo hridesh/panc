@@ -367,7 +367,6 @@ public final class Attr extends CapsuleInternal {
 			ListBuffer<JCStatement> assigns, SystemGraph sysGraph,
 			Env<AttrContext> env) {
 		Set<Name> vars = sysGraph.nodes.keySet();
-		System.out.println("Vars for ref$count: " + vars);
 		final Name _this = names._this;
 		final Name paniniRCField = names.panini.PaniniRefCountField;
 		for (Name vdeclName : vars) {
