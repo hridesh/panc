@@ -140,15 +140,6 @@ public final class Attr extends CapsuleInternal {
         this.seqConstAlg = SEQ_CONST_ALG.instance(context);
     }
 
-    void attribSystemDecl(JCWiringBlock tree, Resolve rs, Env<AttrContext> env ) {
-        //This is where the systemDecl attribution will go, when
-        //pulled in from sun.tools.javac.comp.Attr.visitSystemDecl
-
-        //Use the scope of the out capsule, not the current system decl.
-        Scope scope = enterSystemScope(env);
-        moveWiringDecls(tree, scope);
-    }
-
 	public void visitTopLevel(JCCompilationUnit tree) { /* SKIPPED */ }
 	public void visitImport(JCImport tree) { /* SKIPPED */ }
 	public void visitLetExpr(LetExpr tree) { /* SKIPPED */ }
@@ -412,7 +403,9 @@ public final class Attr extends CapsuleInternal {
 
 	    tree.sym.flags_field= pck.checkFlags(tree, tree.sym.flags(), tree.sym);
 
-	    attribSystemDecl(tree, rs, env);
+	    //Use the scope of the out capsule, not the current system decl.
+		Scope scope = enterSystemScope(env);
+		moveWiringDecls(tree, scope);
 
 	    ListBuffer<JCStatement> decls;
         ListBuffer<JCStatement> inits;
