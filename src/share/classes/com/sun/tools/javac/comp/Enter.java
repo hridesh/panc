@@ -402,11 +402,11 @@ public class Enter extends JCTree.Visitor {
     			JCCapsuleDecl copyActive =
     					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.ACTIVE, capsule)), names.fromString(capsule.name + "$thread"), 
     							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-    			copyActive.accessMods = tc.copy(capsule.mods);
+    			copyActive.accessMods = capsule.mods.flags;
     			JCCapsuleDecl copyCapsule = 
     					make.CapsuleDef(make.Modifiers(INTERFACE, annotationProcessor.createCapsuleAnnotation(Flags.INTERFACE, capsule)), 
     							capsule.name, tc.copy(capsule.params), tc.copy(capsule.implementing), interfaceBody.toList());
-    			copyCapsule.accessMods = tc.copy(capsule.mods);
+    			copyCapsule.accessMods = capsule.mods.flags;
     			copiedDefs.add(copyCapsule);
     			copiedDefs.add(copyActive);
     			copyActive.parentCapsule = copyCapsule;
@@ -414,15 +414,15 @@ public class Enter extends JCTree.Visitor {
     				JCCapsuleDecl copyTask =
         					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.TASK, capsule)), names.fromString(capsule.name + "$task"), 
         							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-    				copyTask.accessMods = tc.copy(capsule.mods);
+    				copyTask.accessMods = capsule.mods.flags;
         			JCCapsuleDecl copySerial =
         					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.SERIAL, capsule)), names.fromString(capsule.name + "$serial"), 
         							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-        			copySerial.accessMods = tc.copy(capsule.mods);
+        			copySerial.accessMods = capsule.mods.flags;
         			JCCapsuleDecl copyMonitor =
         					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.MONITOR, capsule)), names.fromString(capsule.name + "$monitor"), 
         							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-        			copyMonitor.accessMods = tc.copy(capsule.mods);
+        			copyMonitor.accessMods = capsule.mods.flags;
 	    			copiedDefs.add(copyTask);
 	    			copyTask.parentCapsule = copyCapsule;
 	    			copiedDefs.add(copySerial);

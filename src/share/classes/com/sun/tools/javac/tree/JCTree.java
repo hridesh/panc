@@ -917,7 +917,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		 * Store the visibility flags until the lower phase.
 		 * Can't have public flags during initial phase.
 		 */
-		public JCModifiers accessMods;
+		public long accessMods;
 
 		public JCCapsuleDecl(JCModifiers mods, Name name,
 				List<JCVariableDecl> params, List<JCExpression> implementing,
