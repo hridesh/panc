@@ -39,25 +39,29 @@ capsule BankAccount() {
 }
 
 capsule Client1(BankAccount account) {
-	void run() {
+	void makeTransactions() {
 		account.deposit(25);
 		account.withdraw(10);
 	}
 }
 
 capsule Client2(BankAccount account) {
-	void run() {
+	void makeTransactions() {
 		account.withdraw(25);
 		account.deposit(25);
 	}
 }
 
 capsule Bank (){
-    design {
-        Client1 c1; Client2 c2;
-        BankAccount a;
-        c1(a); c2(a);
-    }
+	design {
+		Client1 c1; Client2 c2;
+		BankAccount a;
+		c1(a); c2(a);
+	}
+	void run() {
+		c1.makeTransactions(); //Returns immediately: c1 works concurrently.
+		c2.makeTransactions(); //Returns immediately: c1 works concurrently.
+	}
 }
 
 /*
