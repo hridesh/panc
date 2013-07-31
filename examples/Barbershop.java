@@ -23,7 +23,8 @@ class BooleanC {
 	public boolean value() { return v; }
 }
 
-capsule Barber(WaitingRoom r, boolean isSleeping) {         
+capsule Barber(WaitingRoom r) {         
+	boolean isSleeping = false;
 	void wake(){
 		isSleeping = false;
 		System.out.println("Barber Woke up");
@@ -71,7 +72,7 @@ capsule WaitingRoom(int queue, int cap) {
 }
 
 capsule Customers(Barber b, WaitingRoom r) {
-	void run() {
+	void generate() {
 		for (int numCustomers=1; numCustomers <=5; numCustomers++) {
 			System.out.println("Customer wants haircut");
 			if (!b.isSleeping().value()) {
@@ -93,15 +94,18 @@ capsule Customers(Barber b, WaitingRoom r) {
 }
 
 capsule Barbershop {
-    design {
-        Barber b;
-        WaitingRoom w;
-        Customers cs[5];
+	design {
+		Barber b;
+		WaitingRoom w;
+		Customers cs[5];
 
-        b(w, true);
-        w(0, 10);
-        for(Customers c : cs){
-            c(b, w);
-        }
-    }
+		b(w);
+		w(0, 10);
+		wireall(cs, b, w);
+	}
+	
+	void run() {
+		for(Customers c: cs)
+			c.generate();
+	}
 }
