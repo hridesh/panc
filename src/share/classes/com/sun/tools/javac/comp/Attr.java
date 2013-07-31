@@ -733,10 +733,11 @@ public class Attr extends JCTree.Visitor {
      * @param argtypes argument types.
      */
     Type checkWiring(JCTree tree, Type capsuletype, List<JCExpression> argtrees, List<Type> argtypes) {
+        Type wiringtype = types.createErrorType(capsuletype);
         if( !capsuletype.tsym.isCapsule() ) {
             log.error(tree.pos(), "only.capsule.types.allowed", capsuletype);
+            return wiringtype;
         }
-        Type wiringtype = types.createErrorType(capsuletype);
         CapsuleExtras cinfo = ((ClassSymbol)capsuletype.tsym).capsule_info;
 
         wiringtype = checkWiringArgs(tree, wiringtype, cinfo.wiringSym,
@@ -900,9 +901,15 @@ public class Attr extends JCTree.Visitor {
                 attribStat(l.head, localEnv);
             }
 
-            // visit the system def for rewriting and analysis.
-            // will re-write the body before doing the 'main' statement attribution.
-            pAttr.visitSystemDef(tree, rs, this, localEnv, doGraphs);
+            
+            //we only do translation if we have no errors, this is necessary because
+            //we don't want errors to cause incorrect translation or crashes.
+            if (log.nerrors == 0) {
+                // visit the system def for rewriting and analysis.
+                // will re-write the body before doing the 'main' statement
+                // attribution.
+                pAttr.visitSystemDef(tree, rs, this, localEnv, doGraphs);
+            }
 
             localEnv.info.scope.leave();
             result = tree.type = m.type;
