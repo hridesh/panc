@@ -26,13 +26,44 @@
 import java.net.*;
 import java.io.*;
 
-capsule Host() {
-	ServerSocket ss = null; 
+capsule Worker(EchoServer l) {
+	
+	void run() {
+		while (true) {
+			Socket s = l.getConnection();
+			handleConnection(s);
+		}
+	}
+	
+	void handleConnection(Socket s) { 
+		try {
+			PrintWriter out = new PrintWriter(s.getOutputStream(), true);
+			BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
+			String clientInput;
+			while ((clientInput = in.readLine()) != null) {
+				System.out.println("client says: " + clientInput);
+				out.println(clientInput);
+			}
+		} catch (IOException e) { e.printStackTrace(System.err); }
+	}
+
+}
+
+capsule EchoServer() {
+	
+	design {
+		Worker workers[10];
+		wireall(workers, this);
+	}
+
+	ServerSocket ss; 
+	
 	=> {
 		try {
 			ss = new ServerSocket(8080);
 		} catch (IOException e){ e.printStackTrace(System.err); }
 	}
+	
 	Socket getConnection() {
 		Socket s = null;
 		try {
@@ -40,29 +71,5 @@ capsule Host() {
 		} catch (IOException e){ e.printStackTrace(System.err); }
 		return s;
 	}
-}
-capsule Worker(Host l) {
-  void run() {
-	while (true) {
-	  Socket s = l.getConnection();
-      handleConnection(s);
-    }
-  }
-  void handleConnection(Socket s) { 
-	  try {
-		  PrintWriter out = new PrintWriter(s.getOutputStream(), true);
-		  BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-		  String clientInput;
-		  while ((clientInput = in.readLine()) != null) {
-			  System.out.println("client says: " + clientInput);
-			  out.println(clientInput);
-		  }
-	  } catch (IOException e) { e.printStackTrace(System.err); }
-  }
-}
-capsule EchoServer {
-    design {
-      Host h; Worker workers[10];
-      wireall(workers, h);
-    }
+	
 }

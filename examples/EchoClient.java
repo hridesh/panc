@@ -22,37 +22,51 @@
  */
 import java.net.*;
 import java.io.*;
-capsule Client() {
+
+capsule EchoClient() {
+	
+	Socket echoSocket = null; 
+	PrintWriter out = null;
+	BufferedReader in = null; 
+	BufferedReader stdIn = null;
+	
 	void run() {
 		try {
-			Socket echoSocket = null;
-			PrintWriter out = null;
-			BufferedReader in = null;
-
-			try {
-				echoSocket = new Socket("localhost", 8080);
-				out = new PrintWriter(echoSocket.getOutputStream(), true);
-				in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
-			} catch (UnknownHostException e) { e.printStackTrace(System.err); } 
-
-			BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 			String userInput;
-
+			open();
 			out.println("Hello Server!");
 			System.out.println("Server replied: " + in.readLine());
 			out.println("" + System.currentTimeMillis() + ".");			
 			System.out.println("Server replied: " + in.readLine());
 			out.println("Good bye.");			
 			System.out.println("Server replied: " + in.readLine());
+			close();
+		} catch (IOException e) { 
+			e.printStackTrace(System.err); 
+		}
+	}
+
+	private void open() {
+		try {
+			echoSocket = new Socket("localhost", 8080);
+			out = new PrintWriter(echoSocket.getOutputStream(), true);
+			in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
+			stdIn = new BufferedReader(new InputStreamReader(System.in));
+		} catch (UnknownHostException e) { 
+			e.printStackTrace(System.err); 
+		} catch (IOException e) { 
+			e.printStackTrace(System.err); 
+		}
+	}
+	
+	private void close() {
+		try {
 			out.close();
 			in.close();
 			stdIn.close();
 			echoSocket.close();
-		} catch (IOException e) { e.printStackTrace(System.err); }
+		} catch (IOException e) { 
+			e.printStackTrace(System.err); 
+		}
 	}
-}
-capsule EchoClient {
-    design {
-      Client c;
-    }
 }
