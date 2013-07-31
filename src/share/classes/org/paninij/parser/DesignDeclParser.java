@@ -747,10 +747,11 @@ public class DesignDeclParser {
      * </pre>
      */
     private JCStatement parseCapsuleWiringStatement() {
+        int pos = token.pos;
         JCExpression capsuleName = identExpression();
         List<JCExpression> params = parseParameterList();
         accept(SEMI);
-        JCCapsuleWiring wiringExpression = F.at(token.pos).WiringApply(
+        JCCapsuleWiring wiringExpression = F.at(pos).WiringApply(
                 capsuleName, params);
         return F.Exec(wiringExpression);
     }
