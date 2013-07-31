@@ -23,6 +23,7 @@ import static org.paninij.parser.PaniniTokens.*;
 
 import java.util.Map;
 
+import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.parser.EndPosTable;
 import com.sun.tools.javac.parser.JavacParser;
@@ -489,6 +490,11 @@ public class DesignDeclParser {
      * @return
      */
     public DesignDeclResult parseDesignDecl(JCModifiers mods) {
+        //Design decls cannot have any flags.
+        if (mods.flags != 0) {
+            syntaxError(mods.pos, "mods.for.design");
+        }
+
         nextToken();
         int pos = token.pos;
         JCDesignBlock result;

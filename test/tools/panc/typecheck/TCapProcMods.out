@@ -1,0 +1,9 @@
+TCapProcMods.java:27:5: compiler.err.mod.not.allowed.here: public
+TCapProcMods.java:28:5: compiler.err.mod.not.allowed.here: public
+TCapProcMods.java:30:5: compiler.err.mod.not.allowed.here: protected
+TCapProcMods.java:31:5: compiler.err.mod.not.allowed.here: protected
+TCapProcMods.java:37:5: compiler.err.mod.not.allowed.here: final
+TCapProcMods.java:38:5: compiler.err.mod.not.allowed.here: final
+TCapProcMods.java:41:5: compiler.err.mods.for.init
+TCapProcMods.java:44:5: compiler.err.mods.for.design
+8 errors

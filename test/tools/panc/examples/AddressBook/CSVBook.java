@@ -57,7 +57,7 @@ capsule CSVBook (String filename) implements Book {
 	 * @param filename
 	 * @throws FileNotFoundException
 	 */
-	private final void initDB() throws FileNotFoundException {
+	private void initDB() throws FileNotFoundException {
 		knownAddresses = new ArrayList<Address>();
 		InputStream in = this.getClass().getResourceAsStream(filename);
 		Scanner s = new Scanner(in);
@@ -84,7 +84,7 @@ capsule CSVBook (String filename) implements Book {
 	 * @param csv
 	 * @return
 	 */
-	private final Address parseAddress(String csv) {
+	private Address parseAddress(String csv) {
 		Address address = new Address();
 
 		String[] elems = csv.split(",");
@@ -122,7 +122,7 @@ capsule CSVBook (String filename) implements Book {
 	 * @return the address of the person, reference to the copy in the list. Be
 	 *         careful about making changes to it.
 	 */
-	private final Address search(String firstname, String lastname) {
+	private Address search(String firstname, String lastname) {
 
 		for (Address address : knownAddresses) {
 			if (address.getFirstname().equals(firstname)
