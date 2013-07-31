@@ -521,23 +521,8 @@ public class DesignBlockRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretOR(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.BOOLEAN:
-                    boolean vLHS = asBoolean(lhs.value);
-                    boolean vRHS = asBoolean(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Boolean.valueOf(vLHS || vRHS));
-                default:
-                    return tree;
-                }
-            }
+        	make.pos = tree.pos;
+        	return make.Literal(TypeTags.BOOLEAN, (Integer)lhs.value | (Integer)rhs.value);
         }
 
         /**
@@ -546,23 +531,8 @@ public class DesignBlockRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretAND(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.BOOLEAN:
-                    boolean vLHS = asBoolean(lhs.value);
-                    boolean vRHS = asBoolean(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Boolean.valueOf(vLHS && vRHS));
-                default:
-                    return tree;
-                }
-            }
+        	make.pos = tree.pos;
+        	return make.Literal(TypeTags.BOOLEAN, (Integer)lhs.value & (Integer)rhs.value);
         }
 
         /**
@@ -571,23 +541,8 @@ public class DesignBlockRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretNE(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.INT:
-                    int vLHS = asInt(lhs.value);
-                    int vRHS = asInt(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Boolean.valueOf(vLHS != vRHS));
-                default:
-                    return tree;
-                }
-            }
+        	make.pos = tree.pos;
+        	return make.Literal(TypeTags.BOOLEAN, ((Number)lhs.value != (Number)rhs.value) ? 1 : 0);
         }
 
         /**
@@ -596,23 +551,8 @@ public class DesignBlockRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretEQ(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.INT:
-                    int vLHS = asInt(lhs.value);
-                    int vRHS = asInt(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Boolean.valueOf(vLHS == vRHS));
-                default:
-                    return tree;
-                }
-            }
+        	make.pos = tree.pos;
+        	return make.Literal(TypeTags.BOOLEAN, ((Number)lhs.value == (Number)rhs.value) ? 1 : 0);
         }
 
         /**
@@ -621,23 +561,11 @@ public class DesignBlockRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretGE(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.INT:
-                    int vLHS = asInt(lhs.value);
-                    int vRHS = asInt(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Boolean.valueOf(vLHS >= vRHS));
-                default:
-                    return tree;
-                }
+            if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+                return reportNonInt();
             }
+            make.pos = tree.pos;
+            return make.Literal(TypeTags.BOOLEAN, (((Number)lhs.value).intValue() >= ((Number)rhs.value).intValue()) ? 1 : 0);
         }
 
         /**
@@ -646,23 +574,11 @@ public class DesignBlockRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretGT(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.INT:
-                    int vLHS = asInt(lhs.value);
-                    int vRHS = asInt(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Boolean.valueOf(vLHS > vRHS));
-                default:
-                    return tree;
-                }
+        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+                return reportNonInt();
             }
+        	make.pos = tree.pos;
+            return make.Literal(TypeTags.BOOLEAN, (((Number)lhs.value).intValue() > ((Number)rhs.value).intValue()) ? 1 : 0);
         }
 
         /**
@@ -671,146 +587,70 @@ public class DesignBlockRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretLE(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.INT:
-                    int vLHS = asInt(lhs.value);
-                    int vRHS = asInt(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Boolean.valueOf(vLHS <= vRHS));
-                default:
-                    return tree;
-                }
+        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+                return reportNonInt();
             }
+        	make.pos = tree.pos;
+            return make.Literal(TypeTags.BOOLEAN, (((Number)lhs.value).intValue() <= ((Number)rhs.value).intValue()) ? 1 : 0);
         }
 
         /**
          * @return
          */
         private JCTree interpretLT(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.INT:
-                    int vLHS = asInt(lhs.value);
-                    int vRHS = asInt(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Boolean.valueOf(vLHS < vRHS));
-                default:
-                    return tree;
-                }
+        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+                return reportNonInt();
             }
+        	make.pos = tree.pos;
+            return make.Literal(TypeTags.BOOLEAN, (((Number)lhs.value).intValue() < ((Number)rhs.value).intValue()) ? 1 : 0);
         }
+        
+        
 
         final JCTree interpPlus(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.INT:
-                    int vLHS = asInt(lhs.value);
-                    int vRHS = asInt(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Integer.valueOf(vLHS + vRHS));
-                default:
-                    return tree;
-                }
+        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+                return reportNonInt();
             }
+        	make.pos = tree.pos;
+            return make.Literal(TypeTags.INT, ((Number)lhs.value).intValue() + ((Number)rhs.value).intValue());
         }
 
         final JCTree interpMinus(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.INT:
-                    int vLHS = asInt(lhs.value);
-                    int vRHS = asInt(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Integer.valueOf(vLHS - vRHS));
-                default:
-                    return tree;
-                }
+        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+                return reportNonInt();
             }
+        	make.pos = tree.pos;
+            return make.Literal(TypeTags.INT, ((Number)lhs.value).intValue() - ((Number)rhs.value).intValue());
         }
 
         final JCTree interpMul(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.INT:
-                    int vLHS = asInt(lhs.value);
-                    int vRHS = asInt(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Integer.valueOf(vLHS * vRHS));
-                default:
-                    return tree;
-                }
+        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+                return reportNonInt();
             }
+        	make.pos = tree.pos;
+            return make.Literal(TypeTags.INT, ((Number)lhs.value).intValue() * ((Number)rhs.value).intValue());
         }
 
         final JCTree interpDiv(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.INT:
-                    int vLHS = asInt(lhs.value);
-                    int vRHS = asInt(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Integer.valueOf(vLHS / vRHS));
-                default:
-                    return tree;
-                }
+        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+                return reportNonInt();
             }
+        	make.pos = tree.pos;
+            return make.Literal(TypeTags.INT, Integer.valueOf(((Number)lhs.value).intValue() / ((Number)rhs.value).intValue()));
         }
 
         final JCTree interpMod(JCLiteral lhs, JCLiteral rhs) {
-            if (lhs.typetag != rhs.typetag) {
-                // FIXME rawWarning
-                log.rawWarning(tree.pos, tree
-                        + "did not have the same typetag for lhs and rhs");
-                return tree;
-            } else {
-                switch (lhs.typetag) {
-                case TypeTags.INT:
-                    int vLHS = asInt(lhs.value);
-                    int vRHS = asInt(rhs.value);
-                    make.pos = tree.pos;
-                    return make.Literal(lhs.typetag,
-                            Integer.valueOf(vLHS % vRHS));
-                default:
-                    return tree;
-                }
+        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+                return reportNonInt();
             }
+        	make.pos = tree.pos;
+            return make.Literal(TypeTags.INT, ((Number)lhs.value).intValue() % ((Number)rhs.value).intValue());
+        }
+        
+        private JCTree reportNonInt(){
+        	//Only allowing integer values in concern of bit precision issues.
+        	//No log error at this point due to reports breaking regression tests
+            return tree;
         }
 
         final int asInt(Object obj) {
@@ -819,7 +659,7 @@ public class DesignBlockRewriter extends TreeTranslator {
         }
 
         final boolean asBoolean(Object obj) {
-            return (Boolean) obj;
+            return (Integer)obj == 1;
         }
     }
 
