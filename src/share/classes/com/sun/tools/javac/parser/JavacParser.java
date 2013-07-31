@@ -55,8 +55,8 @@ import static com.sun.tools.javac.parser.Tokens.TokenKind.LT;
 
 // Panini code
 import org.paninij.parser.PaniniTokens;
-import org.paninij.parser.SystemParser;
-import org.paninij.parser.SystemParser.SystemParserResult;
+import org.paninij.parser.DesignDeclParser;
+import org.paninij.parser.DesignDeclParser.DesignDeclResult;
 // end Panini code
 
 /** The parser maps a token sequence into an abstract syntax
@@ -2669,20 +2669,20 @@ public class JavacParser implements Parser {
         else return null;
     }
     
-    private void restoreParserState(SystemParserResult result){
+    private void restoreParserState(DesignDeclResult result){
         this.token = result.token;
         //TODO: treat for case when endPosTable is null;
         this.endPosTable.errorEndPos = result.errorEndPos;
     }
     
-    private JCDesignBlock systemDecl(JCModifiers mods, String dc){
-        SystemParser systemParser = new SystemParser(F, log, names, S, getInitialEndPosTable(), token, mode,this.lastmode, this);
-        SystemParserResult result = systemParser.parseSystemDecl(mods);
+    private JCDesignBlock designDecl(JCModifiers mods, String dc){
+        DesignDeclParser designParser = new DesignDeclParser(F, log, names, S, getInitialEndPosTable(), token, mode,this.lastmode, this);
+        DesignDeclResult result = designParser.parseDesignDecl(mods);
         
         restoreParserState(result);
-        JCDesignBlock systemDecl = result.systemDeclaration;
-        attach(systemDecl, dc);
-        return systemDecl;
+        JCDesignBlock designDecl = result.designDeclaration;
+        attach(designDecl, dc);
+        return designDecl;
     }
     // end Panini code
 
@@ -2820,8 +2820,8 @@ public class JavacParser implements Parser {
              } else if (token.kind == IDENTIFIER
                      && token.name().toString().equals("design")
                      ) {
-                 JCTree wiringBlock = systemDecl(mods, dc);
-                 return List.<JCTree>of(wiringBlock);
+                 JCTree designDecl = designDecl(mods, dc);
+                 return List.<JCTree>of(designDecl);
              } else {
                  pos = token.pos;
                  List<JCTypeParameter> typarams = typeParametersOpt();

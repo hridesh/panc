@@ -416,7 +416,7 @@ public final class Attr extends CapsuleInternal {
 
         SystemGraph sysGraph;
 
-        DesignBlockRewriter interp = new DesignBlockRewriter(make, log);
+        DesignDeclRewriter interp = new DesignDeclRewriter(make, log);
         JCDesignBlock rewritenTree = interp.rewrite(tree);
 
         CapsuleMainTransformer mt = new CapsuleMainTransformer(syms, names, types, log,
