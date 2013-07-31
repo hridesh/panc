@@ -21,8 +21,13 @@ capsule M (C c) {
 }
 
 capsule ConfineTest {
-    design {
-        C c; M m;
-        m(c);
-    }
+	design {
+		C c; M m;
+		m(c);
+	}
+
+	void run() {
+		m.mtest();
+		m.mtest2();
+	}
 }
