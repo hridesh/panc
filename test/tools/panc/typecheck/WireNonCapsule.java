@@ -20,8 +20,10 @@ capsule C(int i) {
     void run() {}
 }
 
-system S {
-    C c;
-    int i = 3;
-    i(i);
+capsule S {
+    design {
+        C c;
+        int i = 3;
+        i(i);
+    }
 }
