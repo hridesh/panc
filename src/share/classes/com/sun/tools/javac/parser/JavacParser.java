@@ -55,8 +55,8 @@ import static com.sun.tools.javac.parser.Tokens.TokenKind.LT;
 
 // Panini code
 import org.paninij.parser.PaniniTokens;
-import org.paninij.parser.SystemParser;
-import org.paninij.parser.SystemParser.SystemParserResult;
+import org.paninij.parser.DesignDeclParser;
+import org.paninij.parser.DesignDeclParser.DesignDeclResult;
 // end Panini code
 
 /** The parser maps a token sequence into an abstract syntax
@@ -2669,20 +2669,20 @@ public class JavacParser implements Parser {
         else return null;
     }
     
-    private void restoreParserState(SystemParserResult result){
+    private void restoreParserState(DesignDeclResult result){
         this.token = result.token;
         //TODO: treat for case when endPosTable is null;
         this.endPosTable.errorEndPos = result.errorEndPos;
     }
     
-    private JCDesignBlock systemDecl(JCModifiers mods, String dc){
-        SystemParser systemParser = new SystemParser(F, log, names, S, getInitialEndPosTable(), token, mode,this.lastmode, this);
-        SystemParserResult result = systemParser.parseSystemDecl(mods);
+    private JCDesignBlock designDecl(JCModifiers mods, String dc){
+        DesignDeclParser designParser = new DesignDeclParser(F, log, names, S, getInitialEndPosTable(), token, mode,this.lastmode, this);
+        DesignDeclResult result = designParser.parseDesignDecl(mods);
         
         restoreParserState(result);
-        JCDesignBlock systemDecl = result.systemDeclaration;
-        attach(systemDecl, dc);
-        return systemDecl;
+        JCDesignBlock designDecl = result.designDeclaration;
+        attach(designDecl, dc);
+        return designDecl;
     }
     // end Panini code
 
@@ -2743,6 +2743,18 @@ public class JavacParser implements Parser {
     
 
     // Panini code
+
+    ////////////////AUXILARY PANINI METHODS///////////////////////
+    /** Diagnose dis-allowed flags for capsule proc and method decls */
+    void checkModsCapsuleMethodDecl(JCModifiers mods, boolean isSignature) {
+        long allowed = (isSignature ? 0 : ~(Flags.PRIVATE));
+        if ((mods.flags & allowed) != 0) {
+            long illegal = mods.flags & allowed;
+            error(mods.pos, "mod.not.allowed.here",
+                      Flags.asFlagSet(illegal));
+        }
+    }
+    ////////////////AUXILARY PANINI METHODS///////////////////////
      JCStatement capsuleDecl(JCModifiers mod, String dc){
      	accept(IDENTIFIER);
      	int pos = token.pos;
@@ -2820,9 +2832,10 @@ public class JavacParser implements Parser {
              } else if (token.kind == IDENTIFIER
                      && token.name().toString().equals("design")
                      ) {
-                 JCTree wiringBlock = systemDecl(mods, dc);
-                 return List.<JCTree>of(wiringBlock);
+                 JCTree designDecl = designDecl(mods, dc);
+                 return List.<JCTree>of(designDecl);
              } else {
+                 //State, proc decl, or helper method.
                  pos = token.pos;
                  List<JCTypeParameter> typarams = typeParametersOpt();
                  // if there are type parameters but no modifiers, save the start
@@ -2844,6 +2857,8 @@ public class JavacParser implements Parser {
                  if (token.kind == LPAREN && !isInterface && type.hasTag(IDENT)) {
                      if (isInterface || tk.name() != className)
                          error(pos, "invalid.meth.decl.ret.type.req");
+                     //Void proc or helper method
+                     checkModsCapsuleMethodDecl(mods, false);
                      return List.of(methodDeclaratorRest(
                          pos, mods, null, names.init, typarams,
                          isInterface, true, dc));
@@ -2851,10 +2866,13 @@ public class JavacParser implements Parser {
                      pos = token.pos;
                      Name name = ident();
                      if (token.kind == LPAREN) {
+                         // proc or helper method
+                         checkModsCapsuleMethodDecl(mods, false);
                          return List.of(methodDeclaratorRest(
                              pos, mods, type, name, typarams,
                              isInterface, isVoid, dc));
                      } else if (!isVoid && typarams.isEmpty()) {
+                         //Var decl list
                          List<JCTree> defs =
                              variableDeclaratorsRest(pos, mods, type, name, isInterface, dc,
                                                      new ListBuffer<JCTree>()).toList();

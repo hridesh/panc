@@ -83,7 +83,9 @@ public class SystemGraph {
 		}
 		
 		void addConnection(Name name, Node node){
-			node.indegree++;
+		    if (node != null){
+		        node.indegree++;
+		    }
 			connections.put(name, node);
 		}
 

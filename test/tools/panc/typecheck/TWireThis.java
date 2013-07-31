@@ -19,23 +19,21 @@
 
 /*
  * @test
- * @summary Simple test of declaring a wiring block inside a capsule
- *          instead of requiring a system.
- * @compile InterCapsuleSystem1.java
+ * @summary Test that 'this' can be a wiring argument in capsule design blocks.
+ * @compile TWireThis.java
  */
-capsule C1 () {
-    int myInt = 5;
 
-    void foo() {
-        c12.baz(myInt);
-    }
-
+capsule M() {
     design {
-        C2 c12;
+        C other;
+        other(this);
     }
 
+    void foo() {}
 }
 
-capsule C2() {
-    void baz(int i) {}
+capsule C(M mediator) {
+    void run() {
+        mediator.foo();
+    }
 }

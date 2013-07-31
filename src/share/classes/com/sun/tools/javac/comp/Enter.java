@@ -361,12 +361,14 @@ public class Enter extends JCTree.Visitor {
     
     // Panini Code
     private List<JCTree> capsuleSplitter(List<JCTree> defs){
-    	ListBuffer<JCTree> copiedDefs = new ListBuffer<JCTree>();
-    	TreeCopier<Void> tc = new TreeCopier<Void>(make);
+        ListBuffer<JCTree> copiedDefs = new ListBuffer<JCTree>();
+        TreeCopier<Void> tc = new TreeCopier<Void>(make);
     	for (List<JCTree> l = defs; l.nonEmpty(); l = l.tail){
     		JCTree def = l.head;
     		if(def.getTag() == CAPSULEDEF && (((JCCapsuleDecl)def).mods.flags & INTERFACE)==0 ){
-    			JCCapsuleDecl capsule = (JCCapsuleDecl)def;
+    		    ListBuffer<JCVariableDecl> stateToInit = new ListBuffer<JCVariableDecl>();
+    		    ListBuffer<JCMethodDecl> initMethods = new ListBuffer<JCMethodDecl>();
+    		    JCCapsuleDecl capsule = (JCCapsuleDecl)def;
     			ListBuffer<JCTree> interfaceBody = new ListBuffer<JCTree>();
     			reorderDefs(capsule);
     			boolean hasRun = false;
@@ -385,13 +387,18 @@ public class Enter extends JCTree.Visitor {
 	    							tc.copy(mdecl.params), 
 	    							tc.copy(mdecl.thrown), null, tc.copy(mdecl.defaultValue)));
     					}
+    					if(mdecl.name.equals(names.panini.PaniniCapsuleInit)) {
+    					    initMethods.add(mdecl);
+    					}
     				}else if(capsuleDefs.getTag() == VARDEF){
-    					JCVariableDecl vdecl = (JCVariableDecl)capsuleDefs;
-    					interfaceBody.add(make.VarDef(tc.copy(vdecl.mods), vdecl.name, 
+    				    JCVariableDecl vdecl = (JCVariableDecl)capsuleDefs;
+    					stateToInit.add(vdecl);
+    					interfaceBody.add(make.VarDef(tc.copy(vdecl.mods), vdecl.name,
     							tc.copy(vdecl.vartype), null));
     				}else
     					interfaceBody.add(tc.copy(capsuleDefs));
     			}
+
     			JCExpression excp = make.Ident(names.fromString("java"));
     			excp = make.Select(excp, names.fromString("lang"));
     			excp = make.Select(excp, names.fromString("InterruptedException"));
@@ -402,11 +409,15 @@ public class Enter extends JCTree.Visitor {
     			JCCapsuleDecl copyActive =
     					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.ACTIVE, capsule)), names.fromString(capsule.name + "$thread"), 
     							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-    			copyActive.accessMods = tc.copy(capsule.mods);
+    			copyActive.accessMods = capsule.mods.flags;
     			JCCapsuleDecl copyCapsule = 
     					make.CapsuleDef(make.Modifiers(INTERFACE, annotationProcessor.createCapsuleAnnotation(Flags.INTERFACE, capsule)), 
     							capsule.name, tc.copy(capsule.params), tc.copy(capsule.implementing), interfaceBody.toList());
-    			copyCapsule.accessMods = tc.copy(capsule.mods);
+    			//Record the init methods and state decls that still need initialized.
+    			copyCapsule.initMethods = initMethods.toList();
+    			copyCapsule.stateToInit = stateToInit.toList();
+    			//
+    			copyCapsule.accessMods = capsule.mods.flags;
     			copiedDefs.add(copyCapsule);
     			copiedDefs.add(copyActive);
     			copyActive.parentCapsule = copyCapsule;
@@ -414,15 +425,15 @@ public class Enter extends JCTree.Visitor {
     				JCCapsuleDecl copyTask =
         					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.TASK, capsule)), names.fromString(capsule.name + "$task"), 
         							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-    				copyTask.accessMods = tc.copy(capsule.mods);
+    				copyTask.accessMods = capsule.mods.flags;
         			JCCapsuleDecl copySerial =
         					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.SERIAL, capsule)), names.fromString(capsule.name + "$serial"), 
         							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-        			copySerial.accessMods = tc.copy(capsule.mods);
+        			copySerial.accessMods = capsule.mods.flags;
         			JCCapsuleDecl copyMonitor =
         					make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.MONITOR, capsule)), names.fromString(capsule.name + "$monitor"), 
         							tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
-        			copyMonitor.accessMods = tc.copy(capsule.mods);
+        			copyMonitor.accessMods = capsule.mods.flags;
 	    			copiedDefs.add(copyTask);
 	    			copyTask.parentCapsule = copyCapsule;
 	    			copiedDefs.add(copySerial);
@@ -646,6 +657,8 @@ public class Enter extends JCTree.Visitor {
             }
         }
         tree.sym = c;
+        c.capsule_info.initMethods = tree.initMethods;
+        c.capsule_info.stateToInit = tree.stateToInit;
         tree.sym.tree = tree;
 
         // Enter class into `compiled' table and enclosing scope.
@@ -882,8 +895,6 @@ public class Enter extends JCTree.Visitor {
 				JCVariableDecl vdecl = (JCVariableDecl) def;
 				if (vdecl.mods.flags != 0)
 					log.error(vdecl.pos(), "illegal.state.modifiers");
-				if (vdecl.init == null)
-					log.warning(vdecl.pos(), "state.not.initialized");
 				vdecl.mods.flags |= PRIVATE;
 				JCStateDecl state = make.at(vdecl.pos).StateDef(
 						make.Modifiers(PRIVATE), vdecl.name,

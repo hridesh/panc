@@ -645,7 +645,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
      *  @param tree     The method definition.
      *  @param env      The environment current outside of the method definition.
      */
-    Env<AttrContext> methodEnv(JCMethodDecl tree, Env<AttrContext> env) {
+    public Env<AttrContext> methodEnv(JCMethodDecl tree, Env<AttrContext> env) {
         Env<AttrContext> localEnv =
             env.dup(tree, env.info.dup(env.info.scope.dupUnshared()));
         localEnv.enclMethod = tree;

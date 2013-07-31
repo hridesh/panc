@@ -23,6 +23,7 @@ import static org.paninij.parser.PaniniTokens.*;
 
 import java.util.Map;
 
+import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.parser.EndPosTable;
 import com.sun.tools.javac.parser.JavacParser;
@@ -56,7 +57,7 @@ import com.sun.tools.javac.util.Position;
  * @author lorand
  * @since panini-0.9.2
  */
-public class SystemParser {
+public class DesignDeclParser {
 
     /**
      * The scanner used for lexical analysis.
@@ -83,12 +84,12 @@ public class SystemParser {
 
     /**
      * Construct a parser from a given scanner, tree factory and log.
-     * 
+     *
      * @param initialToken
      * @param lastmode
      * @param mode
      */
-    public SystemParser(TreeMaker F, Log log, Names names, Lexer S,
+    public DesignDeclParser(TreeMaker F, Log log, Names names, Lexer S,
             Map<JCTree, Integer> endPosTable, Token initialToken, int mode,
             int lastmode, JavacParser javaParser) {
         this.S = S;
@@ -207,7 +208,7 @@ public class SystemParser {
                 // Panini code
                 // TODO: FIXME: remove these;
                 if (token.name().toString().equals("library")
-                        || token.name().toString().equals("system")
+                        || token.name().toString().equals("design")
                         || token.name().toString().equals("capsule")
                         || token.name().toString().equals("signature"))
                     return;
@@ -406,8 +407,8 @@ public class SystemParser {
      * Statement =
      *       For
      *     | TopologyOperator
-     * 
-     * TopologyOperator = 
+     *
+     * TopologyOperator =
      *       Wireall
      *     | Associate
      *     | Ring
@@ -455,8 +456,8 @@ public class SystemParser {
 
     /**
      * <pre>
-     * For = 
-     *    JavacForHeader SystemBlock | SystemStatement
+     * For =
+     *    JavacForHeader DesignBlock | DesignStatement
      * </pre>
      */
     private JCStatement parseFor() {
@@ -471,42 +472,47 @@ public class SystemParser {
 
     private JCStatement parseForBody() {
         if (token.kind == LBRACE) {
-            JCBlock systemBlock = systemBlock();
-            return systemBlock;
+            JCBlock designBlock = designBlock();
+            return designBlock;
         } else {
-            JCStatement forBody = systemStatement().head;
+            JCStatement forBody = designStatement().head;
             return forBody;
         }
     }
 
     /**
      * <pre>
-     *    SystemDecl = 
+     *    DesignDecl =
      *       "design" Block
      * </pre>
-     * 
+     *
      *
      * @return
      */
-    public SystemParserResult parseSystemDecl(JCModifiers mods) {
+    public DesignDeclResult parseDesignDecl(JCModifiers mods) {
+        //Design decls cannot have any flags.
+        if (mods.flags != 0) {
+            syntaxError(mods.pos, "mods.for.design");
+        }
+
         nextToken();
         int pos = token.pos;
         JCDesignBlock result;
         JCBlock body = null;
         if (token.kind == LBRACE) {
             pos = token.pos;
-            body = systemBlock();
+            body = designBlock();
         }else {
             reportSyntaxError(token.pos, "expected", LBRACE);
             //syntaxError(token.pos, "expected", LBRACE);
             // error recovery
             skip(false, true, false, false);
             if (token.kind == LBRACE) {
-                body = systemBlock();
+                body = designBlock();
             }
         }
         result = toP(F.at(pos).WiringBlock(mods, body));
-        return new SystemParserResult(result);
+        return new DesignDeclResult(result);
     }
 
     /**
@@ -526,7 +532,7 @@ public class SystemParser {
     }
 
     /**
-     * 
+     *
      * @param mods
      *            Any modifiers
      * @param varType
@@ -573,7 +579,7 @@ public class SystemParser {
      * <pre>
      *   VariableInitializer = "=" JavacVariableInit
      * </pre>
-     * 
+     *
      * @param isInitAllowed
      *            indicated whether or not a variable initializer is allowed;
      */
@@ -581,7 +587,7 @@ public class SystemParser {
             Name name) {
         if (token.kind == EQ) {
             if (!isInitAllowed) {
-                error(token.endPos, "system.cannot.init.variable", name);
+                error(token.endPos, "design.cannot.init.variable", name);
             }
             nextToken();
             return parseVariableInitWithJavac();
@@ -591,12 +597,12 @@ public class SystemParser {
 
     /**
      * <pre>
-     *   SystemBlock = "{" SystemStatements "}"
+     *   DesignBlock = "{" DesignStatements "}"
      * </pre>
      */
-    private JCBlock systemBlock() {
+    private JCBlock designBlock() {
         accept(LBRACE);
-        List<JCStatement> stats = systemStatements();
+        List<JCStatement> stats = designStatements();
         JCBlock t = F.at(token.pos).Block(0, stats);
         t.endpos = token.pos;
         accept(RBRACE);
@@ -605,13 +611,13 @@ public class SystemParser {
 
     /**
      * <pre>
-     *  SystemStatements = SystemStatement*
+     *  DesignStatements = DesignStatement*
      * </pre>
      */
-    private List<JCStatement> systemStatements() {
+    private List<JCStatement> designStatements() {
         ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
         while (true) {
-            List<JCStatement> statement = systemStatement();
+            List<JCStatement> statement = designStatement();
             if (statement == null) {
                 return stats.toList();
             } else {
@@ -625,7 +631,7 @@ public class SystemParser {
 
     /**
      * <pre>
-     *  SystemStatement = 
+     *  DesignStatement =
      *       Statement
      *     | VariableDecl
      *     | CapsuleWiring
@@ -633,7 +639,7 @@ public class SystemParser {
      *     | JavacExpression ";"
      * </pre>
      */
-    private List<JCStatement> systemStatement() {
+    private List<JCStatement> designStatement() {
         if (token.kind == EOF) {
             error(token.pos, "premature.eof");
         }
@@ -661,7 +667,7 @@ public class SystemParser {
     }
 
     /**
-     * Method used for disambiguate between SystemStatements;
+     * Method used for disambiguate between DesignStatements;
      */
     private boolean isCapsuleWiringStart() {
         // Identifier(...
@@ -670,7 +676,7 @@ public class SystemParser {
     };
 
     /**
-     * Method used for disambiguate between SystemStatements;
+     * Method used for disambiguate between DesignStatements;
      */
     private boolean isIndexedCapsuleWiringStart() {
         // Identifier[...](..
@@ -682,7 +688,7 @@ public class SystemParser {
     };
 
     /**
-     * Method used for disambiguate between SystemStatements;
+     * Method used for disambiguate between DesignStatements;
      */
     private boolean isVariableDeclStart() {
         boolean isPrimitiveDeclaration = (typetag(token.kind) > 0);
@@ -700,14 +706,14 @@ public class SystemParser {
     }
 
     /**
-     * Method used for disambiguate between SystemStatements;
+     * Method used for disambiguate between DesignStatements;
      */
     private boolean isStatementStartingToken(Token kind) {
         return isWiringToken(kind) || (kind.kind == FOR);
     }
 
     /**
-     * Method used for disambiguate between SystemStatements;
+     * Method used for disambiguate between DesignStatements;
      */
     private List<JCStatement> returnNullOrNonEmptyList(JCStatement statement) {
         if (statement == null)
@@ -906,7 +912,7 @@ public class SystemParser {
     /**
      * This class is a copy of inner class from JavacParser. It was added in to
      * avoid the
-     * 
+     *
      * @author lorand
      * @since panini-0.9.2
      */
@@ -920,7 +926,7 @@ public class SystemParser {
         /**
          * Store ending position for a tree, the value of which is the greater
          * of last error position and the given ending position.
-         * 
+         *
          * @param tree
          *            The tree.
          * @param endpos
@@ -932,7 +938,7 @@ public class SystemParser {
          * Store current token's ending position for a tree, the value of which
          * will be the greater of last error position and the ending position of
          * the current token.
-         * 
+         *
          * @param t
          *            The tree.
          */
@@ -942,7 +948,7 @@ public class SystemParser {
          * Store current token's ending position for a tree, the value of which
          * will be the greater of last error position and the ending position of
          * the previous token.
-         * 
+         *
          * @param t
          *            The tree.
          */
@@ -952,7 +958,7 @@ public class SystemParser {
          * Set the error position during the parsing phases, the value of which
          * will be set only if it is greater than the last stored error
          * position.
-         * 
+         *
          * @param errPos
          *            The error position
          */
@@ -963,43 +969,43 @@ public class SystemParser {
         }
     }
 
-    public class SystemParserResult {
+    public class DesignDeclResult {
         public final Token token;
         public final int errorEndPos;
-        public final JCDesignBlock systemDeclaration;
+        public final JCDesignBlock designDeclaration;
 
-        protected SystemParserResult(JCDesignBlock systemDeclaration) {
-            this.token = SystemParser.this.token;
+        protected DesignDeclResult(JCDesignBlock designDeclaration) {
+            this.token = DesignDeclParser.this.token;
             this.errorEndPos = endPosTable.errorEndPos;
-            this.systemDeclaration = systemDeclaration;
+            this.designDeclaration = designDeclaration;
         }
     }
 
     private JCExpression parseExpressionWithJavac() {
         initJavaParserState();
         JCExpression result = javaParser.parseExpression();
-        restoreSystemParserState();
+        restoreDesignParserState();
         return result;
     }
 
     private JCExpression parseTypeWithJavac() {
         initJavaParserState();
         JCExpression result = javaParser.parseType();
-        restoreSystemParserState();
+        restoreDesignParserState();
         return result;
     }
 
     private JCExpression parseVariableInitWithJavac() {
         initJavaParserState();
         JCExpression result = javaParser.variableInitializer();
-        restoreSystemParserState();
+        restoreDesignParserState();
         return result;
     }
 
     private List<JCVariableDecl> parseFormalParametersWithJavaC() {
         initJavaParserState();
         List<JCVariableDecl> formalParams = javaParser.parseFormalParameters();
-        restoreSystemParserState();
+        restoreDesignParserState();
         return formalParams;
     }
 
@@ -1008,35 +1014,35 @@ public class SystemParser {
     private List<JCStatement> parseForInitWithJavaC() {
         initJavaParserState();
         List<JCStatement> init = javaParser.parseForLoopInit();
-        restoreSystemParserState();
+        restoreDesignParserState();
         return init;
     }
 
     private JCExpression parseForCondWithJavaC() {
         initJavaParserState();
         JCExpression forCond = javaParser.parseLoopCond();
-        restoreSystemParserState();
+        restoreDesignParserState();
         return forCond;
     }
 
     private List<JCExpressionStatement> parseForUpdateWithJavac() {
         initJavaParserState();
         List<JCExpressionStatement> update = javaParser.parseForLoopUpdate();
-        restoreSystemParserState();
+        restoreDesignParserState();
         return update;
     }
 
     /*-------- end FOR loop helpers -------------*/
 
     /**
-     * errorPosTable is shared between the JavacParser and the SystemParser no
+     * errorPosTable is shared between the JavacParser and the DesignParser no
      * need to initialize it;
      */
     private void initJavaParserState() {
         javaParser.setToken(token);
     }
 
-    private void restoreSystemParserState() {
+    private void restoreDesignParserState() {
         this.token = javaParser.getToken();
     }
 }

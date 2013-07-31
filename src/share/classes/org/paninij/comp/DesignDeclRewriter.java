@@ -59,11 +59,11 @@ import com.sun.tools.javac.util.Name;
 
 /**
  * Visit the system and interpret java computations to their values.
- * 
+ *
  * @author Sean L. Mooney, Lorand Szakacs
- * 
+ *
  */
-public class DesignBlockRewriter extends TreeTranslator {
+public class DesignDeclRewriter extends TreeTranslator {
 
     InterpEnv<Name, JCTree> valueEnv;
 
@@ -85,10 +85,10 @@ public class DesignBlockRewriter extends TreeTranslator {
 
     /**
      * TODO: Refactor to removethis at some points in the future.
-     * 
+     *
      * This method flattens the statements. Unrolled topology statements are
      * implemented as JCStatements nodes that contain a list of statements.
-     * 
+     *
      * @param stats
      * @return
      */
@@ -124,7 +124,7 @@ public class DesignBlockRewriter extends TreeTranslator {
         return result;
     }
 
-    public DesignBlockRewriter(TreeMaker treeMaker, Log log) {
+    public DesignDeclRewriter(TreeMaker treeMaker, Log log) {
         this.log = log;
         this.make = treeMaker;
         this.copy = new TreeCopier<Void>(make);
@@ -208,7 +208,7 @@ public class DesignBlockRewriter extends TreeTranslator {
         }
 
     }
-    
+
     @Override
     public void visitUnary(JCUnary tree) {
         super.visitUnary(tree);
@@ -443,12 +443,12 @@ public class DesignBlockRewriter extends TreeTranslator {
 
     /**
      * Helper to interpret arithmetic expression trees.
-     * 
+     *
      * TODO: Deal with something besides ints. rename because now it supports
      * booleans
-     * 
+     *
      * @author sean
-     * 
+     *
      */
     private class ArithTreeInterp {
 
@@ -665,9 +665,9 @@ public class DesignBlockRewriter extends TreeTranslator {
 
     /**
      * Standard linked environment for the interpretor
-     * 
+     *
      * @author sean
-     * 
+     *
      */
     private static class InterpEnv<K, V> {
         private final HashMap<K, V> table;
@@ -723,7 +723,7 @@ public class DesignBlockRewriter extends TreeTranslator {
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see com.sun.tools.javac.tree.JCTree#getTag()
          */
         @Override
@@ -734,7 +734,7 @@ public class DesignBlockRewriter extends TreeTranslator {
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see
          * com.sun.tools.javac.tree.JCTree#accept(com.sun.tools.javac.tree.JCTree
          * .Visitor)
@@ -747,7 +747,7 @@ public class DesignBlockRewriter extends TreeTranslator {
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see
          * com.sun.tools.javac.tree.JCTree#accept(com.sun.source.tree.TreeVisitor
          * , java.lang.Object)

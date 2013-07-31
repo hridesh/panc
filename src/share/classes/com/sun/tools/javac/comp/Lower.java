@@ -2318,13 +2318,10 @@ public class Lower extends TreeTranslator {
         if((tree.mods.flags & CAPSULE) != 0){
             JCCapsuleDecl capTree = (JCCapsuleDecl)tree;
             //reapply access flags
-        	if((capTree).accessMods!=null){
-	        	tree.mods.flags |= ((JCCapsuleDecl)tree).accessMods.flags;
-	        	tree.sym.flags_field |= ((JCCapsuleDecl)tree).accessMods.flags;
-        	}
+	       	tree.mods.flags |= ((JCCapsuleDecl)tree).accessMods;
+	       	tree.sym.flags_field |= ((JCCapsuleDecl)tree).accessMods;
     
         	pLower.visitCapsuleDef(capTree, attrEnv);
-
         }
         // end Panini code
 

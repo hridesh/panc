@@ -1,3 +1,4 @@
+
 /*
  * This file is part of the Panini project at Iowa State University.
  *
@@ -19,23 +20,17 @@
 
 /*
  * @test
- * @summary Simple test of declaring a wiring block inside a capsule
- *          instead of requiring a system.
- * @compile InterCapsuleSystem1.java
+ * @summary
+ * @compile -Werror TParamInDesign.java
  */
-capsule C1 () {
-    int myInt = 5;
-
-    void foo() {
-        c12.baz(myInt);
-    }
-
+capsule TParamInDesign (C other) {
     design {
-        C2 c12;
+        C c1;
+        c1(other);
     }
-
 }
 
-capsule C2() {
-    void baz(int i) {}
+capsule C(C other){
+    void foo() {}
 }
+

@@ -19,23 +19,15 @@
 
 /*
  * @test
- * @summary Simple test of declaring a wiring block inside a capsule
- *          instead of requiring a system.
- * @compile InterCapsuleSystem1.java
+ * @ignore
+ * @summary Don't warn if state initialized in state modifier.
+ * @compile -Werror -XDrawDiagnostics TStateInit.java
  */
-capsule C1 () {
-    int myInt = 5;
+capsule TCapProcMods () {
+    int i;
 
-    void foo() {
-        c12.baz(myInt);
+    => {
+        i = 4;
     }
-
-    design {
-        C2 c12;
-    }
-
 }
 
-capsule C2() {
-    void baz(int i) {}
-}

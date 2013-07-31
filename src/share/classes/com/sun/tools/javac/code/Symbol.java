@@ -39,6 +39,8 @@ import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.model.*;
 import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
+import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 
 // Panini code
 import java.util.HashSet;
@@ -779,6 +781,14 @@ public abstract class Symbol implements Element {
          * capsules declared in design blocks.
          */
         public List<JCTree.JCVariableDecl> connectedCapsules = List.<JCTree.JCVariableDecl>nil();
+
+        /**Init decls. -- used for state init checks.
+         * <b> AST nodes in this tree are not attributed.</b>*/
+        public List<JCVariableDecl> stateToInit = List.<JCTree.JCVariableDecl>nil();
+
+        /**Used for state init checks.
+         * <b> AST nodes in this tree are not attributed.</b> */
+        public List<JCMethodDecl> initMethods = List.<JCTree.JCMethodDecl>nil();
 
     	public ClassSymbol getTranslatedSerial(){
     		return translated_serial;

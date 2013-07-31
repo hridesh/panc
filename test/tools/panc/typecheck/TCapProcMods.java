@@ -19,23 +19,28 @@
 
 /*
  * @test
- * @summary Simple test of declaring a wiring block inside a capsule
- *          instead of requiring a system.
- * @compile InterCapsuleSystem1.java
+ * @summary Test illegal modifiers on capsule decls are reported.
+ * @compile/fail/ref=TCapProcMods.out -Werror -XDrawDiagnostics TCapProcMods.java
  */
-capsule C1 () {
-    int myInt = 5;
+capsule TCapProcMods () {
+    //Invalid flag
+    public void foo() {}
+    public int fooR() {}
+    //Invalid flag
+    protected void bar() {}
+    protected int barR() {}
+    //Valid flag
+    private void baz();
+    private int bazR();
 
-    void foo() {
-        c12.baz(myInt);
-    }
+    //invalid
+    private final void bazZ();
+    private final int bazZ();
 
-    design {
-        C2 c12;
-    }
+    //invalid
+    public => {}
 
+    //invalid
+    public design{}
 }
 
-capsule C2() {
-    void baz(int i) {}
-}
