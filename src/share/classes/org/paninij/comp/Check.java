@@ -19,15 +19,32 @@
 package org.paninij.comp;
 
 import static com.sun.tools.javac.code.Flags.INTERFACE;
-import static com.sun.tools.javac.code.Flags.PRIVATE;
 import static com.sun.tools.javac.code.Flags.StandardFlags;
 import static com.sun.tools.javac.code.Flags.asFlagSet;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Kinds;
+import com.sun.tools.javac.code.Scope;
+import com.sun.tools.javac.code.Scope.Entry;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Symbol.ClassSymbol;
+import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.comp.AttrContext;
+import com.sun.tools.javac.comp.Env;
+import com.sun.tools.javac.tree.JCTree.JCAssign;
+import com.sun.tools.javac.tree.JCTree.JCBlock;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
+import com.sun.tools.javac.tree.JCTree.JCIdent;
+import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
+import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.TreeScanner;
+import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.Names;
@@ -44,6 +61,7 @@ public class Check {
 
     private final Log log;
     private final Names names;
+    private final com.sun.tools.javac.comp.MemberEnter jMemberEnter;
 
     public static Check instance(Context context) {
         Check instance = context.get(checkKey);
@@ -57,6 +75,7 @@ public class Check {
 
         log = Log.instance(context);
         names = Names.instance(context);
+        jMemberEnter = com.sun.tools.javac.comp.MemberEnter.instance(context);
     }
 
     /** Check that given modifiers are legal for given symbol and
@@ -129,5 +148,92 @@ public class Check {
         }
 
         return 0;
+    }
+
+    void checkStateInit(final ClassSymbol sym, final Env<AttrContext> env) {
+        final List<JCVariableDecl>  stateToInit = sym.capsule_info.stateToInit;
+        final List<JCMethodDecl> initMethods = sym.capsule_info.initMethods;
+
+        class InitScanner extends TreeScanner {
+            Env<AttrContext> env;
+            static final int STATE_KIND = 1 << 24; //stick this on a high bit.
+            final Set<Symbol> states;
+
+            public InitScanner(Env<AttrContext> env) {
+                this.env = env;
+                states = new HashSet<Symbol>();
+                enterStateNames(stateToInit);
+            }
+
+            final void enterStateNames(final List<JCVariableDecl>  stateToInit) {
+                for(List<JCVariableDecl> l = stateToInit; l.nonEmpty(); l = l.tail) {
+                    jMemberEnter.memberEnter(l.head, env);
+                    l.head.sym.kind = STATE_KIND;
+                    l.head.sym.tree = l.head;
+                    if(l.head.init == null) {;
+                        states.add(l.head.sym);
+                    }
+                }
+            }
+
+            public final void scan(JCTree tree) {
+                if (tree != null )
+                    tree.accept(this);
+            }
+
+            @Override
+            public final void visitAssign(JCAssign tree) {
+                if(tree.lhs != null) {
+                    tree.lhs.accept(this);
+                }
+            }
+
+            @Override
+            public final void visitMethodDef(JCMethodDecl tree) {
+                Env<AttrContext> oldEnv = env;
+                //Create a basic symbol for the tree
+                tree.sym = new MethodSymbol(0, tree.name, null, sym);
+                Env<AttrContext> localenv = jMemberEnter.methodEnv(tree, env);
+                env = localenv;
+                super.visitMethodDef(tree);
+                env = oldEnv;
+            }
+
+            @Override
+            public final void visitVarDef(JCVariableDecl tree) {
+                jMemberEnter.memberEnter(tree, env);
+            }
+
+            @Override
+            public final void visitIdent(JCIdent tree) {
+                Entry decl = env.info.getScope().lookup(tree.name);
+                //lookup ident in scope
+                if(decl.sym != null) {
+                    if(decl.sym.kind == STATE_KIND) {
+                        if(states.contains(decl.sym)) {
+                            states.remove(decl.sym);
+                        } else {
+                            log.warning(tree.pos, "state.already.initialized", tree.name);
+                        }
+                    }
+                }
+            }
+
+            public final void checkAllStateInit() {
+                if(!states.isEmpty()) {
+                    for(List<JCVariableDecl>  l = stateToInit; l.nonEmpty(); l = l.tail) {
+                        if(states.contains(l.head.sym)) {
+                            log.warning(l.head.pos, "state.not.initialized");
+                        }
+                    }
+                }
+            }
+        }
+
+        InitScanner s = new InitScanner(env.dup(sym.tree));
+        for (List<JCMethodDecl> l = initMethods; l.nonEmpty(); l = l.tail) {
+            l.head.accept(s);
+        }
+        s.checkAllStateInit();
     }
 }

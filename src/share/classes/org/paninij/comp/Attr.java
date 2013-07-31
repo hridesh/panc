@@ -310,6 +310,8 @@ public final class Attr extends CapsuleInternal {
 					vdecl.mods.flags |= FINAL;
 			}
 		}
+
+		pck.checkStateInit(tree.sym, env);
 	}
 	
 	private ListBuffer<JCStatement> createCapsuleMemberDisconnects(

@@ -919,6 +919,16 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		 */
 		public long accessMods;
 
+		/**
+		 * Store the initial state decl. Don't use after capsule splitter.
+		 * 'Easy' way to track state decls for initializer checks
+		 */
+		public List<JCVariableDecl> stateToInit = List.<JCVariableDecl>nil();
+		/**
+		 * Store a list of initializer methods. Don't use after capsule splitter.
+		 */
+		public List<JCMethodDecl> initMethods = List.<JCMethodDecl>nil();
+
 		public JCCapsuleDecl(JCModifiers mods, Name name,
 				List<JCVariableDecl> params, List<JCExpression> implementing,
 				List<JCTree> defs) {
