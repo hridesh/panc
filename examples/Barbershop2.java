@@ -67,7 +67,7 @@ capsule WaitingRoom(int cap) {
 
 capsule Customers(Barber b, WaitingRoom r, String[] customerNames) {
 	int idCounter = 0;
-	void run() {
+	void generate() {
 		for (int i = 0; i < customerNames.length; i++) {
 			Customer c = new Customer(customerNames[i]);
 			System.out.println("Customer " + c.getName() + " wants haircut.");
@@ -78,16 +78,21 @@ capsule Customers(Barber b, WaitingRoom r, String[] customerNames) {
 	}
 }
 
-capsule Barbershop {
-    design {
-        Barber b;
-        WaitingRoom w;
-        Customers gs[2];
+capsule Barbershop2 {
+	design {
+		Barber b;
+		WaitingRoom w;
+		Customers gs[2];
 
-        b(w, true, 8);
-        w(10);
+		b(w, true, 8);
+		w(10);
 
-        gs[0](b,w, new String[]{"Hridesh", "Eric", "Steve", "Sarah"});
-        gs[1](b,w, new String[]{"Ganesha", "Rex", "Yuheng", "Lorand"});
-    }
+		gs[0](b,w, new String[]{"Hridesh", "Eric", "Sean", "Yuheng", "Ganesha"});
+		gs[1](b,w, new String[]{"Steven", "Sarah", "Bryan", "Lorand", "Rex"});
+	}
+	
+	void run() {
+		for(Customers generator: gs)
+			generator.generate();
+	}
 }
