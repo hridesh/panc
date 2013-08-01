@@ -24,7 +24,7 @@ package org.paninij.runtime;
  */
 public class UnrunnableCapsuleException extends RuntimeException{
     public UnrunnableCapsuleException() {
-        super("Attempting to run is non-executable capsule.");
+        super("Attempting to run non-executable capsule.");
     }
 
     private static final long serialVersionUID = 4656797864230486711L;
