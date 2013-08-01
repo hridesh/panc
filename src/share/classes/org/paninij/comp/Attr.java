@@ -414,8 +414,6 @@ public final class Attr extends CapsuleInternal {
         ListBuffer<JCStatement> inits;
         ListBuffer<JCStatement> assigns;
         ListBuffer<JCStatement> starts;
-        ListBuffer<JCStatement> joins;
-
         SystemGraph sysGraph;
 
         DesignDeclRewriter interp = new DesignDeclRewriter(make, log);
@@ -430,7 +428,6 @@ public final class Attr extends CapsuleInternal {
         inits = mt.inits;
         assigns = mt.assigns;
         starts = mt.starts;
-        joins = mt.joins;
         sysGraph = mt.sysGraph;
 
         if(rewritenTree.hasTaskCapsule)
@@ -444,7 +441,6 @@ public final class Attr extends CapsuleInternal {
         toAttr.addAll(inits);
         toAttr.addAll(assigns);
         toAttr.addAll(starts);
-        toAttr.addAll(joins);
         final boolean prevCheckCapState = checkCapStateAcc;
         try {
             checkCapStateAcc = false;

@@ -91,7 +91,6 @@ public class CapsuleMainTransformer extends TreeTranslator {
     public final ListBuffer<JCStatement> inits = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> assigns = new ListBuffer<JCStatement>();
     public final ListBuffer<JCStatement> starts = new ListBuffer<JCStatement>();
-    public final ListBuffer<JCStatement> joins = new ListBuffer<JCStatement>();
     public final Map<Name, Name> variables = new HashMap<Name, Name>();
     public final Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
     public final Map<Name, JCFieldAccess> refCountStats = new HashMap<Name, JCFieldAccess>();
@@ -513,15 +512,6 @@ public class CapsuleMainTransformer extends TreeTranslator {
             		make.Ident(c), make.Indexed(make.Ident(vdecl.name), make.Literal(j))),
             		names.fromString(PaniniConstants.PANINI_REF_COUNT));
             refCountStats.put(connectCapIdx,refCountAccess);
-
-            if (capTypeDefinedRun) {
-                joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(),
-                        make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)),
-                                names.fromString(PaniniConstants.PANINI_JOIN)), List.<JCExpression>nil())))),
-                                List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0),
-                                        names.fromString("e"), make.Ident(names.fromString("InterruptedException")),
-                                        null), make.Block(0, List.<JCStatement>nil()))), null));
-            }
         }
 
         variables.put(vdecl.name, c.name);
