@@ -35,18 +35,6 @@ signature Stage {
 	void consume(long n);
 }
 
-capsule Source (Stage next, long num) {
-	Random prng = new Random ();
-	void run() {
-		for (int j = 0; j < num; j++) {
-			long n = prng.nextInt(1024);
-			next.consume(n);
-		}
-		next.consume(-1);
-		yield(2);
-	}
-}
-
 capsule Average (Stage next) implements Stage {
 	long average = 0; 
 	long count = 0; 
@@ -104,8 +92,18 @@ capsule Sink(long num) implements Stage {
 }
 
 capsule Pipeline {
-    design {
-        Source src; Average avg; Sum sum; Min min; Max max; Sink snk;
-        src(avg,500); avg(sum); sum(min); min(max); max(snk); snk(500);
-    }
+	design {
+		Average avg; Sum sum; Min min; Max max; Sink snk;
+		avg(sum); sum(min); min(max); max(snk); snk(500);
+	}
+
+	Random prng = new Random ();
+	void run() {
+		for (int j = 0; j < 500; j++) {
+			long n = prng.nextInt(1024);
+			avg.consume(n);
+		}
+		avg.consume(-1);
+		yield(2);
+	}
 }
