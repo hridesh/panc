@@ -52,8 +52,11 @@ capsule Indirection (Store s) {
 }
 
 capsule SequentialConsistency {
-    design {
-        Main m; Store s; Indirection i1, i2;
-        i1(s); i2(s); m(i1, i2);
-    }
+	design {
+		Main m; Store s; Indirection i1, i2;
+		i1(s); i2(s); m(i1, i2);
+	}
+	void run() {
+		m.doSomething(13);
+	}
 }
