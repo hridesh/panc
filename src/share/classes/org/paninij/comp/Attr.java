@@ -173,9 +173,6 @@ public final class Attr extends CapsuleInternal {
 		if (tree.body != null) {
 			tree.accept(new ASTCFGBuilder());
 		}
-//		System.out.println(tree);
-//		System.out.println(tree.restype);
-//		System.out.println(tree.restype.type);
 
 		if ((tree.sym.owner.flags() & Flags.CAPSULE) != 0) {
 			CapsuleProcedure cp = new CapsuleProcedure((ClassSymbol) tree.sym.owner,
