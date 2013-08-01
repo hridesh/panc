@@ -37,11 +37,17 @@ capsule PrimitiveGiver(boolean bool, byte by, char ch, double d, float f, int i,
 	}
 }
 
-capsule PrimitiveGetter(PrimitiveGiver p){
+capsule PrimitiveTest(){
+	
+	design {
+		PrimitiveGiver p;
+		p(true, 127, 'C', 123.4d, 432.1f, 2147483647, 9223372036854775807L, 32767, "Success!");
+	}
+
 	=>{
 		System.out.println("Starting Primitive type procedure test...");
 	}
-	
+
 	void run(){
 		boolean bool = p.getBoolean();
 		byte by = p.getByte();
@@ -62,17 +68,8 @@ capsule PrimitiveGetter(PrimitiveGiver p){
 		System.out.println("long: "+ l);
 		System.out.println("short: "+ s);
 		System.out.println("String: "+ str);
-		
+
 		System.out.println("Ending primitive type procedure test...");
 	}
 
-}
-
-capsule PrimitiveTest{
-    design {
-        PrimitiveGiver pgiver;
-        PrimitiveGetter pgetter;
-        pgiver(true, 127, 'C', 123.4d, 432.1f, 2147483647, 9223372036854775807L, 32767, "Success!");
-        pgetter(pgiver);
-    }
 }
