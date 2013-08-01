@@ -28,7 +28,7 @@ import javax.swing.JFrame;
  * Simple GUI example in Panini. Each time the button is clicked, the 
  * label updates to show the total number of clicks. 
  */
-capsule UI {
+capsule GUIExample {
 
 	class LabelPanel extends JPanel {
 		private JButton button;   //Swing components
@@ -62,7 +62,7 @@ capsule UI {
 	LabelPanel panel = null;
 	JFrame frame = null;
 
-	public void run() {
+	void run() {
 		Runnable r = new Runnable() {
 			public void run() {
 				frame = new JFrame("GUI Example in Panini"); //create the frame
@@ -89,10 +89,4 @@ capsule UI {
 		};
 		java.awt.EventQueue.invokeLater(r);
 	}
-}
-
-capsule GUIExample {
-    design {
-        UI ui;
-    }
 }
