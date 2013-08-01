@@ -26,12 +26,17 @@ capsule Console () implements Stream {
 }
 
 capsule Greeter (Stream s) {
-	void run(){ s.write("Hello World, Signature Style!"); }
+	void greet(){ 
+		s.write("Hello World, Signature Style!"); 
+	}
 }
 
 capsule SignatureExample {
-    design {
-        Console c; Greeter g;
-        g(c);
-    }
+	design {
+		Console c; Greeter g;
+		g(c);
+	}
+	void run() {
+		g.greet();
+	}
 }
