@@ -783,7 +783,6 @@ public class Attr extends JCTree.Visitor {
             // the type to the tree when it finishes, which we do not want
             // in this context.
             Type aType = ats.head;
-            int  aKind = VAL;
             ResultInfo wireResult = new ResultInfo(VAL, wt.head);
 
             if (aType.tag != ERROR && wireResult.pt.tag != METHOD && resultInfo.pt.tag != FORALL) {
@@ -791,8 +790,7 @@ public class Attr extends JCTree.Visitor {
                 wiringOkay &= res.tag != ERROR; //check for a mismatch in arg wiring
             } else {
                 log.error(as.head.pos(), "unexpected.type",
-                          kindNames(wireResult.pkind),
-                          kindNames(aKind));
+                          wireResult.pt, aType);
                 wiringOkay = false;
             }
 
