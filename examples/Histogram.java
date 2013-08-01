@@ -25,7 +25,7 @@
 import java.io.*;
 
 capsule Reader(String[] args, Bucket[] buckets) {
-	void run() {
+	void read() {
 		if(args.length == 0) process("shaks12.txt");
 		else {
 			for(String fileName : args)
@@ -59,14 +59,17 @@ capsule Printer() {
 }
 
 capsule Histogram (String[] args){
-    design {
-        Reader r;
-        task Bucket buckets[128];
-        sequential Printer p;
+	design {
+		Reader r;
+		Bucket buckets[128];
+		Printer p;
 
-        r(args, buckets);
-        wireall(buckets, p);
-    }
+		r(args, buckets);
+		wireall(buckets, p);
+	}
+	void run() {
+		r.read();
+	}
 }
 
 
