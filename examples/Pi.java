@@ -31,15 +31,15 @@ class Number {
 	void incr() { value ++; }
 	double value() { return value; }
 	static double total(Number[] numbers) {
-	       double total = 0;
-	       for(Number n: numbers) total += n.value();
+		double total = 0;
+		for(Number n: numbers) total += n.value();
 		return total;
-        }
+	}
 }
 
-capsule Worker (double num) {
+capsule Worker () {
 	Random prng = new Random ();
-	Number compute() {
+	Number compute(double num) {
 		Number _circleCount = new Number(0);
 		for (double j = 0; j < num; j++) {
 			double x = prng.nextDouble();
@@ -50,27 +50,28 @@ capsule Worker (double num) {
 	}
 }
 
-capsule Master (double totalCount, Worker[] workers) {
+capsule Pi (String[] args) {
+	design {
+		Worker workers[10];
+	}
 	void run(){
-	 	double startTime = System.currentTimeMillis();
-		Number[] results = foreach(Worker w: workers) w.compute();
+		if(args.length <= 0) {
+			System.out.println("Usage: panini Pi <sample size>, try several hundred thousand samples.");
+			return;
+		}
+			
+		double totalSamples = Integer.parseInt(args[0]);
+		double startTime = System.currentTimeMillis();
+		Number[] results = foreach(Worker w: workers) 
+				w.compute(totalSamples/workers.length);
 
 		double total = 0;
 		for (int i=0; i < workers.length; i++)
-		 	total += results[i].value(); 
+			total += results[i].value(); 
 
-		double pi = 4.0 * total / totalCount; 
+		double pi = 4.0 * total / totalSamples; 
 		System.out.println("Pi : " + pi);
 		double endTime = System.currentTimeMillis();
-		System.out.println("Time to compute Pi using " + totalCount + " samples was:" + (endTime - startTime) + "ms.");
+		System.out.println("Time to compute Pi using " + totalSamples + " samples was:" + (endTime - startTime) + "ms.");
 	}
-}
-
-capsule Pi (String[] args) {
-    design {
-        double totalSamples = Math.pow(10,Integer.parseInt(args[0]));
-        Master master; Worker workers[10];
-        master(totalSamples, workers);
-        wireall(workers, totalSamples/workers.length);
-    }
 }
