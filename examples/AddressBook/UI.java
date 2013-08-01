@@ -18,7 +18,7 @@
  */
 
 capsule UI (Book[] books) {
-	void run() {
+	void search() {
 		AddressRequest[] requests = new AddressRequest[] {
 				new AddressRequest("Barack", "Obama"),
 				new AddressRequest("William", "Clinton"),
