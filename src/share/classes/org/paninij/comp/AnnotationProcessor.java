@@ -163,8 +163,14 @@ public class AnnotationProcessor extends Internal{
 	}
 
 	private Symbol findField(ClassSymbol s, Name name) {
-	    return s.members_field.lookup(name).sym;
+	    return s.members_field.lookup(name, VAR_FILTER).sym;
 	}
+	// where
+      private static final Filter<Symbol> VAR_FILTER = new Filter<Symbol>() {
+          public boolean accepts(Symbol s) {
+              return s.kind == Kinds.VAR;
+          }
+      };
 	
 	/**
 	 * This translates the value field of an effect annotation to an EffectSet
@@ -317,12 +323,20 @@ public class AnnotationProcessor extends Internal{
 	 * @param paramsString
 	 */
     private void fillInParams(ClassSymbol c, String paramsString) {
+        fillInCapsuleParams(c, paramsString);
+        fillInWiringSymbol(c);
+    }
+    //where
+    private void fillInCapsuleParams(ClassSymbol c,
+            String paramsString) {
         JavacParser parser = (JavacParser) parserFactory.newParser(paramsString, false, false, false);
         List<JCVariableDecl> params = parser.capsuleParameters();
         c.capsule_info.capsuleParameters = params;
-
+    }
+    private void fillInWiringSymbol(ClassSymbol c) {
         ListBuffer<Type> wts = new ListBuffer<Type>();
-        for (List<JCVariableDecl> l = params; l.nonEmpty(); l = l.tail){
+        for (List<JCVariableDecl> l = c.capsule_info.capsuleParameters;
+                l.nonEmpty(); l = l.tail){
         	JCVariableDecl p = l.head;
             Symbol fs = findField(c, p.name);
             Type t = fs.type;
@@ -338,7 +352,8 @@ public class AnnotationProcessor extends Internal{
                 new org.paninij.code.Type.WiringType(wts.toList(), c), c);
         c.capsule_info.wiringSym = wiringSym;
     }
-	
+    //end fillInParams helpers
+
 	private void fillInProcedures(ClassSymbol c){
 		Iterator<Symbol> iter = c.members().getElements().iterator();
 		while(iter.hasNext()){
