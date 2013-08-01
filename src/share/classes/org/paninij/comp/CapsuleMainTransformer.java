@@ -508,6 +508,11 @@ public class CapsuleMainTransformer extends TreeTranslator {
             final Name connectCapIdx = names.fromString(vdecl.name.toString()+"["+j+"]");
             systemGraphBuilder.addConnection(sysGraph, names._this,
                     connectCapIdx, connectCapIdx);
+            
+            JCFieldAccess refCountAccess = make.Select(make.TypeCast(
+            		make.Ident(c), make.Indexed(make.Ident(vdecl.name), make.Literal(j))),
+            		names.fromString(PaniniConstants.PANINI_REF_COUNT));
+            refCountStats.put(connectCapIdx,refCountAccess);
 
             if (capTypeDefinedRun) {
                 joins.prepend(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(),
