@@ -44,6 +44,10 @@ Contributor(s): Sean L. Mooney
     <target name="build" description="Build all examples"
         depends="build.Echo, build.Barbershop, build.HelloWorld, build.Pi,  build.Histogram, build.Philosophers, build.Pipeline, build.Signature, build.AddressBook"/>
 
+    <target name="build.Asteroids" description="">
+        <build includes="Asteroids.java" example="Asteroids"/>
+    </target>
+
     <target name="build.Echo" description="">
         <build includes="EchoClient.java, EchoServer.java" example="Echo"/>
     </target>
