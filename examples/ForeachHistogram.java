@@ -26,26 +26,25 @@ import java.io.*;
 
 class Long{
 	private long val;
-	public Long(long l)
-	{
+	public Long(long l)	{
 		val = l;		
 	}
 	
-	public long value()
-	{
+	public long value()	{
 		return val;
 	}
-
 }
 
 capsule Reader(String[] args, Bucket[] buckets, Printer p) {
-	void run() {
+	
+	void read() {
 		if(args.length == 0) process("shaks12.txt");
 		else {
 			for(String fileName : args)
 				process(fileName);
 		}
 	}
+	
 	private void process(String fileName) {
 		try {
 			FileInputStream stream =	new FileInputStream(new File(fileName));
@@ -61,28 +60,43 @@ capsule Reader(String[] args, Bucket[] buckets, Printer p) {
 			p.print("" + i + ":" + results[i].value()); 
 		System.out.println("READER: work complete.");
 	}
+
 }
 
 capsule Bucket() {
+
 	long count = 0;
+	
 	void bump() { count++; }
+	
 	Long getCount(){
 		return new Long(count);
 	}
+
 }
 
 capsule Printer() { 
-	void print(String output) { System.out.println(output); }
+
+	void print(String output) { 
+		System.out.println(output); 
+	}
+
 }
 
-capsule Histogram (String[] args){
-    design {
-        Reader r;
-        task Bucket buckets[128];
-        sequential Printer p;
+capsule ForeachHistogram (String[] args){
 
-        r(args, buckets, p);
-    }
+	design {
+		Reader r;
+		Bucket buckets[128];
+		Printer p;
+
+		r(args, buckets, p);
+	}
+	
+	void run() {
+		r.read();
+	}
+
 }
 
 
