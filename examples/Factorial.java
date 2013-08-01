@@ -17,14 +17,7 @@
  * Contributor(s): Eric Lin, Hridesh Rajan
  */
 
-class Number{
-	int number;
-	Number(int number){ this.number = number; }
-	int v(){ return number;}
-	public String toString() { return "" + number; }
-}
-
-capsule Fact () {
+capsule Helper () {
 	Number fact(int current, int numIndents) { 
 		String indents = "";
 		for(int i=0; i<numIndents; i++) indents+= "\t";
@@ -39,13 +32,19 @@ capsule Fact () {
 	}
 }
 
-capsule Main (Fact c) {
-	void run(){ System.out.println(c.fact(10, 0).v()); }
+capsule Factorial {
+	design {
+  Helper h;
+ }
+	
+	void run(){ 
+		System.out.println(h.fact(10, 0).v()); 
+	}
 }
 
-capsule Factorial {
-    design {
-        Main m; Fact c;
-        m(c);
-    }
+class Number{
+	int number;
+	Number(int number){ this.number = number; }
+	int v(){ return number;}
+	public String toString() { return "" + number; }
 }
