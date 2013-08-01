@@ -524,10 +524,6 @@ public class CapsuleMainTransformer extends TreeTranslator {
             }
         }
 
-        if (capTypeDefinedRun) {
-            tree.activeCapsuleCount += mat.size;
-        }
-
         variables.put(vdecl.name, c.name);
         if(c.capsule_info.capsuleParameters.nonEmpty())
             capsulesToWire.add(vdecl.name);
@@ -566,18 +562,7 @@ public class CapsuleMainTransformer extends TreeTranslator {
                 make.Select(make.Ident(vdecl.name), names.fromString(PaniniConstants.PANINI_START)),
                 List.<JCExpression>nil()));
         starts.prepend(startAssign);
-        if(c.capsule_info.definedRun){
-            if(tree.activeCapsuleCount!=0) {
-                starts.prepend(startAssign);
-                joins.append(make.Try(make.Block(0,List.<JCStatement>of(make.Exec(make.Apply(List.<JCExpression>nil(),
-                        make.Select(make.Ident(vdecl.name),
-                                names.fromString(PaniniConstants.PANINI_JOIN)), List.<JCExpression>nil())))),
-                                List.<JCCatch>of(make.Catch(make.VarDef(make.Modifiers(0),
-                                        names.fromString("e"), make.Ident(names.fromString("InterruptedException")),
-                                        null), make.Block(0, List.<JCStatement>nil()))), null));
-            }
-            tree.activeCapsuleCount++;
-        }
+
         variables.put(vdecl.name, c.name);
         if(c.capsule_info.capsuleParameters.nonEmpty())
             capsulesToWire.add(vdecl.name);
