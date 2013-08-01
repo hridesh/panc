@@ -47,26 +47,20 @@ capsule Ping(Pong pong, int total) {
 	void done() { done = true; }
 
 	private void publishPing() {
-        total--;
-        pong.act(total);
-    }
-}
-
-capsule Producer(Ping ping) {
-	void run() {
-		ping.act(1000000);
-		yield(10000);
+		total--;
+		pong.act(total);
 	}
 }
 
 capsule PingPong () {
-    design {
-        Ping ping;
-        Pong pong;
-        Producer p;
+	design {
+		Ping ping;
+		Pong pong;
 
-        ping(pong, 1000000);
-        pong(ping);
-        p(ping);
-    }
+		ping(pong, 1000000);
+		pong(ping);
+	}
+	void run() {
+		ping.act(1000000);
+	}
 }
