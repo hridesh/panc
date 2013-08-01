@@ -36,7 +36,7 @@ capsule Fork () {
 }
 
 capsule Philosopher (Fork left, Fork right, String name) {
-	void run() {
+	void act() {
 		for (int count=3; count>0; count--) {
 			think();
 			tryEat();
@@ -64,6 +64,7 @@ capsule Philosopher (Fork left, Fork right, String name) {
 			} 
 		}
 	}
+
 }
 
 capsule Philosophers {
@@ -73,4 +74,10 @@ capsule Philosophers {
         p2(f2,f3, "Demosthenes");
         p3(f3,f1, "Socrates");
     }
+    void run() {
+        p1.act();
+        p2.act();
+        p3.act();
+    }
 }
+
