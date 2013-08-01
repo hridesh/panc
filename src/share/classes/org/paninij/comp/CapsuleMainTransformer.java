@@ -501,7 +501,7 @@ public class CapsuleMainTransformer extends TreeTranslator {
         final boolean capTypeDefinedRun = c.capsule_info.definedRun;
         for(int j = mat.size-1; j>=0;j--){
             starts.prepend(make.Exec(make.Apply(List.<JCExpression>nil(),
-                    make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.fromString(PaniniConstants.PANINI_START)),
+                    make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.panini.Start),
                     List.<JCExpression>nil())));
 
             final Name connectCapIdx = names.fromString(vdecl.name.toString()+"["+j+"]");
@@ -549,7 +549,7 @@ public class CapsuleMainTransformer extends TreeTranslator {
         nameAssign.type = vdecl.type;
         inits.append(nameAssign);
         JCExpressionStatement startAssign = make.Exec(make.Apply(List.<JCExpression>nil(),
-                make.Select(make.Ident(vdecl.name), names.fromString(PaniniConstants.PANINI_START)),
+                make.Select(make.Ident(vdecl.name), names.panini.Start),
                 List.<JCExpression>nil()));
         starts.prepend(startAssign);
 
