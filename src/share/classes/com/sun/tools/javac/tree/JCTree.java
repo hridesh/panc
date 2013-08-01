@@ -877,7 +877,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	public static class JCDesignBlock extends JCMethodDecl implements InternalWiringMethod {
 		public boolean hasTaskCapsule;
-		public int activeCapsuleCount;
 
 		public JCDesignBlock(JCModifiers mods, Name name, JCExpression restype,
                 List<JCTypeParameter> typarams, List<JCVariableDecl> params,
