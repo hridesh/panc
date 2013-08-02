@@ -305,7 +305,7 @@ public class LeakDetection {
 								Symbol meth = curr.sym;
 								Type type = jcfa.sym.type;
 								String ts = type.toString();
-								if (type != null &&
+								if (type == null ||
 										ts.compareTo("java.lang.String") !=0) {
 									String meth_string = meth.toString();
 									log.useSource (
@@ -349,7 +349,7 @@ public class LeakDetection {
 							sym.getKind() == ElementKind.FIELD) {
 						Type type = sym.type;
 						String type_string = type.toString();
-						if (type != null &&
+						if (type == null ||
 								type_string.compareTo("java.lang.String") !=0) {
 							log.useSource(sym.outermostClass().sourcefile);
 							log.warning(tree.pos(), "confinement.violation",
