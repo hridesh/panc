@@ -7,7 +7,17 @@ $PANC Pi.java
 $PANINI Pi 8
 rm *.class
 
-EXAMPLES="Barbershop2 HelloWorld Histogram Philosophers Pipeline PrimitiveTest SequentialConsistency SignatureExample"
+echo "Testing Barbershop"
+$PANC Barbershop2.java
+$PANINI Barbershop
+rm *.class
+
+echo "Testing Fibonacci"
+$PANC Fibonacci.java
+$PANINI Fibonaci 8
+rm *.class
+
+EXAMPLES="HelloWorld Histogram Philosophers Pipeline PrimitiveTest SequentialConsistency SignatureExample"
 for EXAMPLE in $EXAMPLES 
  do
   echo "Testing $EXAMPLE."
