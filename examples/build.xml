@@ -42,7 +42,7 @@ Contributor(s): Sean L. Mooney
     </presetdef>
 
     <target name="build" description="Build all examples"
-        depends="build.Echo, build.Barbershop, build.HelloWorld, build.Pi,  build.Histogram, build.Philosophers, build.Pipeline, build.Signature, build.AddressBook"/>
+        depends="build.Asteroids, build.Echo, build.Barbershop, build.HelloWorld, build.Pi,  build.Histogram, build.Fibonacci, build.Philosophers, build.Pipeline, build.Signature, build.AddressBook"/>
 
     <target name="build.Asteroids" description="">
         <build includes="Asteroids.java" example="Asteroids"/>
@@ -69,6 +69,10 @@ Contributor(s): Sean L. Mooney
         <copy todir="${build.panini.dir}/Histogram">
             <fileset dir="${basedir}" includes="shaks12.txt" />
         </copy>
+    </target>
+
+    <target name="build.Fibonacci" description="">
+        <build includes="Fibonacci.java" example="Fibonacci"/>
     </target>
 
     <target name="build.Philosophers" description="">
