@@ -8,6 +8,7 @@ import javax.lang.model.element.ElementKind;
 
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
@@ -302,13 +303,20 @@ public class LeakDetection {
 							if (jcfa.sym.getKind() == ElementKind.FIELD) {
 								Symbol capSym = capsule.sym;
 								Symbol meth = curr.sym;
-								log.useSource (
-									jcfa.sym.outermostClass().sourcefile);
-								log.warning(tree.pos(), "confinement.violation",
-									jcfa.sym, capSym.toString().substring(0,
-										capSym.toString().indexOf("$")),
-											meth.toString().substring(0,
-												meth.toString().indexOf("$")));
+								Type type = jcfa.sym.type;
+								String ts = type.toString();
+								if (type != null &&
+										ts.compareTo("java.lang.String") !=0) {
+									String meth_string = meth.toString();
+									log.useSource (
+										jcfa.sym.outermostClass().sourcefile);
+									log.warning(tree.pos(),
+										"confinement.violation", jcfa.sym,
+										capSym.toString().substring(0,
+											capSym.toString().indexOf("$")),
+											meth_string.substring(0,
+													meth_string.indexOf("$")));
+								}
 							}
 						}
 					}
@@ -339,12 +347,17 @@ public class LeakDetection {
 				if (!analyzingphase) {
 					if (isInnerField(sym) &&
 							sym.getKind() == ElementKind.FIELD) {
-						log.useSource (sym.outermostClass().sourcefile);
-						log.warning(tree.pos(), "confinement.violation",
-							sym, capsule.sym.toString().substring(
-								0, capsule.sym.toString().indexOf("$")),
-									curr.sym.toString().substring(
-										0, curr.sym.toString().indexOf("$")));
+						Type type = sym.type;
+						String type_string = type.toString();
+						if (type != null &&
+								type_string.compareTo("java.lang.String") !=0) {
+							log.useSource(sym.outermostClass().sourcefile);
+							log.warning(tree.pos(), "confinement.violation",
+								sym, capsule.sym.toString().substring(
+									0, capsule.sym.toString().indexOf("$")),
+										curr.sym.toString().substring(
+											0, curr.sym.toString().indexOf("$")));
+						}
 					}
 				}
 			}
