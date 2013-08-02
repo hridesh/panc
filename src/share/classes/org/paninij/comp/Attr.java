@@ -451,10 +451,6 @@ public final class Attr extends CapsuleInternal {
 		List<JCStatement> mainStmts;
 		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).toList();
 
-		//TODO-XX: Still need to create a main method somewhere.
-		//JCMethodDecl maindecl = createMainMethod(rewritenTree.sym.owner, rewritenTree.body, rewritenTree.params, mainStmts);
-
-
 		systemGraphBuilder.completeEdges(sysGraph, annotationProcessor, env, rs);
 
 		// Sequential consistency detection
