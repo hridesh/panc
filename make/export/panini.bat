@@ -8,13 +8,17 @@ set JAVA_OPTS=
 rem TODO put only the non -J opts in here
 set TOOL_OPTS=
 set CP=%PANC_HOME%\lib\panini_rt.jar
+set FIRST=1
 
 :Loop
 IF [%1]==[] GOTO Skip
 set arg=%1
 IF %arg%==-cp GOTO Append
 IF %arg%==-classpath GOTO Append
+IF %FIRST%==0 GOTO SkipThread
 IF NOT [%arg:~0,1%]==[-] set arg=%arg%$thread
+set FIRST=0
+:SkipThread
 set TOOL_OPTS=%TOOL_OPTS% %arg%
 SHIFT
 GOTO Loop
@@ -38,3 +42,5 @@ if NOT "%BCP%"=="" set BCP=-Xbootclasspath/p:%BCP%
 
 rem "java" "${bcp:+-Xbootclasspath/p:"$bcp"}" ${ea} ${javaOpts} -jar "${mylib}/javac.jar" ${toolOpts}
 java %JAVA_OPTS% -cp %CP%;. %TOOL_OPTS%
+
+echo %TOOL_OPTS%
