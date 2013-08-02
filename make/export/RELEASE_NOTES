@@ -1,3 +1,79 @@
+RELEASE NOTES FOR PANINI 0.9.2
+
+These release notes summarizes changes in Panini 0.9.2 release.
+Note that feature releases and bug fixes are cumulative, that is, 
+bug fixes in previous update versions are included in subsequent 
+update versions.
+
+** Programming language features included in this release
+
+* Unified system declarations and capsule declarations. Capsules can now 
+contain a 'design declaration' which allow a capsule to create internal
+connections between other private capsule instances. The keyword system
+is no longer used.
+
+    capsule C () {
+        design {
+            C1 other;
+        }
+
+        void proc() {
+            other.message();
+        }
+    }
+
+  The names on capsules defined in a design declaration (e.g. other) are
+  available in the procedures of the capsule. These names are
+  effectively at the field scope level. Names which do not have capsule
+  types are confined to the scope of the design declaration.
+
+* Executable capsules. 
+
+  In panini 0.9.1, all systems where executable. Since systems no longer
+  exist, some capsules are now executable. Any closed capsules which
+  defines a run method may be executed. A closed capsule is one which
+  takes no parameters, or a single parameter of type String[].
+
+* Topology operators in design declarations.
+  
+  wireall
+  ring
+  assoc
+  star
+
+  These operators look like methods, and simplify wiring some of the
+  common connections between capsules.
+
+  wireall -> connects each element in a capsule array to the same set of
+             arguments
+  If cs is an array of capsules, of length n
+  wireall(cs, arg1, arg2, ...);
+  becomes
+  cs[0](arg1, arg2, ...);
+  cs[1](arg1, arg2, ...);
+  ...
+  cs[n-1](arg1, arg2, ...);
+
+  ring -> connects each element 'N' in a capsule array to element 'N+1'.
+          Connects the last element in the array to the first element in
+          the array.
+
+  ring(cs);
+  becomes
+  cs[0](cs[1]);
+  cs[1](cs[2]);
+  cs[n-1](cs[0]);
+
+  assoc -> Like the array copy method in Java. Associate elements of two
+  arrays from a starting index i, for a l items.
+
+  assoc(cs, 3, ds, 2, args)
+  becomes
+  cs[3](ds[3], args);
+  cs[4](ds[4], args);
+
+  star -> similar to wireall.
+
 RELEASE NOTES FOR PANINI 0.9.1
 
 These release notes summarizes changes in Panini 0.9.1 release.
