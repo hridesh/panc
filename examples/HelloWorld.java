@@ -44,9 +44,9 @@ capsule Console () implements Stream { //Capsule declaration
 }
 
 capsule Greeter (Stream s) { //Requires an instance of Stream to work
-	String message = "Panini: Hello World!"; // State declaration
+	String message = "Hello World!"; // State declaration
 	void greet(){                  //Capsule procedure
-		s.write(message);  //Inter-capsule procedure call 
+		s.write("Panini: " + message);  //Inter-capsule procedure call 
 		long time = System.currentTimeMillis();
 		s.write("Time is now: " + time);
 	}
