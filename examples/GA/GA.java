@@ -52,6 +52,9 @@ capsule Fittest {
 			if( f1.average() > f2.average() ) last = g;
 		}
 	}
+	Fitness bestFitness() {
+		return last.getFitness();
+	}
 }
 
 capsule Logger {
@@ -60,37 +63,34 @@ capsule Logger {
 	}
 	long generationNumber = 0; 
 	void logGeneration(Generation g){
-		System.out.println("********************************************");
-		System.out.println("Generation #"+(generationNumber++));
 		Fitness f = g.getFitness();
-		System.out.println("Average fitness=" + f.average());
-		System.out.println("Maximum fitness="+f.maximum());		
+		System.out.println("Generation #"+(generationNumber++) + ": Fitness = " + f.average() + " (avg), " + f.maximum() + " (max).");
 	}	
 }
 
-capsule Controller (CrossOver c, Mutation m, Fittest f, Logger l, int maxIteration) {
+capsule GA {
+	design {
+		CrossOver c; Mutation m; Fittest f; Logger l ;
+		c(0.9f);
+		m(0.0001f);
+	}
 	void run() {
          Individual individual = new BooleanIndividual();
          Generation g = new Generation(100, individual);
-         explore(g, 0); 
-         System.out.println("********************************************");
-         System.out.println("********FINAL***********RESULTS*************");
-         System.out.println("********************************************");
+         l.logit(g);
+         explore(g, 0, 6); //Initial generation, initial depth, max iterations.
+         Fitness fitness = f.bestFitness();
+         float avgFitness = fitness.average();
+         float maxFitness = fitness.maximum();
+         System.out.println("Final Results: Fitness" + avgFitness + "(avg), " + maxFitness + " (max).");
 	}
-	private void explore (Generation g, int depth) {
+	private void explore (Generation g, int depth, int maxIteration) {
 		if (depth > maxIteration) return;
 		Generation g1 = c.compute(g); 
 		Generation g2 = m.mutate(g); 
-		explore(g1, depth + 1);
-		explore(g2, depth + 1);
+		explore(g1, depth + 1, maxIteration);
+		explore(g2, depth + 1, maxIteration);
 		f.check(g1); f.check(g2); 
 		l.logit(g1); l.logit(g2); 
 	}
-}
-
-system GA {
-	CrossOver c; Mutation m; Fittest f; Logger l ; Controller cl;
- c(0.9f);
-	m(0.0001f);
-	cl(c,m,f,l,5);
 }
