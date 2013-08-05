@@ -22,8 +22,8 @@ import java.io.StringWriter;
 
 /*
  * @test
- * @summary Ensures the frontend produces 'panc' and the version number
- * instead of javac and the java version.
+ * @summary Ensures the frontend produces 'panc'
+ * instead of javac with the -version flag.
  */
 
 /**
@@ -39,8 +39,14 @@ public class PancVersionOpt {
         PrintWriter out = new PrintWriter(sw);
         String[] args = new String[] {"-version"};
         int rc = com.sun.tools.panc.Main.compile(args, out);
-        System.out.println(out.toString());
         if (rc != 0)
             throw new Error("panc failed: rc=" + rc);
+        final String actualVersion = sw.toString();
+        if (!actualVersion.startsWith(PANC)) {
+            throw new Error("\nExpected version sting to start with: " + PANC + "\nFound: " + actualVersion);
+        }
+        System.out.println(actualVersion);
     }
+
+    public static final String PANC = "panc";
 }
