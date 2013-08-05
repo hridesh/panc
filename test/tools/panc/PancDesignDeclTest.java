@@ -19,14 +19,11 @@
 
 /* @test
  * @summary
- * @build PancDesignDeclTest
  * @run main PancDesignDeclTest
  */
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -40,12 +37,9 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.AbstractElementVisitor7;
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileObject;
-import javax.tools.SimpleJavaFileObject;
-import javax.tools.ToolProvider;
 
-import com.sun.source.tree.CompilationUnitTree;
+import util.AbstractPancTest;
+
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
@@ -67,18 +61,24 @@ import com.sun.tools.javac.util.Names;
  * @author Sean L. Mooney
  * @since panini-0.9.2
  */
-public class PancDesignDeclTest {
+public class PancDesignDeclTest extends AbstractPancTest {
 
-    final JavaCompiler tool;
-
-    public PancDesignDeclTest() {
-        tool = ToolProvider.getSystemJavaCompiler();
-        System.out.println("java.home=" + System.getProperty("java.home"));
-
+    /**
+     * Execute all the tests in the file.
+     * Add new calls to other test methods as this test class grows.
+     * Fails fast -- first test method to fail fails the whole test.
+     * @throws IOException
+     */
+    public void runTests() throws IOException {
+        testActiveCapsuleStartCounts();
     }
 
-    public void test() throws IOException {
-
+    /**
+     * Test a design decl with two 'active' capsules. Each capsule instance
+     * should only have start called once.
+     * @throws IOException
+     */
+    private void testActiveCapsuleStartCounts() throws IOException {
         JavacTaskImpl tasks = getTasks("capsule M { design { " + " D d; C c;"
                 + "}}" + "capsule D { void run() {} }"
                 + "capsule C { void run(){} }");
@@ -107,9 +107,11 @@ public class PancDesignDeclTest {
      * statement TODO: Make assertions about whether or not a decl gets a
      * ref$count and what the ref count should be.
      */
-    public void testDeclTranslation(final Context context, final Element t,
+    private void testDeclTranslation(final Context context, final Element t,
             final Collection<Name> expectations) {
+        // Track how many times the 'start' method is called for each name.
         final HashMap<Name, Integer> startCounts = new HashMap<Name, Integer>();
+        //Scan a source tree, looking for start invocations
         final TreeScanner<Void, Void> scanner = new TreeScanner<Void, Void>() {
 
             private boolean visitingMethodInvocation;
@@ -162,6 +164,10 @@ public class PancDesignDeclTest {
             }
         };
 
+        //Visit an element, looking for a 'translated' design decl method.
+        //Use the scanner to count each 'start' call in the design decl.
+        //At the end of a design decl method, assert each name in 'expectations'
+        //has had its start method called exactly once.
         t.accept(new AbstractElementVisitor7<Boolean, Void>() {
             final Names names = Names.instance(context);
 
@@ -229,34 +235,7 @@ public class PancDesignDeclTest {
         }, null);
     }
 
-    static class MyFileObject extends SimpleJavaFileObject {
-
-        private String text;
-
-        public MyFileObject(String text) {
-            super(URI.create("myfo:/Test.java"), JavaFileObject.Kind.SOURCE);
-            this.text = text;
-        }
-
-        @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
-            return text;
-        }
-    }
-
-    public JavacTaskImpl getTasks(String code) {
-        return (JavacTaskImpl) tool.getTask(null, null, null, null, null,
-                Arrays.asList(new MyFileObject(code)));
-    }
-
-    public CompilationUnitTree getCompilationUnitTree(String code)
-            throws IOException {
-        JavacTaskImpl ct = getTasks(code);
-        CompilationUnitTree cut = ct.parse().iterator().next();
-        return cut;
-    }
-
     public static void main(String[] args) throws IOException {
-        new PancDesignDeclTest().test();
+        new PancDesignDeclTest().runTests();
     }
 }
