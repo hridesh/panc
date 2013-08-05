@@ -35,7 +35,7 @@ import com.sun.tools.javac.api.JavacTaskImpl;
  * @author Sean L. Mooney
  * @since panini-0.9.2
  */
-public abstract class AbstractPancTest {
+public abstract class AbstractPancTest extends TestCase{
 
     /**Reference to the tool being tested.
      */
