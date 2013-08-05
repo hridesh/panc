@@ -49,9 +49,17 @@ final class PaniniTaskPool extends Thread {
 				previous = current;
 				current = current.panini$capsule$next;
 			}
-			if(previous == current)
-				_headNode =null;
-			else	
+			if(previous == current) {
+				if (current.panini$capsule$next == current) {
+					_headNode = null;
+					return;
+				}
+				PaniniCapsuleTask tmp = previous;
+				while(tmp != previous.panini$capsule$next)	
+					previous = previous.panini$capsule$next;
+				_headNode = current.panini$capsule$next;
+				previous.panini$capsule$next = _headNode;
+			} else	
 				previous.panini$capsule$next = current.panini$capsule$next;
 		}
 		
