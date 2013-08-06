@@ -230,7 +230,9 @@ public final class Attr extends CapsuleInternal {
 				if(def.getTag() == Tag.METHODDEF){
 					JCMethodDecl mdecl = (JCMethodDecl)def;
 					Type restype = ((MethodType) mdecl.sym.type).restype;
-					if(!mdecl.name.toString().contains("$Original") && restype.isFinal()){
+					ClassSymbol c = checkAndResolveReturnType(env, rs, restype);
+
+					if(!mdecl.name.toString().contains("$Original") && restype.isFinal() && !c.toString().equals("java.lang.String")){
 						ListBuffer<JCStatement> statements = new ListBuffer<JCStatement>();
 						for(List<JCStatement> stats = mdecl.body.stats; stats.nonEmpty(); stats = stats.tail){
 							JCStatement stat = stats.head;

@@ -1174,7 +1174,7 @@ public class CapsuleInternal extends Internal {
 
 	
 	
-	private ClassSymbol checkAndResolveReturnType(Env<AttrContext> env,
+	public ClassSymbol checkAndResolveReturnType(Env<AttrContext> env,
 			Resolve rs, Type restype) {
 		ClassSymbol c;
 		if (restype.toString().equals("void"))
