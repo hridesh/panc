@@ -66,23 +66,37 @@ capsule Logger {
 		Fitness f = g.getFitness();
 		System.out.println("Generation #"+(generationNumber++) + ": Fitness = " + f.average() + " (avg), " + f.maximum() + " (max).");
 	}	
+
+	void log(String msg) {
+		System.out.println(msg);
+	}
 }
 
-capsule GA {
+capsule GA (String[] args) {
 	design {
 		CrossOver c; Mutation m; Fittest f; Logger l ;
 		c(0.9f);
 		m(0.0001f);
 	}
+
+	private int maxDepth() {
+		if (args.length < 1) {
+			return 6; //default;
+		} else {
+			return Integer.parseInt(args[0]);
+		}
+	}
+
 	void run() {
-         Individual individual = new BooleanIndividual();
-         Generation g = new Generation(100, individual);
-         l.logit(g);
-         explore(g, 0, 6); //Initial generation, initial depth, max iterations.
-         Fitness fitness = f.bestFitness();
-         float avgFitness = fitness.average();
-         float maxFitness = fitness.maximum();
-         System.out.println("Final Results: Fitness" + avgFitness + "(avg), " + maxFitness + " (max).");
+		 Individual individual = new BooleanIndividual();
+		 Generation g = new Generation(100, individual);
+		 l.logit(g);
+		 explore(g, 0, maxDepth()); //Initial generation, initial depth, max iterations.
+
+		 Fitness fitness = f.bestFitness();
+		 float avgFitness = fitness.average();
+		 float maxFitness = fitness.maximum();
+		 l.log("Final Results: Fitness " + avgFitness + "(avg), " + maxFitness + " (max).");
 	}
 	private void explore (Generation g, int depth, int maxIteration) {
 		if (depth > maxIteration) return;
