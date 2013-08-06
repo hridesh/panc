@@ -2,18 +2,20 @@ package AILib;
 
 import java.util.ArrayList;
 
-public class Generation extends ArrayList<Individual> {
+public class Generation {
 	
+	private final ArrayList<Individual> inds;
+
 	/***
 	 * Creates a generation of size <code>num</code> with individuals of type baseIndividual.
 	 * @param num
 	 * @param baseIndividual
 	 */
 	public Generation(int num, Individual baseIndividual) { 
-		super(num);
+		inds = new ArrayList<Individual>(num);
 		for (int i = 0; i < num; i++) {
 			Individual newIndividual = baseIndividual.getRandomIndividual();
-			this.add(newIndividual);
+			inds.add(newIndividual);
 		}
 		this.depth = 0;
 	}
@@ -24,21 +26,21 @@ public class Generation extends ArrayList<Individual> {
 	 * @param g
 	 */
 	public Generation(Generation g) {
-		super(g.size());
+		inds = new ArrayList<Individual>(g.size());
 		this.depth = g.depth + 1;
 	}
 	
 	public Generation() {
-		super(0);
+		inds = new ArrayList<Individual>();
 		this.depth = 0;
 	}
 
 	public int[] getFitnessArray() {
-		int len = size();
+		int len = inds.size();
 		int values[] = new int[len];
 		for (int i = 0; i < len; i++) {
 			try {
-				values[i] = get(i).getFitness();
+				values[i] = inds.get(i).getFitness();
 			} catch (IndexOutOfBoundsException e) {
 				System.out.println("Incorrect Indexing in Generation.getFitnessArray()");
 			}
@@ -59,9 +61,13 @@ public class Generation extends ArrayList<Individual> {
 		int sndIndex = Util.chooseItem(f.values);
 		if (fstIndex == sndIndex) // try once to make sure the parents are different
 			sndIndex = Util.chooseItem(f.values);
-		Individual fst = this.get(fstIndex); 
-		Individual snd = this.get(sndIndex);
+		Individual fst = inds.get(fstIndex);
+		Individual snd = inds.get(sndIndex);
 		return new Parents(fst,snd);
+	}
+
+	public void add(Individual i) {
+		inds.add(i);
 	}
 	
 	public boolean add(Individual[] individuals){
@@ -69,6 +75,10 @@ public class Generation extends ArrayList<Individual> {
 		for (int j = 0; j < len; j++)
 			this.add(individuals[j]);
 		return true;
+	}
+
+	public int size() {
+		return inds.size();
 	}
 	
 	public int getDepth(){ return depth; }
