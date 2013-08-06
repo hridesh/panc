@@ -616,6 +616,12 @@ public class Enter extends JCTree.Visitor {
     	pid = make.Select(pid, names.fromString("types"));
     	pid = make.Select(pid, names.fromString("Panini$Duck$Array$Types"));
     	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
+    	pid = make.Ident(names.fromString("org"));
+    	pid = make.Select(pid, names.fromString("paninij"));
+    	pid = make.Select(pid, names.fromString("runtime"));
+    	pid = make.Select(pid, names.fromString("types"));
+    	pid = make.Select(pid, names.fromString("Panini$Duck$Final"));
+    	env.toplevel.defs = env.toplevel.defs.prepend(make.Import(pid, false));
     }
     
     public void visitCapsuleDef(JCCapsuleDecl tree){

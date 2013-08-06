@@ -225,6 +225,27 @@ public final class Attr extends CapsuleInternal {
 			List<JCClassDecl> wrapperClasses = generateClassWrappers(tree, env, rs);
 			enter.classEnter(wrapperClasses, env.outer);
 //			        	System.out.println(wrapperClasses);
+			for(List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail){
+				JCTree def = l.head;
+				if(def.getTag() == Tag.METHODDEF){
+					JCMethodDecl mdecl = (JCMethodDecl)def;
+					Type restype = ((MethodType) mdecl.sym.type).restype;
+					if(!mdecl.name.toString().contains("$Original") && restype.isFinal()){
+						ListBuffer<JCStatement> statements = new ListBuffer<JCStatement>();
+						for(List<JCStatement> stats = mdecl.body.stats; stats.nonEmpty(); stats = stats.tail){
+							JCStatement stat = stats.head;
+							if(stat.getTag() != Tag.RETURN){
+								statements.append(stat);
+							}
+						}
+						statements.append(make.Return(make.TypeCast(mdecl.restype, make.Apply(List.<JCExpression> nil(), make
+								.Select(make.Ident(names.panini.PaniniDuckFuture),
+										names.fromString("finalValue")), List
+								.<JCExpression> nil()))));
+						mdecl.body.stats = statements.toList();
+					}
+				}
+			}
 			attr.attribClassBody(env, tree.sym);
 			if((tree.sym.flags_field & TASK) !=0)
 				tree.computeMethod.body = generateTaskCapsuleComputeMethodBody(tree);

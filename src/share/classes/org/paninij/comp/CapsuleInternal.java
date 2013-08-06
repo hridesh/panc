@@ -929,6 +929,10 @@ public class CapsuleInternal extends Internal {
 		} else if (restype.tag == TypeTags.ARRAY){
 			extending = id("Panini$Duck$Array$Types");
 			implement = List.<JCExpression>nil();
+		} else if ((c.flags() & Flags.FINAL) !=0){
+			extending = ta(id("Panini$Duck$Final"),
+					args(signatureType(typeExpressions, c)));
+			implement = List.<JCExpression>nil();
 		} else {
 			JCMethodDecl get;
 			if (restype.toString().equals("void")) {
@@ -963,7 +967,7 @@ public class CapsuleInternal extends Internal {
 		}
 		
 		ListBuffer<JCTree> wrapperMembers;
-		if (restype.tag == TypeTags.ARRAY)
+		if (restype.tag == TypeTags.ARRAY || (c.flags() & Flags.FINAL) !=0)
 			wrapperMembers = defs(fieldWrapped, fieldMessageId, fieldRedeemed); 
 		else wrapperMembers = defs(fieldWrapped, fieldMessageId, fieldRedeemed, finishMethod, messageIdMethod); 
 		if(!providesHashCode) wrapperMembers.append(createHashCode());
