@@ -59,9 +59,11 @@ import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.Resolve;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
+import com.sun.tools.javac.tree.JCTree.JCStateDecl;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.JCDesignBlock;
+import com.sun.tools.javac.tree.JCTree.Tag;
 import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
@@ -502,6 +504,15 @@ public final class Attr extends CapsuleInternal {
 		tree.switchToMethod();
 	}
 	
+	public final void visitStateDef(JCStateDecl tree) {
+	    if(tree.type.tsym.isCapsule()) {
+	        log.error(tree.pos(), "states.with.capsule.type.error");
+	    }
+
+	    //It's attributed. Make it look like a regular variable
+	    tree.switchToVar();
+	}
+
 	// Helper functions
 	private void processSystemAnnotation(JCDesignBlock tree, ListBuffer<JCStatement> stats, Env<AttrContext> env){
 		int numberOfPools = 1;

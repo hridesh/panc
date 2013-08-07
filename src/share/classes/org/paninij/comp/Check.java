@@ -222,10 +222,20 @@ public class Check {
             public final void checkAllStateInit() {
                 if(!states.isEmpty()) {
                     for(List<JCVariableDecl>  l = stateToInit; l.nonEmpty(); l = l.tail) {
-                        if(states.contains(l.head.sym)) {
-                            log.warning(l.head.pos, "state.not.initialized");
-                        }
+                        checkStateInit(l.head, l.head.sym);
                     }
+                }
+            }
+
+            private final void checkStateInit(DiagnosticPosition pos, Symbol sym) {
+                if(states.contains(sym)
+                        // Don't report unitialized capsule types.
+                        // If there is a capsule type here a
+                        // different error will be reported. Reporting
+                        // not initialized is spurious.
+                        && !sym.type.tsym.isCapsule()
+                        ) {
+                    log.warning(pos, "state.not.initialized");
                 }
             }
         }
