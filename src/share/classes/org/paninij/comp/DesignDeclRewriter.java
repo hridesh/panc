@@ -23,6 +23,7 @@ import java.util.HashMap;
 
 import com.sun.source.tree.Tree.Kind;
 import com.sun.source.tree.TreeVisitor;
+import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCAssign;
@@ -35,9 +36,11 @@ import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleWiring;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
+import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCForLoop;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCLiteral;
+import com.sun.tools.javac.tree.JCTree.JCMemberReference;
 import com.sun.tools.javac.tree.JCTree.JCTopology;
 import com.sun.tools.javac.tree.JCTree.JCUnary;
 import com.sun.tools.javac.tree.JCTree.JCWireall;
@@ -59,9 +62,9 @@ import com.sun.tools.javac.util.Name;
 
 /**
  * Visit the system and interpret java computations to their values.
- *
+ * 
  * @author Sean L. Mooney, Lorand Szakacs
- *
+ * 
  */
 public class DesignDeclRewriter extends TreeTranslator {
 
@@ -77,6 +80,9 @@ public class DesignDeclRewriter extends TreeTranslator {
 
     final TreeCopier<Void> copy;
 
+    private ClassSymbol parentCapsule;
+
+
     public JCDesignBlock rewrite(JCDesignBlock tree) {
         JCDesignBlock translated = super.translate(tree);
         translated.body.stats = unrollStatementsFromBodyStats(translated.body.stats);
@@ -85,10 +91,10 @@ public class DesignDeclRewriter extends TreeTranslator {
 
     /**
      * TODO: Refactor to removethis at some points in the future.
-     *
+     * 
      * This method flattens the statements. Unrolled topology statements are
      * implemented as JCStatements nodes that contain a list of statements.
-     *
+     * 
      * @param stats
      * @return
      */
@@ -124,9 +130,10 @@ public class DesignDeclRewriter extends TreeTranslator {
         return result;
     }
 
-    public DesignDeclRewriter(TreeMaker treeMaker, Log log) {
+    public DesignDeclRewriter(TreeMaker treeMaker, Log log, ClassSymbol parentCapsule) {
         this.log = log;
         this.make = treeMaker;
+        this.parentCapsule = parentCapsule;
         this.copy = new TreeCopier<Void>(make);
         this.atInterp = new ArithTreeInterp();
     }
@@ -145,6 +152,16 @@ public class DesignDeclRewriter extends TreeTranslator {
             result = tree;
         }
     }
+    
+    /* (non-Javadoc)
+     * @see com.sun.tools.javac.tree.TreeTranslator#visitSelect(com.sun.tools.javac.tree.JCTree.JCFieldAccess)
+     */
+    @Override
+    public void visitSelect(JCFieldAccess tree) {
+        
+        super.visitSelect(tree);
+        
+    }
 
     @Override
     public void visitVarDef(JCVariableDecl tree) {
@@ -161,9 +178,7 @@ public class DesignDeclRewriter extends TreeTranslator {
         if (tree.sizeExpr.hasTag(Tag.LITERAL)) {
             tree.size = atInterp.asInt(((JCLiteral) tree.sizeExpr).value);
         } else {
-            //TODO: this is an actual error, not an assertion;
-            Assert.error(tree.sizeExpr
-                    + " should evaluate to an integer literal during system interpretation.");
+            log.error(tree, "design.decl.cant.compute.array.size", tree.sizeExpr, this.parentCapsule.capsule_info.parentCapsule);
         }
     }
 
@@ -183,7 +198,8 @@ public class DesignDeclRewriter extends TreeTranslator {
             Name assignTo = ((JCIdent) tree.lhs).name;
             valueEnv.bind(assignTo, tree.rhs);
         } else {
-            log.error(tree.lhs.pos(), "rewrite.assign.lhs.not.identifier", tree.lhs);
+            log.error(tree.lhs.pos(), "rewrite.assign.lhs.not.identifier",
+                    tree.lhs);
         }
 
         // TODO return translatedRHS instead of tree;
@@ -203,8 +219,8 @@ public class DesignDeclRewriter extends TreeTranslator {
             tree.lhs = lhs;
             tree.rhs = rhs;
             result = tree;
-//            log.rawError(tree.pos, "Trying to interpret " + tree
-//                    + " but one side is not a literal!");
+            // log.rawError(tree.pos, "Trying to interpret " + tree
+            // + " but one side is not a literal!");
         }
 
     }
@@ -215,7 +231,7 @@ public class DesignDeclRewriter extends TreeTranslator {
 
         switch (tree.getTag()) {
         case NEG: {
-            //TODO: Turn unary neg into a negative literal?
+            // TODO: Turn unary neg into a negative literal?
         }
             break;
         case NOT: {
@@ -227,7 +243,7 @@ public class DesignDeclRewriter extends TreeTranslator {
         }
             break;
         default:
-            //Nothing to be done. Result was set in super call
+            // Nothing to be done. Result was set in super call
         }
     }
 
@@ -314,14 +330,17 @@ public class DesignDeclRewriter extends TreeTranslator {
         // index/len elems are integer types.If during interpretation
         // they are not evaluated to literals then it means that they depend
         // on runtime values.
-        if(!tree.srcPos.hasTag(Tag.LITERAL)){
-            Assert.error("The source position parameter of a assoc operator should always evaluate to a literal: " + tree.srcPos);
+        if (!tree.srcPos.hasTag(Tag.LITERAL)) {
+            Assert.error("The source position parameter of a assoc operator should always evaluate to a literal: "
+                    + tree.srcPos);
         }
-        if(!tree.destPos.hasTag(Tag.LITERAL)){
-            Assert.error("The destination position parameter of a assoc operator should always evaluate to a literal: " + tree.srcPos);
+        if (!tree.destPos.hasTag(Tag.LITERAL)) {
+            Assert.error("The destination position parameter of a assoc operator should always evaluate to a literal: "
+                    + tree.srcPos);
         }
-        if(!tree.len.hasTag(Tag.LITERAL)){
-            Assert.error("The length parameter of a assoc operator should always evaluate to a literal: " + tree.srcPos);
+        if (!tree.len.hasTag(Tag.LITERAL)) {
+            Assert.error("The length parameter of a assoc operator should always evaluate to a literal: "
+                    + tree.srcPos);
         }
         int srcPos = atInterp.asInt(((JCLiteral) tree.srcPos).value);
         int destPos = atInterp.asInt(((JCLiteral) tree.destPos).value);
@@ -443,12 +462,12 @@ public class DesignDeclRewriter extends TreeTranslator {
 
     /**
      * Helper to interpret arithmetic expression trees.
-     *
+     * 
      * TODO: Deal with something besides ints. rename because now it supports
      * booleans
-     *
+     * 
      * @author sean
-     *
+     * 
      */
     private class ArithTreeInterp {
 
@@ -505,7 +524,8 @@ public class DesignDeclRewriter extends TreeTranslator {
 
             // TODO: Other cases?
             default:
-                Assert.error("Unsupported operator during interpretation: " + tree);
+                Assert.error("Unsupported operator during interpretation: "
+                        + tree);
                 result = tree;
             }
 
@@ -521,8 +541,9 @@ public class DesignDeclRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretOR(JCLiteral lhs, JCLiteral rhs) {
-        	make.pos = tree.pos;
-        	return make.Literal(TypeTags.BOOLEAN, (Integer)lhs.value | (Integer)rhs.value);
+            make.pos = tree.pos;
+            return make.Literal(TypeTags.BOOLEAN, (Integer) lhs.value
+                    | (Integer) rhs.value);
         }
 
         /**
@@ -531,8 +552,9 @@ public class DesignDeclRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretAND(JCLiteral lhs, JCLiteral rhs) {
-        	make.pos = tree.pos;
-        	return make.Literal(TypeTags.BOOLEAN, (Integer)lhs.value & (Integer)rhs.value);
+            make.pos = tree.pos;
+            return make.Literal(TypeTags.BOOLEAN, (Integer) lhs.value
+                    & (Integer) rhs.value);
         }
 
         /**
@@ -541,8 +563,9 @@ public class DesignDeclRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretNE(JCLiteral lhs, JCLiteral rhs) {
-        	make.pos = tree.pos;
-        	return make.Literal(TypeTags.BOOLEAN, ((Number)lhs.value != (Number)rhs.value) ? 1 : 0);
+            make.pos = tree.pos;
+            return make.Literal(TypeTags.BOOLEAN,
+                    ((Number) lhs.value != (Number) rhs.value) ? 1 : 0);
         }
 
         /**
@@ -551,8 +574,9 @@ public class DesignDeclRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretEQ(JCLiteral lhs, JCLiteral rhs) {
-        	make.pos = tree.pos;
-        	return make.Literal(TypeTags.BOOLEAN, ((Number)lhs.value == (Number)rhs.value) ? 1 : 0);
+            make.pos = tree.pos;
+            return make.Literal(TypeTags.BOOLEAN,
+                    ((Number) lhs.value == (Number) rhs.value) ? 1 : 0);
         }
 
         /**
@@ -565,7 +589,8 @@ public class DesignDeclRewriter extends TreeTranslator {
                 return reportNonInt();
             }
             make.pos = tree.pos;
-            return make.Literal(TypeTags.BOOLEAN, (((Number)lhs.value).intValue() >= ((Number)rhs.value).intValue()) ? 1 : 0);
+            return make.Literal(TypeTags.BOOLEAN, (((Number) lhs.value)
+                    .intValue() >= ((Number) rhs.value).intValue()) ? 1 : 0);
         }
 
         /**
@@ -574,11 +599,12 @@ public class DesignDeclRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretGT(JCLiteral lhs, JCLiteral rhs) {
-        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+            if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
                 return reportNonInt();
             }
-        	make.pos = tree.pos;
-            return make.Literal(TypeTags.BOOLEAN, (((Number)lhs.value).intValue() > ((Number)rhs.value).intValue()) ? 1 : 0);
+            make.pos = tree.pos;
+            return make.Literal(TypeTags.BOOLEAN, (((Number) lhs.value)
+                    .intValue() > ((Number) rhs.value).intValue()) ? 1 : 0);
         }
 
         /**
@@ -587,69 +613,77 @@ public class DesignDeclRewriter extends TreeTranslator {
          * @return
          */
         private JCTree interpretLE(JCLiteral lhs, JCLiteral rhs) {
-        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+            if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
                 return reportNonInt();
             }
-        	make.pos = tree.pos;
-            return make.Literal(TypeTags.BOOLEAN, (((Number)lhs.value).intValue() <= ((Number)rhs.value).intValue()) ? 1 : 0);
+            make.pos = tree.pos;
+            return make.Literal(TypeTags.BOOLEAN, (((Number) lhs.value)
+                    .intValue() <= ((Number) rhs.value).intValue()) ? 1 : 0);
         }
 
         /**
          * @return
          */
         private JCTree interpretLT(JCLiteral lhs, JCLiteral rhs) {
-        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+            if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
                 return reportNonInt();
             }
-        	make.pos = tree.pos;
-            return make.Literal(TypeTags.BOOLEAN, (((Number)lhs.value).intValue() < ((Number)rhs.value).intValue()) ? 1 : 0);
+            make.pos = tree.pos;
+            return make.Literal(TypeTags.BOOLEAN, (((Number) lhs.value)
+                    .intValue() < ((Number) rhs.value).intValue()) ? 1 : 0);
         }
-        
-        
 
         final JCTree interpPlus(JCLiteral lhs, JCLiteral rhs) {
-        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+            if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
                 return reportNonInt();
             }
-        	make.pos = tree.pos;
-            return make.Literal(TypeTags.INT, ((Number)lhs.value).intValue() + ((Number)rhs.value).intValue());
+            make.pos = tree.pos;
+            return make.Literal(TypeTags.INT, ((Number) lhs.value).intValue()
+                    + ((Number) rhs.value).intValue());
         }
 
         final JCTree interpMinus(JCLiteral lhs, JCLiteral rhs) {
-        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+            if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
                 return reportNonInt();
             }
-        	make.pos = tree.pos;
-            return make.Literal(TypeTags.INT, ((Number)lhs.value).intValue() - ((Number)rhs.value).intValue());
+            make.pos = tree.pos;
+            return make.Literal(TypeTags.INT, ((Number) lhs.value).intValue()
+                    - ((Number) rhs.value).intValue());
         }
 
         final JCTree interpMul(JCLiteral lhs, JCLiteral rhs) {
-        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+            if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
                 return reportNonInt();
             }
-        	make.pos = tree.pos;
-            return make.Literal(TypeTags.INT, ((Number)lhs.value).intValue() * ((Number)rhs.value).intValue());
+            make.pos = tree.pos;
+            return make.Literal(TypeTags.INT, ((Number) lhs.value).intValue()
+                    * ((Number) rhs.value).intValue());
         }
 
         final JCTree interpDiv(JCLiteral lhs, JCLiteral rhs) {
-        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+            if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
                 return reportNonInt();
             }
-        	make.pos = tree.pos;
-            return make.Literal(TypeTags.INT, Integer.valueOf(((Number)lhs.value).intValue() / ((Number)rhs.value).intValue()));
+            make.pos = tree.pos;
+            return make.Literal(
+                    TypeTags.INT,
+                    Integer.valueOf(((Number) lhs.value).intValue()
+                            / ((Number) rhs.value).intValue()));
         }
 
         final JCTree interpMod(JCLiteral lhs, JCLiteral rhs) {
-        	if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
+            if (lhs.typetag != TypeTags.INT || rhs.typetag != TypeTags.INT) {
                 return reportNonInt();
             }
-        	make.pos = tree.pos;
-            return make.Literal(TypeTags.INT, ((Number)lhs.value).intValue() % ((Number)rhs.value).intValue());
+            make.pos = tree.pos;
+            return make.Literal(TypeTags.INT, ((Number) lhs.value).intValue()
+                    % ((Number) rhs.value).intValue());
         }
-        
-        private JCTree reportNonInt(){
-        	//Only allowing integer values in concern of bit precision issues.
-        	//No log error at this point due to reports breaking regression tests
+
+        private JCTree reportNonInt() {
+            // Only allowing integer values in concern of bit precision issues.
+            // No log error at this point due to reports breaking regression
+            // tests
             return tree;
         }
 
@@ -659,15 +693,15 @@ public class DesignDeclRewriter extends TreeTranslator {
         }
 
         final boolean asBoolean(Object obj) {
-            return (Integer)obj == 1;
+            return (Integer) obj == 1;
         }
     }
 
     /**
      * Standard linked environment for the interpretor
-     *
+     * 
      * @author sean
-     *
+     * 
      */
     private static class InterpEnv<K, V> {
         private final HashMap<K, V> table;
@@ -723,7 +757,7 @@ public class DesignDeclRewriter extends TreeTranslator {
 
         /*
          * (non-Javadoc)
-         *
+         * 
          * @see com.sun.tools.javac.tree.JCTree#getTag()
          */
         @Override
@@ -734,7 +768,7 @@ public class DesignDeclRewriter extends TreeTranslator {
 
         /*
          * (non-Javadoc)
-         *
+         * 
          * @see
          * com.sun.tools.javac.tree.JCTree#accept(com.sun.tools.javac.tree.JCTree
          * .Visitor)
@@ -747,7 +781,7 @@ public class DesignDeclRewriter extends TreeTranslator {
 
         /*
          * (non-Javadoc)
-         *
+         * 
          * @see
          * com.sun.tools.javac.tree.JCTree#accept(com.sun.source.tree.TreeVisitor
          * , java.lang.Object)

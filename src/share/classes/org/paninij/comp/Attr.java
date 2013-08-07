@@ -438,9 +438,13 @@ public final class Attr extends CapsuleInternal {
         ListBuffer<JCStatement> starts;
         SystemGraph sysGraph;
 
-        DesignDeclRewriter interp = new DesignDeclRewriter(make, log);
+        DesignDeclRewriter interp = new DesignDeclRewriter(make, log, env.enclClass.sym);
         JCDesignBlock rewritenTree = interp.rewrite(tree);
 
+        //we do not want to go on to generating the main method if there are errors in the design decl
+        if(log.nerrors > 0)
+            return;
+        
         CapsuleMainTransformer mt = new CapsuleMainTransformer(syms, names, types, log,
                 rs, env, make, systemGraphBuilder);
         rewritenTree = mt.translate(rewritenTree);
