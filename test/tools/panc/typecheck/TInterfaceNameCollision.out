@@ -1,0 +1,3 @@
+TInterfaceNameCollision.java:27:16: compiler.err.already.defined: kindname.variable, i, kindname.interface, TInterfaceNameCollision
+TInterfaceNameCollision.java:30:17: compiler.err.already.defined: kindname.method, foo(), kindname.interface, TInterfaceNameCollision
+2 errors
