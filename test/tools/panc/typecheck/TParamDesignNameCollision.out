@@ -1,0 +1,3 @@
+TParamDesignNameCollision.java:30:12: compiler.err.already.defined: kindname.variable, d, kindname.class, C$thread
+TParamDesignNameCollision.java:32:12: compiler.err.already.defined: kindname.variable, i, kindname.class, C$thread
+2 errors

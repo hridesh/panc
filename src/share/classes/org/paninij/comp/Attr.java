@@ -87,6 +87,7 @@ public final class Attr extends CapsuleInternal {
 	Annotate annotate;
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
+	final com.sun.tools.javac.comp.Check jchk;
 	public final Check pck;
 
     final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
@@ -133,6 +134,7 @@ public final class Attr extends CapsuleInternal {
         this.annotate = Annotate.instance(context);
         this.annotationProcessor = new AnnotationProcessor(names, make, log);
         this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
+        this.jchk = com.sun.tools.javac.comp.Check.instance(context);
         this.pck = Check.instance(context);
 
         this.seqConstAlg = SEQ_CONST_ALG.instance(context);
@@ -560,12 +562,14 @@ public final class Attr extends CapsuleInternal {
         capSym.capsule_info.connectedCapsules =
                 capSym.capsule_info.connectedCapsules.appendList(capsuleDecls);
 
-        // Enter the symbols into the capusle scope.
+        // Enter the symbols into the capsule scope.
         // Allows the symbols to be visible for other procedures
         // and allows the symbols to be emitted as fields in the bytecode
         for(List<JCVariableDecl> l = capsuleDecls;  l.nonEmpty(); l = l.tail) {
-            l.head.sym.owner = capScope.owner;
-            capScope.enter(l.head.sym);
+            JCVariableDecl v = l.head;
+            v.sym.owner = capScope.owner;
+            jchk.checkUnique(v.pos(), v.sym, capScope);
+            capScope.enter(v.sym);
         }
 
         //TODO: Generics are being annoying. Find a way to not copy the list.
