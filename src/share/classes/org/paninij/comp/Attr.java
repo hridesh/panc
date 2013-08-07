@@ -88,7 +88,7 @@ public final class Attr extends CapsuleInternal {
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
 	final com.sun.tools.javac.comp.Check jchk;
-	public final Check pck;
+	public final Check pchk;
 
     final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
 
@@ -135,7 +135,7 @@ public final class Attr extends CapsuleInternal {
         this.annotationProcessor = new AnnotationProcessor(names, make, log);
         this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
         this.jchk = com.sun.tools.javac.comp.Check.instance(context);
-        this.pck = Check.instance(context);
+        this.pchk = Check.instance(context);
 
         this.seqConstAlg = SEQ_CONST_ALG.instance(context);
     }
@@ -333,7 +333,7 @@ public final class Attr extends CapsuleInternal {
 			}
 		}
 
-		pck.checkStateInit(tree.sym, env);
+		pchk.checkStateInit(tree.sym, env);
 	}
 	
 	private ListBuffer<JCStatement> createCapsuleMemberDisconnects(
@@ -426,7 +426,7 @@ public final class Attr extends CapsuleInternal {
 			com.sun.tools.javac.comp.Attr jAttr, // Javac Attributer.
 			Env<AttrContext> env, boolean doGraphs){
 
-	    tree.sym.flags_field= pck.checkFlags(tree, tree.sym.flags(), tree.sym);
+	    tree.sym.flags_field= pchk.checkFlags(tree, tree.sym.flags(), tree.sym);
 
 	    //Use the scope of the out capsule, not the current system decl.
         Scope scope = enterSystemScope(env);
