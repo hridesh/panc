@@ -2746,6 +2746,7 @@ public class JavacParser implements Parser {
 
     ////////////////AUXILARY PANINI METHODS///////////////////////
     /** Diagnose dis-allowed flags for capsule proc and method decls */
+    // TODO do this check during type checking. 
     void checkModsCapsuleMethodDecl(JCModifiers mods, boolean isSignature) {
         long allowed = (isSignature ? 0 : ~(Flags.PRIVATE));
         if ((mods.flags & allowed) != 0) {
