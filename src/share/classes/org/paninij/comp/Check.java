@@ -25,6 +25,8 @@ import static com.sun.tools.javac.code.Flags.asFlagSet;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.paninij.systemgraph.SystemGraph;
+
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Kinds;
 import com.sun.tools.javac.code.Scope;
@@ -46,6 +48,8 @@ import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
+import com.sun.tools.javac.util.Name;
+import com.sun.tools.javac.util.Pair;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.Names;
 
@@ -63,6 +67,8 @@ public class Check {
     private final Names names;
     private final com.sun.tools.javac.comp.MemberEnter jMemberEnter;
 
+    private final HashSet<Symbol> checkedForCycles;
+
     public static Check instance(Context context) {
         Check instance = context.get(checkKey);
         if (instance == null)
@@ -76,6 +82,28 @@ public class Check {
         log = Log.instance(context);
         names = Names.instance(context);
         jMemberEnter = com.sun.tools.javac.comp.MemberEnter.instance(context);
+
+        checkedForCycles = new HashSet<Symbol>();
+    }
+
+    /**
+     * Mark a capsule as having been checked for cycles in
+     * the design decl.
+     *
+     * This symbol should be a symbol to the 'origin' capsule
+     * type and not to one of the capsule kinds. Work around
+     * to prevent checking/reporting cyclic warnings in multiple
+     * capsule kinds.
+     *
+     * @param sym
+     */
+    private void markedCheckedForCycles(Symbol sym) {
+        //Must be a symbol
+        Assert.check(sym.isCapsule());
+        //parentCapsule == sym => This is the 'origin' capsule symbol
+        // and not one of translated capsule kinds.
+        Assert.check( ((ClassSymbol)sym).capsule_info.parentCapsule == sym);
+        checkedForCycles.add(sym);
     }
 
     /** Check that given modifiers are legal for given symbol and
@@ -245,5 +273,26 @@ public class Check {
             l.head.accept(s);
         }
         s.checkAllStateInit();
+    }
+
+    /**
+     * @param location
+     * @param fst
+     * @param snd
+     */
+    public void checkCycleRepeat(SystemGraph sysGraph, Name startPoint, Env<AttrContext> env) {
+        Symbol location = env.enclMethod.sym.location();
+        //Don't recheck. It's been done for some other capsule kind
+        if (checkedForCycles.contains(location)) {
+            return;
+        }
+
+        for (List<Pair<Name, Name>> cycles = sysGraph.detectCyclicReferences(startPoint);
+                cycles.nonEmpty(); cycles = cycles.tail) {
+            log.warning("cyclic.references.exists", cycles.head.fst,
+                    cycles.head.snd, location);
+        }
+
+        markedCheckedForCycles(location);
     }
 }

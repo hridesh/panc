@@ -31,6 +31,7 @@ import static com.sun.tools.javac.tree.JCTree.Tag.ASSIGN;
 import static com.sun.tools.javac.tree.JCTree.Tag.LT;
 import static com.sun.tools.javac.tree.JCTree.Tag.PREINC;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,6 +46,7 @@ import org.paninij.systemgraph.SystemGraphBuilder;
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Scope;
@@ -73,6 +75,8 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
+import com.sun.tools.javac.util.Pair;
+
 import org.paninij.util.PaniniConstants;
 
 /***
@@ -450,10 +454,11 @@ public final class Attr extends CapsuleInternal {
         DesignDeclTransformer mt = new DesignDeclTransformer(syms, names, types, log,
                 rs, env, make, systemGraphBuilder);
         rewritenTree = mt.translate(rewritenTree);
+
         // Check for cyclic references and report it
-        if (mt.sysGraph.detectCyclicReferences(names._this)) {
-        	log.warning(tree.pos(), "compiler.warn.cyclic.references.exists");
-        }
+        pchk.checkCycleRepeat(mt.sysGraph, names._this, env);
+
+
         //pull data structures back out for reference here.
         decls = mt.decls;
         inits = mt.inits;

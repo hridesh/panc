@@ -216,11 +216,13 @@ public class SystemGraph {
 		return edges;
 	}
 	
-	public boolean detectCyclicReferences(Name _this) {
-		boolean retVal = false;
+	public List<Pair<Name, Name>> detectCyclicReferences(Name _this) {
+		ListBuffer<Pair<Name, Name>> cycles = new ListBuffer<Pair<Name,Name>>();
 		HashMap<Name, Node> visited = new HashMap<Name, Node>();
 		Node start = nodes.get(_this);
-		if (start == null)	return retVal;
+		if (start == null)
+		    return cycles.toList();
+
 		Stack<Node> toVisit = new Stack<Node>();
 		toVisit.push(start);
 		do {
@@ -234,7 +236,7 @@ public class SystemGraph {
 					newNode = true;
 					break;
 				} else {
-					return true;
+					cycles.add(new Pair<Name, Name>(fromNode.name, toNode.name));
 				}
 			}
 			if (newNode)	continue;
@@ -242,6 +244,7 @@ public class SystemGraph {
 			Node n = toVisit.pop();
 			visited.put(n.name, n);
 		} while (!toVisit.isEmpty());
-		return retVal;
+
+		return cycles.toList();
 	}
 }
