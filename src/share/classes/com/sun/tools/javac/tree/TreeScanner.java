@@ -86,6 +86,10 @@ public class TreeScanner extends Visitor {
     	visitClassDef(tree);
     }
     
+    public void visitStateDef(JCStateDecl tree) {
+        visitVarDef(tree);
+    }
+
     public void visitFree(JCFree tree){
     	scan(tree.exp);
     }
