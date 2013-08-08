@@ -893,7 +893,7 @@ public class CapsuleInternal extends Internal {
 		if (restype.tag != TypeTags.ARRAY){
 			ClassSymbol cs = c;
 			Set<String> methods = new HashSet<String>();
-			for(Type type = restype; type != Type.noType && type.toString().equals(names.java_lang_Object.toString()); type = cs.getSuperclass()){
+			for(Type type = restype; type != Type.noType && !type.toString().equals(names.java_lang_Object.toString()); type = cs.getSuperclass()){
 				cs = checkAndResolveReturnType(env, rs, type);
 				Iterator<Symbol> iterator = cs.members().getElements().iterator();
 				while (iterator.hasNext()) {
