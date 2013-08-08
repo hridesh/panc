@@ -97,6 +97,7 @@ public class Kinds {
 
     public enum KindName implements Formattable {
         // Panini code
+        CAPSULE("kindname.panini.capsule"),
         CAPSULE_WIRING("kindname.panini.capsule_wiring"),
         // end Panini code
         ANNOTATION("kindname.annotation"),
@@ -159,9 +160,19 @@ public class Kinds {
 
         case ANNOTATION_TYPE:
         case CLASS:
+            // Panini code
+            if((sym.flags_field &  Flags.CAPSULE) != 0)
+                return KindName.CAPSULE;
+            else
+            // end Panini code
             return KindName.CLASS;
 
         case INTERFACE:
+            // Panini code
+            if((sym.flags_field &  Flags.CAPSULE) != 0)
+                return KindName.CAPSULE;
+            else
+            // end Panini code
             return KindName.INTERFACE;
 
         case TYPE_PARAMETER:

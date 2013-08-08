@@ -219,6 +219,14 @@ public class JavacParser implements Parser {
      */
     private int lastmode = 0;
 
+    // Panini code
+    /**Create VarDef or StateDef in {@link #variableDeclaratorRest(int, JCModifiers, JCExpression, Name, boolean, String)}.
+     * Used to differentiate how variable declarators are parsed
+     *  either as {@link JCVariableDecl} or {@link JCStateDecl}.
+     */
+    private boolean createVarDefs = true;
+    // end Panini code
+
     /* ---------- token management -------------- */
 
     protected Token token;
@@ -2508,8 +2516,15 @@ public class JavacParser implements Parser {
             init = variableInitializer();
         }
         else if (reqInit) syntaxError(token.pos, "expected", EQ);
-        JCVariableDecl result =
-            toP(F.at(pos).VarDef(mods, name, type, init));
+        JCVariableDecl result = 
+            toP( // Panini code
+                 (createVarDefs ?
+                 // end Panini code
+                    F.at(pos).VarDef(mods, name, type, init)
+                 // Panini code
+                    : F.at(pos).StateDef(mods, name, type, init) )
+                 // end Panini code
+                    );
         attach(result, dc);
         return result;
     }
@@ -2746,6 +2761,7 @@ public class JavacParser implements Parser {
 
     ////////////////AUXILARY PANINI METHODS///////////////////////
     /** Diagnose dis-allowed flags for capsule proc and method decls */
+    // TODO do this check during type checking. 
     void checkModsCapsuleMethodDecl(JCModifiers mods, boolean isSignature) {
         long allowed = (isSignature ? 0 : ~(Flags.PRIVATE));
         if ((mods.flags & allowed) != 0) {
@@ -2872,13 +2888,19 @@ public class JavacParser implements Parser {
                              pos, mods, type, name, typarams,
                              isInterface, isVoid, dc));
                      } else if (!isVoid && typarams.isEmpty()) {
-                         //Var decl list
-                         List<JCTree> defs =
-                             variableDeclaratorsRest(pos, mods, type, name, isInterface, dc,
-                                                     new ListBuffer<JCTree>()).toList();
-                         storeEnd(defs.last(), token.endPos);
-                         accept(SEMI);
-                         return defs;
+                         boolean prevCreateVarDefs = createVarDefs;
+                         try {
+                             createVarDefs = false;
+                             //State decl list
+                             List<JCTree> defs =
+                                     variableDeclaratorsRest(pos, mods, type, name, isInterface, dc,
+                                             new ListBuffer<JCTree>()).toList();
+                             storeEnd(defs.last(), token.endPos);
+                             accept(SEMI);
+                             return defs;
+                         } finally {
+                             createVarDefs = prevCreateVarDefs;
+                         }
                      } else {
                          pos = token.pos;
                          List<JCTree> err = isVoid

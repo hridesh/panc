@@ -190,6 +190,11 @@ public abstract class Symbol implements Element {
                 (owner.flags() & BLOCK) == 0 && owner.kind != PCK && owner.kind != TYP)) {
             return null;
         }
+        // Panini code
+        if( (owner.flags_field & Flags.CAPSULE) != 0) {
+            return((ClassSymbol)owner).capsule_info.parentCapsule;
+        }
+        // end Panini code
         return owner;
     }
 
@@ -790,6 +795,10 @@ public abstract class Symbol implements Element {
          * <b> AST nodes in this tree are not attributed.</b> */
         public List<JCMethodDecl> initMethods = List.<JCTree.JCMethodDecl>nil();
 
+        public CapsuleExtras(ClassSymbol definingSymbol) {
+            this.parentCapsule = definingSymbol;
+        }
+
     	public ClassSymbol getTranslatedSerial(){
     		return translated_serial;
     	}
@@ -823,7 +832,7 @@ public abstract class Symbol implements Element {
         public static ClassSymbol asCapsuleSymbol(ClassSymbol c) {
             c.flags_field |= Flags.CAPSULE;
             if (c.capsule_info == null) {
-                c.capsule_info = new CapsuleExtras();
+                c.capsule_info = new CapsuleExtras(c);
             }
             return c;
         }

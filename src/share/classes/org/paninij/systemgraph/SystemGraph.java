@@ -23,6 +23,9 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.HashMap;
+import java.util.Stack;
+
+import sun.util.logging.resources.logging;
 
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.CapsuleExtras;
@@ -211,5 +214,37 @@ public class SystemGraph {
 			}
 		}
 		return edges;
+	}
+	
+	public List<Pair<Name, Name>> detectCyclicReferences(Name _this) {
+		ListBuffer<Pair<Name, Name>> cycles = new ListBuffer<Pair<Name,Name>>();
+		HashMap<Name, Node> visited = new HashMap<Name, Node>();
+		Node start = nodes.get(_this);
+		if (start == null)
+		    return cycles.toList();
+
+		Stack<Node> toVisit = new Stack<Node>();
+		toVisit.push(start);
+		do {
+			boolean newNode = false;
+			Node fromNode = toVisit.peek();
+			for (Node toNode : fromNode.connections.values()) {
+				if (toNode == null)	continue;
+				if (visited.containsKey(toNode.name))	continue;
+				if (!toVisit.contains(toNode)) {
+					toVisit.push(toNode);
+					newNode = true;
+					break;
+				} else {
+					cycles.add(new Pair<Name, Name>(fromNode.name, toNode.name));
+				}
+			}
+			if (newNode)	continue;
+			// process the node
+			Node n = toVisit.pop();
+			visited.put(n.name, n);
+		} while (!toVisit.isEmpty());
+
+		return cycles.toList();
 	}
 }

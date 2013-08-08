@@ -1,0 +1,3 @@
+TParamDesignNameCollision.java:30:12: compiler.err.already.defined: kindname.variable, d, kindname.panini.capsule, C
+TParamDesignNameCollision.java:32:12: compiler.err.already.defined: kindname.variable, i, kindname.panini.capsule, C
+2 errors

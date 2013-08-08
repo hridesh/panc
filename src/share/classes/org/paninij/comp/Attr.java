@@ -31,6 +31,7 @@ import static com.sun.tools.javac.tree.JCTree.Tag.ASSIGN;
 import static com.sun.tools.javac.tree.JCTree.Tag.LT;
 import static com.sun.tools.javac.tree.JCTree.Tag.PREINC;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,6 +46,7 @@ import org.paninij.systemgraph.SystemGraphBuilder;
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Scope;
@@ -59,9 +61,11 @@ import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.Resolve;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
+import com.sun.tools.javac.tree.JCTree.JCStateDecl;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.JCDesignBlock;
+import com.sun.tools.javac.tree.JCTree.Tag;
 import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
@@ -71,6 +75,8 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
+import com.sun.tools.javac.util.Pair;
+
 import org.paninij.util.PaniniConstants;
 
 /***
@@ -87,7 +93,8 @@ public final class Attr extends CapsuleInternal {
 	Annotate annotate;
 	AnnotationProcessor annotationProcessor;
 	SystemGraphBuilder systemGraphBuilder;
-	public final Check pck;
+	final com.sun.tools.javac.comp.Check jchk;
+	public final Check pchk;
 
     final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
 
@@ -134,7 +141,8 @@ public final class Attr extends CapsuleInternal {
         this.annotate = Annotate.instance(context);
         this.annotationProcessor = new AnnotationProcessor(names, make, log);
         this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
-        this.pck = Check.instance(context);
+        this.jchk = com.sun.tools.javac.comp.Check.instance(context);
+        this.pchk = Check.instance(context);
 
         this.seqConstAlg = SEQ_CONST_ALG.instance(context);
     }
@@ -332,7 +340,7 @@ public final class Attr extends CapsuleInternal {
 			}
 		}
 
-		pck.checkStateInit(tree.sym, env);
+		pchk.checkStateInit(tree.sym, env);
 	}
 	
 	private ListBuffer<JCStatement> createCapsuleMemberDisconnects(
@@ -425,7 +433,7 @@ public final class Attr extends CapsuleInternal {
 			com.sun.tools.javac.comp.Attr jAttr, // Javac Attributer.
 			Env<AttrContext> env, boolean doGraphs){
 
-	    tree.sym.flags_field= pck.checkFlags(tree, tree.sym.flags(), tree.sym);
+	    tree.sym.flags_field= pchk.checkFlags(tree, tree.sym.flags(), tree.sym);
 
 	    //Use the scope of the out capsule, not the current system decl.
         Scope scope = enterSystemScope(env);
@@ -437,12 +445,20 @@ public final class Attr extends CapsuleInternal {
         ListBuffer<JCStatement> starts;
         SystemGraph sysGraph;
 
-        DesignDeclRewriter interp = new DesignDeclRewriter(make, log);
+        DesignDeclRewriter interp = new DesignDeclRewriter(make, log, env.enclClass.sym);
         JCDesignBlock rewritenTree = interp.rewrite(tree);
 
-        CapsuleMainTransformer mt = new CapsuleMainTransformer(syms, names, types, log,
+        //we do not want to go on to generating the main method if there are errors in the design decl
+        if(log.nerrors > 0)
+            return;
+        
+        DesignDeclTransformer mt = new DesignDeclTransformer(syms, names, types, log,
                 rs, env, make, systemGraphBuilder);
         rewritenTree = mt.translate(rewritenTree);
+
+        // Check for cyclic references and report it
+        pchk.checkCycleRepeat(mt.sysGraph, names._this, env);
+
 
         //pull data structures back out for reference here.
         decls = mt.decls;
@@ -494,6 +510,15 @@ public final class Attr extends CapsuleInternal {
 		tree.switchToMethod();
 	}
 	
+	public final void visitStateDef(JCStateDecl tree) {
+	    if(tree.type.tsym.isCapsule()) {
+	        log.error(tree.pos(), "states.with.capsule.type.error");
+	    }
+
+	    //It's attributed. Make it look like a regular variable
+	    tree.switchToVar();
+	}
+
 	// Helper functions
 	private void processSystemAnnotation(JCDesignBlock tree, ListBuffer<JCStatement> stats, Env<AttrContext> env){
 		int numberOfPools = 1;
@@ -561,12 +586,14 @@ public final class Attr extends CapsuleInternal {
         capSym.capsule_info.connectedCapsules =
                 capSym.capsule_info.connectedCapsules.appendList(capsuleDecls);
 
-        // Enter the symbols into the capusle scope.
+        // Enter the symbols into the capsule scope.
         // Allows the symbols to be visible for other procedures
         // and allows the symbols to be emitted as fields in the bytecode
         for(List<JCVariableDecl> l = capsuleDecls;  l.nonEmpty(); l = l.tail) {
-            l.head.sym.owner = capScope.owner;
-            capScope.enter(l.head.sym);
+            JCVariableDecl v = l.head;
+            v.sym.owner = capScope.owner;
+            jchk.checkUnique(v.pos(), v.sym, capScope);
+            capScope.enter(v.sym);
         }
 
         //TODO: Generics are being annoying. Find a way to not copy the list.

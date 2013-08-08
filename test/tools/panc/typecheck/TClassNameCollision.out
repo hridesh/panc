@@ -1,0 +1,5 @@
+TClassNameCollision.java:27:16: compiler.err.already.defined: kindname.variable, i, kindname.class, TClassNameCollision
+TClassNameCollision.java:30:9: compiler.err.already.defined: kindname.variable, k, kindname.class, TClassNameCollision
+TClassNameCollision.java:33:17: compiler.err.already.defined: kindname.method, foo(), kindname.class, TClassNameCollision
+TClassNameCollision.java:36:20: compiler.err.already.defined: kindname.variable, i, kindname.method, bar()
+4 errors

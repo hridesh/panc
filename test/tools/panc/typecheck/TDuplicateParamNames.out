@@ -1,2 +1,2 @@
-TDuplicateParamNames.java:25:44: compiler.err.already.defined: kindname.variable, s, kindname.interface, TDuplicateParamNames
+TDuplicateParamNames.java:25:44: compiler.err.already.defined: kindname.variable, s, kindname.panini.capsule, TDuplicateParamNames
 1 error

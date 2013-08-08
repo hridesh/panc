@@ -693,7 +693,7 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
 
         VarSymbol v = new VarSymbol(0, tree.name, tree.vartype.type, tree.sym);
         v.owner = owner;
-        v.flags_field = attr.pAttr.pck.checkCapsuleParamFlags(tree.pos(), tree.mods.flags);
+        v.flags_field = attr.pAttr.pchk.checkCapsuleParamFlags(tree.pos(), tree.mods.flags);
         tree.sym = v;
 
         if (chk.checkUnique(tree.pos(), v, enclScope)) {
@@ -704,6 +704,10 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
         v.pos = tree.pos;
 
         return type;
+    }
+
+    public void visitStateDef(JCStateDecl tree) {
+        visitVarDef(tree);
     }
     // end Panini code
 

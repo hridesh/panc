@@ -266,7 +266,7 @@ public class Flags {
     /**
      * Wiring blocks are always private final.
      */
-    public static final long WIRING_BLOCK_FLAGS = PROTECTED | FINAL;
+    public static final long WIRING_BLOCK_FLAGS = PUBLIC | FINAL;
     /**Valid capsule kind mask.
      */
     public static final long CapsuleKindFlags = SERIAL | ACTIVE | TASK | MONITOR;

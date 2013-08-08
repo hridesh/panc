@@ -390,7 +390,7 @@ public class Enter extends JCTree.Visitor {
     					if(mdecl.name.equals(names.panini.PaniniCapsuleInit)) {
     					    initMethods.add(mdecl);
     					}
-    				}else if(capsuleDefs.getTag() == VARDEF){
+    				}else if(capsuleDefs.getTag() == STATE){
     				    JCVariableDecl vdecl = (JCVariableDecl)capsuleDefs;
     					stateToInit.add(vdecl);
     					interfaceBody.add(make.VarDef(tc.copy(vdecl.mods), vdecl.name,
@@ -829,7 +829,7 @@ public class Enter extends JCTree.Visitor {
 				JCStateDecl state = make.at(vdecl.pos).StateDef(
 						make.Modifiers(PRIVATE), vdecl.name, vdecl.vartype,
 						vdecl.init);
-				state.switchToVar();
+
 				definitions.add(state);
 			} else
 				definitions.add(def);
@@ -905,7 +905,7 @@ public class Enter extends JCTree.Visitor {
 				JCStateDecl state = make.at(vdecl.pos).StateDef(
 						make.Modifiers(PRIVATE), vdecl.name,
 						tc.copy(vdecl.vartype), tc.copy(vdecl.init));
-				state.switchToVar();
+
 				definitions.add(state);
 			} else
 				definitions.add(tc.copy(def));

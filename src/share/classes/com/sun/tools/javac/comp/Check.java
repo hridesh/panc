@@ -2824,6 +2824,9 @@ public class Check {
      *  @param sym           The symbol.
      *  @param s             The scope.
      */
+    // Panini code
+    public
+    // end Panini code
     boolean checkUnique(DiagnosticPosition pos, Symbol sym, Scope s) {
         if (sym.type.isErroneous())
             return true;
