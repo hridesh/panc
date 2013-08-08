@@ -34,8 +34,10 @@ import com.sun.tools.javac.code.*;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
@@ -58,14 +60,16 @@ public class CapsuleInternal extends Internal {
 	protected Enter enter;
 	protected MemberEnter memberEnter;
 	protected Types types;
+	protected Resolve rs;
 
 	public CapsuleInternal(TreeMaker make, Names names, Types types, Enter enter,
-			MemberEnter memberEnter, Symtab syms) {
+			MemberEnter memberEnter, Symtab syms, Resolve rs) {
 		super(make, names);
 		this.types = types;
 		this.enter = enter;
 		this.syms = syms;
 		this.memberEnter = memberEnter;
+		this.rs = rs;
 		specCounter = 0;
 	}
 
@@ -367,7 +371,7 @@ public class CapsuleInternal extends Internal {
 	}
 
 	public List<JCClassDecl> generateClassWrappers(JCCapsuleDecl tree,
-			Env<AttrContext> env, Resolve rs) {
+			Env<AttrContext> env) {
 		ListBuffer<JCClassDecl> classes = new ListBuffer<JCClassDecl>();
 		Map<String, JCClassDecl> alreadedAddedDuckClasses = new HashMap<String, JCClassDecl>();
 
@@ -886,32 +890,41 @@ public class CapsuleInternal extends Internal {
 		ListBuffer<JCExpression> inits = new ListBuffer<JCExpression>();
 		boolean providesHashCode = false;
 		boolean providesEquals = false;
-		if (restype.tag != TypeTags.ARRAY)
-			while (iter.hasNext()) {
-				Symbol s = iter.next();
-				if (s.getKind() == ElementKind.METHOD) {
-					MethodSymbol m = (MethodSymbol) s;
-					JCMethodDecl value;
-					if(c.packge()!=env.enclClass.sym.packge())
-						if (m.isStatic() || ((m.flags() & PUBLIC) == 0)
+		if (restype.tag != TypeTags.ARRAY){
+			ClassSymbol cs = c;
+			Set<String> methods = new HashSet<String>();
+			for(Type type = restype; type != Type.noType && type.toString().equals(names.java_lang_Object.toString()); type = cs.getSuperclass()){
+				cs = checkAndResolveReturnType(env, rs, type);
+				Iterator<Symbol> iterator = cs.members().getElements().iterator();
+				while (iterator.hasNext()) {
+					Symbol s = iterator.next();
+					if (s.getKind() == ElementKind.METHOD) {
+						MethodSymbol m = (MethodSymbol) s;
+						JCMethodDecl value;
+						if(c.packge()!=env.enclClass.sym.packge())
+							if (m.isStatic() || ((m.flags() & PUBLIC) == 0)
+									|| ((m.flags() & SYNTHETIC) != 0))
+								continue; // Do not wrap static methods.
+						if (m.isStatic() || ((m.flags() & PROTECTED) != 0) ||((m.flags() & PRIVATE) != 0)
 								|| ((m.flags() & SYNTHETIC) != 0))
 							continue; // Do not wrap static methods.
-					if (m.isStatic() || ((m.flags() & PROTECTED) != 0) ||((m.flags() & PRIVATE) != 0)
-							|| ((m.flags() & SYNTHETIC) != 0))
-						continue; // Do not wrap static methods.
-					if (!m.type.getReturnType().toString().equals("void")) {
-						value = createFutureValueMethod(m, m.name);
-					} else {
-						value = createVoidFutureValueMethod(m, m.name);
-					}
-					wrappedMethods.add(value);
-					if(!providesHashCode && m.name.contentEquals("hashCode") && m.getParameters().length() == 0)
-						providesHashCode = true;
-					if(!providesEquals && m.name.contentEquals("equals") && m.getParameters().length() == 1) {
-						providesEquals = true;
+						if (!m.type.getReturnType().toString().equals("void")) {
+							value = createFutureValueMethod(m, m.name);
+						} else {
+							value = createVoidFutureValueMethod(m, m.name);
+						}
+						
+						if(methods.add(m.toString()))
+							wrappedMethods.add(value);
+						if(!providesHashCode && m.name.contentEquals("hashCode") && m.getParameters().length() == 0)
+							providesHashCode = true;
+						if(!providesEquals && m.name.contentEquals("equals") && m.getParameters().length() == 1) {
+							providesEquals = true;
+						}
 					}
 				}
 			}
+		}
 		iter = c.members().getElements().iterator();
 		constructors.add(createDuckConstructor(iter, false, false));
 
@@ -1079,7 +1092,7 @@ public class CapsuleInternal extends Internal {
 			tp.appendList(make.TypeParams(List.<Type> of(ts.type)));
 		}
 		if (m.getParameters() != null) {
-			for (List<VarSymbol> l = m.getParameters(); l.nonEmpty(); l=l.tail){
+			for (List<VarSymbol> l = m.getParameters(); l.nonEmpty(); l = l.tail){
 				VarSymbol v = l.head;
 				params.add(make.VarDef(v, null));
 				args.add(id(v.name));
