@@ -448,7 +448,10 @@ public final class Attr extends CapsuleInternal {
         CapsuleMainTransformer mt = new CapsuleMainTransformer(syms, names, types, log,
                 rs, env, make, systemGraphBuilder);
         rewritenTree = mt.translate(rewritenTree);
-
+        // Check for cyclic references and report it
+        if (mt.sysGraph.detectCyclicReferences(names._this)) {
+        	log.warning(tree.pos(), "compiler.warn.cyclic.references.exists");
+        }
         //pull data structures back out for reference here.
         decls = mt.decls;
         inits = mt.inits;
