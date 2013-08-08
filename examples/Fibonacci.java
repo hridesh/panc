@@ -31,7 +31,7 @@ signature Worker {
 capsule FibWorker (Worker w) implements Worker {
 	Number execute(int n) {
 		if (n < 2) return new Number(n);
-		if (n < 13) return new Number(helper(13));
+		if (n < 13) return new Number(helper(n));
 		return new Sum (w.execute(n-1), w.execute(n-2));
 	}
 	private int helper(int n) {
