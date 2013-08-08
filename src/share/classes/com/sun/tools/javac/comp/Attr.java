@@ -920,6 +920,13 @@ public class Attr extends JCTree.Visitor {
     	pAttr.visitProcDef(tree);
     }
     
+
+    @Override
+    public void visitStateDef(JCStateDecl tree) {
+        visitVarDef(tree);
+        pAttr.visitStateDef(tree);
+    }
+
     @Override
     public void visitProcApply(JCProcInvocation tree) {
         //TODO: Extend the env?
@@ -1259,11 +1266,6 @@ public class Attr extends JCTree.Visitor {
         Lint prevLint = chk.setLint(lint);
 
         // Check that the variable's declared type is well-formed.
-        // Panini code
-        if(tree.getTag()==Tag.STATE)
-    		if(syms.capsules.containsKey(names.fromString(tree.vartype.toString())))
-    			log.error(tree.pos(), "states.with.capsule.type.error");
-        // end Panini code
         chk.validate(tree.vartype, env);
         deferredLintHandler.flush(tree.pos());
 

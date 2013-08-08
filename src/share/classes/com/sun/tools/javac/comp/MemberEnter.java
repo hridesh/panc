@@ -705,6 +705,10 @@ public class MemberEnter extends JCTree.Visitor implements Completer {
 
         return type;
     }
+
+    public void visitStateDef(JCStateDecl tree) {
+        visitVarDef(tree);
+    }
     // end Panini code
 
     public void visitVarDef(JCVariableDecl tree) {    	
