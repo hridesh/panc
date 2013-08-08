@@ -445,7 +445,7 @@ public final class Attr extends CapsuleInternal {
         if(log.nerrors > 0)
             return;
         
-        CapsuleMainTransformer mt = new CapsuleMainTransformer(syms, names, types, log,
+        DesignDeclTransformer mt = new DesignDeclTransformer(syms, names, types, log,
                 rs, env, make, systemGraphBuilder);
         rewritenTree = mt.translate(rewritenTree);
         // Check for cyclic references and report it

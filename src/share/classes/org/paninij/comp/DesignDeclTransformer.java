@@ -83,7 +83,7 @@ import org.paninij.util.PaniniConstants;
  * @author Sean L. Mooney
  * @since panini-0.9.2
  */
-public class CapsuleMainTransformer extends TreeTranslator {
+public class DesignDeclTransformer extends TreeTranslator {
 
     /**
      * Decls to copy into the rewritten body. This list <b>will not</b> include
@@ -114,7 +114,7 @@ public class CapsuleMainTransformer extends TreeTranslator {
      */
     JCDesignBlock systemDecl;
 
-    public CapsuleMainTransformer(Symtab syms, Names names, Types types, Log log,
+    public DesignDeclTransformer(Symtab syms, Names names, Types types, Log log,
             Resolve rs, Env<AttrContext> env,
             TreeMaker make, SystemGraphBuilder builder) {
         this.syms = syms;
