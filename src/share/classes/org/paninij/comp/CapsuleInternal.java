@@ -275,11 +275,11 @@ public class CapsuleInternal extends Internal {
 						PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_FINISH, args(nullv()))));
 			} else {
-				caseStatements.append(make.Exec(make.Apply(List
+				/*caseStatements.append(make.Exec(make.Apply(List
 						.<JCExpression> nil(), make.Select(make.Select(
 						make.Ident(names.fromString("System")),
 						names.fromString("out")), names.fromString("println")),
-						List.<JCExpression> of(stringc("got it")))));
+						List.<JCExpression> of(stringc("got it")))));*/
 				caseStatements.append(es(apply(
 						PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_FINISH,
