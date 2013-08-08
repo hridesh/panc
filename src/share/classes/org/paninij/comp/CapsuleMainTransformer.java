@@ -40,11 +40,13 @@ import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.Resolve;
 import com.sun.tools.javac.tree.JCTree.JCAssignOp;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.TreeTranslator;
 import com.sun.tools.javac.tree.JCTree.JCArrayTypeTree;
@@ -504,6 +506,24 @@ public class CapsuleMainTransformer extends TreeTranslator {
                     make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.panini.Start),
                     List.<JCExpression>nil())));
 
+            // TODO: assigning name to thread
+            if(initName.contains("$thread")) {
+            	String name = vdecl.name.toString()+"["+j+"]"+":"+((JCCapsuleDecl)c.tree).parentCapsule.name.toString();
+            	JCLiteral sName = make.Literal(TypeTags.CLASS, name);
+            	ListBuffer<JCExpression> exprs = new ListBuffer<JCExpression>();
+            	exprs.add(sName);
+            	JCStatement stmt = make
+    					.Exec(make.Apply(
+    							List.<JCExpression> nil(),
+    							make.Select(
+    									make.TypeCast(
+    											make.Ident(c.type.tsym),
+    											make.Indexed(make.Ident(vdecl.name), make.Literal(j))),
+    									names.fromString("setName")),
+    									exprs.toList()));
+            	assigns.append(stmt);
+            }
+            
             final Name connectCapIdx = names.fromString(vdecl.name.toString()+"["+j+"]");
             systemGraphBuilder.addConnection(sysGraph, names._this,
                     connectCapIdx, connectCapIdx);
@@ -548,6 +568,23 @@ public class CapsuleMainTransformer extends TreeTranslator {
         JCExpressionStatement nameAssign = make.at(vdecl.pos()).Exec(newAssign);
         nameAssign.type = vdecl.type;
         inits.append(nameAssign);
+        // TODO: assigning name to thread
+        if(initName.contains("$thread")) {
+        	String name = vdecl.name.toString()+":"+vdecl.type.tsym.name.toString();
+        	JCLiteral sName = make.Literal(TypeTags.CLASS, name);
+        	ListBuffer<JCExpression> exprs = new ListBuffer<JCExpression>();
+        	exprs.add(sName);
+        	JCStatement stmt = make
+					.Exec(make.Apply(
+							List.<JCExpression> nil(),
+							make.Select(
+									make.TypeCast(
+											make.Ident(c.type.tsym),
+											make.Ident(vdecl.name)),
+									names.fromString("setName")),
+									exprs.toList()));
+        	inits.append(stmt);
+        }
         JCExpressionStatement startAssign = make.Exec(make.Apply(List.<JCExpression>nil(),
                 make.Select(make.Ident(vdecl.name), names.panini.Start),
                 List.<JCExpression>nil()));
