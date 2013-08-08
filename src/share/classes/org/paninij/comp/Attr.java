@@ -126,7 +126,8 @@ public final class Attr extends CapsuleInternal {
                 com.sun.tools.javac.code.Types.instance(context),
                 com.sun.tools.javac.comp.Enter.instance(context),
                 com.sun.tools.javac.comp.MemberEnter.instance(context),
-                com.sun.tools.javac.code.Symtab.instance(context));
+                com.sun.tools.javac.code.Symtab.instance(context),
+                com.sun.tools.javac.comp.Resolve.instance(context));
         context.put(attrKey, this);
 
         this.log = com.sun.tools.javac.util.Log.instance(context);
@@ -222,7 +223,7 @@ public final class Attr extends CapsuleInternal {
 	            tree.sym.capsule_info.connectedCapsules.appendList(tree.params);
 
 		if (tree.needsDefaultRun){
-			List<JCClassDecl> wrapperClasses = generateClassWrappers(tree, env, rs);
+			List<JCClassDecl> wrapperClasses = generateClassWrappers(tree, env);
 			enter.classEnter(wrapperClasses, env.outer);
 //			        	System.out.println(wrapperClasses);
 			for(List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail){
