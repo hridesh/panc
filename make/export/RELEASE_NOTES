@@ -74,6 +74,20 @@ is no longer used.
 
   star -> similar to wireall.
 
+Known Issues:
+
+1. Panc does not always automatically find the source file for a capsule not
+   explicitly included as a file to compile. Use the classpath (-cp) or sourcepath
+   (-sourcepath) flag to tell panc where to find source files.
+
+   $> panc -sourcepath . CapsuleName.java
+
+2. Capsule instances connected in a cycle may not terminate. If two capsule
+   instances are connected to each other (e.g. capsule instance 'a' is connected
+   to capsule instance 'b' and 'b' is connected to 'a') then the automatic capsule
+   shutdown mechanism will not work. Panc produces a warning messge for each
+   cyclic connection it detects.
+
 RELEASE NOTES FOR PANINI 0.9.1
 
 These release notes summarizes changes in Panini 0.9.1 release.
