@@ -17,8 +17,10 @@
  * Contributor(s): Hridesh Rajan, Sean Mooney, Spencer Morrison
  */
 
+import java.util.*;
+
 capsule UI (Book[] books) {
-	void search() {
+	Address[] search() {
 		AddressRequest[] requests = new AddressRequest[] {
 				new AddressRequest("Barack", "Obama"),
 				new AddressRequest("William", "Clinton"),
@@ -27,12 +29,15 @@ capsule UI (Book[] books) {
 				new AddressRequest("James", "Carter"),
 				new AddressRequest("Gerald", "Ford")
 		};
+
+		ArrayList<Address> addrs = new ArrayList<Address>();
 		for(int j=0; j<requests.length; j++) {
 			Address[] results = foreach(Book b : books) b.search(requests[j]);
 			for(int i=0; i<books.length; i++){
 				if(!results[i].equals(null))
-					System.out.println(results[i].toString());
+					addrs.add(results[i]);
 			}
 		}
+        return addrs.toArray(new Address[addrs.size()]);
 	}
 }

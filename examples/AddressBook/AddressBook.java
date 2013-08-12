@@ -34,6 +34,9 @@ capsule AddressBook {
 	}
 
 	void run() {
-		ui.search();
+		Address[] searchResults = ui.search();
+		for (int i = 0; i < searchResults.length; i++) {
+			System.out.println(searchResults[i].toString());
+		}
 	}
 }
