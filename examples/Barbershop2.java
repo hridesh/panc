@@ -80,11 +80,13 @@ capsule Customers(Barber b, WaitingRoom r, String[] customerNames) {
 
 capsule Barbershop {
 	design {
+		int numCustomers = 5;
+		int numGenerators = 2;
 		Barber b;
 		WaitingRoom w;
-		Customers gs[2];
+		Customers gs[numGenerators];
 
-		b(w, true, 8);
+		b(w, true, numGenerators * numCustomers);
 		w(10);
 
 		gs[0](b,w, new String[]{"Hridesh", "Eric", "Sean", "Yuheng", "Ganesha"});
