@@ -29,7 +29,7 @@ is no longer used.
 
 * Executable capsules. 
 
-  In panini 0.9.1, all systems where executable. Since systems no longer
+  In panini 0.9.1, all systems were executable. Since systems no longer
   exist, some capsules are now executable. Any closed capsules which
   defines a run method may be executed. A closed capsule is one which
   takes no parameters, or a single parameter of type String[].
@@ -41,8 +41,8 @@ is no longer used.
   assoc
   star
 
-  These operators look like methods, and simplify wiring some of the
-  common connections between capsules.
+  These operators simplify wiring some of the common connections 
+  between capsules.
 
   wireall -> connects each element in a capsule array to the same set of
              arguments
@@ -157,12 +157,12 @@ update versions are included in subsequent update versions.
 	capsule C ( D d1, ... ) {
     	t s; 
         ...
-        void m ( ... ) {    …   }
+        void m ( ... ) {    ���   }
     } 
 
 * Support for system declarations 
 	system S1 {
-		C c1; D d1; … // Declaration of capsule instances in this system
+		C c1; D d1; ��� // Declaration of capsule instances in this system
         c1 ( d1 ) ;  // Wiring capsule instances together.
 	}
 
