@@ -157,12 +157,12 @@ update versions are included in subsequent update versions.
 	capsule C ( D d1, ... ) {
     	t s; 
         ...
-        void m ( ... ) {    ���   }
+        void m ( ... ) {    ...   }
     } 
 
 * Support for system declarations 
 	system S1 {
-		C c1; D d1; ��� // Declaration of capsule instances in this system
+		C c1; D d1; // Declaration of capsule instances in this system
         c1 ( d1 ) ;  // Wiring capsule instances together.
 	}
 
