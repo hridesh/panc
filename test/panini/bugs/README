@@ -1,0 +1,6 @@
+Tests which expose bugs in the sourceforge bug tracker.
+
+Each bug gets its own folder.
+
+Move the relevant test to $PANC_DEV_ROOT/test/tools/panc or an appropriate sub-folder
+in the directory once the bug has been closed.
