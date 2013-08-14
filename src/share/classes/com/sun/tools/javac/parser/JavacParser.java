@@ -225,6 +225,11 @@ public class JavacParser implements Parser {
      *  either as {@link JCVariableDecl} or {@link JCStateDecl}.
      */
     private boolean createVarDefs = true;
+    
+    /**
+     * Used to check if an initializer has already been declared in the same capsule
+     */
+    private boolean initializerDeclared = false;
     // end Panini code
 
     /* ---------- token management -------------- */
@@ -2791,6 +2796,7 @@ public class JavacParser implements Parser {
             implementing = typeList();
         }
 //     	List<JCTree> defs = classOrInterfaceBody(name, false);
+        initializerDeclared = false;
         List<JCTree> defs = capsuleBody(name);
      	JCCapsuleDecl result = 
      			toP(F.at(pos).CapsuleDef(mod, name, params, implementing, defs));
@@ -2835,6 +2841,7 @@ public class JavacParser implements Parser {
                         mods.annotations.isEmpty()) {
                  return List.<JCTree>of(block(pos, mods.flags));
              } else if(token.kind == TokenKind.INIT){
+            	 int prevPos = token.pos;
             	 if(mods.flags!=0)
             		 return List.<JCTree>of(syntaxError(mods.pos, null, "mods.for.init"));
             	 nextToken();
@@ -2844,6 +2851,11 @@ public class JavacParser implements Parser {
                      pos = token.pos;
                  }else
                 	 return List.<JCTree>of(syntaxError(token.pos, null, "expected", LBRACE));
+            	 if(initializerDeclared){
+            		 log.error(prevPos, "capsules.cant.have.multiple.initializers");
+            		 return List.<JCTree>nil();
+            	 }
+            	 initializerDeclared = true;
             	 return List.<JCTree>of(to(F.at(pos).InitDef(to(F.at(pos).Modifiers(Flags.PROTECTED)), body)));
              } else if (token.kind == IDENTIFIER
                      && token.name().toString().equals("design")
