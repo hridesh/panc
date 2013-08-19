@@ -296,27 +296,26 @@ public class LeakDetection {
 			} else if (tree instanceof JCFieldAccess) {
 				JCFieldAccess jcfa = (JCFieldAccess)tree;
 				if (!jcfa.type.isPrimitive()) {
-					output.add(jcfa.sym);
+					Symbol field_sym = jcfa.sym;
+					output.add(field_sym);
 					if (!analyzingphase) {
 						JCExpression selected = jcfa.selected;
-						if (isVarThis(selected) && isInnerField(jcfa.sym)) {
-							if (jcfa.sym.getKind() == ElementKind.FIELD) {
-								Symbol capSym = capsule.sym;
-								Symbol meth = curr.sym;
-								Type type = jcfa.sym.type;
-								String ts = type.toString();
-								if (type == null ||
-										ts.compareTo("java.lang.String") !=0) {
-									String meth_string = meth.toString();
-									log.useSource (
-										jcfa.sym.outermostClass().sourcefile);
-									log.warning(tree.pos(),
-										"confinement.violation", jcfa.sym,
-										capSym.toString().substring(0,
-											capSym.toString().indexOf("$")),
-											meth_string.substring(0,
-													meth_string.indexOf("$")));
-								}
+						if (isVarThis(selected) && isInnerField(field_sym)) {
+							Symbol capSym = capsule.sym;
+							Symbol meth = curr.sym;
+							Type type = field_sym.type;
+							String ts = type.toString();
+							if (type == null ||
+									ts.compareTo("java.lang.String") !=0) {
+								String meth_string = meth.toString();
+								log.useSource (
+										field_sym.outermostClass().sourcefile);
+								log.warning(tree.pos(),
+									"confinement.violation", field_sym,
+									capSym.toString().substring(0,
+										capSym.toString().indexOf("$")),
+										meth_string.substring(0,
+												meth_string.indexOf("$")));
 							}
 						}
 					}
@@ -345,18 +344,18 @@ public class LeakDetection {
 				}
 				output.add(sym);
 				if (!analyzingphase) {
-					if (isInnerField(sym) &&
-							sym.getKind() == ElementKind.FIELD) {
+					if (isInnerField(sym)) {
 						Type type = sym.type;
 						String type_string = type.toString();
 						if (type == null ||
 								type_string.compareTo("java.lang.String") !=0) {
+							Symbol curr_sym = curr.sym;
 							log.useSource(sym.outermostClass().sourcefile);
 							log.warning(tree.pos(), "confinement.violation",
 								sym, capsule.sym.toString().substring(
 									0, capsule.sym.toString().indexOf("$")),
-										curr.sym.toString().substring(
-											0, curr.sym.toString().indexOf("$")));
+									curr_sym.toString().substring(0,
+											curr_sym.toString().indexOf("$")));
 						}
 					}
 				}
@@ -380,13 +379,14 @@ public class LeakDetection {
 		return false;
 	}
 
+	// Check whether a symbol is field that is declared in inside a Capsule.
 	private boolean isInnerField(Symbol s) {
 		for (JCTree def : defs) {
 			if (def instanceof JCVariableDecl) {
 				JCVariableDecl field = (JCVariableDecl)def;
-				if (field.sym == s &&
-						((field.mods.flags & Flags.PRIVATE) != 0)) {
-					return true;
+				if (field.sym == s /* &&
+						((field.mods.flags & Flags.PRIVATE) != 0) */) {
+					return s.getKind() == ElementKind.FIELD;
 				}
 			}
 		}
