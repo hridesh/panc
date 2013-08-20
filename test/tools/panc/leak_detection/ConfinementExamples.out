@@ -1,0 +1,3 @@
+ConfinementExamples.java:39:24: compiler.warn.confinement.violation: tc, M, mtest
+ConfinementExamples.java:43:24: compiler.warn.confinement.violation: tc, M, mtest2
+2 warnings

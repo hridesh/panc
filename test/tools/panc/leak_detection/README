@@ -1,0 +1,3 @@
+This directory contains regression testing(s) for the confinement violation
+detection module. This module is currently located in the class file
+LeakDetection.java in org.paninij.analysis directory.
