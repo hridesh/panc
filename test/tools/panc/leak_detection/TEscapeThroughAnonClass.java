@@ -19,39 +19,41 @@
 
 /*
  * @test
- * @summary Ensure Capsule state will not be leaked to other Capsule.
- * @compile/ref=ConfinementExamples.out -XDrawDiagnostics  ConfinementExamples.java
+ * @summary Ensure Capsule state will not be used by other Capsule.
+ * @compile/ref=TEscapeThroughAnonClass.out -XDrawDiagnostics TEscapeThroughAnonClass.java
  */
 
-class TestC {
-	TestC next;
-	void setNext(TestC next) { this.next = next; }
+import java.util.ArrayList;
+
+interface Escape {
+	void method();
 }
 
-capsule C {
-	void test(TestC tc) {  }
-}
+capsule B (A a) {
+	ArrayList bal = new ArrayList();
 
-capsule M (C c) {
-	TestC tc = new TestC();
-	void mtest() {
-		tc.setNext(tc);
-		c.test(tc);
-	}
-
-	TestC mtest2() {
-		return tc;
+	void escape(Escape fun){
+		fun.method();
 	}
 }
 
-capsule ConfineTest {
+capsule A {
+	ArrayList aal = new ArrayList();
+	int escapeei = 0;
+
 	design {
-		C c; M m;
-		m(c);
+		A a;
+		B b;
+		b(a);
 	}
 
 	void run() {
-		m.mtest();
-		m.mtest2();
+		b.escape(new Escape() {
+			public void method() {
+				escapeei = 2;
+			}
+		});
 	}
+
+	void nothing() {};
 }
