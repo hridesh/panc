@@ -60,9 +60,9 @@ public abstract class SeqConstCheckAlgorithm {
 	public abstract void potentialPathCheck();
 
 	protected void reportTotalWarnings(HashSet<BiRoute> warnings) {
-	    //Do not report counts total warnings for release.
-	    //Reenable for benchmarking/testing for papers.
-	    //System.out.println(name + " warnings = " + warnings.size());
+	    // Do not report counts total warnings for release.
+	    // Reenable for benchmarking/testing for papers.
+	    // System.out.println(name + " warnings = " + warnings.size());
 	}
 
 	protected void reportTrimmedWarnings(HashSet<BiRoute> warnings) {

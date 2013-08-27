@@ -60,7 +60,8 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 		for (Node node : graph.nodes.values()) {
 			ClassSymbol cs = node.capsule;
 			for (MethodSymbol ms : node.procedures) {
-				if (cs.capsule_info.definedRun && ms.toString().compareTo("run()") == 0) {
+				if (cs.capsule_info.definedRun &&
+						ms.toString().compareTo("run()") == 0) {
 					ClassMethod now = new ClassMethod(cs, ms, node);
 
 					if (traversed.contains(now)) { continue; }

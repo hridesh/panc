@@ -70,7 +70,8 @@ public class ConsistencyUtil {
 
         private final String name;
 
-        private static HashMap<String, SEQ_CONST_ALG> tab = new HashMap<String, ConsistencyUtil.SEQ_CONST_ALG>();
+        private static HashMap<String, SEQ_CONST_ALG> tab =
+        	new HashMap<String, ConsistencyUtil.SEQ_CONST_ALG>();
         static {
             for (SEQ_CONST_ALG a: values()) {
                 tab.put(a.name, a);

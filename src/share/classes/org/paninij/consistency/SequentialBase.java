@@ -32,7 +32,7 @@ import org.paninij.effects.*;
 /**
  * Basic sequential inconsistency detection.
  * This version of the sequential consistency violation detector signals warning
- *  when two paths conflict.
+ * when two paths conflict.
  */
 public class SequentialBase extends SeqConstCheckAlgorithm {
 	private SystemGraph graph;
@@ -50,13 +50,13 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
-	@Override
 	public void potentialPathCheck() {
 		HashSet<ClassMethod> traversed = new HashSet<ClassMethod>();
 		for (Node node : graph.nodes.values()) {
 			ClassSymbol cs = node.capsule;
 			for (MethodSymbol ms : node.procedures) {
-				if (cs.capsule_info.definedRun && ms.toString().compareTo("run()") == 0) {
+				if (cs.capsule_info.definedRun &&
+						ms.toString().compareTo("run()") == 0) {
 					ClassMethod now = new ClassMethod(cs, ms, node);
 
 					if (traversed.contains(now)) { continue; }
@@ -71,7 +71,6 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 				}
 			}
 		}
-
 
         reportTotalWarnings(warnings);
         HashSet<BiRoute> trimmed = ConsistencyUtil.trim(warnings);

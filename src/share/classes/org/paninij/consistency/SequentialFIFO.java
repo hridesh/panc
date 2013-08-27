@@ -55,7 +55,8 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 		for (Node node : graph.nodes.values()) {
 			ClassSymbol cs = node.capsule;
 			for (MethodSymbol ms : node.procedures) {
-				if (cs.capsule_info.definedRun && ms.toString().compareTo("run()") == 0) {
+				if (cs.capsule_info.definedRun &&
+						ms.toString().compareTo("run()") == 0) {
 					ClassMethod now = new ClassMethod(cs, ms, node);
 
 					if (traversed.contains(now)) { continue; }
@@ -242,7 +243,7 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 					if (i < size1 - 1) { check(r1, i + 1, r2, j, er1, er2); }
 				}
 				return;
-			} /*else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
+			} /* else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
 				return;
 			}*/
 		}

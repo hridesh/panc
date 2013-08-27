@@ -47,8 +47,9 @@ public class ConsistencyChecker {
 	HashMap<Node, HashSet<Path>> paths;
 	List<HashSet<Path>> pathCandidates = List.<HashSet<Path>>nil();
 
-	/**Do the first part of the analysis.
-	 * - this checks if there are more than one simple paths between any two vertices of the graph.
+	/** Do the first part of the analysis.
+	 * - this checks if there are more than one simple paths between any two
+	 * vertices of the graph.
 	 */
 	public void potentialPathCheck() {
 		for (Node node : graph.nodes.values()) {
@@ -57,7 +58,8 @@ public class ConsistencyChecker {
 			paths = new HashMap<Node, HashSet<Path>>();
 			Path currentPath = new Path();
 			if (traverse(node, currentPath)) {
-				Iterator<Entry<Node, HashSet<Path>>> iter = paths.entrySet().iterator();
+				Iterator<Entry<Node, HashSet<Path>>> iter =
+					paths.entrySet().iterator();
 				while (iter.hasNext()) {
 					Entry<Node, HashSet<Path>> entry = iter.next();
 					if (entry.getValue().size() > 1) {
@@ -78,22 +80,24 @@ public class ConsistencyChecker {
 		List<Edge> startingCalls;
 	}
 
-	
-	
 	Report currentReport;
 	List<MethodSymbol> endingProcedure;
 	HashMap<MethodSymbol, HashSet<Edge>> firstCall;
+
 	/**
-	 * Find the actual paths for set of potential paths, and see if potential trouble exists. 
+	 * Find the actual paths for set of potential paths, and see if potential
+	 * trouble exists. 
 	 */
 	private void pathCheck() {
-		for (HashSet<Path> paths : pathCandidates) {//for each sets of path
+		for (HashSet<Path> paths : pathCandidates) { // for each sets of path
 			currentReport = new Report();
 			endingProcedure = List.<MethodSymbol>nil();
 			firstCall = new HashMap<MethodSymbol, HashSet<Edge>>();
 			write = new HashMap<String, HashSet<Edge>>();
 			read = new HashMap<String, HashSet<Edge>>();
-			pathCheck(paths);//will have a list of EffectSets in endEffects after this is called.
+			// Will have a list of EffectSets in endEffects after this is
+			// called.
+			pathCheck(paths);
 			checkEffects(paths);
 		}
 	}
@@ -113,7 +117,8 @@ public class ConsistencyChecker {
 					if (entry instanceof FieldEffect) {
 						String field = ((FieldEffect) entry).f.name.toString();
 						if (write.containsKey(field)) {
-							printWarning(write.get(field), currentReport.startingNode);
+							printWarning(write.get(field),
+									currentReport.startingNode);
 							continue;
 						}
 						if (read.containsKey(field)) {
@@ -130,7 +135,8 @@ public class ConsistencyChecker {
 						String field = ((FieldEffect) entry).f.name.toString();
 						if (write.containsKey(field)) {
 							write.get(field).addAll(firstCall.get(es)); 
-							printWarning(write.get(field), currentReport.startingNode);
+							printWarning(write.get(field),
+									currentReport.startingNode);
 							continue;
 						} else {
 							HashSet<Edge> edges = new HashSet<Edge>();
@@ -139,7 +145,8 @@ public class ConsistencyChecker {
 						}
 						if (read.containsKey(field)) {
 							read.get(field).addAll(firstCall.get(es)); 
-							printWarning(read.get(field), currentReport.startingNode);
+							printWarning(read.get(field),
+									currentReport.startingNode);
 							continue;
 						} else {
 							HashSet<Edge> edges = new HashSet<Edge>();
@@ -163,7 +170,7 @@ public class ConsistencyChecker {
 			}
 		}
 	}
-	
+
 	private void printWarning(HashSet<Edge> hashSet, Node startingNode) {
 		List<String> sets = List.<String>nil();
 		for (Edge edge : hashSet) {
@@ -181,19 +188,21 @@ public class ConsistencyChecker {
 			if(!duplicate)
 				sets = sets.append(set);
 		}
-		log.warning("sequential.inconsistency.warning", sets, startingNode.capsule.capsule_info.parentCapsule.name);
+		log.warning("sequential.inconsistency.warning", sets,
+				startingNode.capsule.capsule_info.parentCapsule.name);
 	}
-	
+
 	private void pathCheck(HashSet<Path> paths) {
-		for (Path path : paths) {//for each path
+		for (Path path : paths) { // for each path
 			currentReport.startingNode = path.nodes.head;
 			getActualPaths(path.nodes);
 		}
 	}
-	
+
 	private Edge currentStartingCall;
 	private void getActualPaths(List<Node> path) {
-		for (MethodSymbol sym : path.head.procedures) {//can add restrictions to filter out unnecessary methods.?
+		for (MethodSymbol sym : path.head.procedures) {
+			// can add restrictions to filter out unnecessary methods.?
 			List<Edge> edges = graph.getEdges(path.head, sym, path.tail);
 			for (Edge e : edges) {
 				currentStartingCall = e;
@@ -215,7 +224,7 @@ public class ConsistencyChecker {
 	}
 	
 	private void getActualPaths(Edge edge, List<Node> path) {
-		if (path.tail.isEmpty()) {//end of path
+		if (path.tail.isEmpty()) { // end of path
  			for (MethodSymbol m : path.head.procedures) {
 				if (m.toString().equals(edge.toProcedure.toString())){
 					if (m.effect != null) {
@@ -230,8 +239,9 @@ public class ConsistencyChecker {
 					}
 				}
 			}
-		}else {
-			List<Edge> edges = graph.getEdges(edge.toNode, edge.toProcedure, path.tail);
+		} else {
+			List<Edge> edges = graph.getEdges(edge.toNode, edge.toProcedure,
+					path.tail);
 			for (Edge e : edges) {
 				getActualPaths(e, path.tail);
 			}
