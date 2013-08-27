@@ -877,6 +877,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	public static class JCDesignBlock extends JCMethodDecl implements InternalWiringMethod {
 		public boolean hasTaskCapsule;
+		public org.paninij.systemgraph.SystemGraph sysGraph;
 
 		public JCDesignBlock(JCModifiers mods, Name name, JCExpression restype,
                 List<JCTypeParameter> typarams, List<JCVariableDecl> params,

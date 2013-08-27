@@ -95,6 +95,7 @@ public final class Attr extends CapsuleInternal {
 	SystemGraphBuilder systemGraphBuilder;
 	final com.sun.tools.javac.comp.Check jchk;
 	public final Check pchk;
+	public List<JCDesignBlock> designBlocks = List.<JCDesignBlock>nil();
 
     final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
 
@@ -491,15 +492,28 @@ public final class Attr extends CapsuleInternal {
 		List<JCStatement> mainStmts;
 		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).toList();
 
-		systemGraphBuilder.completeEdges(sysGraph, annotationProcessor, env, rs);
-
-		// Sequential consistency detection
-		SeqConstCheckAlgorithm sca = 
-		    ConsistencyUtil.createChecker(seqConstAlg, sysGraph, log);
-		sca.potentialPathCheck();
+		tree.sysGraph = sysGraph;
+		this.designBlocks = this.designBlocks.append(tree); 
 
 		//replace the systemDef/wiring block with the new body.
 		tree.body.stats = mainStmts;
+	}
+	
+	public final void postVisitSystemDefs(Env<AttrContext> env) {
+		for(List<JCDesignBlock> l = this.designBlocks; l.nonEmpty(); l = l.tail){
+			JCDesignBlock tree = l.head;
+			postVisitSystemDef(tree, env);
+		}
+		this.designBlocks = List.<JCDesignBlock>nil();
+	}
+	
+	private final void postVisitSystemDef(JCDesignBlock tree, Env<AttrContext> env) {
+		systemGraphBuilder.completeEdges(tree.sysGraph, annotationProcessor, env, rs);
+
+		// Sequential consistency detection
+		SeqConstCheckAlgorithm sca = 
+		    ConsistencyUtil.createChecker(seqConstAlg, tree.sysGraph, log);
+		sca.potentialPathCheck();
 	}
 
 	public final void visitProcDef(JCProcDecl tree){

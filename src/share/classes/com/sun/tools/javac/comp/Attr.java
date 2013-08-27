@@ -95,7 +95,7 @@ public class Attr extends JCTree.Visitor {
     final Annotate annotate;
     final DeferredLintHandler deferredLintHandler;
     // Panini code
-    org.paninij.comp.Attr pAttr;
+    public org.paninij.comp.Attr pAttr;
     public boolean doGraphs = false;
     // end Panini code
 
