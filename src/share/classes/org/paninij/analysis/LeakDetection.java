@@ -6,7 +6,6 @@ import java.util.TreeSet;
 
 import javax.lang.model.element.ElementKind;
 
-import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
@@ -45,7 +44,7 @@ public class LeakDetection {
 				if (((JCMethodDecl) jct).body != null) {
 					JCMethodDecl meth = (JCMethodDecl)jct;
 
-					if (shouldAnalysis(meth)) {
+					if (AnalysisUtil.shouldAnalyze(capsule, meth)) {
 						if (meth.body != null) {
 							MethodWrapper temp = new MethodWrapper(meth);
 							map.put(meth, temp);
@@ -81,23 +80,13 @@ public class LeakDetection {
 		for (JCTree jct : defs) {
 			if (jct instanceof JCMethodDecl) {
 				JCMethodDecl jcmd = (JCMethodDecl) jct;
-				if (shouldAnalysis(jcmd)) {
+				if (AnalysisUtil.shouldAnalyze(capsule, jcmd)) {
 					if (jcmd.body != null) {
 						intra(capsule, jcmd);
 					}
 				}
 			}
 		}
-	}
-
-	private boolean shouldAnalysis(JCMethodDecl meth) {
-		if ((meth.mods.flags & Flags.PRIVATE) != 0 ||
-				// an active Capsule.
-				(!capsule.needsDefaultRun &&
-					meth.sym.toString().compareTo("run()") == 0)) {
-			return true;
-		}
-		return false;
 	}
 
 	public HashSet<Symbol> intra(JCCapsuleDecl capsule, JCMethodDecl meth) {
@@ -165,7 +154,7 @@ public class LeakDetection {
 				if (currMeth instanceof JCIdent) {
 					JCIdent jci = (JCIdent) currMeth;
 					innerCall = true;
-					addCallEdge(meth.sym, jci.sym);
+					AnalysisUtil.addCallEdge(meth.sym, jci.sym, reversed);
 
 					HashSet<Symbol> leaks = result.get(jci.sym);
 					if (leaks != null) {
@@ -190,16 +179,17 @@ public class LeakDetection {
 					}
 				} else if (currMeth instanceof JCFieldAccess) {
 					JCFieldAccess jcfa = (JCFieldAccess)currMeth;
-					JCExpression receiver = getEssentialExpr(jcfa.selected);
+					JCExpression receiver =
+						AnalysisUtil.getEssentialExpr(jcfa.selected);
 
 					if (receiver instanceof JCIdent) {
 						JCIdent jci = (JCIdent)receiver;
-						if (isInnerField(jci.sym)) {
+						if (AnalysisUtil.isInnerField(defs, jci.sym)) {
 							innerCall = true;
 						}
 					} else if (receiver instanceof JCFieldAccess) {
 						JCFieldAccess field = (JCFieldAccess)receiver;
-						if (isInnerField(field.sym)) {
+						if (AnalysisUtil.isInnerField(defs, field.sym)) {
 							innerCall = true;
 						}
 					}
@@ -211,7 +201,7 @@ public class LeakDetection {
 					warningList(jcmi.args, preLeak); }
 			} else if (curr instanceof JCAssign) {
 				JCAssign jca = (JCAssign)curr;
-				JCExpression lhs = getEssentialExpr(jca.lhs);
+				JCExpression lhs = AnalysisUtil.getEssentialExpr(jca.lhs);
 				if (lhs instanceof JCIdent) {
 					JCIdent jci = (JCIdent)lhs;
 					if (preLeak.contains(jci.sym)) {
@@ -220,7 +210,7 @@ public class LeakDetection {
 				} else if (lhs instanceof JCFieldAccess) {
 					JCFieldAccess jcf = (JCFieldAccess)lhs;
 
-					if (isVarThis(jcf.selected)) {
+					if (AnalysisUtil.isVarThis(jcf.selected)) {
 						if (preLeak.contains(jcf.sym)) {
 							warningCandidates(jca.rhs, preLeak);
 						}
@@ -303,7 +293,8 @@ public class LeakDetection {
 			output.add(field_sym);
 			if (!analyzingphase) {
 				JCExpression selected = jcfa.selected;
-				if (isVarThis(selected) && isInnerField(field_sym)) {
+				if (AnalysisUtil.isVarThis(selected) &&
+						AnalysisUtil.isInnerField(defs, field_sym)) {
 					Symbol capSym = capsule.sym;
 					Symbol meth = curr.sym;
 					Type type = field_sym.type;
@@ -312,8 +303,9 @@ public class LeakDetection {
 						String meth_string = meth.toString();
 						log.useSource (field_sym.outermostClass().sourcefile);
 						log.warning(tree.pos(), "confinement.violation",
-								field_sym, removeDollar(capSym.toString()),
-								removeDollar(meth_string));
+								field_sym,
+								AnalysisUtil.rmDollar(capSym.toString()),
+								AnalysisUtil.rmDollar(meth_string));
 					}
 				}
 			}
@@ -324,7 +316,7 @@ public class LeakDetection {
 		if (tree != null) {
 			if (tree instanceof JCExpression) {
 				JCExpression jce = (JCExpression)tree;
-				tree = getEssentialExpr(jce);
+				tree = AnalysisUtil.getEssentialExpr(jce);
 			}
 
 			if (tree instanceof JCIdent) {
@@ -337,18 +329,6 @@ public class LeakDetection {
 		}
 	}
 
-	private static JCExpression getEssentialExpr(JCExpression original) {
-		JCExpression rightOp = original;
-		while (rightOp instanceof JCTypeCast || rightOp instanceof JCParens) {
-			if (rightOp instanceof JCTypeCast) {
-				rightOp = ((JCTypeCast)rightOp).expr;
-			} else if (rightOp instanceof JCParens) {
-				rightOp = ((JCParens)rightOp).expr;
-			}
-		}
-		return rightOp;
-	}
-
 	private void warning(JCIdent tree, HashSet<Symbol> output,
 			boolean mustBePrimitive) {
 		Symbol sym = tree.sym;
@@ -356,7 +336,7 @@ public class LeakDetection {
 			if (!mustBePrimitive || !sym.type.isPrimitive()) {
 				output.add(sym);
 				if (!analyzingphase) {
-					if (isInnerField(sym)) {
+					if (AnalysisUtil.isInnerField(defs, sym)) {
 						Type type = sym.type;
 						String type_string = type.toString();
 						if (type == null ||
@@ -364,62 +344,14 @@ public class LeakDetection {
 							Symbol curr_sym = curr.sym;
 							log.useSource(sym.outermostClass().sourcefile);
 							log.warning(tree.pos(), "confinement.violation",
-								sym, removeDollar(capsule.sym.toString()),
-								removeDollar(curr_sym.toString()));
+								sym,
+								AnalysisUtil.rmDollar(capsule.sym.toString()),
+								AnalysisUtil.rmDollar(curr_sym.toString()));
 						}
 					}
 				}
 			}
 		}
-	}
-
-	private String removeDollar(String input) {
-		int index = input.indexOf("$");
-
-		if (index != -1) {
-			return input.substring(0, index);
-		}
-		return input;
-	}
-
-	private static boolean isVarThis(JCTree that) {
-		if (that instanceof JCIdent) {
-			JCIdent tree = (JCIdent)that;
-			Symbol sym = tree.sym;
-			if (sym != null) {
-				ElementKind symKind = sym.getKind();
-				if (symKind == ElementKind.FIELD) {
-					if (sym.name.toString().compareTo("this") == 0) {
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	}
-
-	// Check whether a symbol is field that is declared in inside a Capsule.
-	private boolean isInnerField(Symbol s) {
-		for (JCTree def : defs) {
-			if (def instanceof JCVariableDecl) {
-				JCVariableDecl field = (JCVariableDecl)def;
-				if (field.sym == s /* &&
-						((field.mods.flags & Flags.PRIVATE) != 0) */
-						&& (field.mods.flags == 0)) {
-					return s.getKind() == ElementKind.FIELD;
-				}
-			}
-		}
-		return false;
-	}
-
-	private void addCallEdge(Symbol caller, Symbol callee) {
-		HashSet<Symbol> callers = reversed.get(callee);
-		if (callers == null) {
-			callers = new HashSet<Symbol>();
-			reversed.put(callee, callers);
-		}
-		callers.add(caller);
 	}
 
 	public class LeakExpressions extends TreeScanner {

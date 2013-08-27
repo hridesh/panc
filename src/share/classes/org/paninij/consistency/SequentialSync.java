@@ -65,8 +65,8 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 					paths.clear();
 					Route al = new Route();
 					// traverse(node, null, ms, al);
-					ConsistencyUtil.traverse(node, null, ms, al, loops, paths,
-							graph);
+					ConsistencyUtil.traverse(node, null, ms, al, graph, loops,
+							paths);
 					checkPaths(paths);
 				}
 			}

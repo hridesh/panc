@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.Symbol.*;
 
+import org.paninij.analysis.AnalysisUtil;
 import org.paninij.effects.*;
 
 /**
@@ -55,8 +56,7 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 		for (Node node : graph.nodes.values()) {
 			ClassSymbol cs = node.capsule;
 			for (MethodSymbol ms : node.procedures) {
-				if (cs.capsule_info.definedRun &&
-						ms.toString().compareTo("run()") == 0) {
+				if (AnalysisUtil.activeRun(cs, ms)) {
 					ClassMethod now = new ClassMethod(cs, ms, node);
 
 					if (traversed.contains(now)) { continue; }
@@ -64,9 +64,8 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 
 					paths.clear();
 					Route al = new Route();
-					ConsistencyUtil.traverse(node, null, ms, al, loops, paths,
-							graph);
-
+					ConsistencyUtil.traverse(node, null, ms, al, graph, loops,
+							paths);
 					checkPaths(paths);
 				}
 			}

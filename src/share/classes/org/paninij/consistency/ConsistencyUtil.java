@@ -205,8 +205,8 @@ public class ConsistencyUtil {
     }
 
     public static final void traverse(Node node, Edge e, MethodSymbol ms,
-			Route curr, HashMap<ClassMethod, HashSet<Route>> loops,
-			HashSet<Route> paths, SystemGraph graph) {
+			Route curr, SystemGraph graph,
+			HashMap<ClassMethod, HashSet<Route>> loops, HashSet<Route> paths) {
 		ClassMethod temp = new ClassMethod(node.capsule, ms, node);
 		Route newList = curr.cloneR();
 		if (curr.nodes.contains(temp)) {
@@ -237,8 +237,8 @@ public class ConsistencyUtil {
 		for (Edge ee : graph.edges) {
 			if (ee.fromNode == node &&
 					ee.fromProcedure.toString().compareTo(ms.toString()) == 0) {
-				traverse(ee.toNode, ee, ee.toProcedure, newList, loops,
-						paths, graph);
+				traverse(ee.toNode, ee, ee.toProcedure, newList, graph, loops,
+						paths);
 				numEdge++;
 			}
 		}

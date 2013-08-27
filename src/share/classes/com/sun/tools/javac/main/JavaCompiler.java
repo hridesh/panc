@@ -1291,8 +1291,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 
 		// Panini code
 		attr.pAttr.postVisitSystemDefs(env);
-		org.paninij.analysis.Main.attribute(attr.doGraphs, env, log
-		        );
+		org.paninij.analysis.Main.attribute(attr.doGraphs, env, log);
 		// end Panini code
 
 		return env;

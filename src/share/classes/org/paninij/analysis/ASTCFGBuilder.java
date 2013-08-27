@@ -21,7 +21,6 @@ package org.paninij.analysis;
 
 import java.util.ArrayList;
 
-import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.*;
@@ -159,14 +158,15 @@ public class ASTCFGBuilder extends TreeScanner {
 
 	public ArrayList<JCTree> order;
 	public void visitMethodDef(JCMethodDecl tree) {
-		ClassSymbol cs = tree.sym.ownerCapsule();
+		Symbol tree_sym = tree.sym;
+		ClassSymbol cs = tree_sym.ownerCapsule();
         if (cs != null) {
 		    Assert.checkNonNull(cs.capsule_info);
-	        if ((cs.capsule_info.definedRun && tree.sym.toString().indexOf("$") == -1) ||
-					((cs.toString().substring(cs.toString().indexOf("$")
-							+ 1).compareTo("thread") == 0) &&
-					(tree.sym.toString().indexOf("$Original()") != -1 ||
-					(tree.mods.flags & Flags.PRIVATE) != 0))) {
+
+		    String tree_name = tree_sym.toString();
+// System.out.println("ASTCFGBuilder ms = " + tree_sym + "\tcs = " + cs);
+	        if (AnalysisUtil.activeThread(cs, tree_name) ||
+	        		AnalysisUtil.originalMethod(cs, tree, tree_name)) {
 				ArrayList<JCTree> previous = order;
 				order = new ArrayList<JCTree>();
 
