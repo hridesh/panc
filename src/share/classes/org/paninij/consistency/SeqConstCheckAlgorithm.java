@@ -27,7 +27,6 @@ import com.sun.tools.javac.util.Log;
  * Interface for any class which implements a sequential consistency check
  */
 public abstract class SeqConstCheckAlgorithm {
-
     /**
      * The log object to use for reporting warnings.
      */

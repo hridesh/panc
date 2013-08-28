@@ -48,7 +48,7 @@ public class ConsistencyChecker {
 	List<HashSet<Path>> pathCandidates = List.<HashSet<Path>>nil();
 
 	/** Do the first part of the analysis.
-	 * - this checks if there are more than one simple paths between any two
+	 * This checks if there are more than one simple paths between any two
 	 * vertices of the graph.
 	 */
 	public void potentialPathCheck() {
@@ -89,7 +89,8 @@ public class ConsistencyChecker {
 	 * trouble exists. 
 	 */
 	private void pathCheck() {
-		for (HashSet<Path> paths : pathCandidates) { // for each sets of path
+		// for each sets of path
+		for (HashSet<Path> paths : pathCandidates) {
 			currentReport = new Report();
 			endingProcedure = List.<MethodSymbol>nil();
 			firstCall = new HashMap<MethodSymbol, HashSet<Edge>>();
@@ -224,7 +225,8 @@ public class ConsistencyChecker {
 	}
 	
 	private void getActualPaths(Edge edge, List<Node> path) {
-		if (path.tail.isEmpty()) { // end of path
+		// end of path
+		if (path.tail.isEmpty()) {
  			for (MethodSymbol m : path.head.procedures) {
 				if (m.toString().equals(edge.toProcedure.toString())){
 					if (m.effect != null) {

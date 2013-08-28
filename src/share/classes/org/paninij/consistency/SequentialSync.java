@@ -49,7 +49,6 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
-	@Override
 	public void potentialPathCheck() {
 		HashSet<ClassMethod> traversed = new HashSet<ClassMethod>();
 		for (Node node : graph.nodes.values()) {
@@ -64,7 +63,6 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 
 					paths.clear();
 					Route al = new Route();
-					// traverse(node, null, ms, al);
 					ConsistencyUtil.traverse(node, null, ms, al, graph, loops,
 							paths);
 					checkPaths(paths);
@@ -146,7 +144,7 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 	}
 
 	// This method should be called when the first nodes of the two routes are
-	// the same
+	// the same.
 	private final void distinctPath(Route r1, Route r2, Route er1, Route er2) {
 		ArrayList<ClassMethod> ns1 = r1.nodes;
 		ArrayList<Edge> l1 = r1.edges;
@@ -212,7 +210,7 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 	}
 
 	// this method should be called when the first edge of the first path is
-	// asychronous call.
+	// asynchronous call.
 	private final void check(Route r1, int i, Route er1, Route er2) {
 		int size1 = r1.size();
 		ArrayList<ClassMethod> ns1 = r1.nodes;

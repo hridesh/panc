@@ -24,29 +24,26 @@ import static com.sun.tools.javac.code.Flags.FINAL;
 import static com.sun.tools.javac.code.Flags.MONITOR;
 import static com.sun.tools.javac.code.Flags.PUBLIC;
 import static com.sun.tools.javac.code.Flags.SERIAL;
-import static com.sun.tools.javac.code.Flags.STATIC;
 import static com.sun.tools.javac.code.Flags.TASK;
 import static com.sun.tools.javac.code.TypeTags.INT;
 import static com.sun.tools.javac.tree.JCTree.Tag.ASSIGN;
 import static com.sun.tools.javac.tree.JCTree.Tag.LT;
 import static com.sun.tools.javac.tree.JCTree.Tag.PREINC;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.paninij.analysis.ASTCFGBuilder;
+import org.paninij.analysis.ASTCFGPrinter;
 import org.paninij.consistency.ConsistencyUtil;
 import org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
 import org.paninij.consistency.SeqConstCheckAlgorithm;
 import org.paninij.systemgraph.SystemGraph;
-import org.paninij.systemgraph.SystemGraph.Node;
 import org.paninij.systemgraph.SystemGraphBuilder;
 
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Scope;
@@ -54,7 +51,6 @@ import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.code.TypeTags;
-import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.Annotate;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
@@ -75,7 +71,6 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
-import com.sun.tools.javac.util.Pair;
 
 import org.paninij.util.PaniniConstants;
 
@@ -179,74 +174,80 @@ public final class Attr extends CapsuleInternal {
 		}
 	}
 
-	public final void postVisitMethodDef(JCMethodDecl tree, Env<AttrContext> env, Resolve rs) {
+	public final void postVisitMethodDef(JCMethodDecl tree,
+			Env<AttrContext> env, Resolve rs) {
 		if (tree.body != null) {
 			tree.accept(new ASTCFGBuilder());
 		}
 
-		if ((tree.sym.owner.flags() & Flags.CAPSULE) != 0) {
-			CapsuleProcedure cp = new CapsuleProcedure((ClassSymbol) tree.sym.owner,
-					tree.name, tree.sym.params);
-			((ClassSymbol) tree.sym.owner).capsule_info.procedures.put(tree.sym, cp);
-			if(tree.sym.effect!=null){
-				annotationProcessor.setEffects(tree, tree.sym.effect);
-				Attribute.Compound buf = annotate.enterAnnotation(tree.mods.annotations.last(), Type.noType, env);
-				tree.sym.attributes_field = tree.sym.attributes_field.append(buf); 
+		MethodSymbol ms = tree.sym;
+		ClassSymbol owner = (ClassSymbol) ms.owner;
+		if ((owner.flags() & Flags.CAPSULE) != 0) {
+			CapsuleProcedure cp =
+				new CapsuleProcedure(owner, tree.name, ms.params);
+			owner.capsule_info.procedures.put(ms, cp);
+			if (ms.effect != null) {
+				annotationProcessor.setEffects(tree, ms.effect);
+				Attribute.Compound buf = annotate.enterAnnotation(
+						tree.mods.annotations.last(), Type.noType, env);
+				ms.attributes_field = ms.attributes_field.append(buf); 
 			}
 		}
 	}
 	
-	public final void visitVarDef(JCVariableDecl tree) {  /* SKIPPED */ }
-	public final void visitBlock(JCBlock tree) {  /* SKIPPED */ }
-	public final void visitDoLoop(JCDoWhileLoop tree) {  /* SKIPPED */ }
-	public final void visitWhileLoop(JCWhileLoop tree){  /* SKIPPED */ }
-	public final void visitForLoop(JCForLoop tree){  /* SKIPPED */ }
-	public final void visitForeachLoop(JCEnhancedForLoop tree) {  /* SKIPPED */ }
-	public final void visitSwitch(JCSwitch tree) {  /* SKIPPED */ }
-	public final void visitCase(JCCase tree) {  /* SKIPPED */ }
-	public final void visitSynchronized(JCSynchronized tree) {  /* SKIPPED */ }
-	public final void visitTry(JCTry tree) {  /* SKIPPED */ }
-	public final void visitCatch(JCCatch tree) {  /* SKIPPED */ }
-	public final void visitConditional(JCConditional tree) {  /* SKIPPED */ }
-	public final void visitIf(JCIf tree) {  /* SKIPPED */ }
-	public final void visitExec(JCExpressionStatement tree) {  /* SKIPPED */ }
-	public final void visitBreak(JCBreak tree) {  /* SKIPPED */ }
-	public final void visitContinue(JCContinue tree) {  /* SKIPPED */ }
-	public final void visitReturn(JCReturn tree) {  /* SKIPPED */ }
-	public final void visitThrow(JCThrow tree) {  /* SKIPPED */ }
-	public final void visitApply(JCMethodInvocation tree) {  /* SKIPPED */ }
-	public final void visitNewClass(JCNewClass tree) {  /* SKIPPED */ }
-	public final void visitNewArray(JCNewArray tree) {  /* SKIPPED */ }
-	public final void visitParens(JCParens tree) {  /* SKIPPED */ }
-	public final void visitAssign(JCAssign tree) {  /* SKIPPED */ }
-	public final void visitAssignop(JCAssignOp tree) {  /* SKIPPED */ }
-	public final void visitUnary(JCUnary tree) {  /* SKIPPED */ }
-	public final void visitBinary(JCBinary tree) {  /* SKIPPED */ }
-	public void visitTypeCast(JCTypeCast tree) {  /* SKIPPED */ }
-	public void visitTypeTest(JCInstanceOf tree) {  /* SKIPPED */ }
-	public void visitIndexed(JCArrayAccess tree) {  /* SKIPPED */ }
-	public void visitSelect(JCFieldAccess tree) {  /* SKIPPED */ }
+	public final void visitVarDef(JCVariableDecl tree) { /* SKIPPED */ }
+	public final void visitBlock(JCBlock tree) { /* SKIPPED */ }
+	public final void visitDoLoop(JCDoWhileLoop tree) { /* SKIPPED */ }
+	public final void visitWhileLoop(JCWhileLoop tree) { /* SKIPPED */ }
+	public final void visitForLoop(JCForLoop tree) { /* SKIPPED */ }
+	public final void visitForeachLoop(JCEnhancedForLoop tree) { /* SKIPPED */ }
+	public final void visitSwitch(JCSwitch tree) { /* SKIPPED */ }
+	public final void visitCase(JCCase tree) { /* SKIPPED */ }
+	public final void visitSynchronized(JCSynchronized tree) { /* SKIPPED */ }
+	public final void visitTry(JCTry tree) { /* SKIPPED */ }
+	public final void visitCatch(JCCatch tree) { /* SKIPPED */ }
+	public final void visitConditional(JCConditional tree) { /* SKIPPED */ }
+	public final void visitIf(JCIf tree) { /* SKIPPED */ }
+	public final void visitExec(JCExpressionStatement tree) { /* SKIPPED */ }
+	public final void visitBreak(JCBreak tree) { /* SKIPPED */ }
+	public final void visitContinue(JCContinue tree) { /* SKIPPED */ }
+	public final void visitReturn(JCReturn tree) { /* SKIPPED */ }
+	public final void visitThrow(JCThrow tree) { /* SKIPPED */ }
+	public final void visitApply(JCMethodInvocation tree) { /* SKIPPED */ }
+	public final void visitNewClass(JCNewClass tree) { /* SKIPPED */ }
+	public final void visitNewArray(JCNewArray tree) { /* SKIPPED */ }
+	public final void visitParens(JCParens tree) { /* SKIPPED */ }
+	public final void visitAssign(JCAssign tree) { /* SKIPPED */ }
+	public final void visitAssignop(JCAssignOp tree) { /* SKIPPED */ }
+	public final void visitUnary(JCUnary tree) { /* SKIPPED */ }
+	public final void visitBinary(JCBinary tree) { /* SKIPPED */ }
+	public void visitTypeCast(JCTypeCast tree) { /* SKIPPED */ }
+	public void visitTypeTest(JCInstanceOf tree) { /* SKIPPED */ }
+	public void visitIndexed(JCArrayAccess tree) { /* SKIPPED */ }
+	public void visitSelect(JCFieldAccess tree) { /* SKIPPED */ }
 	
-	public final void visitCapsuleDef(final JCCapsuleDecl tree, final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env, Resolve rs){
+	public final void visitCapsuleDef(final JCCapsuleDecl tree,
+			final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env,
+			Resolve rs) {
 	    tree.sym.capsule_info.connectedCapsules =
 	            tree.sym.capsule_info.connectedCapsules.appendList(tree.params);
 
-		if (tree.needsDefaultRun){
+		if (tree.needsDefaultRun) {
 			List<JCClassDecl> wrapperClasses = generateClassWrappers(tree, env);
 			enter.classEnter(wrapperClasses, env.outer);
 //			        	System.out.println(wrapperClasses);
-			for(List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail){
+			for(List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
 				JCTree def = l.head;
-				if(def.getTag() == Tag.METHODDEF){
+				if (def.getTag() == Tag.METHODDEF) {
 					JCMethodDecl mdecl = (JCMethodDecl)def;
 					Type restype = ((MethodType) mdecl.sym.type).restype;
 					ClassSymbol c = checkAndResolveReturnType(env, rs, restype);
 
-					if(!mdecl.name.toString().contains("$Original") && restype.isFinal() && !c.toString().equals("java.lang.String")){
+					if (!mdecl.name.toString().contains("$Original") && restype.isFinal() && !c.toString().equals("java.lang.String")) {
 						ListBuffer<JCStatement> statements = new ListBuffer<JCStatement>();
-						for(List<JCStatement> stats = mdecl.body.stats; stats.nonEmpty(); stats = stats.tail){
+						for(List<JCStatement> stats = mdecl.body.stats; stats.nonEmpty(); stats = stats.tail) {
 							JCStatement stat = stats.head;
-							if(stat.getTag() != Tag.RETURN){
+							if (stat.getTag() != Tag.RETURN) {
 								statements.append(stat);
 							}
 						}
@@ -259,7 +260,7 @@ public final class Attr extends CapsuleInternal {
 				}
 			}
 			attr.attribClassBody(env, tree.sym);
-			if((tree.sym.flags_field & TASK) !=0)
+			if ((tree.sym.flags_field & TASK) !=0)
 				tree.computeMethod.body = generateTaskCapsuleComputeMethodBody(tree);
 			else
 				tree.computeMethod.body = generateThreadCapsuleComputeMethodBody(tree);
@@ -302,9 +303,9 @@ public final class Attr extends CapsuleInternal {
 					methodStats.append(make.If(make.Binary(JCTree.Tag.EQ, make.Ident(names
 							.fromString(PaniniConstants.PANINI_REF_COUNT)), make.Literal(TypeTags.INT, Integer.valueOf(0))), 
 							make.Block(0, blockStats.toList()), null));
-				
+
 				JCBlock body = make.Block(0, methodStats.toList());
-				
+
 				JCMethodDecl disconnectMeth = null;
 				MethodSymbol msym = null;
 				msym = new MethodSymbol(PUBLIC | FINAL | Flags.SYNCHRONIZED,
@@ -324,19 +325,19 @@ public final class Attr extends CapsuleInternal {
 			}
 		}
 
-		for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail){
+		for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
 			JCTree def = l.head;
-			if(def.getTag() == Tag.METHODDEF){
+			if (def.getTag() == Tag.METHODDEF) {
 				JCMethodDecl mdecl = (JCMethodDecl)def;
-				for (List<JCVariableDecl> p = mdecl.params; p.nonEmpty(); p = p.tail){
+				for (List<JCVariableDecl> p = mdecl.params; p.nonEmpty(); p = p.tail) {
 					JCVariableDecl param = p.head;
-					if((param.type.tsym.flags_field & Flags.CAPSULE) != 0 &&!mdecl.name.toString().contains("$Original")){
+					if ((param.type.tsym.flags_field & Flags.CAPSULE) != 0 &&!mdecl.name.toString().contains("$Original")) {
 						log.error("procedure.argument.illegal", param, mdecl.name.toString(), tree.sym);
 					}
 				}
-			}else if(def.getTag() == Tag.VARDEF){
+			}else if (def.getTag() == Tag.VARDEF) {
 				JCVariableDecl vdecl = (JCVariableDecl)def;
-				if((vdecl.type.tsym.flags_field & Flags.CAPSULE) != 0)
+				if ((vdecl.type.tsym.flags_field & Flags.CAPSULE) != 0)
 					vdecl.mods.flags |= FINAL;
 			}
 		}
@@ -432,7 +433,7 @@ public final class Attr extends CapsuleInternal {
 
 	public final void visitSystemDef(JCDesignBlock tree, Resolve rs,
 			com.sun.tools.javac.comp.Attr jAttr, // Javac Attributer.
-			Env<AttrContext> env, boolean doGraphs){
+			Env<AttrContext> env, boolean doGraphs) {
 
 	    tree.sym.flags_field= pchk.checkFlags(tree, tree.sym.flags(), tree.sym);
 
@@ -450,7 +451,7 @@ public final class Attr extends CapsuleInternal {
         JCDesignBlock rewritenTree = interp.rewrite(tree);
 
         //we do not want to go on to generating the main method if there are errors in the design decl
-        if(log.nerrors > 0)
+        if (log.nerrors > 0)
             return;
         
         DesignDeclTransformer mt = new DesignDeclTransformer(syms, names, types, log,
@@ -468,7 +469,7 @@ public final class Attr extends CapsuleInternal {
         starts = mt.starts;
         sysGraph = mt.sysGraph;
 
-        if(rewritenTree.hasTaskCapsule)
+        if (rewritenTree.hasTaskCapsule)
 			processSystemAnnotation(rewritenTree, inits, env);
 
         initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph, env);
@@ -500,7 +501,7 @@ public final class Attr extends CapsuleInternal {
 	}
 	
 	public final void postVisitSystemDefs(Env<AttrContext> env) {
-		for(List<JCDesignBlock> l = this.designBlocks; l.nonEmpty(); l = l.tail){
+		for(List<JCDesignBlock> l = this.designBlocks; l.nonEmpty(); l = l.tail) {
 			JCDesignBlock tree = l.head;
 			postVisitSystemDef(tree, env);
 		}
@@ -516,16 +517,16 @@ public final class Attr extends CapsuleInternal {
 		sca.potentialPathCheck();
 	}
 
-	public final void visitProcDef(JCProcDecl tree){
+	public final void visitProcDef(JCProcDecl tree) {
 		Type restype = ((MethodType)tree.sym.type).restype;
-		if((restype.tsym.flags_field & Flags.CAPSULE) == 1){
+		if ((restype.tsym.flags_field & Flags.CAPSULE) == 1) {
 			log.error(tree.pos(), "procedure.restype.illegal.capsule");
 		}
 		tree.switchToMethod();
 	}
 	
 	public final void visitStateDef(JCStateDecl tree) {
-	    if(tree.type.tsym.isCapsule()) {
+	    if (tree.type.tsym.isCapsule()) {
 	        log.error(tree.pos(), "states.with.capsule.type.error");
 	    }
 
@@ -534,7 +535,7 @@ public final class Attr extends CapsuleInternal {
 	}
 
 	// Helper functions
-	private void processSystemAnnotation(JCDesignBlock tree, ListBuffer<JCStatement> stats, Env<AttrContext> env){
+	private void processSystemAnnotation(JCDesignBlock tree, ListBuffer<JCStatement> stats, Env<AttrContext> env) {
 		int numberOfPools = 1;
 		for (List<JCAnnotation> l = tree.mods.annotations; l.nonEmpty(); l = l.tail) {
 			JCAnnotation annotation = l.head;
@@ -576,7 +577,7 @@ public final class Attr extends CapsuleInternal {
             @Override
             public final void visitVarDef(JCVariableDecl tree) {
                 Type t = tree.vartype.type;
-                if( t.tsym.isCapsule() ||
+                if ( t.tsym.isCapsule() ||
                         (types.isArray(t) && types.elemtype(t).tsym.isCapsule())) {
                     varDecls.add(tree);
                 }
@@ -636,7 +637,7 @@ public final class Attr extends CapsuleInternal {
             env = env.next;
         }
 
-        if(env != null) {
+        if (env != null) {
             return ((JCClassDecl)env.tree).sym.members_field;
         }
         Assert.error();

@@ -54,7 +54,6 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 
 	public HashSet<BiRoute> warnings = new HashSet<BiRoute>();
 
-	@Override
 	public void potentialPathCheck() {
 		HashSet<ClassMethod> traversed = new HashSet<ClassMethod>();
 		for (Node node : graph.nodes.values()) {
@@ -69,7 +68,6 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 
 					paths.clear();
 					Route al = new Route();
-					// traverse(node, null, ms, al);
 					ConsistencyUtil.traverse(node, null, ms, al, graph, loops,
 							paths);
 					checkPaths(paths);
@@ -259,7 +257,7 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 	}
 
 	// this method should be called when the first edge of the first path is
-	// asychronous call.
+	// asynchronous call.
 	private final int check(Route r1, int i, Route r2, int j, Route er1,
 			Route er2) {
 		int size1 = r1.size();

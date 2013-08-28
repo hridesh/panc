@@ -8,7 +8,6 @@ import org.paninij.analysis.CommonMethod;
 import org.paninij.path.Path_Var;
 
 import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Symbol.CapsuleExtras;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.tree.JCTree;
@@ -96,6 +95,10 @@ public class AliasingIntra {
 	        VarSymbol sym = jcvd.sym;
 			localAssignOp(sym, init, unit, out);
 			out.writtenLocals.remove(sym);
+		} else if (unit instanceof JCEnhancedForLoop) {
+			JCEnhancedForLoop jcefl = (JCEnhancedForLoop)unit;
+			VarSymbol sym = jcefl.var.sym;
+			localAssignOp(sym, jcefl.expr, unit, out);
 		} else if (unit instanceof JCCatch || unit instanceof JCAssignOp ||
 				unit instanceof JCBinary || unit instanceof JCInstanceOf ||
 				unit instanceof JCTypeCast || unit instanceof JCReturn ||
@@ -116,7 +119,7 @@ public class AliasingIntra {
 				unit instanceof JCClassDecl || unit instanceof JCContinue ||
 				unit instanceof JCDoWhileLoop || 
 				unit instanceof JCEnhancedForLoop ||
-				unit instanceof JCExpressionStatement ||
+				unit instanceof JCExpressionStatement || 
 				unit instanceof JCForLoop || unit instanceof JCIf ||
 				unit instanceof JCLabeledStatement || unit instanceof JCSkip || 
 				unit instanceof JCSwitch || unit instanceof JCSynchronized ||
@@ -160,8 +163,8 @@ public class AliasingIntra {
 				} else if (rightOp instanceof JCArrayAccess) { // v = v[]
 					outValue.removeLocal(left);
 				} else if (rightOp instanceof JCAssign) { // v = (v = ...)
-					outValue.assignJCAssignToLocal(left, (JCAssign)rightOp);
 				} else if (rightOp instanceof JCNewArray) { ///// v = new C[];
+					outValue.assignJCAssignToLocal(left, (JCAssign)rightOp);
 					outValue.assignNewArrayToLocal(left);
 				} else if (rightOp instanceof JCNewClass) { ///// v = new C();
 					outValue.processUnalyzableAffectedPahts();

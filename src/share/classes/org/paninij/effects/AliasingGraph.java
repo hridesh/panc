@@ -281,6 +281,7 @@ public class AliasingGraph {
 				for (Path p : hp1) {
 					temp.add(p.clonePath());
 				}
+				result.add(temp);
 			}
 		}
 		return result;
@@ -578,7 +579,7 @@ public class AliasingGraph {
 		for (HashSet<Path> paths : aliasingPaths) {
 			if (paths.contains(temp)) {
 				for (Path p : paths) {
-					if (p instanceof Path_Parameter && !p.equals(temp)) {
+					if (/*p instanceof Path_Parameter &&*/ !p.equals(temp)) {
 						return p;
 					}
 				}

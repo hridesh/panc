@@ -38,72 +38,82 @@ public class SystemGraphBuilder {
 	Symtab syms;
 	Names names;
 	Log log;
-	
-	public SystemGraphBuilder(Symtab syms, Names names, Log log){
+
+	public SystemGraphBuilder(Symtab syms, Names names, Log log) {
 		this.syms = syms;
 		this.names = names;
 		this.log = log;
 	}
-	
+
 	/** Returns an empty systemGraph
 	 */
-	public SystemGraph createSystemGraph(){
+	public SystemGraph createSystemGraph() {
 		return new SystemGraph();
 	}
 	
 	/** Adds a single Node with the name and capsuleSymbol to graph
 	 */
-	public void addSingleNode(SystemGraph graph, Name name, final ClassSymbol c){
+	public void addSingleNode(SystemGraph graph, Name name,
+			final ClassSymbol c) {
 		graph.addNode(name, c);
 	}
 
 	/** Adds an array of capsules as multiple nodes.
 	 * Name of these nodes are represented as "capsuleName[index]" in the graph
 	 */
-	public void addMultipleNodes(SystemGraph graph, Name name, int amount, final ClassSymbol c) {
-		for(int i=0;i<amount;i++){
+	public void addMultipleNodes(SystemGraph graph, Name name, int amount,
+			final ClassSymbol c) {
+		for (int i=0;i<amount;i++) {
 			graph.addNode(names.fromString(name+"["+i+"]"), c);
 		}
 		graph.capsuleArrays.put(name, amount);
 	}
 	
-	public void addConnection(SystemGraph graph, Name fromNode, Name arg, Name toNode){
+	public void addConnection(SystemGraph graph, Name fromNode, Name arg,
+			Name toNode) {
 		graph.setConnection(fromNode, arg, toNode);
 	}
 	
 	/** Connects a single capsule to a capsule Array
 	 */
-	public void addConnectionsOneToMany(SystemGraph graph, Name fromNode, Name arg, Name toNode){
+	public void addConnectionsOneToMany(SystemGraph graph, Name fromNode,
+			Name arg, Name toNode) {
 		int amount = graph.capsuleArrays.get(toNode);
-		for(int i=0;i<amount;i++){
-			addConnection(graph, fromNode, names.fromString(arg+"["+i+"]"), names.fromString(toNode+"["+i+"]"));
+		for (int i=0;i<amount;i++) {
+			addConnection(graph, fromNode, names.fromString(arg+"["+i+"]"),
+					names.fromString(toNode+"["+i+"]"));
 		}
 	}
-	
+
 	/** Connects from every capsule of a capsule array to a single capsule. 
 	 *  Used for foreach loops in systems
 	 */
-	public void addConnectionsManyToOne(SystemGraph graph, Name fromNode, Name arg, Name toNode){
+	public void addConnectionsManyToOne(SystemGraph graph, Name fromNode,
+			Name arg, Name toNode) {
 		int amount = graph.capsuleArrays.get(fromNode);
-		for(int i=0;i<amount;i++){
-			addConnection(graph, names.fromString(fromNode+"["+i+"]"), arg, toNode);
+		for (int i=0;i<amount;i++) {
+			addConnection(graph, names.fromString(fromNode+"["+i+"]"), arg,
+					toNode);
 		}
 	}
-	
+
 	/** Connects from every capsule of a capsule array to a capsule array. 
 	 *  Used for foreach loops in systems
 	 */
-	public void addConnectionsManyToMany(SystemGraph graph, Name fromNode, Name arg, Name toNode){
+	public void addConnectionsManyToMany(SystemGraph graph, Name fromNode,
+			Name arg, Name toNode) {
 		int fromAmount = graph.capsuleArrays.get(fromNode);
 		int toAmount = graph.capsuleArrays.get(fromNode);
-		for(int i=0;i<fromAmount;i++){
-			for(int j=0;j<toAmount;j++)
-				addConnection(graph, names.fromString(fromNode+"["+i+"]"), names.fromString(arg+"["+i+"]"), names.fromString(toNode+"["+j+"]"));
+		for (int i=0;i<fromAmount;i++) {
+			for (int j=0;j<toAmount;j++)
+				addConnection(graph, names.fromString(fromNode+"["+i+"]"),
+						names.fromString(arg+"["+i+"]"),
+						names.fromString(toNode+"["+j+"]"));
 		}
 	}
 
 	private void translateCallEffects(SystemGraph.Node node,
-			MethodSymbol fromProc, SystemGraph graph, EffectSet ars){
+			MethodSymbol fromProc, SystemGraph graph, EffectSet ars) {
 		for (CallEffect call : ars.calls) {
 			if (call instanceof CapsuleEffect) {
 				CapsuleEffect ce = (CapsuleEffect) call;
@@ -112,17 +122,18 @@ public class SystemGraphBuilder {
 				int pos = ce.pos;
 				int line = ce.line;
 
-				if(n!=null)
-				for (MethodSymbol ms : n.capsule.capsule_info.procedures.keySet()) {
-					if (ms.toString().compareTo(meth.toString()) == 0) {
-						graph.setEdge(node, fromProc, n, ms, pos, line);
-						break;
+				if (n!=null)
+					for (MethodSymbol ms :
+						n.capsule.capsule_info.procedures.keySet()) {
+						if (ms.toString().compareTo(meth.toString()) == 0) {
+							graph.setEdge(node, fromProc, n, ms, pos, line);
+							break;
+						}
+						if (types(ms).compareTo(types(meth)) == 0) {
+							graph.setEdge(node, fromProc, n, ms, pos, line);
+							break;
+						}
 					}
-					if (types(ms).compareTo(types(meth)) == 0) {
-						graph.setEdge(node, fromProc, n, ms, pos, line);
-						break;
-					}
-				}
 			} else if (call instanceof ForeachEffect) {
 				ForeachEffect fe = (ForeachEffect)call;
 				String calleeName = fe.callee.toString();
@@ -137,7 +148,8 @@ public class SystemGraphBuilder {
 					if (keyS.startsWith(calleeName.toString()) &&
 							keyS.charAt(size) == '[') {
 						Node n = connections.get(key);
-						for (MethodSymbol ms : n.capsule.capsule_info.procedures.keySet()) {
+						for (MethodSymbol ms :
+							n.capsule.capsule_info.procedures.keySet()) {
 							if (ms.toString().compareTo(meth.toString()) == 0) {
 								graph.setEdge(node, fromProc, n, ms, pos, line);
 								break;
@@ -181,14 +193,15 @@ public class SystemGraphBuilder {
 				} else { buf.append(temp.substring(0, index)); }
 			}
 		}
-		
+
 		buf.append(")");
 		return buf.toString();
     }
 
-	public void completeEdges(SystemGraph graph, AnnotationProcessor ap, Env<AttrContext> env, Resolve rs){
-		for(SystemGraph.Node n : graph.nodes.values()){
-			for(MethodSymbol ms : n.procedures){
+	public void completeEdges(SystemGraph graph, AnnotationProcessor ap,
+			Env<AttrContext> env, Resolve rs) {
+		for (SystemGraph.Node n : graph.nodes.values()) {
+			for (MethodSymbol ms : n.procedures) {
 				ms.complete();
 				if (ms.effect == null && ms.attributes_field.size() != 0) {
 					for (Compound compound : ms.attributes_field) {
@@ -199,7 +212,7 @@ public class SystemGraphBuilder {
 						}
 					}
 				}
-				if(ms.effect!=null){
+				if (ms.effect!=null) {
 					translateCallEffects(n, ms, graph, ms.effect);
 				}
 			}

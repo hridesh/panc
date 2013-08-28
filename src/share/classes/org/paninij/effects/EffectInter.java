@@ -500,9 +500,8 @@ public class EffectInter {
 
 			Symbol fld = ag.aliasingState(selected);
 			if (fld != null) {
-				Symbol typeSym = fld.type.tsym;
 				// single capsule call.
-				if (typeSym.isCapsule()) {
+				if (fld.type.tsym.isCapsule()) {
 					DiagnosticSource ds =
 						new DiagnosticSource(curr_cap.sourcefile, null);
 					int pos = tree.getPreferredPosition();
@@ -525,8 +524,40 @@ public class EffectInter {
 					rs.alive.add(ce);
 					rs.collected.remove(ce);
 				} else {
-					rs.write.add(new FieldEffect(
-							new Path_Parameter(null, 0), fld));
+					boolean capsulecall = false;
+					if (fld.type instanceof ArrayType) {
+						Type elemtype = ((ArrayType)fld.type).elemtype;
+						if (elemtype.tsym.isCapsule()) {
+							capsulecall = true;
+
+							DiagnosticSource ds =
+								new DiagnosticSource(curr_cap.sourcefile, null);
+							int pos = tree.getPreferredPosition();
+
+							ForeachEffect fe = new ForeachEffect(curr_cap, fld,
+									(MethodSymbol)jcf.sym, pos,
+									ds.getLineNumber(pos),
+									ds.getColumnNumber(pos, false),
+									curr_cap.sourcefile.toString());
+
+							// pair of calls that need to be tested
+							for (CallEffect ce : rs.alive) {
+								intra.direct.add(new BiCall(ce, fe));
+							}
+							for (CallEffect ce : rs.collected) {
+								intra.indirect.add(new BiCall(ce, fe));
+							}
+
+							rs.calls.add(fe);
+							rs.alive.add(fe);
+							rs.collected.remove(fe);
+						}
+					}
+
+					if (!capsulecall) {
+						rs.write.add(new FieldEffect(
+								new Path_Parameter(null, 0), fld));
+					}
 				}
 				return;
 			}

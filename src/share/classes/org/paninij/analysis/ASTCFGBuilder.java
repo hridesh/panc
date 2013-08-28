@@ -164,7 +164,6 @@ public class ASTCFGBuilder extends TreeScanner {
 		    Assert.checkNonNull(cs.capsule_info);
 
 		    String tree_name = tree_sym.toString();
-// System.out.println("ASTCFGBuilder ms = " + tree_sym + "\tcs = " + cs);
 	        if (AnalysisUtil.activeThread(cs, tree_name) ||
 	        		AnalysisUtil.originalMethod(cs, tree, tree_name)) {
 				ArrayList<JCTree> previous = order;
@@ -509,20 +508,27 @@ public class ASTCFGBuilder extends TreeScanner {
 	public void visitForeachLoop(JCEnhancedForLoop tree) {
 		JCExpression expr = tree.expr;
 		JCStatement body = tree.body;
+
 		// methodCost
 		this.loop++;
 		// methodCost
-		// fill the start/end/exit nodes
-		expr.accept(this);
-		ArrayList<JCTree> currentStartNodes = this.currentStartNodes;
 
+		// fill the start/end/exit nodes
+		tree.id = id++;
+		init(tree);
+		order.add(tree);
+
+		expr.accept(this);
 		body.accept(this);
 
 		ArrayList<JCTree> bodyExcEndNodes = currentExitNodes;
 
-		this.currentStartNodes = currentStartNodes;
-		currentEndNodes = new ArrayList<JCTree>(currentEndNodes);
-		currentEndNodes.add(tree);
+		// this.currentStartNodes = currentStartNodes;
+		ArrayList<JCTree> temp_start = new ArrayList<JCTree>(1);
+		temp_start.add(tree);
+		this.currentStartNodes = temp_start;
+		// currentEndNodes = new ArrayList<JCTree>(currentEndNodes);
+		// currentEndNodes.add(tree);
 
 		// for breaks;
 		ArrayList<JCTree> tempBreakNodes = new ArrayList<JCTree>();
@@ -532,10 +538,13 @@ public class ASTCFGBuilder extends TreeScanner {
 		// for continues;
 		bodyExcEndNodes = resolveContinues(tree, tempContinueNodes,
 				bodyExcEndNodes);
-		
+
 		currentExitNodes = bodyExcEndNodes;
 
-		addNode(tree);
+		// addNode(tree);
+		tree.startNodes = currentStartNodes;
+		tree.endNodes = currentEndNodes;
+		tree.exitNodes = currentExitNodes;
 
 		for (JCTree jct : tempBreakNodes) {
 			jct.successors.add(tree);
@@ -543,10 +552,13 @@ public class ASTCFGBuilder extends TreeScanner {
 		}
 
 		// connect the nodes
-		connectToEndNodesOf(expr, tree);
+		connectToStartNodesOf(tree, expr);
+		// connectToEndNodesOf(expr, tree);
+
+		connectStartNodesToEndNodesOf(body, expr);
 
 		connectStartNodesToEndNodesOf(body, body);
-		connectToEndNodesOf(body, tree);
+
 		for (JCTree jct1 : tempContinueNodes) {
 			jct1.successors.addAll(body.startNodes);
 			for (JCTree jct2 : body.startNodes) {
@@ -1214,7 +1226,8 @@ public class ASTCFGBuilder extends TreeScanner {
 		}
 	}
 
-	private static void connectStartNodesToEndNodesOf(JCTree start, JCTree end) {
+	private static void connectStartNodesToEndNodesOf(JCTree start,
+			JCTree end) {
 		for (JCTree endNode : end.endNodes) {
 			for (JCTree startNode : start.startNodes) {
 				endNode.successors.add(startNode);
