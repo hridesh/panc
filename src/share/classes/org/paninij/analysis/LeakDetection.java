@@ -297,9 +297,7 @@ public class LeakDetection {
 						AnalysisUtil.isInnerField(defs, field_sym)) {
 					Symbol capSym = capsule.sym;
 					Symbol meth = curr.sym;
-					Type type = field_sym.type;
-					String ts = type.toString();
-					if (type == null || ts.compareTo("java.lang.String") !=0) {
+					if (!AnalysisUtil.immute_type(field_sym.type)) {
 						String meth_string = meth.toString();
 						log.useSource (field_sym.outermostClass().sourcefile);
 						log.warning(tree.pos(), "confinement.violation",
@@ -337,10 +335,7 @@ public class LeakDetection {
 				output.add(sym);
 				if (!analyzingphase) {
 					if (AnalysisUtil.isInnerField(defs, sym)) {
-						Type type = sym.type;
-						String type_string = type.toString();
-						if (type == null ||
-								type_string.compareTo("java.lang.String") !=0) {
+						if (!AnalysisUtil.immute_type(sym.type)) {
 							Symbol curr_sym = curr.sym;
 							log.useSource(sym.outermostClass().sourcefile);
 							log.warning(tree.pos(), "confinement.violation",

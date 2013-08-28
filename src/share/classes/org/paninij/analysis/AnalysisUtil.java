@@ -11,6 +11,7 @@ import javax.lang.model.element.ElementKind;
 
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.tree.JCTree;
@@ -128,5 +129,11 @@ public class AnalysisUtil {
 			int i2 = order.indexOf(o2);
 			return i1 - i2;
 		}
+	}
+
+	public static boolean immute_type(Type type) {
+		String type_string = type.toString();
+		return type_string.compareTo("java.lang.String") == 0 ||
+			type_string.compareTo("java.math.BigDecimal") == 0;
 	}
 }
