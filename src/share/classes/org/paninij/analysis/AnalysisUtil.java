@@ -1,7 +1,11 @@
 package org.paninij.analysis;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TreeSet;
 
 import javax.lang.model.element.ElementKind;
 
@@ -104,5 +108,25 @@ public class AnalysisUtil {
 			reversed.put(callee, callers);
 		}
 		callers.add(caller);
+	}
+
+	// The following two methods are for constructing the order for the for the
+	// analysis for methods.
+	public static Collection<JCTree> constructWorklist(ArrayList<JCTree> order) {
+		return new TreeSet<JCTree>(new InnerComparator(order));
+	}
+
+	private static class InnerComparator implements Comparator<JCTree> {
+		public final ArrayList<JCTree> order;
+
+		public InnerComparator(ArrayList<JCTree> order) {
+			this.order = order;
+		}
+
+		public int compare(JCTree o1, JCTree o2) {
+			int i1 = order.indexOf(o1);
+			int i2 = order.indexOf(o2);
+			return i1 - i2;
+		}
 	}
 }

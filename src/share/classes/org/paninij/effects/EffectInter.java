@@ -6,7 +6,7 @@ import java.util.HashSet;
 
 import javax.tools.JavaFileObject;
 
-import org.paninij.analysis.CommonMethod;
+import org.paninij.analysis.AnalysisUtil;
 import org.paninij.path.*;
 
 import com.sun.tools.javac.code.*;
@@ -30,7 +30,7 @@ public class EffectInter {
 		} else if (pathBase instanceof Path_Parameter) {
 			int baseIndex = path.getBase();
 			if (baseIndex == 0) {
-				meth = CommonMethod.essentialExpr(meth);
+				meth = AnalysisUtil.getEssentialExpr(meth);
 
 				if (meth instanceof JCIdent) { // this.m
 					return path.switchBase(0);
@@ -200,34 +200,31 @@ public class EffectInter {
 							if (meth instanceof JCFieldAccess) {
 								JCFieldAccess jcfa = (JCFieldAccess)meth;
 								JCExpression selected = jcfa.selected;
-								if (selected instanceof JCIdent) {
-									JCIdent jci = (JCIdent)selected;
-									if (jci.sym == tsym) {
-										JavaFileObject sf = curr_cap.sourcefile;
-										DiagnosticSource ds =
-											new DiagnosticSource(sf, null);
-										int pos = jcf.getPreferredPosition();
+								if (selected instanceof JCIdent &&
+										((JCIdent)selected).sym == tsym) {
+									JavaFileObject sf = curr_cap.sourcefile;
+									DiagnosticSource ds =
+										new DiagnosticSource(sf, null);
+									int pos = jcf.getPreferredPosition();
 
-										ForeachEffect fe = new ForeachEffect(
-												curr_cap, tsym,
-												(MethodSymbol)(jcfa.sym), pos,
-												ds.getLineNumber(pos),
-												ds.getColumnNumber(pos, false),
-												sf.toString());
+									ForeachEffect fe = new ForeachEffect(
+											curr_cap, tsym,
+											(MethodSymbol)(jcfa.sym), pos,
+											ds.getLineNumber(pos),
+											ds.getColumnNumber(pos, false),
+											sf.toString());
 
-										// pair of calls that need to be tested
-										for (CallEffect ce : rs.alive) {
-											intra.direct.add(new BiCall(ce, fe));
-										}
-										for (CallEffect ce : rs.collected) {
-											intra.indirect.add(
-													new BiCall(ce, fe));
-										}
-
-										rs.calls.add(fe);
-										rs.alive.add(fe);
-										rs.collected.remove(fe);
+									// pair of calls that need to be tested
+									for (CallEffect ce : rs.alive) {
+										intra.direct.add(new BiCall(ce, fe));
 									}
+									for (CallEffect ce : rs.collected) {
+										intra.indirect.add(new BiCall(ce, fe));
+									}
+
+									rs.calls.add(fe);
+									rs.alive.add(fe);
+									rs.collected.remove(fe);
 								}
 							}
 						}
@@ -240,11 +237,11 @@ public class EffectInter {
 	public static final boolean isCapsuleCall(JCMethodInvocation tree,
 			AliasingGraph ag) {
 		JCExpression meth = tree.meth;
-		meth = CommonMethod.essentialExpr(meth);
+		meth = AnalysisUtil.getEssentialExpr(meth);
 
 		if (meth instanceof JCFieldAccess) { // selected.m(...)
 			JCFieldAccess jcf = (JCFieldAccess)meth;
-			JCExpression selected = CommonMethod.essentialExpr(jcf.selected);
+			JCExpression selected = AnalysisUtil.getEssentialExpr(jcf.selected);
 
 			Symbol caps = ag.aliasingState(selected);
 			if (caps != null) {
@@ -263,11 +260,11 @@ public class EffectInter {
 	public static final CallEffect capsuleCall(JCMethodInvocation tree,
 			AliasingGraph ag, ClassSymbol cap) {
 		JCExpression meth = tree.meth;
-		meth = CommonMethod.essentialExpr(meth);
+		meth = AnalysisUtil.getEssentialExpr(meth);
 
 		if (meth instanceof JCFieldAccess) { // selected.m(...)
 			JCFieldAccess jcf = (JCFieldAccess)meth;
-			JCExpression selected = CommonMethod.essentialExpr(jcf.selected);
+			JCExpression selected = AnalysisUtil.getEssentialExpr(jcf.selected);
 
 			Symbol caps = ag.aliasingState(selected);
 			if (caps != null) {
@@ -287,7 +284,8 @@ public class EffectInter {
 
 			if (selected instanceof JCArrayAccess) {
 				JCArrayAccess jcaa = (JCArrayAccess)selected;
-				JCExpression indexed = CommonMethod.essentialExpr(jcaa.indexed);
+				JCExpression indexed =
+					AnalysisUtil.getEssentialExpr(jcaa.indexed);
 
 				Symbol cs = ag.aliasingState(indexed);
 				if (cs != null) {
@@ -313,7 +311,7 @@ public class EffectInter {
 	public static final boolean isCallReturnNew(JCMethodInvocation tree,
 			AliasingGraph ag) {
 		JCExpression meth = tree.meth;
-		meth = CommonMethod.essentialExpr(meth);
+		meth = AnalysisUtil.getEssentialExpr(meth);
 
 		if (meth instanceof JCIdent) { // selected.m(...)
 			JCIdent jci = (JCIdent)meth;
@@ -330,7 +328,7 @@ public class EffectInter {
 	public final boolean intraCommuteCall(JCMethodInvocation tree,
 			AliasingGraph ag) {
 		JCExpression meth = tree.meth;
-		meth = CommonMethod.essentialExpr(meth);
+		meth = AnalysisUtil.getEssentialExpr(meth);
 		if (meth instanceof JCIdent) {
 			JCIdent jci = (JCIdent)meth;
 			Symbol s = jci.sym;
@@ -350,7 +348,7 @@ public class EffectInter {
 			}
 		} else if (meth instanceof JCFieldAccess) { // selected.m(...)
 			JCFieldAccess jcf = (JCFieldAccess)meth;
-			JCExpression selected = CommonMethod.essentialExpr(jcf.selected);
+			JCExpression selected = AnalysisUtil.getEssentialExpr(jcf.selected);
 
 			Symbol caps = ag.aliasingState(selected);
 			if (caps != null) {
@@ -409,7 +407,7 @@ public class EffectInter {
 			AliasingGraph ag) {
 		if (tree instanceof JCArrayAccess) {
 			JCArrayAccess jcaa = (JCArrayAccess)tree;
-			JCExpression indexed = CommonMethod.essentialExpr(jcaa.indexed);
+			JCExpression indexed = AnalysisUtil.getEssentialExpr(jcaa.indexed);
 
 			Symbol caps = ag.aliasingState(indexed);
 			if (caps != null) {
@@ -430,7 +428,7 @@ public class EffectInter {
 			JCMethodInvocation jcmd) {
 		if (tree instanceof JCArrayAccess) {
 			JCArrayAccess jcaa = (JCArrayAccess)tree;
-			JCExpression indexed = CommonMethod.essentialExpr(jcaa.indexed);
+			JCExpression indexed = AnalysisUtil.getEssentialExpr(jcaa.indexed);
 
 			Symbol caps = ag.aliasingState(indexed);
 			if (caps != null) {
@@ -455,7 +453,7 @@ public class EffectInter {
 	public final void intraProcessMethodCall(JCMethodInvocation tree,
 			AliasingGraph ag, EffectSet rs, EffectIntra intra) {
 		JCExpression meth = tree.meth;
-		meth = CommonMethod.essentialExpr(meth);
+		meth = AnalysisUtil.getEssentialExpr(meth);
 		if (meth instanceof JCIdent) {
 			JCIdent jci = (JCIdent)meth;
 			Symbol s = jci.sym;
@@ -488,7 +486,7 @@ public class EffectInter {
 				return;
 			}
 
-			JCExpression selected = CommonMethod.essentialExpr(jcf.selected);
+			JCExpression selected = AnalysisUtil.getEssentialExpr(jcf.selected);
 			CallEffect calleffect = ag.capEffect(selected);
 			if (calleffect != null) {
 				rs.alive.remove(calleffect);
@@ -565,7 +563,8 @@ public class EffectInter {
 			// multiple capsule call
 			if (selected instanceof JCArrayAccess) {
 				JCArrayAccess jcaa = (JCArrayAccess)selected;
-				JCExpression indexed = CommonMethod.essentialExpr(jcaa.indexed);
+				JCExpression indexed =
+					AnalysisUtil.getEssentialExpr(jcaa.indexed);
 
 				fld = ag.aliasingState(indexed);
 				if (fld != null) {
@@ -606,12 +605,12 @@ public class EffectInter {
 			if (selected instanceof JCMethodInvocation) {
 				JCMethodInvocation jcmi = (JCMethodInvocation)selected;
 				JCExpression inner = jcmi.meth;
-				inner = CommonMethod.essentialExpr(inner);
+				inner = AnalysisUtil.getEssentialExpr(inner);
 
 				if (inner instanceof JCFieldAccess) {
 					JCFieldAccess jcfa = (JCFieldAccess)inner;
 					JCExpression exp =
-						CommonMethod.essentialExpr(jcfa.selected);
+						AnalysisUtil.getEssentialExpr(jcfa.selected);
 					Symbol receiver = ag.aliasingState(exp);
 					MethodSymbol ms = (MethodSymbol)jcfa.sym;
 
@@ -650,7 +649,7 @@ public class EffectInter {
 			if (selected instanceof JCArrayAccess) {
 				JCArrayAccess jcaa = (JCArrayAccess)selected;
 				JCExpression inner = jcaa.indexed;
-				inner = CommonMethod.essentialExpr(inner);
+				inner = AnalysisUtil.getEssentialExpr(inner);
 
 				if (inner instanceof JCIdent) {
 					JCIdent jci = (JCIdent)inner;
@@ -703,7 +702,8 @@ public class EffectInter {
 
 				// copy the effect from method XYZ$Original to XYZ
 				if (n1.contains("$Original")) {
-					for (MethodSymbol ms : cap.capsule_info.procedures.keySet()) {
+					for (MethodSymbol ms :
+						cap.capsule_info.procedures.keySet()) {
 						String n2 = ms.name.toString();
 						if (n2.equals(n1.substring(0,
 								n1.indexOf("$Original")))) {

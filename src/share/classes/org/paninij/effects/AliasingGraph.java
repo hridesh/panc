@@ -159,7 +159,7 @@ public class AliasingGraph {
 	public final CallEffect capEffect (JCTree tree) {
 		if (tree instanceof JCExpression) {
 			JCExpression jce = (JCExpression)tree;
-			tree = CommonMethod.essentialExpr(jce);
+			tree = AnalysisUtil.getEssentialExpr(jce);
 		}
 
 		if (tree instanceof JCIdent) {
@@ -178,7 +178,7 @@ public class AliasingGraph {
 	public final boolean isReceiverNew (JCTree tree) {
 		if (tree instanceof JCExpression) {
 			JCExpression jce = (JCExpression)tree;
-			tree = CommonMethod.essentialExpr(jce);
+			tree = AnalysisUtil.getEssentialExpr(jce);
 		}
 
 		Path path = createPathForExp((JCExpression)tree);
@@ -189,7 +189,7 @@ public class AliasingGraph {
 	public final Symbol aliasingState (JCTree tree) {
 		if (tree instanceof JCExpression) {
 			JCExpression jce = (JCExpression)tree;
-			tree = CommonMethod.essentialExpr(jce);
+			tree = AnalysisUtil.getEssentialExpr(jce);
 		}
 
 		Path path = createPathForExp((JCExpression)tree);
@@ -427,7 +427,7 @@ public class AliasingGraph {
 	// left = right, where right == v[];
 	public void assignArrayToLocal(Symbol left, JCArrayAccess right) {
 		Path pathIndexed =
-			createPathForExp(CommonMethod.essentialExpr(right.indexed));
+			createPathForExp(AnalysisUtil.getEssentialExpr(right.indexed));
 
 		Path resultPath = null;
 		if (pathIndexed != null) {
@@ -590,7 +590,7 @@ public class AliasingGraph {
 	}
 
 	public Path createPathForExp(JCExpression exp) {
-		exp = CommonMethod.essentialExpr(exp);
+		exp = AnalysisUtil.getEssentialExpr(exp);
 		if (exp instanceof JCFieldAccess) {
 			return createPathForField((JCFieldAccess)exp);
 		} else if (exp instanceof JCIdent) {
@@ -630,7 +630,7 @@ public class AliasingGraph {
 		JCExpression selected = field.selected;
 		Symbol sym = field.sym;
 
-		selected = CommonMethod.essentialExpr(selected);
+		selected = AnalysisUtil.getEssentialExpr(selected);
 		if (selected instanceof JCFieldAccess) {
 			Path previous = createPathForField((JCFieldAccess)selected);
 			if (previous == null) { return null; }

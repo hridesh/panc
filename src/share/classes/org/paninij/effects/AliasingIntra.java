@@ -4,7 +4,7 @@ import java.util.*;
 
 import javax.lang.model.element.ElementKind;
 
-import org.paninij.analysis.CommonMethod;
+import org.paninij.analysis.AnalysisUtil;
 import org.paninij.path.Path_Var;
 
 import com.sun.tools.javac.code.Symbol;
@@ -53,7 +53,7 @@ public class AliasingIntra {
 					if (kind == ElementKind.LOCAL_VARIABLE ||
 							kind == ElementKind.PARAMETER) {
 						if (!jci.type.isPrimitive()) { // reference types
-							rightOp = CommonMethod.essentialExpr(rightOp);
+							rightOp = AnalysisUtil.getEssentialExpr(rightOp);
 
 							if (rightOp instanceof JCMethodInvocation) {
 								if (!EffectInter.isCapsuleCall(
@@ -137,7 +137,7 @@ public class AliasingIntra {
 		if (kind == ElementKind.LOCAL_VARIABLE ||
 				kind == ElementKind.PARAMETER) {
 			if (!left.type.isPrimitive()) { // reference types
-				rightOp = CommonMethod.essentialExpr(rightOp);
+				rightOp = AnalysisUtil.getEssentialExpr(rightOp);
 
 				outValue.removeLocal(left);
 				if (rightOp instanceof JCIdent) { // v = v
@@ -163,8 +163,8 @@ public class AliasingIntra {
 				} else if (rightOp instanceof JCArrayAccess) { // v = v[]
 					outValue.removeLocal(left);
 				} else if (rightOp instanceof JCAssign) { // v = (v = ...)
-				} else if (rightOp instanceof JCNewArray) { ///// v = new C[];
 					outValue.assignJCAssignToLocal(left, (JCAssign)rightOp);
+				} else if (rightOp instanceof JCNewArray) { ///// v = new C[];
 					outValue.assignNewArrayToLocal(left);
 				} else if (rightOp instanceof JCNewClass) { ///// v = new C();
 					outValue.processUnalyzableAffectedPahts();
@@ -203,7 +203,7 @@ public class AliasingIntra {
 			}
 		} else if (kind == ElementKind.FIELD) { // f = ...
 			if (!left.type.isPrimitive()) {		 ///////// reference types
-				rightOp = CommonMethod.essentialExpr(rightOp);
+				rightOp = AnalysisUtil.getEssentialExpr(rightOp);
 
 				if (rightOp instanceof JCIdent) { // v = v
 					JCIdent jr = (JCIdent)rightOp;
@@ -258,7 +258,7 @@ public class AliasingIntra {
 	private void fieldAssignmentOperation(JCFieldAccess left,
 			JCExpression rightOp, JCTree unit, AliasingGraph outValue) {
 		if (!left.type.isPrimitive()) {		 ///////// reference types
-			rightOp = CommonMethod.essentialExpr(rightOp);
+			rightOp = AnalysisUtil.getEssentialExpr(rightOp);
 
 			if (rightOp instanceof JCIdent) { //////////////////// v = v
 				JCIdent jr = (JCIdent)rightOp;
@@ -321,7 +321,7 @@ public class AliasingIntra {
 	public final void analyze(ArrayList<JCTree> order, HashSet<JCTree> exists) {
 		JCTree head = order.get(0);
 
-		Collection<JCTree> changedUnits = CommonMethod.constructWorklist(order);
+		Collection<JCTree> changedUnits = AnalysisUtil.constructWorklist(order);
 
 		for (JCTree node : order) {
 			changedUnits.add(node);

@@ -4,7 +4,7 @@ import java.util.*;
 
 import javax.lang.model.element.ElementKind;
 
-import org.paninij.analysis.CommonMethod;
+import org.paninij.analysis.AnalysisUtil;
 import org.paninij.path.*;
 
 import com.sun.tools.javac.code.*;
@@ -110,7 +110,7 @@ public class EffectIntra {
 
 	private static void abstractCommandAssign(JCTree tree, JCExpression leftOp, 
 			AliasingGraph aliasing, EffectSet out) {
-		leftOp = CommonMethod.essentialExpr(leftOp);
+		leftOp = AnalysisUtil.getEssentialExpr(leftOp);
 
 		if (leftOp instanceof JCIdent) {/////////// v=...
 			addIdentEffect((JCIdent)leftOp, out, 1);
@@ -157,7 +157,7 @@ public class EffectIntra {
 		if ((sym.flags_field & Flags.STATIC) == 0) {
 			if (sym.getKind() == ElementKind.FIELD) {
 				JCExpression selected = jcf.selected;
-				selected = CommonMethod.essentialExpr(selected);
+				selected = AnalysisUtil.getEssentialExpr(selected);
 
 				if (!aliasing.isReceiverNew(selected)) {
 					Path p = aliasing.createPathForExp(selected);
@@ -225,7 +225,7 @@ public class EffectIntra {
 
 	public EffectSet doAnalysis(List<JCTree> endNodes) {
 		JCTree head = order.get(0);
-		Collection<JCTree> changedUnits = CommonMethod.constructWorklist(order);
+		Collection<JCTree> changedUnits = AnalysisUtil.constructWorklist(order);
 
 	    // Create the order of the AST for analyzing the effect of the methods.
         // This order is used to make the algorithm converge faster.
