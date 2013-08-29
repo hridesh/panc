@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.paninij.analysis.ASTCFGBuilder;
-import org.paninij.analysis.ASTCFGPrinter;
 import org.paninij.consistency.ConsistencyUtil;
 import org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
 import org.paninij.consistency.SeqConstCheckAlgorithm;
@@ -236,7 +235,7 @@ public final class Attr extends CapsuleInternal {
 			List<JCClassDecl> wrapperClasses = generateClassWrappers(tree, env);
 			enter.classEnter(wrapperClasses, env.outer);
 //			        	System.out.println(wrapperClasses);
-			for(List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
+			for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
 				JCTree def = l.head;
 				if (def.getTag() == Tag.METHODDEF) {
 					JCMethodDecl mdecl = (JCMethodDecl)def;
@@ -245,7 +244,7 @@ public final class Attr extends CapsuleInternal {
 
 					if (!mdecl.name.toString().contains("$Original") && restype.isFinal() && !c.toString().equals("java.lang.String")) {
 						ListBuffer<JCStatement> statements = new ListBuffer<JCStatement>();
-						for(List<JCStatement> stats = mdecl.body.stats; stats.nonEmpty(); stats = stats.tail) {
+						for (List<JCStatement> stats = mdecl.body.stats; stats.nonEmpty(); stats = stats.tail) {
 							JCStatement stat = stats.head;
 							if (stat.getTag() != Tag.RETURN) {
 								statements.append(stat);
@@ -335,7 +334,7 @@ public final class Attr extends CapsuleInternal {
 						log.error("procedure.argument.illegal", param, mdecl.name.toString(), tree.sym);
 					}
 				}
-			}else if (def.getTag() == Tag.VARDEF) {
+			} else if (def.getTag() == Tag.VARDEF) {
 				JCVariableDecl vdecl = (JCVariableDecl)def;
 				if ((vdecl.type.tsym.flags_field & Flags.CAPSULE) != 0)
 					vdecl.mods.flags |= FINAL;
@@ -434,7 +433,6 @@ public final class Attr extends CapsuleInternal {
 	public final void visitSystemDef(JCDesignBlock tree, Resolve rs,
 			com.sun.tools.javac.comp.Attr jAttr, // Javac Attributer.
 			Env<AttrContext> env, boolean doGraphs) {
-
 	    tree.sym.flags_field= pchk.checkFlags(tree, tree.sym.flags(), tree.sym);
 
 	    //Use the scope of the out capsule, not the current system decl.
@@ -460,7 +458,6 @@ public final class Attr extends CapsuleInternal {
 
         // Check for cyclic references and report it
         pchk.checkCycleRepeat(mt.sysGraph, names._this, env);
-
 
         //pull data structures back out for reference here.
         decls = mt.decls;
@@ -501,15 +498,17 @@ public final class Attr extends CapsuleInternal {
 	}
 	
 	public final void postVisitSystemDefs(Env<AttrContext> env) {
-		for(List<JCDesignBlock> l = this.designBlocks; l.nonEmpty(); l = l.tail) {
+		for (List<JCDesignBlock> l = this.designBlocks; l.nonEmpty(); l = l.tail) {
 			JCDesignBlock tree = l.head;
 			postVisitSystemDef(tree, env);
 		}
 		this.designBlocks = List.<JCDesignBlock>nil();
 	}
 	
-	private final void postVisitSystemDef(JCDesignBlock tree, Env<AttrContext> env) {
-		systemGraphBuilder.completeEdges(tree.sysGraph, annotationProcessor, env, rs);
+	private final void postVisitSystemDef(JCDesignBlock tree,
+			Env<AttrContext> env) {
+		systemGraphBuilder.completeEdges(tree.sysGraph, annotationProcessor,
+				env, rs);
 
 		// Sequential consistency detection
 		SeqConstCheckAlgorithm sca = 
@@ -577,7 +576,7 @@ public final class Attr extends CapsuleInternal {
             @Override
             public final void visitVarDef(JCVariableDecl tree) {
                 Type t = tree.vartype.type;
-                if ( t.tsym.isCapsule() ||
+                if (t.tsym.isCapsule() ||
                         (types.isArray(t) && types.elemtype(t).tsym.isCapsule())) {
                     varDecls.add(tree);
                 }
@@ -604,7 +603,7 @@ public final class Attr extends CapsuleInternal {
         // Enter the symbols into the capsule scope.
         // Allows the symbols to be visible for other procedures
         // and allows the symbols to be emitted as fields in the bytecode
-        for(List<JCVariableDecl> l = capsuleDecls;  l.nonEmpty(); l = l.tail) {
+        for (List<JCVariableDecl> l = capsuleDecls;  l.nonEmpty(); l = l.tail) {
             JCVariableDecl v = l.head;
             v.sym.owner = capScope.owner;
             jchk.checkUnique(v.pos(), v.sym, capScope);
@@ -613,7 +612,7 @@ public final class Attr extends CapsuleInternal {
 
         //TODO: Generics are being annoying. Find a way to not copy the list.
         ListBuffer<JCTree> capFields = new ListBuffer<JCTree>();
-        for(List<JCVariableDecl> l = capsuleDecls; l.nonEmpty(); l = l.tail) {
+        for (List<JCVariableDecl> l = capsuleDecls; l.nonEmpty(); l = l.tail) {
             capFields.add(l.head);
             // Mark as private. Do not mark synthetic. Will cause other
             // name resolution to fail.
@@ -633,7 +632,7 @@ public final class Attr extends CapsuleInternal {
      * @param env
      */
     protected Scope enterSystemScope(Env<AttrContext> env) {
-        while(env != null && !env.tree.hasTag(JCTree.Tag.CAPSULEDEF)) {
+        while (env != null && !env.tree.hasTag(JCTree.Tag.CAPSULEDEF)) {
             env = env.next;
         }
 

@@ -1,7 +1,6 @@
 package org.paninij.analysis;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -113,7 +112,7 @@ public class AnalysisUtil {
 
 	// The following two methods are for constructing the order for the for the
 	// analysis for methods.
-	public static Collection<JCTree> constructWorklist(ArrayList<JCTree> order) {
+	public static TreeSet<JCTree> constructWorklist(ArrayList<JCTree> order) {
 		return new TreeSet<JCTree>(new InnerComparator(order));
 	}
 

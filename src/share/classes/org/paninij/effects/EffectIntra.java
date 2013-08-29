@@ -189,13 +189,11 @@ public class EffectIntra {
 				if (sym.name.toString().compareTo("this") != 0) {
 					// ignore this = x
 					if (readOrWrite == 0) {
-						fcg.read.add(
-								new FieldEffect(
-										new Path_Parameter(null, 0), sym));
+						fcg.read.add(new FieldEffect(
+								new Path_Parameter(null, 0), sym));
 					} else {
 						fcg.assignField(sym);
-						fcg.write.add(
-								new FieldEffect(
+						fcg.write.add(new FieldEffect(
 										new Path_Parameter(null, 0), sym));
 					}
 				}
@@ -215,17 +213,9 @@ public class EffectIntra {
 	private EffectSet newInitialFlow() { return new EffectSet(); }
 	private EffectSet entryInitialFlow() { return new EffectSet(true); }
 
-	private static void mergeInto(EffectSet inout, EffectSet in) {
-		EffectSet tmp = new EffectSet();
-		tmp = new EffectSet(inout);
-		tmp.union(in);
-
-		inout.init(tmp);
-	}
-
 	public EffectSet doAnalysis(List<JCTree> endNodes) {
 		JCTree head = order.get(0);
-		Collection<JCTree> changedUnits = AnalysisUtil.constructWorklist(order);
+		TreeSet<JCTree> changedUnits = AnalysisUtil.constructWorklist(order);
 
 	    // Create the order of the AST for analyzing the effect of the methods.
         // This order is used to make the algorithm converge faster.
@@ -246,7 +236,6 @@ public class EffectIntra {
 		while (!changedUnits.isEmpty()) {
 			EffectSet previousAfterFlow = newInitialFlow();
 
-			EffectSet beforeFlow = new EffectSet(true);
 			EffectSet afterFlow;
 	
 			//get the first object
@@ -257,12 +246,13 @@ public class EffectIntra {
 
 			// Compute and store beforeFlow
 			List<JCTree> preds = s.predecessors;
-			beforeFlow = effectBeforeFlow.get(s);
+			EffectSet beforeFlow = effectBeforeFlow.get(s);
 
 			if (preds.size() > 0) { // copy
 				for (JCTree sPred : preds) {
 					EffectSet otherBranchFlow = effectAfterFlow.get(sPred);
-					mergeInto(beforeFlow, otherBranchFlow);
+					// mergeInto(beforeFlow, otherBranchFlow);
+					beforeFlow.union(otherBranchFlow);
 				}
 			}
 
@@ -277,11 +267,13 @@ public class EffectIntra {
 				changedUnits.addAll(s.successors);
 			}
 		}
+
 		EffectSet resultEffect = new EffectSet();
 		// for (JCTree astc : resultNodes) {
 		for (JCTree astc : endNodes) {
 			EffectSet otherBranchFlow = effectAfterFlow.get(astc);
-			mergeInto(resultEffect, otherBranchFlow);
+			// mergeInto(resultEffect, otherBranchFlow);
+			resultEffect.union(otherBranchFlow);
 		}
 		resultEffect.compress();
 		resultEffect.returnNewObject = returnNewObject;
@@ -289,5 +281,21 @@ public class EffectIntra {
 		resultEffect.indirect = indirect;
 
 		return resultEffect;
+	}
+
+	public static class ValueComparator implements Comparator<JCTree> {
+	    Map<JCTree, Double> base;
+	    public ValueComparator(Map<JCTree, Double> base) {
+	        this.base = base;
+	    }
+
+	    // Note: this comparator imposes orderings that are inconsistent with equals.    
+	    public int compare(JCTree a, JCTree b) {
+	        if (base.get(a) >= base.get(b)) {
+	            return -1;
+	        } else {
+	            return 1;
+	        } // returning 0 would merge keys
+	    }
 	}
 }

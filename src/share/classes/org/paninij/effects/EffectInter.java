@@ -681,14 +681,15 @@ public class EffectInter {
 			// Aliasing analysis
 			AliasingIntra dai = new AliasingIntra(curr_cap, jcmd);
 			dai.analyze(jcmd.order, exists);
+
 			HashMap<JCTree, AliasingGraph> beforeFlow = dai.graphBeforeFlow;
 
 			// Doing the actual intra effect analsyis.
-			EffectIntra fcIntra = new EffectIntra(this, curr_meth,
-					jcmd.order, beforeFlow);
+			EffectIntra fcIntra =
+				new EffectIntra(this, curr_meth, jcmd.order, beforeFlow);
 			java.util.List<JCTree> ends = new ArrayList<JCTree>(body.endNodes);
 			ends.addAll(body.exitNodes);
-			EffectSet newResult = fcIntra.doAnalysis(ends);			
+			EffectSet newResult = fcIntra.doAnalysis(ends);
 			newResult.compress();
 
 			// If the effect does not change, no need to put the methods
