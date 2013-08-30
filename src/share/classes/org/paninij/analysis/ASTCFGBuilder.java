@@ -33,8 +33,7 @@ import org.paninij.effects.EffectInter;
 
 public class ASTCFGBuilder extends TreeScanner {
 	private int id = 0;
-	private ArrayList<JCTree> currentStartNodes, currentEndNodes,
-		currentExitNodes;
+	private ArrayList<JCTree> currentStartNodes, currentEndNodes, currentExitNodes;
 	private static ArrayList<JCTree> emptyList = new ArrayList<JCTree>(0);
 
 	private EffectInter effectsBuilder;
@@ -177,6 +176,7 @@ public class ASTCFGBuilder extends TreeScanner {
 					body.accept(this);
 					tree.order = order;
 					effectsBuilder.analysis(tree, cs);
+
 				}
 				tree.cost = methodCost;
 
@@ -469,6 +469,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		JCTree nextStartNodeTree = null;
 		if (cond != null) {
 			nextStartNodeTree = cond;
+ 
 			connectStartNodesToEndNodesOf(body, cond);
 		} else {
 			nextStartNodeTree = body;
@@ -482,9 +483,8 @@ public class ASTCFGBuilder extends TreeScanner {
 				connectStartNodesToEndNodesOf(body, lastStatement);
 			}
 			connectStartNodesToEndNodesOf(lastStatement, body);
-		}
+		} else { connectStartNodesToEndNodesOf(nextStartNodeTree, body); }
 
-		connectStartNodesToEndNodesOf(nextStartNodeTree, body);
 		if (cond != null) {
 			for (JCTree jct1 : tempContinueNodes) {
 				jct1.successors.addAll(cond.startNodes);
@@ -937,7 +937,7 @@ public class ASTCFGBuilder extends TreeScanner {
 		// connect the nodes
 		if (!args.isEmpty()) {
 			JCTree lastArg = visitList(args);
-			connectStartNodesToEndNodesOf(lastArg, meth);
+			connectStartNodesToEndNodesOf(args.head, meth);
 			connectToEndNodesOf(lastArg, tree);
 		} else {
 			connectToEndNodesOf(meth, tree);

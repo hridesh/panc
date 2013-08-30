@@ -117,13 +117,13 @@ public class EffectSet {
 					&& collected.isEmpty();
 			}
 
-			if (g.isInit) {
+			/*if (g.isInit) {*/
 				// if (isBottom && g.isBottom) { return true; }
-				return calls.equals(g.calls) &&
-				writtenLocals.equals(g.writtenLocals) &&
-				writtenFields.equals(g.writtenFields) && alive.equals(g.alive)
-				&& collected.equals(g.collected);
-			}
+			return calls.equals(g.calls) &&
+			writtenLocals.equals(g.writtenLocals) &&
+			writtenFields.equals(g.writtenFields) && alive.equals(g.alive)
+			&& collected.equals(g.collected);
+			/*}*/
 		}
 		return false;
 	}
