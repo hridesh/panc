@@ -107,6 +107,27 @@ public class EffectSet {
 		return false;
 	}
 
+	public boolean continue_Analyzing(Object o) {
+		if (o instanceof EffectSet) { 
+			EffectSet g = (EffectSet)o;
+			assert isInit;
+			if (!g.isInit) {
+				return calls.isEmpty() && writtenLocals.isEmpty()
+					&& writtenFields.isEmpty() && alive.isEmpty()
+					&& collected.isEmpty();
+			}
+
+			if (g.isInit) {
+				// if (isBottom && g.isBottom) { return true; }
+				return calls.equals(g.calls) &&
+				writtenLocals.equals(g.writtenLocals) &&
+				writtenFields.equals(g.writtenFields) && alive.equals(g.alive)
+				&& collected.equals(g.collected);
+			}
+		}
+		return false;
+	}
+
 	public void union(EffectSet x) {
 		if (x.isInit) {
 			if (isInit) {
@@ -120,7 +141,7 @@ public class EffectSet {
 						writtenLocals.addAll(x.writtenLocals);
 						writtenFields.addAll(x.writtenFields);
 						isWriteBottom |= x.isWriteBottom;
-						
+
 						for (Symbol s : writtenLocals) {
 							assignVar(s); }
 						for (Symbol s : writtenFields) {
@@ -334,7 +355,7 @@ public class EffectSet {
 			}
 		}
 
-		if (direct.isEmpty()) {
+		if (direct == null || direct.isEmpty()) {
 			System.out.println("\tdirect empty");
 		} else {
 			System.out.println("\tdirect:");
@@ -344,7 +365,7 @@ public class EffectSet {
 			}
 		}
 
-		if (indirect.isEmpty()) {
+		if (indirect == null || indirect.isEmpty()) {
 			System.out.println("\tindirect empty");
 		} else {
 			System.out.println("\tindirect:");

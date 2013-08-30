@@ -33,7 +33,8 @@ import org.paninij.effects.EffectInter;
 
 public class ASTCFGBuilder extends TreeScanner {
 	private int id = 0;
-	private ArrayList<JCTree> currentStartNodes, currentEndNodes, currentExitNodes;
+	private ArrayList<JCTree> currentStartNodes, currentEndNodes,
+		currentExitNodes;
 	private static ArrayList<JCTree> emptyList = new ArrayList<JCTree>(0);
 
 	private EffectInter effectsBuilder;

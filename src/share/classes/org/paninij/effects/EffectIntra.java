@@ -78,12 +78,12 @@ public class EffectIntra {
 					!aliasing.isReceiverNew(expr)) {
 				returnNewObject = false;
 			}
-		} else if (tree instanceof JCCatch ||
-				tree instanceof JCBinary || tree instanceof JCInstanceOf ||
-				tree instanceof JCTypeCast || tree instanceof JCVariableDecl ||
-				tree instanceof JCMethodDecl || tree instanceof JCModifiers ||
-				tree instanceof JCTypeParameter ||
-				tree instanceof TypeBoundKind //the followings are JCExpression 
+		} else if (tree instanceof JCCatch || tree instanceof JCBinary ||
+				tree instanceof JCInstanceOf || tree instanceof JCTypeCast ||
+				tree instanceof JCVariableDecl || tree instanceof JCMethodDecl
+				|| tree instanceof JCModifiers ||
+				tree instanceof JCTypeParameter || tree instanceof TypeBoundKind
+				//the followings are JCExpression 
 				|| tree instanceof JCAnnotation ||
 				tree instanceof JCArrayTypeTree || tree instanceof JCConditional
 				|| tree instanceof JCLiteral || tree instanceof JCNewArray ||
@@ -200,7 +200,9 @@ public class EffectIntra {
 			} else if (kind == ElementKind.LOCAL_VARIABLE ||
 					kind == ElementKind.PARAMETER ||
 					kind == ElementKind.EXCEPTION_PARAMETER) {
-				if (readOrWrite == 1) { fcg.assignVar(sym); }
+				if (readOrWrite == 1 && !sym.type.isPrimitive()) {
+					fcg.assignVar(sym);
+				}
 			} else if (kind == ElementKind.CLASS ||
 					kind == ElementKind.INTERFACE || kind == ElementKind.METHOD
 					|| kind == ElementKind.CONSTRUCTOR ||
@@ -263,7 +265,7 @@ public class EffectIntra {
 
 			afterFlow.compress();
 
-			if (!afterFlow.equals(previousAfterFlow)) {
+			if (!afterFlow.continue_Analyzing(previousAfterFlow)) {
 				changedUnits.addAll(s.successors);
 			}
 		}
@@ -289,7 +291,8 @@ public class EffectIntra {
 	        this.base = base;
 	    }
 
-	    // Note: this comparator imposes orderings that are inconsistent with equals.    
+	    // Note: this comparator imposes orderings that are inconsistent with
+	    // equals.    
 	    public int compare(JCTree a, JCTree b) {
 	        if (base.get(a) >= base.get(b)) {
 	            return -1;
