@@ -44,7 +44,7 @@ public class AnalysisUtil {
 		String capsule_name = cs.toString();
 		return (capsule_name.substring(capsule_name.indexOf("$")
 				+ 1).compareTo("thread") == 0) &&
-				(tree_name.indexOf("$Original()") != -1 ||
+				(tree_name.indexOf("$Original") != -1 ||
 						(meth.mods.flags & Flags.PRIVATE) != 0);
 	}
 
@@ -65,6 +65,16 @@ public class AnalysisUtil {
 
 		if (index != -1) {
 			return input.substring(0, index);
+		}
+		return input;
+	}
+
+	public static String rmDollarOriginal(String input) {
+		int index = input.indexOf("$");
+
+		if (index != -1) {
+			return input.substring(0, index) +
+					input.substring(index + 9, input.length());
 		}
 		return input;
 	}
