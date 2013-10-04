@@ -376,7 +376,7 @@ public class Enter extends JCTree.Visitor {
     				JCTree capsuleDefs = c.head;
     				if(capsuleDefs.getTag() == METHODDEF){
     					JCMethodDecl mdecl = (JCMethodDecl)capsuleDefs;
-    					if(mdecl.name.toString().equals("run")&&mdecl.params.isEmpty())
+    					if((mdecl.name.toString().equals("run")&&mdecl.params.isEmpty())||mdecl.name.equals(names.panini.InternalCapsuleWiring))
     						hasRun = true;
     					if((mdecl.mods.flags & PRIVATE)==0 && !mdecl.name.equals(names.panini.PaniniCapsuleInit)
     					&& !mdecl.name.equals(names.panini.InternalCapsuleWiring)){
