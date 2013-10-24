@@ -7,7 +7,6 @@ import java.util.TreeSet;
 import javax.lang.model.element.ElementKind;
 
 import com.sun.tools.javac.code.Symbol;
-// import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.tree.JCTree;
@@ -29,10 +28,14 @@ public class LeakDetection {
 	private InnerClassCapsuleAliasDetector icca;
 
 	// the intermediate result from the intra procedural analysis.
-	private HashMap<JCTree, TreeWrapper> intraMap =
+	private HashMap<JCTree, TreeWrapper> backwardMap =
 		new HashMap<JCTree, TreeWrapper>();
 
-public static boolean DEBUG = false;
+	private HashMap<JCTree, TreeWrapper> forwardMap =
+		new HashMap<JCTree, TreeWrapper>();
+
+	private HashSet<String> warnings = new HashSet<String>();
+
 	public void inter(JCCapsuleDecl capsule, Log log) {
 		this.log = log;
 		this.capsule = capsule;
@@ -68,7 +71,8 @@ public static boolean DEBUG = false;
 			JCMethodDecl curr = w.meth;
 
 			HashSet<Symbol> previous = result.get(curr.sym);
-			HashSet<Symbol> newResult = intra(capsule, curr);
+			HashSet<Symbol> newResult = backwardsintra(capsule, curr);
+			forwardintra(capsule, curr);
 
 			if (previous == null || !previous.equals(newResult)) {
 				result.put(curr.sym, newResult);
@@ -81,7 +85,9 @@ public static boolean DEBUG = false;
 				}
 			}
 		}
-
+/*if (analyzingphase) {
+	return;
+}*/
 		// output warnings
 		analyzingphase = false;
 		for (JCTree jct : defs) {
@@ -89,14 +95,81 @@ public static boolean DEBUG = false;
 				JCMethodDecl jcmd = (JCMethodDecl) jct;
 				if (AnalysisUtil.shouldAnalyze(capsule, jcmd)) {
 					if (jcmd.body != null) {
-						intra(capsule, jcmd);
+						backwardsintra(capsule, jcmd);
+
+						forwardintra(capsule, jcmd);
 					}
 				}
 			}
 		}
 	}
 
-	public HashSet<Symbol> intra(JCCapsuleDecl capsule, JCMethodDecl meth) {
+	private void forwardintra(JCCapsuleDecl capsule, JCMethodDecl meth) {
+		curr = meth;
+		defs = capsule.defs;
+
+		JCBlock body = meth.body;
+		assert body != null;
+
+		TreeSet<TreeWrapper> queue = new TreeSet<TreeWrapper>();
+
+		for (JCTree tree : body.startNodes) {
+			TreeWrapper temp = new TreeWrapper(tree);
+			if (analyzingphase) {
+				forwardMap.put(tree, temp);
+			}
+			queue.add(temp);
+		}
+
+		HashSet<JCTree> processed = new HashSet<JCTree>();
+
+		while (!queue.isEmpty()) {
+			TreeWrapper w = queue.first();
+			queue.remove(w);
+			JCTree curr = w.tree;
+
+			if (!analyzingphase) {
+				if (processed.contains(curr)) { continue; }
+				processed.add(curr);
+			}
+
+			HashSet<Symbol> preLeak = new HashSet<Symbol>();
+			for (JCTree succ : curr.predecessors) {
+				TreeWrapper temp = forwardMap.get(succ);
+				if (temp == null) {
+					temp = new TreeWrapper(succ);
+					forwardMap.put(succ, temp);
+				}
+
+				preLeak.addAll(temp.leakVar);
+			}
+
+			HashSet<Symbol> previous = new HashSet<Symbol>(w.leakVar);
+			forwardVisitTree(curr, preLeak, meth);
+
+			if (analyzingphase) {
+				if (!preLeak.equals(previous) || w.first) {
+					w.leakVar.addAll(preLeak);
+					w.first = false;
+					for (JCTree predecessor : curr.successors) {
+						TreeWrapper temp = forwardMap.get(predecessor);
+						if (temp == null) {
+							temp = new TreeWrapper(predecessor);
+							forwardMap.put(predecessor, temp);
+						}
+						queue.add(temp);
+					}
+				}
+			} else {
+				for (JCTree predecessor : curr.successors) {
+					TreeWrapper temp = forwardMap.get(predecessor);
+					queue.add(temp);
+				}
+			}
+		}
+	}
+
+	public HashSet<Symbol> backwardsintra(JCCapsuleDecl capsule, JCMethodDecl meth) {
 		curr = meth;
 		defs = capsule.defs;
 
@@ -108,14 +181,14 @@ public static boolean DEBUG = false;
 		for (JCTree tree : body.endNodes) {
 			TreeWrapper temp = new TreeWrapper(tree);
 			if (analyzingphase) {
-				intraMap.put(tree, temp);
+				backwardMap.put(tree, temp);
 			}
 			queue.add(temp);
 		}
 		for (JCTree tree : body.exitNodes) {
 			TreeWrapper temp = new TreeWrapper(tree);
 			if (analyzingphase) {
-				intraMap.put(tree, temp);
+				backwardMap.put(tree, temp);
 			}
 			queue.add(temp);
 		}
@@ -134,131 +207,198 @@ public static boolean DEBUG = false;
 
 			HashSet<Symbol> preLeak = new HashSet<Symbol>();
 			for (JCTree succ : curr.successors) {
-				TreeWrapper temp = intraMap.get(succ);
+				TreeWrapper temp = backwardMap.get(succ);
 				if (temp == null) {
 					temp = new TreeWrapper(succ);
-					intraMap.put(succ, temp);
+					backwardMap.put(succ, temp);
 				}
 
 				preLeak.addAll(temp.leakVar);
 			}
 			HashSet<Symbol> previous = new HashSet<Symbol>(w.leakVar);
 
-			if (curr instanceof JCVariableDecl) { // T var = init;
-				JCVariableDecl jcvd = (JCVariableDecl)curr;
-				if (preLeak.contains(jcvd.sym)) {
-					warningCandidates(jcvd.init, preLeak);
-				}
-			} else if (curr instanceof JCReturn) { // return exp;
-				warningCandidates(((JCReturn)curr).expr, preLeak);
-			} else if (curr instanceof JCMethodInvocation) {
-				JCMethodInvocation jcmi = (JCMethodInvocation)curr;
-				JCExpression currMeth = jcmi.meth;
-
-				boolean innerCall = false;
-
-				// if the method is not intra capsule method call
-				if (currMeth instanceof JCIdent) {
-					JCIdent jci = (JCIdent) currMeth;
-					innerCall = true;
-					AnalysisUtil.addCallEdge(meth.sym, jci.sym, reversed);
-
-					HashSet<Symbol> leaks = result.get(jci.sym);
-					if (leaks != null) {
-						for (Symbol s : leaks) {
-							if (s != null) {
-								ElementKind symKind = s.getKind();
-								if (symKind == ElementKind.FIELD) {
-									preLeak.add(s);
-								} else if (symKind == ElementKind.PARAMETER) {
-									MethodSymbol ms = (MethodSymbol)jci.sym;
-									int i = 0;
-									for (Symbol para : ms.params) {
-										if (para == s) {
-											warningCandidates(jcmi.args.get(i),
-													preLeak);
-										}
-										i++;
-									}
-								}
-							}
-						}
-					}
-				} else if (currMeth instanceof JCFieldAccess) {
-					JCFieldAccess jcfa = (JCFieldAccess)currMeth;
-					JCExpression receiver =
-						AnalysisUtil.getEssentialExpr(jcfa.selected);
-
-					if (receiver instanceof JCIdent) {
-						JCIdent jci = (JCIdent)receiver;
-						if (AnalysisUtil.isInnerField(defs, jci.sym)) {
-							innerCall = true;
-						}
-					} else if (receiver instanceof JCFieldAccess) {
-						JCFieldAccess field = (JCFieldAccess)receiver;
-						if (AnalysisUtil.isInnerField(defs, field.sym)) {
-							innerCall = true;
-						}
-					}
-				}
-
-				// If this is inter procedural capsule call, all the parameters
-				// will be leaked.
-				if (!innerCall) {
-					warningList(jcmi.args, preLeak); }
-			} else if (curr instanceof JCAssign) {
-				JCAssign jca = (JCAssign)curr;
-				JCExpression lhs = AnalysisUtil.getEssentialExpr(jca.lhs);
-				if (lhs instanceof JCIdent) {
-					JCIdent jci = (JCIdent)lhs;
-					if (preLeak.contains(jci.sym)) {
-						warningCandidates(jca.rhs, preLeak);
-					}
-				} else if (lhs instanceof JCFieldAccess) {
-					JCFieldAccess jcf = (JCFieldAccess)lhs;
-
-					if (AnalysisUtil.isVarThis(jcf.selected)) {
-						if (preLeak.contains(jcf.sym)) {
-							warningCandidates(jca.rhs, preLeak);
-						}
-					} else { warningCandidates(jca.rhs, preLeak); }
-				} else {
-					warningCandidates(jca.rhs, preLeak);
-				}
-			} else if (curr instanceof JCNewClass) {
-				warningList(((JCNewClass)curr).args, preLeak);
-			} else if (curr instanceof JCNewArray) {
-				warningList(((JCNewArray)curr).elems, preLeak);
-			}
+			visitTree(curr, preLeak, meth, false);
 
 			if (analyzingphase) {
 				if (!preLeak.equals(previous) || w.first) {
 					w.leakVar.addAll(preLeak);
 					w.first = false;
 					for (JCTree predecessor : curr.predecessors) {
-						TreeWrapper temp = intraMap.get(predecessor);
+						TreeWrapper temp = backwardMap.get(predecessor);
 						if (temp == null) {
 							temp = new TreeWrapper(predecessor);
-							intraMap.put(predecessor, temp);
+							backwardMap.put(predecessor, temp);
 						}
 						queue.add(temp);
 					}
 				}
 			} else {
 				for (JCTree predecessor : curr.predecessors) {
-					TreeWrapper temp = intraMap.get(predecessor);
+					TreeWrapper temp = backwardMap.get(predecessor);
 					queue.add(temp);
 				}
 			}
 		}
 
 		HashSet<Symbol> intraResult = new HashSet<Symbol>();
-		for (JCTree jct : intraMap.keySet()) {
-			TreeWrapper jw = intraMap.get(jct);
+		for (JCTree jct : backwardMap.keySet()) {
+			TreeWrapper jw = backwardMap.get(jct);
 			intraResult.addAll(jw.leakVar);
 		}
 
 		return intraResult;
+	}
+
+	private void forwardVisitTree(JCTree curr, HashSet<Symbol> preLeak,
+			JCMethodDecl meth) {
+		if (curr instanceof JCIdent) { // T var = init;
+			if (preLeak.contains(((JCIdent) curr).sym)) {
+				warning((JCIdent)curr, preLeak, true, true);
+			}
+		} else if (curr instanceof JCMethodInvocation) {
+			JCMethodInvocation jcmi = (JCMethodInvocation)curr;
+			JCExpression currMeth = jcmi.meth;
+
+			boolean innerCall = false;
+
+			// if the method is not intra capsule method call
+			if (currMeth instanceof JCIdent) {
+				JCIdent jci = (JCIdent) currMeth;
+				innerCall = true;
+				AnalysisUtil.addCallEdge(meth.sym, jci.sym, reversed);
+
+				HashSet<Symbol> leaks = result.get(jci.sym);
+				if (leaks != null) {
+					for (Symbol s : leaks) {
+						if (s != null) {
+							ElementKind symKind = s.getKind();
+							if (symKind == ElementKind.FIELD) {
+								preLeak.add(s);
+							} else if (symKind == ElementKind.PARAMETER) {
+								MethodSymbol ms = (MethodSymbol)jci.sym;
+								int i = 0;
+								for (Symbol para : ms.params) {
+									if (para == s) {
+										warningCandidates(jcmi.args.get(i),
+												preLeak, true);
+									}
+									i++;
+								}
+							}
+						}
+					}
+				}
+			} else if (currMeth instanceof JCFieldAccess) {
+				JCFieldAccess jcfa = (JCFieldAccess)currMeth;
+				JCExpression receiver =
+					AnalysisUtil.getEssentialExpr(jcfa.selected);
+
+				if (receiver instanceof JCIdent) {
+					JCIdent jci = (JCIdent)receiver;
+					if (AnalysisUtil.isInnerField(defs, jci.sym)) {
+						innerCall = true;
+					}
+				} else if (receiver instanceof JCFieldAccess) {
+					JCFieldAccess field = (JCFieldAccess)receiver;
+					if (AnalysisUtil.isInnerField(defs, field.sym)) {
+						innerCall = true;
+					}
+				}
+			}
+
+			// If this is inter procedural capsule call, all the parameters
+			// will be leaked.
+			if (!innerCall) { warningList(jcmi.args, preLeak, true); }
+		}
+	}
+
+	private void visitTree(JCTree curr, HashSet<Symbol> preLeak,
+			JCMethodDecl meth, boolean warnLeakingVar) {
+		if (curr instanceof JCVariableDecl) { // T var = init;
+			JCVariableDecl jcvd = (JCVariableDecl)curr;
+			if (preLeak.contains(jcvd.sym)) {
+				warningCandidates(jcvd.init, preLeak, warnLeakingVar);
+			}
+		} else if (curr instanceof JCReturn) { // return exp;
+			warningCandidates(((JCReturn)curr).expr, preLeak, warnLeakingVar);
+		} else if (curr instanceof JCMethodInvocation) {
+			JCMethodInvocation jcmi = (JCMethodInvocation)curr;
+			JCExpression currMeth = jcmi.meth;
+
+			boolean innerCall = false;
+
+			// if the method is not intra capsule method call
+			if (currMeth instanceof JCIdent) {
+				JCIdent jci = (JCIdent) currMeth;
+				innerCall = true;
+				AnalysisUtil.addCallEdge(meth.sym, jci.sym, reversed);
+
+				HashSet<Symbol> leaks = result.get(jci.sym);
+				if (leaks != null) {
+					for (Symbol s : leaks) {
+						if (s != null) {
+							ElementKind symKind = s.getKind();
+							if (symKind == ElementKind.FIELD) {
+								preLeak.add(s);
+							} else if (symKind == ElementKind.PARAMETER) {
+								MethodSymbol ms = (MethodSymbol)jci.sym;
+								int i = 0;
+								for (Symbol para : ms.params) {
+									if (para == s) {
+										warningCandidates(jcmi.args.get(i),
+												preLeak, warnLeakingVar);
+									}
+									i++;
+								}
+							}
+						}
+					}
+				}
+			} else if (currMeth instanceof JCFieldAccess) {
+				JCFieldAccess jcfa = (JCFieldAccess)currMeth;
+				JCExpression receiver =
+					AnalysisUtil.getEssentialExpr(jcfa.selected);
+
+				if (receiver instanceof JCIdent) {
+					JCIdent jci = (JCIdent)receiver;
+					if (AnalysisUtil.isInnerField(defs, jci.sym)) {
+						innerCall = true;
+					}
+				} else if (receiver instanceof JCFieldAccess) {
+					JCFieldAccess field = (JCFieldAccess)receiver;
+					if (AnalysisUtil.isInnerField(defs, field.sym)) {
+						innerCall = true;
+					}
+				}
+			}
+
+			// If this is inter procedural capsule call, all the parameters
+			// will be leaked.
+			if (!innerCall) { warningList(jcmi.args, preLeak, warnLeakingVar); }
+		} else if (curr instanceof JCAssign) {
+			JCAssign jca = (JCAssign)curr;
+			JCExpression lhs = AnalysisUtil.getEssentialExpr(jca.lhs);
+			if (lhs instanceof JCIdent) {
+				JCIdent jci = (JCIdent)lhs;
+				if (preLeak.contains(jci.sym)) {
+					warningCandidates(jca.rhs, preLeak, warnLeakingVar);
+				}
+			} else if (lhs instanceof JCFieldAccess) {
+				JCFieldAccess jcf = (JCFieldAccess)lhs;
+
+				if (AnalysisUtil.isVarThis(jcf.selected)) {
+					if (preLeak.contains(jcf.sym)) {
+						warningCandidates(jca.rhs, preLeak, warnLeakingVar);
+					}
+				} else { warningCandidates(jca.rhs, preLeak, warnLeakingVar); }
+			} else {
+				warningCandidates(jca.rhs, preLeak, warnLeakingVar);
+			}
+		} else if (curr instanceof JCNewClass) {
+			warningList(((JCNewClass)curr).args, preLeak, warnLeakingVar);
+		} else if (curr instanceof JCNewArray) {
+			warningList(((JCNewArray)curr).elems, preLeak, warnLeakingVar);
+		}
 	}
 
 	private static class MethodWrapper implements Comparable<MethodWrapper> {
@@ -284,10 +424,10 @@ public static boolean DEBUG = false;
 	}
 
 	private void warningList(List<? extends JCTree> listsOfTrees,
-			HashSet<Symbol> output) {
+			HashSet<Symbol> output, boolean warnLeakingVar) {
 		if (listsOfTrees != null) {
 			for (JCTree jct : listsOfTrees) {
-				warningCandidates(jct, output);
+				warningCandidates(jct, output, warnLeakingVar);
 			}
 		}
 	}
@@ -306,18 +446,41 @@ public static boolean DEBUG = false;
 					Symbol meth = curr.sym;
 					if (!AnalysisUtil.immute_type(field_sym.type)) {
 						String meth_string = meth.toString();
-						log.useSource (field_sym.outermostClass().sourcefile);
-						log.warning(tree.pos(), "confinement.violation",
-								field_sym,
-								AnalysisUtil.rmDollar(capSym.toString()),
-								AnalysisUtil.rmDollar(meth_string));
+
+						addWarnings(meth_string, tree, field_sym, capSym);
 					}
 				}
 			}
 		}
 	}
 
-	private void warningCandidates(JCTree tree, HashSet<Symbol> output) {
+	private void addWarnings(String meth_string, JCTree tree, Symbol sym,
+			Symbol capSym) {
+		boolean found = false;
+		String warningStr = tree.pos() +
+			"confinement.violation" + sym +
+			AnalysisUtil.rmDollar(capSym.toString()) +
+			AnalysisUtil.rmDollar(meth_string);
+
+		for (String warning : warnings) {
+			if (warning.compareTo(warningStr) == 0) {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			warnings.add(warningStr);
+
+			log.useSource (sym.outermostClass().sourcefile);
+			log.warning(tree.pos(), "confinement.violation",
+					sym,
+					AnalysisUtil.rmDollar(capSym.toString()),
+					AnalysisUtil.rmDollar(meth_string));
+		}
+	}
+
+	private void warningCandidates(JCTree tree, HashSet<Symbol> output,
+			boolean warnLeakingVar) {
 		if (tree != null) {
 			if (tree instanceof JCExpression) {
 				JCExpression jce = (JCExpression)tree;
@@ -325,53 +488,54 @@ public static boolean DEBUG = false;
 			}
 
 			if (tree instanceof JCIdent) {
-				warning((JCIdent) tree, output, true);
+				warning((JCIdent) tree, output, true, warnLeakingVar);
 			} else if (tree instanceof JCFieldAccess) {
 				warnJCFieldAccess(tree, output, true);
 			} else if (tree instanceof JCNewClass) {
-				new LeakExpressions(output).scan(((JCNewClass) tree).def);
+				new LeakExpressions(output,
+						warnLeakingVar).scan(((JCNewClass) tree).def);
 			}
 		}
 	}
 
 	private void warning(JCIdent tree, HashSet<Symbol> output,
-			boolean mustBePrimitive) {
+			boolean mustBePrimitive, boolean warnLeakingVar) {
 		Symbol sym = tree.sym;
 		if (sym != null) {
 			if (!mustBePrimitive || !sym.type.isPrimitive()) {
-				output.add(sym);
 				if (!analyzingphase) {
-					if (AnalysisUtil.isInnerField(defs, sym)) {
+					if ((warnLeakingVar && output.contains(sym)) ||
+							AnalysisUtil.isInnerField(defs, sym)) {
 						if (!AnalysisUtil.immute_type(sym.type)) {
 							Symbol curr_sym = curr.sym;
-							log.useSource(sym.outermostClass().sourcefile);
-							log.warning(tree.pos(), "confinement.violation",
-								sym,
-								AnalysisUtil.rmDollar(capsule.sym.toString()),
-								AnalysisUtil.rmDollar(curr_sym.toString()));
+
+							addWarnings(curr_sym.toString(), tree, sym, capsule.sym);
 						}
 					}
 				}
+				output.add(sym);
 			}
 		}
 	}
 
 	public class LeakExpressions extends TreeScanner {
-		public LeakExpressions(HashSet<Symbol> output) {
+		public LeakExpressions(HashSet<Symbol> output, boolean warnLeakingVar) {
 			this.output = output;
+			this.warnLeakingVar = warnLeakingVar;
 		}
 
 		public HashSet<Symbol> output;
+		public boolean warnLeakingVar;
 
 		public void visitIdent(JCIdent tree) {
-			warning(tree, output, false); }
+			warning(tree, output, false, warnLeakingVar); }
 
 		public void visitSelect(JCFieldAccess tree) {
 			warnJCFieldAccess(tree, output, false);
 	    }
 
 		public void visitNewClass(JCNewClass tree) {
-			new LeakExpressions(output).scan(tree.def);
+			new LeakExpressions(output, warnLeakingVar).scan(tree.def);
 	    } 
 	}
 }

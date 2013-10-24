@@ -1,0 +1,2 @@
+ConfinementCheckerBug.java:43:21: compiler.warn.confinement.violation: list, ConfinementBug, run()
+1 warning
