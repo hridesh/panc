@@ -1,16 +1,10 @@
 package org.paninij.analysis;
 
-import java.util.Collection;
-import java.util.Stack;
-
 import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.comp.Attr;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
-import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.code.Symbol;
 
 public final class Main {
 	/**

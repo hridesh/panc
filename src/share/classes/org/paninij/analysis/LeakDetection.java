@@ -7,7 +7,7 @@ import java.util.TreeSet;
 import javax.lang.model.element.ElementKind;
 
 import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Type;
+// import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.tree.JCTree;
@@ -26,14 +26,19 @@ public class LeakDetection {
 	private Log log;
 	private JCCapsuleDecl capsule;
 	private JCMethodDecl curr;
+	private InnerClassCapsuleAliasDetector icca;
 
 	// the intermediate result from the intra procedural analysis.
 	private HashMap<JCTree, TreeWrapper> intraMap =
 		new HashMap<JCTree, TreeWrapper>();
 
+public static boolean DEBUG = false;
 	public void inter(JCCapsuleDecl capsule, Log log) {
 		this.log = log;
 		this.capsule = capsule;
+
+		icca = new InnerClassCapsuleAliasDetector(log);
+
 		defs = capsule.defs;
 		TreeSet<MethodWrapper> queue = new TreeSet<MethodWrapper>();
 		HashMap<JCMethodDecl, MethodWrapper> map =
@@ -46,6 +51,8 @@ public class LeakDetection {
 
 					if (AnalysisUtil.shouldAnalyze(capsule, meth)) {
 						if (meth.body != null) {
+							meth.body.accept(icca);
+
 							MethodWrapper temp = new MethodWrapper(meth);
 							map.put(meth, temp);
 							queue.add(temp);
