@@ -48,16 +48,20 @@ public class AnalysisUtil {
 						(meth.mods.flags & Flags.PRIVATE) != 0);
 	}
 
-	public static JCExpression getEssentialExpr(JCExpression original) {
-		JCExpression rightOp = original;
-		while (rightOp instanceof JCTypeCast || rightOp instanceof JCParens) {
-			if (rightOp instanceof JCTypeCast) {
-				rightOp = ((JCTypeCast)rightOp).expr;
-			} else if (rightOp instanceof JCParens) {
-				rightOp = ((JCParens)rightOp).expr;
+	// Test whether the method is from the source input, not a rewritten one.
+	public static boolean originalMethod(MethodSymbol meth) {
+		return meth.toString().indexOf("$Original") != -1;
+	}
+
+	public static JCExpression getEssentialExpr(JCExpression expr) {
+		while (expr instanceof JCTypeCast || expr instanceof JCParens) {
+			if (expr instanceof JCTypeCast) {
+				expr = ((JCTypeCast)expr).expr;
+			} else if (expr instanceof JCParens) {
+				expr = ((JCParens)expr).expr;
 			}
 		}
-		return rightOp;
+		return expr;
 	}
 
 	public static String rmDollar(String input) {

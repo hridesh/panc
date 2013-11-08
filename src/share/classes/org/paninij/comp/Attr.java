@@ -162,38 +162,6 @@ public final class Attr extends CapsuleInternal {
 	public final void visitLabelled(JCLabeledStatement tree) {  /* SKIPPED */ }
 	public final void visitAssert(JCAssert tree) {  /* SKIPPED */ }
 
-	public final void preVisitMethodDef(JCMethodDecl tree,
-			final com.sun.tools.javac.comp.Attr attr) {
-		if (tree.sym.isProcedure) {
-			try {
-				((JCProcDecl) tree).switchToProc();
-				tree.accept(attr);
-			} catch (ClassCastException e) {
-			}
-		}
-	}
-
-	public final void postVisitMethodDef(JCMethodDecl tree,
-			Env<AttrContext> env, Resolve rs) {
-		if (tree.body != null) {
-			tree.accept(new ASTCFGBuilder());
-		}
-
-		MethodSymbol ms = tree.sym;
-		ClassSymbol owner = (ClassSymbol) ms.owner;
-		if ((owner.flags() & Flags.CAPSULE) != 0) {
-			CapsuleProcedure cp =
-				new CapsuleProcedure(owner, tree.name, ms.params);
-			owner.capsule_info.procedures.put(ms, cp);
-			if (ms.effect != null) {
-				annotationProcessor.setEffects(tree, ms.effect);
-				Attribute.Compound buf = annotate.enterAnnotation(
-						tree.mods.annotations.last(), Type.noType, env);
-				ms.attributes_field = ms.attributes_field.append(buf); 
-			}
-		}
-	}
-	
 	public final void visitVarDef(JCVariableDecl tree) { /* SKIPPED */ }
 	public final void visitBlock(JCBlock tree) { /* SKIPPED */ }
 	public final void visitDoLoop(JCDoWhileLoop tree) { /* SKIPPED */ }
@@ -224,6 +192,37 @@ public final class Attr extends CapsuleInternal {
 	public void visitTypeTest(JCInstanceOf tree) { /* SKIPPED */ }
 	public void visitIndexed(JCArrayAccess tree) { /* SKIPPED */ }
 	public void visitSelect(JCFieldAccess tree) { /* SKIPPED */ }
+
+	public final void preVisitMethodDef(JCMethodDecl tree,
+			final com.sun.tools.javac.comp.Attr attr) {
+		if (tree.sym.isProcedure) {
+			try {
+				((JCProcDecl) tree).switchToProc();
+				tree.accept(attr);
+			} catch (ClassCastException e) {}
+		}
+	}
+
+	public final void postVisitMethodDef(JCMethodDecl tree,
+			Env<AttrContext> env, Resolve rs) {
+		if (tree.body != null) {
+			tree.accept(new ASTCFGBuilder());
+		}
+
+		MethodSymbol ms = tree.sym;
+		ClassSymbol owner = (ClassSymbol) ms.owner;
+		if ((owner.flags() & Flags.CAPSULE) != 0) {
+			CapsuleProcedure cp =
+				new CapsuleProcedure(owner, tree.name, ms.params);
+			owner.capsule_info.procedures.put(ms, cp);
+			if (ms.effect != null) {
+				annotationProcessor.setEffects(tree, ms.effect);
+				Attribute.Compound buf = annotate.enterAnnotation(
+						tree.mods.annotations.last(), Type.noType, env);
+				ms.attributes_field = ms.attributes_field.append(buf); 
+			}
+		}
+	}
 	
 	public final void visitCapsuleDef(final JCCapsuleDecl tree,
 			final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env,
