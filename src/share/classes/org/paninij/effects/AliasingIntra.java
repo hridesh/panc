@@ -3,45 +3,50 @@ package org.paninij.effects;
 import java.util.*;
 
 import javax.lang.model.element.ElementKind;
-
-import org.paninij.analysis.AnalysisUtil;
-import org.paninij.path.Path_Var;
+import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.JCTree.*;
+
+import org.paninij.analysis.AnalysisUtil;
+import org.paninij.effects.LoopAlias.LoopCapsuleTarget;
 
 public class AliasingIntra {
 	public final ClassSymbol cap;
-	public final JCMethodDecl current_analyzing_meth;
+	public final JCMethodDecl curr_meth;
 	public HashMap<JCTree, AliasingGraph> graphBeforeFlow =
 		new HashMap<JCTree, AliasingGraph>();
 	public HashMap<JCTree, AliasingGraph> graphAfterFlow =
 		new HashMap<JCTree, AliasingGraph>();
+	public final TreeMaker make;
 
-	public AliasingIntra(ClassSymbol cap, JCMethodDecl current_meth) {
-		this.current_analyzing_meth = current_meth;
+	public AliasingIntra(ClassSymbol cap, JCMethodDecl current_meth,
+			TreeMaker make) {
+		this.curr_meth = current_meth;
 		this.cap = cap;
+		this.make = make;
 	}
 
-	private void flowThrough(AliasingGraph in, JCTree unit, AliasingGraph out) {
+	private void flowThrough(AliasingGraph in, JCTree tree, AliasingGraph out) {
 		out.init(in);
 
-		if (unit instanceof JCMethodInvocation) { // Calls
-			if (!EffectInter.isCapsuleCall((JCMethodInvocation)unit,
-					out)) {
+		if (tree instanceof JCMethodInvocation) { // Calls
+			if (!EffectInter.isCapsuleCall((JCMethodInvocation)tree, out)) {
 				out.processUnalyzableAffectedPahts();
 			}
-		} else if (unit instanceof JCAssign) { // assignment
-			JCExpression leftOp = ((JCAssign)unit).lhs;
-			JCExpression rightOp = ((JCAssign)unit).rhs;
+		} else if (tree instanceof JCAssign) { // assignment
+			JCExpression leftOp = ((JCAssign)tree).lhs;
+			JCExpression rightOp = ((JCAssign)tree).rhs;
 			if (leftOp instanceof JCIdent) { // v = ...           
 				JCIdent left = (JCIdent)leftOp;
-				localAssignOp(left.sym, rightOp, unit, out);
+				localAssignOp(left.sym, rightOp, tree, out);
 			} else if (leftOp instanceof JCFieldAccess) { // X.f = ...
-				fieldAssignmentOperation((JCFieldAccess)leftOp, rightOp, unit,
+				fieldAssignmentOperation((JCFieldAccess)leftOp, rightOp, tree,
 						out);
 			} else if (leftOp instanceof JCArrayAccess) { // v[i] = ...
 				JCArrayAccess jcaa = (JCArrayAccess)leftOp;
@@ -56,13 +61,14 @@ public class AliasingIntra {
 							rightOp = AnalysisUtil.getEssentialExpr(rightOp);
 
 							if (rightOp instanceof JCMethodInvocation) {
-								if (!EffectInter.isCapsuleCall(
-										(JCMethodInvocation)rightOp, out)) {
+								JCMethodInvocation jcmi =
+									(JCMethodInvocation)rightOp;
+								if (!EffectInter.isCapsuleCall(jcmi, out)) {
 									out.removeLocal(jcisym);
 								} else {
-									out.pathsToNewNode.put(
-											new Path_Var(jcisym, true),
-											AliasingGraph.unknownType);
+									out.assignCapsuleCallToLocal(jcisym,
+											EffectInter.capsuleCall(jcmi, out,
+													cap));
 								}
 							} else {
 								out.removeLocal(jcisym);
@@ -85,50 +91,50 @@ public class AliasingIntra {
 					leftOp instanceof JCTypeUnion || leftOp instanceof JCUnary
 					|| leftOp instanceof JCWildcard ||
 					leftOp instanceof LetExpr) {
-					throw new Error("Array match failure = " + unit + " type = "
+					throw new Error("Array match failure = " + tree + " type = "
 							+ leftOp.getClass());
-			} else throw new Error("JCAssign match failure = " + unit +
+			} else throw new Error("JCAssign match failure = " + tree +
 					" type = " + leftOp.getClass());
-		} else if (unit instanceof JCVariableDecl) {
-			JCVariableDecl jcvd = (JCVariableDecl)unit;
+		} else if (tree instanceof JCVariableDecl) {
+			JCVariableDecl jcvd = (JCVariableDecl)tree;
 	        JCExpression init = jcvd.init;
 	        VarSymbol sym = jcvd.sym;
-			localAssignOp(sym, init, unit, out);
+			localAssignOp(sym, init, tree, out);
 			out.writtenLocals.remove(sym);
-		} else if (unit instanceof JCEnhancedForLoop) {
-			JCEnhancedForLoop jcefl = (JCEnhancedForLoop)unit;
+		} else if (tree instanceof JCEnhancedForLoop) {
+			JCEnhancedForLoop jcefl = (JCEnhancedForLoop)tree;
 			VarSymbol sym = jcefl.var.sym;
-			localAssignOp(sym, jcefl.expr, unit, out);
-		} else if (unit instanceof JCCatch || unit instanceof JCAssignOp ||
-				unit instanceof JCBinary || unit instanceof JCInstanceOf ||
-				unit instanceof JCTypeCast || unit instanceof JCReturn ||
-				unit instanceof JCMethodDecl || unit instanceof JCModifiers ||
-				unit instanceof JCTypeParameter || unit instanceof TypeBoundKind
+			localAssignOp(sym, jcefl.expr, tree, out);
+		} else if (tree instanceof JCCatch || tree instanceof JCAssignOp ||
+				tree instanceof JCBinary || tree instanceof JCInstanceOf ||
+				tree instanceof JCTypeCast || tree instanceof JCReturn ||
+				tree instanceof JCMethodDecl || tree instanceof JCModifiers ||
+				tree instanceof JCTypeParameter || tree instanceof TypeBoundKind
 				|| // the followings are JCExpression 
-				unit instanceof JCAnnotation || unit instanceof JCArrayAccess ||
-				unit instanceof JCArrayTypeTree || unit instanceof JCConditional
-				|| unit instanceof JCFieldAccess || unit instanceof JCIdent ||
-				unit instanceof JCLiteral || unit instanceof JCNewArray ||
-				unit instanceof JCNewClass || unit instanceof JCParens ||
-				unit instanceof JCPrimitiveTypeTree ||
-				unit instanceof JCTypeApply || unit instanceof JCTypeUnion ||
-				unit instanceof JCUnary || unit instanceof JCWildcard ||
+				tree instanceof JCAnnotation || tree instanceof JCArrayAccess ||
+				tree instanceof JCArrayTypeTree || tree instanceof JCConditional
+				|| tree instanceof JCFieldAccess || tree instanceof JCIdent ||
+				tree instanceof JCLiteral || tree instanceof JCNewArray ||
+				tree instanceof JCNewClass || tree instanceof JCParens ||
+				tree instanceof JCPrimitiveTypeTree ||
+				tree instanceof JCTypeApply || tree instanceof JCTypeUnion ||
+				tree instanceof JCUnary || tree instanceof JCWildcard ||
 				// the followings are JCStatement
-				unit instanceof JCAssert || unit instanceof JCBlock ||
-				unit instanceof JCBreak || unit instanceof JCCase ||
-				unit instanceof JCClassDecl || unit instanceof JCContinue ||
-				unit instanceof JCDoWhileLoop || 
-				unit instanceof JCEnhancedForLoop ||
-				unit instanceof JCExpressionStatement || 
-				unit instanceof JCForLoop || unit instanceof JCIf ||
-				unit instanceof JCLabeledStatement || unit instanceof JCSkip || 
-				unit instanceof JCSwitch || unit instanceof JCSynchronized ||
-				unit instanceof JCThrow || unit instanceof JCTry ||
-				unit instanceof JCWhileLoop) { // ignored do nothing...
-		} else if (unit instanceof JCCompilationUnit || unit instanceof JCImport
-				|| unit instanceof JCMethodDecl || unit instanceof JCErroneous
-				|| unit instanceof LetExpr) {
-		} else throw new Error("JCTree match faliure " + unit);
+				tree instanceof JCAssert || tree instanceof JCBlock ||
+				tree instanceof JCBreak || tree instanceof JCCase ||
+				tree instanceof JCClassDecl || tree instanceof JCContinue ||
+				tree instanceof JCDoWhileLoop || 
+				tree instanceof JCEnhancedForLoop ||
+				tree instanceof JCExpressionStatement || 
+				tree instanceof JCForLoop || tree instanceof JCIf ||
+				tree instanceof JCLabeledStatement || tree instanceof JCSkip || 
+				tree instanceof JCSwitch || tree instanceof JCSynchronized ||
+				tree instanceof JCThrow || tree instanceof JCTry ||
+				tree instanceof JCWhileLoop) { // ignored do nothing...
+		} else if (tree instanceof JCCompilationUnit || tree instanceof JCImport
+				|| tree instanceof JCMethodDecl || tree instanceof JCErroneous
+				|| tree instanceof LetExpr) {
+		} else throw new Error("JCTree match faliure " + tree);
 	}
 
 	public void localAssignOp(Symbol left, JCExpression rightOp, JCTree unit,
@@ -257,7 +263,7 @@ public class AliasingIntra {
 	
 	private void fieldAssignmentOperation(JCFieldAccess left,
 			JCExpression rightOp, JCTree unit, AliasingGraph outValue) {
-		if (!left.type.isPrimitive()) {		 ///////// reference types
+		if (!left.type.isPrimitive()) {	// reference types
 			rightOp = AnalysisUtil.getEssentialExpr(rightOp);
 
 			if (rightOp instanceof JCIdent) { //////////////////// v = v
@@ -310,54 +316,63 @@ public class AliasingIntra {
 		}
 	}
 
-	private static final void mergeInto(AliasingGraph inout, AliasingGraph in) {
-		AliasingGraph tmp = new AliasingGraph();
-		tmp = new AliasingGraph(inout);
-		tmp.union(in);
-
-		inout.init(tmp);
-	}
-
-	public final void analyze(ArrayList<JCTree> order, HashSet<JCTree> exists) {
+	public final void analyze(ArrayList<JCTree> order, HashSet<JCTree> exists,
+			JavaFileObject sourcefile) {
 		JCTree head = order.get(0);
 
-		Collection<JCTree> changedUnits = AnalysisUtil.constructWorklist(order);
+		TreeSet<JCTree> changedUnits = AnalysisUtil.constructWorklist(order);
 
 		for (JCTree node : order) {
 			changedUnits.add(node);
-			graphBeforeFlow.put(node, newInitialFlow());
-			graphAfterFlow.put(node, newInitialFlow());
+			graphBeforeFlow.put(node, new AliasingGraph());
+			graphAfterFlow.put(node, new AliasingGraph());
 		}
 		if (head != null) {
 			graphBeforeFlow.put(head, entryInitialFlow());
-			graphAfterFlow.put(head, newInitialFlow());
+			graphAfterFlow.put(head, new AliasingGraph());
 		}
+
+		LoopAlias la = new LoopAlias(sourcefile);
+		curr_meth.body.accept(la);
+
+		HashMap<JCTree, HashSet<LoopCapsuleTarget>> loop_capsules =
+			la.loop_capsules;
 
 		// Perform fixed point flow analysis
 		while (!changedUnits.isEmpty()) {
-			AliasingGraph previousAfterFlow = newInitialFlow();
-
-			AliasingGraph beforeFlow;
-			AliasingGraph afterFlow;
-
 			//get the first object
 			JCTree s = changedUnits.iterator().next();
 			changedUnits.remove(s);
-			previousAfterFlow.init(graphAfterFlow.get(s));
+
+			AliasingGraph previousAfterFlow =
+				new AliasingGraph(graphAfterFlow.get(s));
 
 			List<JCTree> preds = s.predecessors;
-
-			beforeFlow = graphBeforeFlow.get(s);
+			AliasingGraph beforeFlow = graphBeforeFlow.get(s);
 
 			if (preds.size() > 0) { // copy
 				for (JCTree sPred : preds) {
 					AliasingGraph otherBranchFlow = graphAfterFlow.get(sPred);
-					mergeInto(beforeFlow, otherBranchFlow);
+					beforeFlow.union(otherBranchFlow);
+				}
+			}
+
+			for (JCTree forloop : loop_capsules.keySet()) {
+				JCForLoop jcf = (JCForLoop)forloop;
+				if (AnalysisUtil.forloopsuccessors(jcf).contains(s)) {
+					HashSet<ForallAliasing> hs = beforeFlow.forall_alias;
+
+					for (LoopCapsuleTarget lct : loop_capsules.get(forloop)) {
+						hs.add(new ForallAliasing(make.Literal(TypeTags.INT, 0),
+								jcf.cond, make.Literal(TypeTags.INT, 1),
+								lct.target.indexed, lct.capsule_instance,
+								lct.capsule_meth, lct.pos, lct.line));
+					}
 				}
 			}
 
 			// Compute afterFlow and store it.
-			afterFlow = graphAfterFlow.get(s);
+			AliasingGraph afterFlow = graphAfterFlow.get(s);
 			// set aliasingInfo before calling
 			flowThrough(beforeFlow, s, afterFlow);
 			if (!afterFlow.equals(previousAfterFlow)) {
@@ -366,12 +381,10 @@ public class AliasingIntra {
 		}
 	}
 
-	private AliasingGraph newInitialFlow() { return new AliasingGraph(); }
-
 	private AliasingGraph entryInitialFlow() {
 		AliasingGraph entry = new AliasingGraph(true);
 		int i = 1;
-		for (JCVariableDecl jcv : current_analyzing_meth.params) {
+		for (JCVariableDecl jcv : curr_meth.params) {
 			VarSymbol sym = jcv.sym;
 			entry.assignParamToLocal(sym, i);
 			i++;

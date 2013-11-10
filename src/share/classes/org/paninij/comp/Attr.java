@@ -206,7 +206,7 @@ public final class Attr extends CapsuleInternal {
 	public final void postVisitMethodDef(JCMethodDecl tree,
 			Env<AttrContext> env, Resolve rs) {
 		if (tree.body != null) {
-			tree.accept(new ASTCFGBuilder());
+			tree.accept(new ASTCFGBuilder(make));
 		}
 
 		MethodSymbol ms = tree.sym;

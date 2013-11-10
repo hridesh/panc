@@ -5,6 +5,7 @@ import java.util.*;
 import javax.lang.model.element.ElementKind;
 
 import org.paninij.analysis.AnalysisUtil;
+import org.paninij.effects.LoopSynchronize.CollectedCall;
 import org.paninij.path.*;
 
 import com.sun.tools.javac.code.*;
@@ -42,6 +43,7 @@ public class EffectIntra {
 	private final void flowThrough(JCTree tree, AliasingGraph aliasing,
 							   EffectSet inValue, EffectSet out) {
 		out.init(inValue);
+
 		// if (out.isBottom) { return; }
 
 		if (tree instanceof JCMethodInvocation) { /////////// Calls
@@ -75,7 +77,7 @@ public class EffectIntra {
 			if (expr != null &&
 					!(expr instanceof JCNewClass) &&
 					!(expr instanceof JCNewArray) &&
-					!aliasing.isReceiverNew(expr)) {
+					!aliasing.isReceiverNew(expr, true)) {
 				returnNewObject = false;
 			}
 		} else if (tree instanceof JCCatch || tree instanceof JCBinary ||
@@ -112,7 +114,7 @@ public class EffectIntra {
 			AliasingGraph aliasing, EffectSet out) {
 		leftOp = AnalysisUtil.getEssentialExpr(leftOp);
 
-		if (leftOp instanceof JCIdent) {/////////// v=...
+		if (leftOp instanceof JCIdent) { /////////// v=...
 			addIdentEffect((JCIdent)leftOp, out, 1);
 		} else if (leftOp instanceof JCFieldAccess) {  // X.f = ..., ///////////
 			addFieldAccessEffect((JCFieldAccess)leftOp, aliasing, out, 1);
@@ -139,7 +141,7 @@ public class EffectIntra {
 	public static void addArrayAccessEffect(JCExpression indexed,
 			JCExpression index, AliasingGraph aliasing, int readOrWrite,
 	        EffectSet result) {
-		if (!aliasing.isReceiverNew(indexed)) {
+		if (!aliasing.isReceiverNew(indexed, true)) {
 			Path p = aliasing.createPathForExp(indexed);
 
 			Type type = indexed.type;
@@ -159,9 +161,9 @@ public class EffectIntra {
 				JCExpression selected = jcf.selected;
 				selected = AnalysisUtil.getEssentialExpr(selected);
 
-				if (!aliasing.isReceiverNew(selected)) {
+				if (!aliasing.isReceiverNew(selected, true)) {
 					Path p = aliasing.createPathForExp(selected);
-	
+
 					if (readOrWrite == 0) {
 						result.read.add(new FieldEffect(p, sym));
 					} else {
@@ -212,9 +214,6 @@ public class EffectIntra {
 		}
 	}
 
-	private EffectSet newInitialFlow() { return new EffectSet(); }
-	private EffectSet entryInitialFlow() { return new EffectSet(true); }
-
 	public EffectSet doAnalysis(List<JCTree> endNodes) {
 		JCTree head = order.get(0);
 		TreeSet<JCTree> changedUnits = AnalysisUtil.constructWorklist(order);
@@ -225,26 +224,32 @@ public class EffectIntra {
 		for (JCTree node : order) {
 			changedUnits.add(node);
 			resultNodes.add(node);
-			effectBeforeFlow.put(node, newInitialFlow());
-			effectAfterFlow.put(node, newInitialFlow());
+			effectBeforeFlow.put(node, new EffectSet());
+			effectAfterFlow.put(node, new EffectSet());
 		}
 
 		if (head != null) {
-			effectBeforeFlow.put(head, entryInitialFlow());
-			effectAfterFlow.put(head, newInitialFlow());
+			effectBeforeFlow.put(head, new EffectSet(true));
+			effectAfterFlow.put(head, new EffectSet());
 		}
+
+		LoopSynchronize la = new LoopSynchronize(aliasing);
+		curr_meth.body.accept(la);
+		HashMap<JCTree, HashSet<CollectedCall>> loop_collect = la.loop_collect;
+
+		LoopCapCall lcc = new LoopCapCall();
+		curr_meth.body.accept(lcc);
+		HashMap<JCTree, HashSet<Integer>> loop_call = lcc.non_recursive;
+
+		HashMap<JCTree, LoopEffect> le = new HashMap<JCTree, LoopEffect>();
 
 		// Perform fixed point flow analysis
 		while (!changedUnits.isEmpty()) {
-			EffectSet previousAfterFlow = newInitialFlow();
-
-			EffectSet afterFlow;
-	
 			//get the first object
 			JCTree s = changedUnits.iterator().next();
 			changedUnits.remove(s);
-			// previousAfterFlow = new EffectSet(effectAfterFlow.get(s));
-			previousAfterFlow.init(effectAfterFlow.get(s));
+
+			EffectSet previousAfterFlow = new EffectSet(effectAfterFlow.get(s));
 
 			// Compute and store beforeFlow
 			List<JCTree> preds = s.predecessors;
@@ -253,20 +258,102 @@ public class EffectIntra {
 			if (preds.size() > 0) { // copy
 				for (JCTree sPred : preds) {
 					EffectSet otherBranchFlow = effectAfterFlow.get(sPred);
-					// mergeInto(beforeFlow, otherBranchFlow);
 					beforeFlow.union(otherBranchFlow);
 				}
 			}
 
+			for (JCTree forloop : loop_collect.keySet()) {
+				JCForLoop jcf = (JCForLoop)forloop;
+				if (AnalysisUtil.forloopsuccessors(jcf).contains(s)) {
+					// call effects that are still alive
+					HashSet<CallEffect> alive = beforeFlow.alive;
+					// call effects that are collected
+					HashSet<CallEffect> collected = beforeFlow.collected;
+
+					for (CollectedCall lct : loop_collect.get(jcf)) {
+						HashSet<CallEffect> toberemoved =
+							new HashSet<CallEffect>();
+						for (CallEffect ce : alive) {
+							if (ce.pos() == lct.pos) {
+								toberemoved.add(ce);
+							}
+						}
+
+						collected.addAll(toberemoved);
+						alive.removeAll(toberemoved);
+					}
+				}
+			}
+
+			for (JCTree forloop : loop_call.keySet()) {
+				JCForLoop jcf = (JCForLoop)forloop;
+				if (jcf.startNodes.contains(s)) {
+					le.put(jcf, new LoopEffect(beforeFlow.alive,
+							beforeFlow.collected, direct, indirect));
+				}
+			}
+
 			// Compute afterFlow and store it.
-			afterFlow = effectAfterFlow.get(s);
+			EffectSet afterFlow = effectAfterFlow.get(s);
 
 			flowThrough(s, aliasing.get(s), beforeFlow, afterFlow);
 
+			for (JCTree forloop : loop_call.keySet()) {
+				JCForLoop jcf = (JCForLoop)forloop;
+				if (AnalysisUtil.forloopsuccessors(jcf).contains(s)) {
+					HashSet<Integer> calls = loop_call.get(jcf);
+					LoopEffect loopeffect = le.get(jcf);
+
+					HashSet<BiCall> tbr = new HashSet<BiCall>();
+					HashSet<BiCall> tba = new HashSet<BiCall>();
+					for (BiCall bc : direct) {
+						CallEffect ce1 = bc.ce1;
+						CallEffect ce2 = bc.ce2;
+
+						if (ce1.equals(ce2) && calls.contains(ce1.pos())) {
+							if (!loopeffect.alive.contains(ce1)) {
+								tbr.add(bc);
+								BiCall bc1 = new BiCall(bc.ce1, bc.ce2);
+								bc1.notsameindex = true;
+								tba.add(bc1);
+							}
+						}
+					}
+					direct.removeAll(tbr);
+					direct.addAll(tba);
+					tbr.clear();
+					tba.clear();
+					for (BiCall bc : indirect) {
+						CallEffect ce1 = bc.ce1;
+						CallEffect ce2 = bc.ce2;
+
+						if (ce1.equals(ce2) && calls.contains(ce1.pos())) {
+							if (!loopeffect.collected.contains(ce1)) {
+								tbr.add(bc);
+								BiCall bc1 = new BiCall(bc.ce1, bc.ce2);
+								bc1.notsameindex = true;
+								tba.add(bc1);
+							}
+						}
+					}
+					indirect.removeAll(tbr);
+					indirect.addAll(tba);
+				}
+			}
+
 			afterFlow.compress();
 
-			if (!afterFlow.continue_Analyzing(previousAfterFlow)) {
-				changedUnits.addAll(s.successors);
+			if (!afterFlow.continue_Analyzing(previousAfterFlow) /*&&
+					!afterFlow.continue_Analyzing(beforeFlow)*/) {
+				/*if (afterFlow.continue_Analyzing(beforeFlow)) {*/
+					changedUnits.addAll(s.successors);
+				/*} else  {
+					for (JCTree successor : s.successors) {
+						if (successor.predecessors.size() > 1) {
+							changedUnits.add(successor);
+						}
+					}
+				}*/
 			}
 		}
 
@@ -279,6 +366,36 @@ public class EffectIntra {
 		}
 		resultEffect.compress();
 		resultEffect.returnNewObject = returnNewObject;
+
+		for (JCTree forloop : loop_call.keySet()) {
+			JCForLoop jcf = (JCForLoop)forloop;
+			if (AnalysisUtil.forloopsuccessors(jcf).isEmpty()) {
+				HashSet<Integer> calls = loop_call.get(jcf);
+				LoopEffect loopeffect = le.get(jcf);
+
+				for (BiCall bc : direct) {
+					CallEffect ce1 = bc.ce1;
+					CallEffect ce2 = bc.ce2;
+
+					if (ce1.equals(ce2) && calls.contains(ce1.pos())) {
+						if (!loopeffect.alive.contains(ce1)) {
+							bc.notsameindex = true;
+						}
+					}
+				}
+				for (BiCall bc : indirect) {
+					CallEffect ce1 = bc.ce1;
+					CallEffect ce2 = bc.ce2;
+
+					if (ce1.equals(ce2) && calls.contains(ce1.pos())) {
+						if (!loopeffect.collected.contains(ce1)) {
+							bc.notsameindex = true;
+						}
+					}
+				}
+			}
+		}
+
 		resultEffect.direct = direct;
 		resultEffect.indirect = indirect;
 
@@ -298,7 +415,27 @@ public class EffectIntra {
 	            return -1;
 	        } else {
 	            return 1;
-	        } // returning 0 would merge keys
+	        }
 	    }
+	}
+
+	public static class LoopEffect {
+		// Record call effects that are still alive
+		public final HashSet<CallEffect> alive;
+		// Record call effects that are collected
+		public final HashSet<CallEffect> collected;
+		// Record the direct before the loop.
+		public final HashSet<BiCall> direct;
+		// Record the indirect before the loop.
+		public final HashSet<BiCall> indirect;
+
+		public LoopEffect(HashSet<CallEffect> alive,
+				HashSet<CallEffect> collected, HashSet<BiCall> direct,
+				HashSet<BiCall> indirect) {
+			this.alive = new HashSet<CallEffect>(alive);
+			this.collected = new HashSet<CallEffect>(collected);
+			this.direct = new HashSet<BiCall>(direct);
+			this.indirect = new HashSet<BiCall>(indirect);
+		}
 	}
 }

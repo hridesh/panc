@@ -17,7 +17,6 @@ public class ForeachEffect implements CallEffect {
 	public final int col;
 	// the file of this call
 	public final String fileName;
-	
 
 	public ForeachEffect(ClassSymbol caller, Symbol callee,
 			MethodSymbol meth, int pos, int line, int col, String fileName) {
@@ -32,7 +31,7 @@ public class ForeachEffect implements CallEffect {
 
 	public void printEffect() {
 		System.out.println("ForeachEffect caller = " + caller + "\tcallee = " +
-				callee + "\tmethod = " + meth + "\tline = " + line + "\t" + pos
+				callee + "\tmethod = " + meth + "\tline = " + line + "\tpos = "
 				+ pos);
 	}
 

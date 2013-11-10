@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.TreeSet;
 
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.type.TypeKind;
 
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
@@ -148,5 +149,42 @@ public class AnalysisUtil {
 		String type_string = type.toString();
 		return type_string.compareTo("java.lang.String") == 0 ||
 			type_string.compareTo("java.math.BigDecimal") == 0;
+	}
+
+	// Get the successors of the input for loop.
+	public static final HashSet<JCTree> forloopsuccessors(JCForLoop forloop) {
+		HashSet<JCTree> result = new HashSet<JCTree>();
+		for (JCTree end : forloop.endNodes) {
+			for (JCTree next : end.successors) {
+				if (!forloop.body.startNodes.contains(next)) {
+					result.add(next);
+				}
+			}
+		}
+		return result;
+	}
+
+	public static final void add_loop_index(JCForLoop jcf,
+			HashSet<Symbol> vars) {
+		for (JCStatement stmt : jcf.init) {
+        	if (stmt instanceof JCVariableDecl) {
+        		vars.add(((JCVariableDecl)stmt).sym);
+        	} else if (stmt instanceof JCExpressionStatement) {
+        		JCExpressionStatement jces = (JCExpressionStatement) stmt;
+        		JCExpression expr =
+        			AnalysisUtil.getEssentialExpr(jces.expr);
+        		if (expr instanceof JCAssign) {
+        			JCExpression lhs =
+        				AnalysisUtil.getEssentialExpr(((JCAssign)expr).lhs);
+        			if (lhs instanceof JCIdent) {
+        				vars.add(((JCIdent)lhs).sym);
+        			}
+        		}
+        	}
+        }
+	}
+
+	public static final boolean int_type(Type type) {
+		return type.getKind() == TypeKind.INT;
 	}
 }

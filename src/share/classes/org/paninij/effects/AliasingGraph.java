@@ -13,6 +13,8 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
 
 public class AliasingGraph {
+	public HashSet<ForallAliasing> forall_alias;
+
 	// path that points to a new node.
 	public HashMap<Path, Type> pathsToNewNode;
 
@@ -70,6 +72,13 @@ public class AliasingGraph {
 			}
 			result += "}";
 		}
+
+		if (!forall_alias.isEmpty()) {
+			for (ForallAliasing fa : forall_alias) {
+				result += fa.printString() + "\t";
+			}
+		}
+
 		result += "}\n";
 		return result;
 	}
@@ -81,6 +90,7 @@ public class AliasingGraph {
 		writtenLocals = new HashSet<Symbol>();
 		unanalyzable = false;
 		aliasingPaths = new HashSet<HashSet<Path>>();
+		forall_alias = new HashSet<ForallAliasing>();
 	}
 
 	public AliasingGraph(boolean b) {
@@ -95,6 +105,7 @@ public class AliasingGraph {
 		writtenLocals = new HashSet<Symbol>(x.writtenLocals);
 		unanalyzable = x.unanalyzable;
 		aliasingPaths = new HashSet<HashSet<Path>>(x.aliasingPaths);
+		forall_alias = new HashSet<ForallAliasing>(x.forall_alias);
 		if (x.isInit) { isInit = true; }
 	}
 
@@ -105,13 +116,14 @@ public class AliasingGraph {
 		writtenLocals = new HashSet<Symbol>(x.writtenLocals);
 		unanalyzable = x.unanalyzable;
 		aliasingPaths = new HashSet<HashSet<Path>>(x.aliasingPaths);
+		forall_alias = new HashSet<ForallAliasing>(x.forall_alias);
 		if (x.isInit) { isInit = true; }
 	}
 
 	public int hashCode() {
 		return pathsToNewNode.hashCode() + writtenFields.hashCode() +
 		writtenLocals.hashCode() + aliasingPaths.hashCode() +
-		pathsToCap.hashCode();
+		pathsToCap.hashCode() + forall_alias.hashCode();
 	}
 
 	public boolean equals(Object o) {
@@ -125,34 +137,38 @@ public class AliasingGraph {
 				unanalyzable == g.unanalyzable &&
 				writtenLocals.equals(g.writtenLocals) &&
 				aliasingPaths.equals(g.aliasingPaths) &&
-				pathsToCap.equals(g.pathsToCap);
+				pathsToCap.equals(g.pathsToCap) &&
+				forall_alias.equals(g.forall_alias);
 			}
 			return false;
 		}
 		throw new Error("should not compare other object = " + o.getClass());
 	}
 
-	public final boolean isPathNew (Path path) {
-		if (path instanceof Path_Parameter) {
-			Path_Parameter pp = (Path_Parameter)path;
-			if (pp.id != 0) {
-				return true;
-			}
-		}
+	// confinement indicates whether this algorithm has confinement assumption.
+	public final boolean isPathNew (Path path, boolean confinement) {
 		Path temp = path;
-		while (temp instanceof Path_Compound) {
-			Path_Compound pc = (Path_Compound)temp;
-			temp = pc.base;
-			if (temp instanceof Path_Parameter) {
-				Path_Parameter pp = (Path_Parameter)temp;
-				if (pp.id != 0) {
-					return true;
-				}
+
+		if (confinement) {
+			if (path instanceof Path_Parameter) {
+				Path_Parameter pp = (Path_Parameter)path;
+				if (pp.id != 0) { return true; }
 			}
+
+			while (temp instanceof Path_Compound) {
+				Path_Compound pc = (Path_Compound)temp;
+				temp = pc.base;
+				if (temp instanceof Path_Parameter) {
+					Path_Parameter pp = (Path_Parameter)temp;
+					if (pp.id != 0) {
+						return true;
+					}
+				}
+			}	
 		}
-		if (pathsToNewNode.containsKey(path)) {
-			return true;
-		}
+
+		if (pathsToNewNode.containsKey(path)) { return true; }
+
 		return false;
 	}
 
@@ -172,10 +188,25 @@ public class AliasingGraph {
 			}
 		}
 
+		if (tree instanceof JCArrayAccess) {
+			JCArrayAccess jcaa = (JCArrayAccess)tree;
+			JCExpression indexed = AnalysisUtil.getEssentialExpr(jcaa.indexed);
+			if (indexed instanceof JCIdent) {
+				JCIdent jr = (JCIdent)indexed;
+				Symbol sr = jr.sym;
+				ElementKind kind = sr.getKind();
+				if (kind == ElementKind.LOCAL_VARIABLE ||
+						kind == ElementKind.PARAMETER) {
+					return pathsToCap.get(new Path_Var(sr, false));
+				}
+			}
+		}
+
 		return null;
 	}
 
-	public final boolean isReceiverNew (JCTree tree) {
+	// confinement indicates whether this algorithm has confinement assumption.
+	public final boolean isReceiverNew (JCTree tree, boolean confinement) {
 		if (tree instanceof JCExpression) {
 			JCExpression jce = (JCExpression)tree;
 			tree = AnalysisUtil.getEssentialExpr(jce);
@@ -183,7 +214,7 @@ public class AliasingGraph {
 
 		Path path = createPathForExp((JCExpression)tree);
 
-		return isPathNew(path);
+		return isPathNew(path, confinement);
 	}
 
 	public final Symbol aliasingState (JCTree tree) {
@@ -337,6 +368,8 @@ public class AliasingGraph {
 				if (unanalyzable || arg.unanalyzable) {
 					processUnalyzableAffectedPahts();
 				}
+
+				forall_alias.retainAll(arg.forall_alias);
 			} else {
 				isInit = true;
 
@@ -349,6 +382,8 @@ public class AliasingGraph {
 
 				// for alias
 				aliasingPaths = new HashSet<HashSet<Path>>(arg.aliasingPaths);
+
+				forall_alias = new HashSet<ForallAliasing>(arg.forall_alias);
 			}
 		}
 	}
@@ -391,6 +426,15 @@ public class AliasingGraph {
 				pathsToNewNode.containsKey(path_right)), path_right);
 	}
 
+	// left = parameter
+	public void parameterAssignment(Symbol left, Symbol right) {
+		removeLocal(left);
+
+		Path path_right = new Path_Var(right, false);
+		addAlias(aliasingPaths, path_right, new Path_Var(left,
+				pathsToNewNode.containsKey(path_right)));
+	}
+
 	// left = this
 	public void localThisAssignment(Symbol left) {
 		removeLocal(left);
@@ -399,7 +443,7 @@ public class AliasingGraph {
 				new Path_Var(left, false), new Path_Parameter(null, 0));
 	}
 
-	// left = right, where right == v.f;	
+	// left = right, where right == v.f;
 	public void assignFieldToLocal(Symbol left, JCFieldAccess right) {
 		assignPathToLocalCommon(left, createPathForField(right));
 	}

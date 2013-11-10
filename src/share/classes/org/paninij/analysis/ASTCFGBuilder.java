@@ -33,12 +33,17 @@ import org.paninij.effects.EffectInter;
 
 public class ASTCFGBuilder extends TreeScanner {
 	private int id = 0;
-	private ArrayList<JCTree> currentStartNodes, currentEndNodes, currentExitNodes;
+	private ArrayList<JCTree> currentStartNodes;
+	private ArrayList<JCTree> currentEndNodes;
+	private ArrayList<JCTree> currentExitNodes;
 	private static ArrayList<JCTree> emptyList = new ArrayList<JCTree>(0);
 
 	private EffectInter effectsBuilder;
-	public ASTCFGBuilder() {
+	private TreeMaker make;
+
+	public ASTCFGBuilder(TreeMaker make) {
 		effectsBuilder = new EffectInter();
+		this.make = make;
 	}
 	
 	// methodCost
@@ -175,8 +180,7 @@ public class ASTCFGBuilder extends TreeScanner {
 				if (body != null && body.predecessors == null) {
 					body.accept(this);
 					tree.order = order;
-					effectsBuilder.analysis(tree, cs);
-
+					effectsBuilder.analysis(tree, cs, make);
 				}
 				tree.cost = methodCost;
 

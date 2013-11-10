@@ -18,6 +18,6 @@ public class IOEffect implements CallEffect {
 	public String effectToString() {
 		return "I";
 	}
-	
+
 	public int pos() { return -1; }
 }

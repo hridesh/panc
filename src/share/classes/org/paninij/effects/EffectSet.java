@@ -161,7 +161,7 @@ public class EffectSet {
 							}
 						}
 
-						collected.removeAll(alive);
+						// collected.removeAll(alive);
 						collected.addAll(cTemp);
 					// }
 				// }
@@ -186,13 +186,7 @@ public class EffectSet {
 
 	public void makeButtom() {
 		isBottom = true;
-		/*read.clear();
-		write.clear();
-		calls.clear();
-		writtenLocals.clear();
-		writtenFields.clear();
-		alive.clear();
-		collected.clear();*/
+
 		isWriteBottom = true;
 	}
 
@@ -220,13 +214,6 @@ public class EffectSet {
 	 * and write contains read. */
 	public void compress() {
 		if (isBottom) {
-			/* read.clear();
-			write.clear();
-			calls.clear();
-			writtenLocals.clear();
-			writtenFields.clear();
-			alive.clear();
-			collected.clear(); */
 			isWriteBottom = true;
 			// return;
 		}
@@ -297,7 +284,6 @@ public class EffectSet {
 		System.out.println("\tisInit = " + isInit);
 		if (isBottom) {
 			System.out.println("\tbuttom effect");
-			// return;
 		}
 
 		if (read.isEmpty() && write.isEmpty() && calls.isEmpty()) {
@@ -361,7 +347,7 @@ public class EffectSet {
 			System.out.println("\tdirect:");
 			for (BiCall rwe : direct) {
 				System.out.print("\t\t");
-				rwe.printCalls();
+				rwe.printCalls("\t\t");
 			}
 		}
 
@@ -371,7 +357,7 @@ public class EffectSet {
 			System.out.println("\tindirect:");
 			for (BiCall rwe : indirect) {
 				System.out.print("\t\t");
-				rwe.printCalls();
+				rwe.printCalls("\t\t");
 			}
 		}
 	}

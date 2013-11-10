@@ -13,6 +13,7 @@ import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.DiagnosticSource;
 import com.sun.tools.javac.util.List;
@@ -43,8 +44,7 @@ public class EffectInter {
 			} else {
 				if (args != null) {
 					JCExpression tree = args.get(baseIndex - 1);
-					return path.switchBaseWithPath(
-							ag.createPathForExp(tree));
+					return path.switchBaseWithPath(ag.createPathForExp(tree));
 				}
 				return Path_Unknown.unknow;
 			}
@@ -60,14 +60,14 @@ public class EffectInter {
 
 	private static final void addFieldEffect(AliasingGraph ag, Path p,
 			FieldEffect eff, HashSet<EffectEntry> result) {
-		if (!ag.isPathNew(p)) {
+		if (!ag.isPathNew(p, true)) {
 			result.add(eff);
 		}
 	}
 
 	private static void addArrayEffect(AliasingGraph ag, Path p,
 			ArrayEffect eff, HashSet<EffectEntry> result) {
-		if (!ag.isPathNew(p)) {
+		if (!ag.isPathNew(p, true)) {
 			result.add(eff);
 		}
 	}
@@ -224,7 +224,7 @@ public class EffectInter {
 
 									rs.calls.add(fe);
 									rs.alive.add(fe);
-									rs.collected.remove(fe);
+									// rs.collected.remove(fe);
 								}
 							}
 						}
@@ -251,7 +251,6 @@ public class EffectInter {
 					return true;
 				}
 			}
-
 			return foreallCall(selected, ag);
 		}
 		return false;
@@ -291,6 +290,7 @@ public class EffectInter {
 				if (cs != null) {
 					ArrayType at = (ArrayType)cs.type;
 					Symbol typeSym = at.elemtype.tsym;
+
 					// many capsule call.
 					if (typeSym.isCapsule()) {
 						DiagnosticSource ds =
@@ -408,7 +408,6 @@ public class EffectInter {
 		if (tree instanceof JCArrayAccess) {
 			JCArrayAccess jcaa = (JCArrayAccess)tree;
 			JCExpression indexed = AnalysisUtil.getEssentialExpr(jcaa.indexed);
-
 			Symbol caps = ag.aliasingState(indexed);
 			if (caps != null) {
 				ArrayType at = (ArrayType)caps.type;
@@ -494,7 +493,7 @@ public class EffectInter {
 				return;
 			}
 
-			if (ag.isReceiverNew(selected)) { return; }
+			if (ag.isReceiverNew(selected, true)) { return; }
 
 			Symbol fld = ag.aliasingState(selected);
 			if (fld != null) {
@@ -570,7 +569,7 @@ public class EffectInter {
 				if (fld != null) {
 					ArrayType at = (ArrayType)fld.type;
 					Symbol typeSym = at.elemtype.tsym;
-					// many capsule call.
+					// many capsule calls.
 					if (typeSym.isCapsule()) {
 						DiagnosticSource ds =
 							new DiagnosticSource(curr_cap.sourcefile, null);
@@ -664,7 +663,7 @@ public class EffectInter {
 	} // end of intraProcessMethodCall
 
 	// This method should be called only when jcmd is non-null
-	public void analysis(JCMethodDecl jcmd, ClassSymbol cap) {
+	public void analysis(JCMethodDecl jcmd, ClassSymbol cap, TreeMaker make) {
 		curr_meth = jcmd;
 		JCBlock body = jcmd.body;
 		curr_cap = cap;
@@ -678,12 +677,12 @@ public class EffectInter {
 			for (JCTree tree : body.exitNodes) {
 				exists.add(tree);
 			}
+
 			// Aliasing analysis
-			AliasingIntra dai = new AliasingIntra(curr_cap, jcmd);
-			dai.analyze(jcmd.order, exists);
+			AliasingIntra dai = new AliasingIntra(curr_cap, jcmd, make);
+			dai.analyze(jcmd.order, exists, curr_cap.sourcefile);
 
 			HashMap<JCTree, AliasingGraph> beforeFlow = dai.graphBeforeFlow;
-
 			// Doing the actual intra effect analsyis.
 			EffectIntra fcIntra =
 				new EffectIntra(this, curr_meth, jcmd.order, beforeFlow);
@@ -692,9 +691,9 @@ public class EffectInter {
 			EffectSet newResult = fcIntra.doAnalysis(ends);
 			newResult.compress();
 
-			// If the effect does not change, no need to put the methods
-			// that depend on the current method back to the queue for
-			// further analysis. Reaching a fix point.
+			// If the effect does not change, no need to put the methods that
+			// depend on the current method back to the queue for further
+			// analysis. Reaching a fix point.
 			if ((oldResult == null) || (!newResult.equals(oldResult))) {
 				MethodSymbol meth = jcmd.sym;
 				meth.effect = newResult;
@@ -716,7 +715,7 @@ public class EffectInter {
 					for (MethodSymbol s : callers) {
 						// if (!s.effect.isBottom) {
 							EffectInter ei = new EffectInter();
-							ei.analysis(s.tree, cap);
+							ei.analysis(s.tree, cap, make);
 						// }
 					}
 				}
