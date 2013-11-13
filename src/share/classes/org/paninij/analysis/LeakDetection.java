@@ -378,21 +378,29 @@ public class LeakDetection {
 		} else if (curr instanceof JCAssign) {
 			JCAssign jca = (JCAssign)curr;
 			JCExpression lhs = AnalysisUtil.getEssentialExpr(jca.lhs);
+			JCExpression rhs = AnalysisUtil.getEssentialExpr(jca.rhs);
 			if (lhs instanceof JCIdent) {
 				JCIdent jci = (JCIdent)lhs;
 				if (preLeak.contains(jci.sym)) {
-					warningCandidates(jca.rhs, preLeak, warnLeakingVar);
+					warningCandidates(rhs, preLeak, warnLeakingVar);
 				}
 			} else if (lhs instanceof JCFieldAccess) {
 				JCFieldAccess jcf = (JCFieldAccess)lhs;
 
 				if (AnalysisUtil.isVarThis(jcf.selected)) {
 					if (preLeak.contains(jcf.sym)) {
-						warningCandidates(jca.rhs, preLeak, warnLeakingVar);
+						warningCandidates(rhs, preLeak, warnLeakingVar);
 					}
-				} else { warningCandidates(jca.rhs, preLeak, warnLeakingVar); }
+				} else { warningCandidates(rhs, preLeak, warnLeakingVar); }
 			} else {
-				warningCandidates(jca.rhs, preLeak, warnLeakingVar);
+				warningCandidates(rhs, preLeak, warnLeakingVar);
+			}
+
+			if (rhs instanceof JCIdent) {
+				JCIdent jci = (JCIdent)rhs;
+				if (preLeak.contains(jci.sym)) {
+					warningCandidates(lhs, preLeak, warnLeakingVar);
+				}
 			}
 		} else if (curr instanceof JCNewClass) {
 			warningList(((JCNewClass)curr).args, preLeak, warnLeakingVar);
@@ -491,9 +499,18 @@ public class LeakDetection {
 				warning((JCIdent) tree, output, true, warnLeakingVar);
 			} else if (tree instanceof JCFieldAccess) {
 				warnJCFieldAccess(tree, output, true);
+			} else if (tree instanceof JCArrayAccess) {
+				if (!tree.type.isPrimitive()) {
+					JCArrayAccess jcaa = (JCArrayAccess)tree;
+					JCExpression indexed =
+						AnalysisUtil.getEssentialExpr(jcaa.indexed);
+					warningCandidates(indexed, output, warnLeakingVar);
+				}
 			} else if (tree instanceof JCNewClass) {
-				new LeakExpressions(output,
-						warnLeakingVar).scan(((JCNewClass) tree).def);
+				JCNewClass new_class = (JCNewClass) tree;
+				new LeakExpressions(output, warnLeakingVar).scan(new_class.def);
+
+				warningList(new_class.args, output, warnLeakingVar);
 			}
 		}
 	}
