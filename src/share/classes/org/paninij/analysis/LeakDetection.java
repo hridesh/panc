@@ -1,3 +1,22 @@
+/*
+ * This file is part of the Panini project at Iowa State University.
+ *
+ * The contents of this file are subject to the Mozilla Public License
+ * Version 1.1 (the "License"); you may not use this file except in
+ * compliance with the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
+ * For more details and the latest version of this code please see
+ * http://paninij.org
+ *
+ * Contributor(s): Yuheng Long
+ */
+
 package org.paninij.analysis;
 
 import java.util.HashMap;
@@ -26,6 +45,9 @@ public class LeakDetection {
 	private JCCapsuleDecl capsule;
 	private JCMethodDecl curr;
 	private InnerClassCapsuleAliasDetector icca;
+
+	private HashMap<Symbol, HashSet<JCTree>> all_nodes =
+		new HashMap<Symbol, HashSet<JCTree>>();
 
 	// the intermediate result from the intra procedural analysis.
 	private HashMap<JCTree, TreeWrapper> backwardMap =
@@ -85,9 +107,7 @@ public class LeakDetection {
 				}
 			}
 		}
-/*if (analyzingphase) {
-	return;
-}*/
+
 		// output warnings
 		analyzingphase = false;
 		for (JCTree jct : defs) {
@@ -119,6 +139,18 @@ public class LeakDetection {
 				forwardMap.put(tree, temp);
 			}
 			queue.add(temp);
+		}
+
+		HashSet<JCTree> nodes = all_nodes.get(meth.sym);
+		if (analyzingphase) {
+			if (nodes != null) {
+				for (JCTree node : nodes) {
+					TreeWrapper temp = new TreeWrapper(node);		
+					forwardMap.put(node, temp);
+
+					queue.add(temp);
+				}
+			}
 		}
 
 		HashSet<JCTree> processed = new HashSet<JCTree>();
@@ -169,7 +201,8 @@ public class LeakDetection {
 		}
 	}
 
-	public HashSet<Symbol> backwardsintra(JCCapsuleDecl capsule, JCMethodDecl meth) {
+	public HashSet<Symbol> backwardsintra(JCCapsuleDecl capsule,
+			JCMethodDecl meth) {
 		curr = meth;
 		defs = capsule.defs;
 
@@ -193,6 +226,18 @@ public class LeakDetection {
 			queue.add(temp);
 		}
 
+		HashSet<JCTree> nodes = all_nodes.get(meth.sym);
+		if (analyzingphase) {
+			if (nodes != null) {
+				for (JCTree node : nodes) {
+					TreeWrapper temp = new TreeWrapper(node);		
+					backwardMap.put(node, temp);
+
+					queue.add(temp);
+				}
+			}
+		}
+
 		HashSet<JCTree> processed = new HashSet<JCTree>();
 
 		while (!queue.isEmpty()) {
@@ -200,10 +245,11 @@ public class LeakDetection {
 			queue.remove(w);
 			JCTree curr = w.tree;
 
-			if (!analyzingphase) {
-				if (processed.contains(curr)) { continue; }
-				processed.add(curr);
+			if (!analyzingphase && processed.contains(curr)) {
+				continue;
 			}
+
+			processed.add(curr);
 
 			HashSet<Symbol> preLeak = new HashSet<Symbol>();
 			for (JCTree succ : curr.successors) {
@@ -240,10 +286,17 @@ public class LeakDetection {
 			}
 		}
 
+		if (nodes == null) {
+			nodes = processed;
+			all_nodes.put(meth.sym, processed);
+		}
+
 		HashSet<Symbol> intraResult = new HashSet<Symbol>();
 		for (JCTree jct : backwardMap.keySet()) {
-			TreeWrapper jw = backwardMap.get(jct);
-			intraResult.addAll(jw.leakVar);
+			if (nodes.contains(jct)) {
+				TreeWrapper jw = backwardMap.get(jct);
+				intraResult.addAll(jw.leakVar);
+			}
 		}
 
 		return intraResult;
@@ -252,8 +305,12 @@ public class LeakDetection {
 	private void forwardVisitTree(JCTree curr, HashSet<Symbol> preLeak,
 			JCMethodDecl meth) {
 		if (curr instanceof JCIdent) { // T var = init;
-			if (preLeak.contains(((JCIdent) curr).sym)) {
-				warning((JCIdent)curr, preLeak, true, true);
+			JCIdent jci = (JCIdent) curr;
+			Symbol sym = jci.sym;
+			if (preLeak.contains(sym)) {
+				if (sym.getKind() != ElementKind.FIELD) {
+					warning((JCIdent)curr, preLeak, true, true);
+				}
 			}
 		} else if (curr instanceof JCMethodInvocation) {
 			JCMethodInvocation jcmi = (JCMethodInvocation)curr;
@@ -332,8 +389,8 @@ public class LeakDetection {
 				JCIdent jci = (JCIdent) currMeth;
 				innerCall = true;
 				AnalysisUtil.addCallEdge(meth.sym, jci.sym, reversed);
-
 				HashSet<Symbol> leaks = result.get(jci.sym);
+
 				if (leaks != null) {
 					for (Symbol s : leaks) {
 						if (s != null) {
@@ -374,7 +431,9 @@ public class LeakDetection {
 
 			// If this is inter procedural capsule call, all the parameters
 			// will be leaked.
-			if (!innerCall) { warningList(jcmi.args, preLeak, warnLeakingVar); }
+			if (!innerCall) {
+				warningList(jcmi.args, preLeak, warnLeakingVar);
+			}
 		} else if (curr instanceof JCAssign) {
 			JCAssign jca = (JCAssign)curr;
 			JCExpression lhs = AnalysisUtil.getEssentialExpr(jca.lhs);
@@ -464,24 +523,16 @@ public class LeakDetection {
 
 	private void addWarnings(String meth_string, JCTree tree, Symbol sym,
 			Symbol capSym) {
-		boolean found = false;
-		String warningStr = tree.pos() +
+		String warningStr = tree.getPreferredPosition() +
 			"confinement.violation" + sym +
 			AnalysisUtil.rmDollar(capSym.toString()) +
 			AnalysisUtil.rmDollar(meth_string);
 
-		for (String warning : warnings) {
-			if (warning.compareTo(warningStr) == 0) {
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
+		if (!warnings.contains(warningStr)) {
 			warnings.add(warningStr);
 
 			log.useSource (sym.outermostClass().sourcefile);
-			log.warning(tree.pos(), "confinement.violation",
-					sym,
+			log.warning(tree.pos(), "confinement.violation", sym,
 					AnalysisUtil.rmDollar(capSym.toString()),
 					AnalysisUtil.rmDollar(meth_string));
 		}
