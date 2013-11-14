@@ -69,21 +69,23 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 		}
 
 		HashSet<BiCall> direct = es.direct;
-		boolean existReverse = false;
+		// boolean existReverse = false;
 		for (BiCall bc : direct) {
 			CallEffect ce1 = bc.ce1;
 			CallEffect ce2 = bc.ce2;
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				warnings.add(new BiRoute(er1, er2));
+				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
+					warnings.add(new BiRoute(er1, er2));
+				}
 				return;
-			} else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
+			} /*else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
 				// return;
 				existReverse = true;
-			}
+			}*/
 		}
-		if (existReverse) { return; }
+		// if (existReverse) { return; }
 		HashSet<BiCall> indirect = es.indirect;
 		for (BiCall bc : indirect) {
 			CallEffect ce1 = bc.ce1;
@@ -91,7 +93,9 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				check(r1, 1, er1, er2);
+				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
+					check(r1, 1, er1, er2);
+				}
 				return;
 			}
 		}

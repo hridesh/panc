@@ -78,6 +78,14 @@ public abstract class SeqConstCheckAlgorithm {
 	    // Do not report counts total warnings for release.
 	    // Reenable for benchmarking/testing for papers.
 	    // System.out.println(name + " warnings = " + warnings.size());
+		/*final int warningsCount = warnings.size();
+	    if (warningsCount > 0) {
+	        log.warning("deterministic.inconsistency.warning.count",
+	        		warnings.size());
+	        for (BiRoute r : warnings) {
+	            warnSeqInconsistency(r.r1, r.r2);
+	        }
+	    }*/
 	}
 
 	protected void reportTrimmedWarnings(HashSet<BiRoute> warnings) {

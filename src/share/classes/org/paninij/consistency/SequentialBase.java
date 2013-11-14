@@ -77,8 +77,10 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				warnings.add(new BiRoute(er1, er2));
-				return;
+				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
+					warnings.add(new BiRoute(er1, er2));
+					return;
+				}
 			}
 		}
 	}

@@ -102,21 +102,23 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 		}
 
 		HashSet<BiCall> direct = es.direct;
-		boolean existReverse = false;
+		// boolean existReverse = false;
 		for (BiCall bc : direct) {
 			CallEffect ce1 = bc.ce1;
 			CallEffect ce2 = bc.ce2;
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				check(r1, 1, r2, 1, er1, er2);
+				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
+					check(r1, 1, r2, 1, er1, er2);
+				}
 				return;
-			} else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
+			} /*else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
 				// return;
 				existReverse = true;
-			}
+			}*/
 		}
-		if (existReverse) { return; }
+		// if (existReverse) { return; }
 		HashSet<BiCall> indirect = es.indirect;
 		for (BiCall bc : indirect) {
 			CallEffect ce1 = bc.ce1;
@@ -124,16 +126,20 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				if (2 < size1) {
-					int i = 1;
-					ClassMethod cm = ns1.get(i);
-					Edge ee = l1.get(i);
-					while (i < size1 - 1 && synchronousCall(cm, ee.pos)) {
-						i++;
-						cm = ns1.get(i);
-						ee = l1.get(i);
+				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
+					if (2 < size1) {
+						int i = 1;
+						ClassMethod cm = ns1.get(i);
+						Edge ee = l1.get(i);
+						while (i < size1 - 1 && synchronousCall(cm, ee.pos)) {
+							i++;
+							cm = ns1.get(i);
+							ee = l1.get(i);
+						}
+						if (i < size1 - 1) {
+							check(r1, i + 1, r2, j, er1, er2);
+						}
 					}
-					if (i < size1 - 1) { check(r1, i + 1, r2, j, er1, er2); }
 				}
 				return;
 			} /* else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
