@@ -115,8 +115,8 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
 				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
 					check(r1, 0, r2, 0, er1, er2);
+					return;
 				}
-				return;
 			} /*else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
 				// return;
 				existReverse = true;
@@ -142,8 +142,8 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 						}
 						if (i < size1 - 1) { check(r1, i, r2, 0, er1, er2); }
 					}
+					return;
 				}
-				return;
 			}
 		}
 	}

@@ -111,8 +111,8 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
 				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
 					check(r1, 1, r2, 1, er1, er2);
+					return;
 				}
-				return;
 			} /*else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
 				// return;
 				existReverse = true;
@@ -140,8 +140,8 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 							check(r1, i + 1, r2, j, er1, er2);
 						}
 					}
+					return;
 				}
-				return;
 			} /* else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
 				return;
 			}*/
