@@ -72,7 +72,10 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 					int temp = j;
 					j = check(r, 0, r2, j, er1, er2);
 
-					if (j >= size2 - 1) { return; }
+					if (j >= size2 - 1) {
+						warnings.add(new BiRoute(er1, er2));
+						return;
+					}
 					if (j != temp) {
 						changed = true;
 					}
