@@ -127,9 +127,10 @@ public class EffectSet {
 	}
 
 	public boolean continue_Analyzing(Object o) {
+		assert isInit;
 		if (o instanceof EffectSet) { 
 			EffectSet g = (EffectSet)o;
-			assert isInit;
+
 			if (!g.isInit) {
 				return calls.isEmpty() && writtenLocals.isEmpty()
 					&& writtenFields.isEmpty() && alive.isEmpty()

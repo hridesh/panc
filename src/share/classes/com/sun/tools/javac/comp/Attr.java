@@ -51,7 +51,6 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
-import org.paninij.consistency.*;
 import org.paninij.util.PaniniConstants;
 // end Panini code
 

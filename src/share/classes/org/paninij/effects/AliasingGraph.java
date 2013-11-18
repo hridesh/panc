@@ -146,6 +146,7 @@ public class AliasingGraph {
 	}
 
 	public boolean equals(Object o) {
+		assert isInit;
 		if (o instanceof AliasingGraph) {
 			AliasingGraph g = (AliasingGraph)o;
 			if (!isInit && !g.isInit) { return true; }

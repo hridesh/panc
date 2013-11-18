@@ -390,6 +390,8 @@ public class AliasingIntra {
 				}
 			}
 
+			if (!beforeFlow.isInit) { continue; }
+
 			// Compute afterFlow and store it.
 			AliasingGraph afterFlow = graphAfterFlow.get(s);
 			// set aliasingInfo before calling

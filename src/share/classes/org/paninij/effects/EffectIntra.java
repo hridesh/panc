@@ -312,6 +312,7 @@ public class EffectIntra {
 				}
 			}
 
+			if (!beforeFlow.isInit) { continue; }
 			// Compute afterFlow and store it.
 			EffectSet afterFlow = effectAfterFlow.get(s);
 
