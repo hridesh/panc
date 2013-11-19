@@ -707,7 +707,7 @@ public class AliasingGraph {
 			ElementKind rightkind = sr.getKind();
 			if (rightkind == ElementKind.LOCAL_VARIABLE ||
 					rightkind == ElementKind.PARAMETER) {
-				return pathForLocal(sr);
+				return new Path_Compound(pathForLocal(sr), sym);
 			} else if (rightkind == ElementKind.FIELD) { // this.f = ...
 				if (sr.name.toString().compareTo("this") == 0 ||
 						sr.name.toString().compareTo("super") == 0) {
