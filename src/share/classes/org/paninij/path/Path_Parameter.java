@@ -64,6 +64,9 @@ public class Path_Parameter implements Path {
 	}
 
 	public String printPath() {
+		if (base != null) {
+			return "parameter " + id + "(" + base + ")";
+		}
 		return "parameter " + id;
 	}
 

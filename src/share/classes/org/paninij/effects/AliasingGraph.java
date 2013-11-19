@@ -547,6 +547,11 @@ public class AliasingGraph {
 				new Path_Parameter(null, right));
 	}
 
+	public void initParam(VarSymbol s, int right) {
+		addAlias(aliasingPaths, new Path_Var(s, false),
+				new Path_Parameter(s, right));
+	}
+
 	public void processReturn(JCExpression expr) {
 		Type currentType = pathsToNewNode.get(createPathForExp(expr));
 		if (currentType != null) {
