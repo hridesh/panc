@@ -407,7 +407,7 @@ public class AliasingIntra {
 		int i = 1;
 		for (JCVariableDecl jcv : curr_meth.params) {
 			VarSymbol sym = jcv.sym;
-			entry.assignParamToLocal(sym, i);
+			entry.initParam(sym, i);
 			i++;
 		}
 		return entry;

@@ -23,13 +23,13 @@ import java.util.*;
 
 import javax.lang.model.element.ElementKind;
 
-import org.paninij.analysis.*;
-import org.paninij.path.*;
-
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
+
+import org.paninij.analysis.*;
+import org.paninij.path.*;
 
 public class AliasingGraph {
 	public HashSet<ForallAliasing> forall_alias;
@@ -547,6 +547,11 @@ public class AliasingGraph {
 				new Path_Parameter(null, right));
 	}
 
+	public void initParam(VarSymbol s, int right) {
+		addAlias(aliasingPaths, new Path_Var(s, false),
+				new Path_Parameter(s, right));
+	}
+
 	public void processReturn(JCExpression expr) {
 		Type currentType = pathsToNewNode.get(createPathForExp(expr));
 		if (currentType != null) {
@@ -585,11 +590,13 @@ public class AliasingGraph {
 
 	public void assignLocalToThisField(Symbol field, Symbol var) {
 		writeField(field);
+		Path_Var pv = new Path_Var(var, true);
+		Path p = new Path_Compound(new Path_Parameter(null, 0), field);
 		if (isLocalNew(var)) {
-			Path p = new Path_Compound(new Path_Parameter(null, 0), field);
-			pathsToNewNode.put(p,
-					pathsToNewNode.get(new Path_Var(var, true)));
+			pathsToNewNode.put(p, pathsToNewNode.get(pv));
 		}
+
+		addAlias(aliasingPaths, pv, p);
 	}
 
 	public void writeField(Symbol field) {
@@ -705,7 +712,7 @@ public class AliasingGraph {
 			ElementKind rightkind = sr.getKind();
 			if (rightkind == ElementKind.LOCAL_VARIABLE ||
 					rightkind == ElementKind.PARAMETER) {
-				return pathForLocal(sr);
+				return new Path_Compound(pathForLocal(sr), sym);
 			} else if (rightkind == ElementKind.FIELD) { // this.f = ...
 				if (sr.name.toString().compareTo("this") == 0 ||
 						sr.name.toString().compareTo("super") == 0) {

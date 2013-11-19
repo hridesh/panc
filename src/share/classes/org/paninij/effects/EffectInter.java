@@ -121,14 +121,13 @@ public class EffectInter {
 		}
 	}
 
-	private final void knowCallee (Symbol meth, JCMethodInvocation stmt,
+	private final void knowCallee (MethodSymbol meth, JCMethodInvocation stmt,
 			AliasingGraph aliasing, JCMethodDecl curr_meth, EffectSet ars,
 			EffectIntra intra, EffectSet result) {
-		MethodSymbol ms = (MethodSymbol)meth;
-		HashSet<MethodSymbol> callers = ms.callers;
+		HashSet<MethodSymbol> callers = meth.callers;
 		if (callers == null) {
-			ms.callers = new HashSet<MethodSymbol>();
-			callers = ms.callers;
+			meth.callers = new HashSet<MethodSymbol>();
+			callers = meth.callers;
 		}
 		callers.add(curr_meth.sym);
 		if (ars != null) {
@@ -491,7 +490,7 @@ public class EffectInter {
 			{ // m(...)
 				MethodSymbol ms = (MethodSymbol)s;
 				JCMethodDecl jcmd = ms.tree;
-				knowCallee(s, tree, ag, curr_meth, jcmd.sym.effect, intra, rs);
+				knowCallee(ms, tree, ag, curr_meth, jcmd.sym.effect, intra, rs);
 			}
 		} else if (meth instanceof JCFieldAccess) { // selected.m(...)
 			JCFieldAccess jcf = (JCFieldAccess)meth;
