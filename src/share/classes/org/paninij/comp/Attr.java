@@ -30,6 +30,7 @@ import static com.sun.tools.javac.tree.JCTree.Tag.ASSIGN;
 import static com.sun.tools.javac.tree.JCTree.Tag.LT;
 import static com.sun.tools.javac.tree.JCTree.Tag.PREINC;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -90,6 +91,8 @@ public final class Attr extends CapsuleInternal {
 	final com.sun.tools.javac.comp.Check jchk;
 	public final Check pchk;
 	public List<JCDesignBlock> designBlocks = List.<JCDesignBlock>nil();
+	public final Map<Name, java.util.List<Name>> capsuleAliases = 
+			new HashMap<Name, java.util.List<Name>>();
 
     final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
 
@@ -399,7 +402,7 @@ public final class Attr extends CapsuleInternal {
 	private void initRefCount(Map<Name, Name> variables,
 			Map<Name, JCFieldAccess> refCountStats,
 			ListBuffer<JCStatement> assigns, SystemGraph sysGraph,
-			Env<AttrContext> env) {
+			Env<AttrContext> env, Map<Name, Integer> aliasRefCounts) {
 		Set<Name> vars = sysGraph.nodes.keySet();
 		final Name _this = names._this;
 		final Name paniniRCField = names.panini.PaniniRefCountField;
@@ -407,7 +410,9 @@ public final class Attr extends CapsuleInternal {
 		    // Reference count update
 			int refCount = 0;
 			refCount = sysGraph.nodes.get(vdeclName).indegree;
-
+			if (aliasRefCounts.containsKey(vdeclName)) {
+				refCount += aliasRefCounts.get(vdeclName);
+			}
 			JCFieldAccess accessStat = null;
 			if (refCountStats.containsKey(vdeclName)) {
 				accessStat = refCountStats.get(vdeclName);
@@ -422,9 +427,9 @@ public final class Attr extends CapsuleInternal {
 		    }
 			if (accessStat == null)
 				continue;
-			JCAssign refCountAssign = make.Assign(accessStat, intlit(refCount));
+			JCAssignOp refCountAssignOp = make.Assignop(Tag.PLUS_ASG, accessStat, intlit(refCount));
 			JCExpressionStatement refCountAssignStmt = make
-					.Exec(refCountAssign);
+					.Exec(refCountAssignOp);
 			assigns.append(refCountAssignStmt);
 		}
 	}
@@ -453,6 +458,7 @@ public final class Attr extends CapsuleInternal {
         
         DesignDeclTransformer mt = new DesignDeclTransformer(syms, names, types, log,
                 rs, env, make, systemGraphBuilder);
+        mt.setCapsuleAliases(capsuleAliases); // gc-fix
         rewritenTree = mt.translate(rewritenTree);
 
         // Check for cyclic references and report it
@@ -468,7 +474,8 @@ public final class Attr extends CapsuleInternal {
         if (rewritenTree.hasTaskCapsule)
 			processSystemAnnotation(rewritenTree, inits, env);
 
-        initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph, env);
+        Map<Name, Integer> aliasRefCounts = mt.aliasRefCounts;
+        initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph, env, aliasRefCounts);
         
         //attribute the new statement.
         ListBuffer<JCStatement> toAttr = new ListBuffer<JCTree.JCStatement>();

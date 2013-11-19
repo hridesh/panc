@@ -26,6 +26,7 @@ import static com.sun.tools.javac.tree.JCTree.Tag.LT;
 import static com.sun.tools.javac.tree.JCTree.Tag.PREINC;
 import static com.sun.tools.javac.tree.JCTree.Tag.TYPEIDENT;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,6 +39,7 @@ import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Kinds;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
+import com.sun.tools.javac.code.Type.ClassType;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.TypeTags;
@@ -49,6 +51,7 @@ import com.sun.tools.javac.tree.JCTree.JCAssignOp;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.TreeTranslator;
+import com.sun.tools.javac.tree.JCTree.JCArrayAccess;
 import com.sun.tools.javac.tree.JCTree.JCArrayTypeTree;
 import com.sun.tools.javac.tree.JCTree.JCAssign;
 import com.sun.tools.javac.tree.JCTree.JCBinary;
@@ -77,6 +80,7 @@ import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
+
 import org.paninij.util.PaniniConstants;
 
 /**
@@ -96,6 +100,9 @@ public class DesignDeclTransformer extends TreeTranslator {
     public final Map<Name, Name> variables = new HashMap<Name, Name>();
     public final Map<Name, Integer> modArrays = new HashMap<Name, Integer>();
     public final Map<Name, JCFieldAccess> refCountStats = new HashMap<Name, JCFieldAccess>();
+	public Map<Name, java.util.List<Name>> capsuleAliases;
+	public Map<Name, java.util.List<Name>> removedAliases = new HashMap<Name, java.util.List<Name>>();
+	public final Map<Name, Integer> aliasRefCounts = new HashMap<Name, Integer>();
     
     final Symtab syms;
     final Names names;
@@ -255,6 +262,108 @@ public class DesignDeclTransformer extends TreeTranslator {
                             c.capsule_info.capsuleParameters.get(j).getName(),
                             names.fromString(mi.arguments.get(j).toString()));
                 }
+                
+				if (syms.capsules
+						.containsKey(names
+								.fromString(c.capsule_info.capsuleParameters
+										.get(j).vartype.toString()))) {
+					// let's do some work!
+					Name alias, where;
+					if (!variables.containsKey(names.fromString(mi.arguments
+							.get(j).toString()))) {
+						if (mi.arguments.get(j) instanceof JCIdent) {
+							where = ((JCIdent) mi.arguments.get(j)).sym.owner.name;
+						} else if (mi.arguments.get(j) instanceof JCArrayAccess) {
+							JCIdent indexed = (JCIdent)((JCArrayAccess) mi.arguments.get(j)).indexed;
+							where = indexed.sym.owner.name;
+						} else {
+							where = null; // do not process any other types.
+						}
+						alias = null;
+						if (mi.arguments.get(j).type != null)
+							alias = mi.arguments.get(j).type.tsym.name;
+						//alias = mi.arguments.get(j).type.tsym.name;
+						if (capsuleAliases.containsKey(alias)) {
+							java.util.List<Name> aliases = capsuleAliases
+									.get(alias);
+							// got through removed aliases
+							if ((removedAliases != null)
+									&& (removedAliases.get(c.name) != null))
+								for (Name name : removedAliases.get(c.name)) {
+									if (name.toString().equals(
+											c.name.toString())) {
+										aliases.add(where);
+									}
+								}
+							for (Name name : aliases) {
+								if (name.toString().equals(c.name.toString())) {
+									aliases.remove(name);
+									if (removedAliases.containsKey(c.name)) {
+										if (!removedAliases.get(c.name)
+												.contains(name)) {
+											removedAliases.get(c.name)
+													.add(name);
+										}
+									} else {
+										java.util.List<Name> values = new ArrayList<Name>();
+										values.add(name);
+										removedAliases.put(c.name, values);
+									}
+									aliases.add(where);
+								}
+							}
+
+							capsuleAliases.get(alias).add(where);
+						} else {
+							ArrayList<Name> values = new ArrayList<Name>();
+							values.add(where);
+							capsuleAliases.put(alias, values);
+						}
+					} else {
+						alias = null;
+						if (mi.arguments.get(j).type != null)
+							alias = mi.arguments.get(j).type.tsym.name;
+						Name alias_interface = null;//
+						if (mi.arguments.get(j).type instanceof ClassType) {
+							ClassType alias_type = (ClassType) mi.arguments
+									.get(j).type;
+							if (alias_type.all_interfaces_field.head != null)
+								alias_interface = alias_type.all_interfaces_field.head.tsym.name;
+						}
+
+						/*
+						 * (mi.arguments.get(j).type instanceof ClassType) ?
+						 * ((ClassType) mi.arguments
+						 * .get(j).type).all_interfaces_field.head.tsym.name :
+						 * null;
+						 */
+						java.util.List<Name> values = null;
+						if (capsuleAliases.containsKey(alias)) {
+							values = capsuleAliases.get(alias);
+						} else if (capsuleAliases.containsKey(alias_interface)) {
+							values = capsuleAliases.get(alias_interface);
+						}
+						if (values != null) {
+							for (Name name : values) {
+								if (name.toString().equals(c.toString())) {
+									// Got a match, lets add this
+									Name candidate = names
+											.fromString(mi.arguments.get(j)
+													.toString());
+									/*System.out.println(c + "(" + alias + ")"
+											+ " : " + candidate);*/
+									if (aliasRefCounts.containsKey(candidate)) {
+										int val = aliasRefCounts.get(candidate) + 1;
+										aliasRefCounts.remove(candidate);
+										aliasRefCounts.put(candidate, val);
+									} else {
+										aliasRefCounts.put(candidate, 1);
+									}
+								}
+							}
+						}
+					}
+				}
             }
             // updated refcount stats
             Name variableName = names.fromString(mi.indexed.toString()+"["+mi.index+"]");
@@ -413,6 +522,80 @@ public class DesignDeclTransformer extends TreeTranslator {
                 args = args.tail,
                 wiringTypes = wiringTypes.tail
                 ) {
+        	
+			if (wiringTypes.head.tsym.isCapsule()) {
+				Name alias, where;
+				Name arg = names.fromString(args.head.toString());
+				if (!variables.containsKey(arg)) {
+					// cparams.head.sym.type.tsym.name
+					if (args.head.type != null)
+						alias = args.head.type.tsym.name;
+					else
+						alias = null;
+					if (args.head.getTree() instanceof JCIdent)
+						where = ((JCIdent) args.head.getTree()).sym.owner.name;
+					else where = null;
+					//System.out.println(where + "(" + alias + ")");
+					if (capsuleAliases.containsKey(alias)) {
+						java.util.List<Name> aliases = capsuleAliases
+								.get(alias);
+						for (Name name : aliases) {
+							if (name.toString().equals(c.name.toString())) {
+								aliases.remove(name);
+								aliases.add(where);
+							}
+						}
+						capsuleAliases.get(alias).add(where);
+					} else {
+						ArrayList<Name> values = new ArrayList<Name>();
+						values.add(where);
+						capsuleAliases.put(alias, values);
+					}
+
+				} else {
+					//alias = args.head.type.tsym.name;
+					if (args.head.type != null)
+						alias = args.head.type.tsym.name;
+					else
+						alias = null;
+					Name alias_interface = null;
+
+					if (args.head.type instanceof ClassType) {
+						ClassType argType = (ClassType) args.head.type;
+						if (argType.all_interfaces_field != null
+								&& argType.all_interfaces_field.head != null) {
+							alias_interface = argType.all_interfaces_field.head.tsym.name;
+						}
+					}
+
+					// tsym.attributes_field.head.type.tsym.name;
+					java.util.List<Name> values = null;
+					if (capsuleAliases.containsKey(alias)) {
+						values = capsuleAliases.get(alias);
+
+					} else if (capsuleAliases.containsKey(alias_interface)) {
+						values = capsuleAliases.get(alias_interface);
+					}
+					if (values != null) {
+						for (Name name : values) {
+							if (name.toString().equals(c.toString())) {
+								// Got a match, lets add this
+								Name candidate = names.fromString(args.head
+										.toString());// cparams.head.name;
+								/*System.out.println(c + "(" + alias + ")"
+										+ " : " + candidate);*/
+								if (aliasRefCounts.containsKey(candidate)) {
+									int val = aliasRefCounts.get(candidate) + 1;
+									aliasRefCounts.remove(candidate);
+									aliasRefCounts.put(candidate, val);
+								} else {
+									aliasRefCounts.put(candidate, 1);
+								}
+							}
+						}
+					}
+				}
+			}
 
             JCAssign newAssign = make
                     .at(mi.pos())
@@ -594,4 +777,8 @@ public class DesignDeclTransformer extends TreeTranslator {
         if(c.capsule_info.capsuleParameters.nonEmpty())
             capsulesToWire.add(vdecl.name);
     }
+    
+    public void setCapsuleAliases(Map<Name, java.util.List<Name>> aliases) {
+		capsuleAliases = aliases;
+	}
 }
