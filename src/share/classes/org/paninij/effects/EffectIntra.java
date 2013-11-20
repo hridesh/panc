@@ -378,11 +378,16 @@ public class EffectIntra {
 		}
 
 		EffectSet resultEffect = new EffectSet();
-		// for (JCTree astc : resultNodes) {
-		for (JCTree astc : endNodes) {
+		for (JCTree astc : resultNodes) {
+		// for (JCTree astc : endNodes) {
 			EffectSet otherBranchFlow = effectAfterFlow.get(astc);
 			// mergeInto(resultEffect, otherBranchFlow);
-			resultEffect.union(otherBranchFlow);
+
+			if (endNodes.contains(astc)) {
+				resultEffect.union(otherBranchFlow);
+			} else {
+				resultEffect.unionHeapEffect(otherBranchFlow);
+			}
 		}
 		resultEffect.compress();
 		resultEffect.returnNewObject = returnNewObject;

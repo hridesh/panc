@@ -148,6 +148,45 @@ public class EffectSet {
 		return false;
 	}
 
+	// Only concern the heap effects, but not the call effects for the
+	// intermediate nodes.
+	public void unionHeapEffect(EffectSet x) {
+		if (x.isInit) {
+			if (isInit) {
+				// if (!isBottom) {
+					if (x.isBottom) {
+						makeButtom();
+					} // else {
+						read.addAll(x.read);
+						write.addAll(x.write);
+						writtenLocals.addAll(x.writtenLocals);
+						writtenFields.addAll(x.writtenFields);
+						isWriteBottom |= x.isWriteBottom;
+
+						for (Symbol s : writtenLocals) {
+							assignVar(s); }
+						for (Symbol s : writtenFields) {
+							assignField(s); }
+						if (isWriteBottom) {
+							removedAffectedByUnanalyzable(read);
+							removedAffectedByUnanalyzable(write);
+						}
+					// }
+				// }
+			} else {
+				isInit = true;
+				if (x.isBottom) {
+					makeButtom();
+				} // else {
+					read = new HashSet<EffectEntry>(x.read);
+					write = new HashSet<EffectEntry>(x.write);
+					writtenLocals = new HashSet<Symbol>(x.writtenLocals);
+					writtenFields = new HashSet<Symbol>(x.writtenFields);
+				// }
+			}
+		}
+	}
+
 	public void union(EffectSet x) {
 		if (x.isInit) {
 			if (isInit) {
