@@ -51,6 +51,7 @@ public class Names {
      */
     public final Name Wiring;
     public final Name PaniniFinish;
+    public final Name PaniniDuckGetMessage;
     public final Name PaniniDuckFuture;
     public final Name PaniniDisconnect;
     public final Name PaniniRefCountField;
@@ -64,6 +65,32 @@ public class Names {
     public final Name Paninij;
     public final Name Runtime;
     public final Name UnrunnableCapsuleExceptionClass;
+    
+    // names related to batch messages
+    public final Name RunBatch;
+    public final Name BatchMessage;
+    public final Name BatchMessageApply;
+    
+    //names of the boxed primitive types
+    public final Name Byte;
+    public final Name Short;
+    public final Name Character;
+    public final Name Integer;
+    public final Name Long;
+    public final Name Float;
+    public final Name Double;
+    public final Name Boolean;
+    public final Name Void;
+
+    //these are the names of methods from the boxed primitive value types
+    public final Name byteValue;
+    public final Name shortValue;
+    public final Name charValue;
+    public final Name intValue;
+    public final Name longValue;
+    public final Name floatValue;
+    public final Name doubleValue;
+    public final Name booleanValue;
 
     /**
      * Construct more names, using an exitings Names table.
@@ -80,11 +107,35 @@ public class Names {
         Capsule = names.fromString("Capsule");
         Wiring = names.fromString("Wiring");
         PaniniFinish = names.fromString(PaniniConstants.PANINI_FINISH);
+        PaniniDuckGetMessage = names.fromString(PaniniConstants.PANINI_DUCK_GET_MESSAGE);
         PaniniDuckFuture = names.fromString(PaniniConstants.PANINI_DUCK_TYPE);
         PaniniDisconnect = names.fromString(PaniniConstants.PANINI_DISCONNECT);
         InternalCapsuleWiring = names.fromString(PaniniConstants.CAPSULE_SYS_WIRE);
         PaniniRefCountField = names.fromString(PaniniConstants.PANINI_REF_COUNT);
 
+        RunBatch = names.fromString(PaniniConstants.PANINI_DUCK_RUN_BATCH_PIMITIVE_METH_NAME);
+        BatchMessage = names.fromString(PaniniConstants.PANINI_BATCH_MESSAGE_TYPE_NAME);
+        BatchMessageApply = names.fromString(PaniniConstants.PANINI_BATCH_MESSAGE_APPLY_METH_NAME);
+
+        Byte = names.fromString("Byte");
+        Short = names.fromString("Short");
+        Character = names.fromString("Character");
+        Integer = names.fromString("Integer");
+        Long = names.fromString("Long");
+        Float = names.fromString("Float");
+        Double = names.fromString("Double");
+        Boolean = names.fromString("Boolean");
+        Void = names.fromString("Void");
+        
+        byteValue = names.fromString("byteValue");
+        shortValue = names.fromString("shortValue");
+        charValue = names.fromString("charValue");
+        intValue = names.fromString("intValue");
+        longValue = names.fromString("longValue");
+        floatValue = names.fromString("floatValue");
+        doubleValue = names.fromString("doubleValue");
+        booleanValue = names.fromString("booleanValue");
+        
         //Class and package Names
         Org = names.fromString("org");
         Paninij = names.fromString("paninij");

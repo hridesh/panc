@@ -44,6 +44,7 @@ public class PaniniConstants {
 	public final static String PANINI_FINISH = "panini$finish";
 	public final static String PANINI_MESSAGE = "panini$message";
 	public final static String PANINI_DUCK_GET = "panini$get";
+    public final static String PANINI_DUCK_GET_MESSAGE = "panini$getMessage";
 	public final static String PANINI_GET_NEXT_DUCK = "get$Next$Duck";
 	public final static String PANINI_TERMINATE = "panini$terminate";
 	public final static String PANINI_METHOD_CONST = "panini$methodConst$";
@@ -69,6 +70,10 @@ public class PaniniConstants {
 	
 	public final static String PANINI_REF_COUNT = "panini$ref$count";
 	public final static String PANINI_DISCONNECT = "panini$disconnect";
+	
+	public final static String PANINI_DUCK_RUN_BATCH_PIMITIVE_METH_NAME = "runBatch";
+    public final static String PANINI_BATCH_MESSAGE_TYPE_NAME = "BatchMessage";
+    public final static String PANINI_BATCH_MESSAGE_APPLY_METH_NAME = "apply";
 
 	public final static String UNRUNNABLE_EXCEPTION_CLASS =
 	        "UnrunnableCapsuleException";
