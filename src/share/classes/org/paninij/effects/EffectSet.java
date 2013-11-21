@@ -295,6 +295,11 @@ public class EffectSet {
 		read.removeAll(toberemoved);
 	}
 
+	public void clearReadWrite() {
+		read.clear();
+		write.clear();
+	}
+
 	private static void putStaticFinalFromConcreteToType(
 			HashSet<EffectEntry> set) {
 		HashSet<EffectEntry> toberemoved = new HashSet<EffectEntry>();

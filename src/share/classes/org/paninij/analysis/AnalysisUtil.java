@@ -38,6 +38,20 @@ import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.List;
 
 public class AnalysisUtil {
+	public static boolean statelessCapsule(JCTree tree) {
+		JCCapsuleDecl cap_decl = (JCCapsuleDecl)tree;
+
+		for (JCTree def : cap_decl.defs) {
+			if (def instanceof JCVariableDecl) {
+				JCVariableDecl jcvd = (JCVariableDecl)def;
+				if (jcvd.mods.flags == 0) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
 	public static boolean shouldAnalyze(JCCapsuleDecl capsule,
 			JCMethodDecl meth) {
 		if ((meth.mods.flags & Flags.PRIVATE) != 0 ||

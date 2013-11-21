@@ -424,6 +424,11 @@ public class EffectIntra {
 		resultEffect.direct = direct;
 		resultEffect.indirect = indirect;
 
+		// stateless capsules do not have any visible heap effect.
+		if (AnalysisUtil.statelessCapsule(curr_meth.sym.ownerCapsule().tree)) {
+			resultEffect.clearReadWrite();
+		}
+
 		return resultEffect;
 	}
 

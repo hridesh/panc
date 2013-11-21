@@ -165,7 +165,7 @@ public class ASTCFGBuilder extends TreeScanner {
 	public void visitMethodDef(JCMethodDecl tree) {
 		Symbol tree_sym = tree.sym;
 		ClassSymbol cs = tree_sym.ownerCapsule();
-        if (cs != null) {
+        if (cs != null && cs.tree != null) {
 		    Assert.checkNonNull(cs.capsule_info);
 
 		    String tree_name = tree_sym.toString();
