@@ -3985,6 +3985,12 @@ public class Attr extends JCTree.Visitor {
             JCExpression genericType = batch.typeArgumentValue;
             JCExpression classCtor = createBatchMessageTypeApply(batch);
             JCClassDecl def = make.AnonymousClassDef(make.Modifiers(0), createBatchApplyMethod(batch, genericType));
+            // it is important to distinguish between normal anonymous class definitions
+            // and the ones translated from batch messages. They have different semantics.
+            // e.g. within batch messages you can reference capsule procedures, while from
+            // anonymous classes you can't.
+            def.batchMessage = batch;
+            def.isBatchMessage = true;
             JCNewClass lambda = make.NewClass(null, null, classCtor, List.<JCExpression>nil(), def);
             return lambda;
         }

@@ -22,8 +22,8 @@ package org.paninij.analysis;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.tree.*;
+import com.sun.tools.javac.tree.JCTree.JCBatchMessage;
 import com.sun.tools.javac.util.*;
-
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeScanner;
 
@@ -62,6 +62,8 @@ capsule A {
 public class InnerClassCapsuleAliasDetector extends TreeScanner {
 	private ClassSymbol cap_sym = null;
 	private Log log;
+    private boolean inBatchMessage;
+    private JCBatchMessage currentBatchMessage;
 
 	public InnerClassCapsuleAliasDetector(Log log) {
 		this.log = log;
@@ -123,19 +125,48 @@ public class InnerClassCapsuleAliasDetector extends TreeScanner {
 	public void visitSelect(JCFieldAccess tree) {}
 	private void singleton(JCTree tree) {} */
 
+	@Override
 	public void visitClassDef(JCClassDecl tree) {
 		ClassSymbol temp = cap_sym;
 		cap_sym = tree.sym;
+		inBatchMessage = tree.isBatchMessage;
+		currentBatchMessage = tree.batchMessage;
 
 		for (JCTree def : tree.defs) {
 			def.accept(this);
 		}
 
+		inBatchMessage = false;
+		currentBatchMessage = null;
 		cap_sym = temp;
 	}
+	
+    /**
+     * Take the following batch message invocation as an example:
+     * <div>
+     * capRef -> {
+     *      capRef.foo(); //ok
+     *      otherCapRef.bar(); //not ok
+     * }
+     * </div>
+     * 
+     * This is translated to a test.runBatch(...) method call with an anonymous
+     * class as a parameter containing the code in the block. If the variable
+     * referenced in the block is the same as the one we call the batch on then
+     * we ignore it, since it is perfectly legal.
+     * 
+     * @return whether or not the capsule reference should be ignored in the
+     *         current context.
+     */
+    private boolean ignoreCapRefInBatch(JCIdent tree) {
+        // FIXME batch: find a better way of doing this than string comparison
+        boolean re = (currentBatchMessage != null) && tree.name.toString().equals(currentBatchMessage.targetCapsule.name.toString());
+        return (inBatchMessage && re);
+    }
 
+	@Override
 	public void visitIdent(JCIdent tree) {
-		if (tree.type.tsym.isCapsule() && cap_sym != null) {
+		if (cap_sym != null && tree.type.tsym.isCapsule() && !ignoreCapRefInBatch(tree)) {
 			Symbol sym = tree.sym;
 			log.useSource (sym.outermostClass().sourcefile);
 			log.warning(tree.pos(), "capsule.escape.inner.class",

@@ -1604,6 +1604,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public List<JCExpression> implementing;
         public List<JCTree> defs;
         public ClassSymbol sym;
+        // Panini code
+        // these values are necessary because confinement analysis has
+        // different semantics when dealing with anonymous classes that are
+        // batch messages.
+        public boolean isBatchMessage = false;
+        public JCBatchMessage batchMessage = null;
+        // end Panini code
         protected JCClassDecl(JCModifiers mods,
                            Name name,
                            List<JCTypeParameter> typarams,
