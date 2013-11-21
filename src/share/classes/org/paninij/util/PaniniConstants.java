@@ -48,6 +48,7 @@ public class PaniniConstants {
 	public final static String PANINI_GET_NEXT_DUCK = "get$Next$Duck";
 	public final static String PANINI_TERMINATE = "panini$terminate";
 	public final static String PANINI_METHOD_CONST = "panini$methodConst$";
+	public final static String PANINI_METHOD_CONST_BATCH = "panini$methodConst$BatchMessage";
 	public final static String PANINI_MESSAGE_ID = "panini$message$id";
 	public final static String PANINI_DUCK_TYPE = "panini$duck$future";
 	public final static String PANINI_PUSH = "panini$push";

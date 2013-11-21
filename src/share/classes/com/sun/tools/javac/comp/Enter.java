@@ -43,9 +43,6 @@ import com.sun.tools.javac.util.List;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
-import static com.sun.tools.javac.code.TypeTags.PACKAGE;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.DOT;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.STAR;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 // Panini code
 import com.sun.tools.javac.parser.ParserFactory;

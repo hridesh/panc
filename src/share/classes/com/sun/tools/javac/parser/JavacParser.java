@@ -3425,6 +3425,7 @@ public class JavacParser implements Parser {
         case APPLY: case NEWCLASS:
         case ERRONEOUS:
         // Panini code
+        case BATCH_MESSAGE:
         case PROCCALL:
         case CAPSULE_WIRING:
             return t;

@@ -26,25 +26,26 @@
 package com.sun.tools.javac.comp;
 
 import java.util.*;
+
 import javax.lang.model.element.ElementKind;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.*;
+
 import static com.sun.tools.javac.code.Flags.ANNOTATION;
 import static com.sun.tools.javac.code.Flags.BLOCK;
+
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
-
 import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.code.Lint.LintCategory;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.comp.Check.CheckContext;
-
 import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.TreeVisitor;
@@ -52,13 +53,15 @@ import com.sun.source.util.SimpleTreeVisitor;
 
 // Panini code
 import org.paninij.util.PaniniConstants;
+import org.paninij.util.ListUtils;
+import org.paninij.util.Predicate;
 // end Panini code
 
+import static com.sun.tools.javac.code.Kinds.ERRONEOUS;
+import static com.sun.tools.javac.code.TypeTags.WILDCARD;
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
-import static com.sun.tools.javac.code.Kinds.ERRONEOUS;
 import static com.sun.tools.javac.code.TypeTags.*;
-import static com.sun.tools.javac.code.TypeTags.WILDCARD;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
 /** This is the main context-dependent analysis phase in GJC. It
@@ -1325,11 +1328,27 @@ public class Attr extends JCTree.Visitor {
             // Create a new local environment with a local scope.
             Env<AttrContext> localEnv =
                 env.dup(tree, env.info.dup(env.info.scope.dup()));
+            // Panini code
+            replaceBatchMessages(tree);
+            // end Panini code
             attribStats(tree.stats, localEnv);
             localEnv.info.scope.leave();
         }
         result = null;
     }
+    
+    // Panini code
+    private Map<String, JCClassDecl> alreadedAddedBatchDuckClasses = new HashMap<String, JCClassDecl>();
+    /**
+     * This method will go through a block and replace all occurrences of JCBatchMessage
+     * with calls to runBatch. Additionally, it will generate the appropriate classes and ducks.
+     * @param tree
+     */
+    private void replaceBatchMessages(JCBlock tree){
+        BatchRewriter batchRewriter = new BatchRewriter(make, alreadedAddedBatchDuckClasses);
+        batchRewriter.translate(tree);
+    }
+    //end Panini code
 
     public void visitDoLoop(JCDoWhileLoop tree) {
         attribStat(tree.body, env.dup(tree));
@@ -2560,8 +2579,6 @@ public class Attr extends JCTree.Visitor {
         Symbol sym;
         boolean varArgs = false;
 
-        int pttag = pt().tag;
-
         // Find symbol
         if (pt().tag == METHOD || pt().tag == FORALL) {
             // If we are looking for a method, the prototype `pt' will be a
@@ -3779,4 +3796,325 @@ public class Attr extends JCTree.Visitor {
         }
     }
     // </editor-fold>
+    
+    // Panini code
+    //FIXME batch: find a way to get rid of these.
+    @Deprecated JCCapsuleDecl enclosingCapsuleDef;
+    @Deprecated JCMethodDecl enclosingMethodDef;
+    /**
+     * Assumptions:
+     *  (1) the top-most level it will visit is a JCBlock
+     *  (2) for every JCBlock a new instance of this class is used.
+     * 
+     * This translator will visit every JCBatchMessage withing a block and:
+     *    - create the appropriate duck futures
+     *    - create and anonymous BatchMessage instantiation in which all
+     *      capsule procedure calls have been appended with $Original
+     *    - replace all JCBatchMessage nodes with calls to the 
+     *      'runBatch' function from PaniniCapsule
+     * 
+     * @author Lorand Szakacs
+     */
+    private class BatchRewriter extends TreeTranslator {
+        private TreeMaker make;
+        private TreeCopier<JCTree> copier;
+        private JCBatchMessage batch;
+        private final Map<String, JCClassDecl> existingBatchDuckClasses;
+
+        //TODO batch: maybe move to enclosing class
+        private final Map<Integer, Name> typeTagToTypeNameMap;
+        private final Map<Integer, Name> typeTagToValueMethodCall;
+        
+        public BatchRewriter(TreeMaker maker, Map<String, JCClassDecl> alreadedAddedDuckClasses){
+            this.make = maker;
+            this.copier = new TreeCopier<JCTree>(this.make);
+            this.existingBatchDuckClasses = alreadedAddedDuckClasses;
+            
+            Map<Integer, Name> m =  new HashMap<Integer, Name>();
+            m.put(BYTE, names.panini.Byte);
+            m.put(SHORT, names.panini.Short);
+            m.put(CHAR, names.panini.Character);
+            m.put(INT, names.panini.Integer);
+            m.put(LONG, names.panini.Long);
+            m.put(FLOAT, names.panini.Float);
+            m.put(DOUBLE, names.panini.Double);
+            m.put(BOOLEAN, names.panini.Boolean);
+            m.put(VOID, names.panini.Void);
+            typeTagToTypeNameMap = Collections.<Integer, Name>unmodifiableMap(m);
+            
+            m =  new HashMap<Integer, Name>();
+            m.put(BYTE, names.panini.byteValue);
+            m.put(SHORT, names.panini.shortValue);
+            m.put(CHAR, names.panini.charValue);
+            m.put(INT, names.panini.intValue);
+            m.put(LONG, names.panini.longValue);
+            m.put(FLOAT, names.panini.floatValue);
+            m.put(DOUBLE, names.panini.doubleValue);
+            m.put(BOOLEAN, names.panini.booleanValue);
+            typeTagToValueMethodCall = Collections.<Integer, Name>unmodifiableMap(m);
+        }
+        
+        @Override
+        public void visitBatchMessage(JCBatchMessage batch) {
+            this.batch = batch;
+            batch.typeOfTargetCapsule = checkTypeOfBatchTargetCapsule();
+            batch.returnTypeOfBatch = checkReturnTypeOfBatch(batch.body);
+            batch.typeArgumentValue = createGenericTypeArgumentOfBatchMessage();
+            batch.duckClass = generateDuck();
+            translateBatchMessage();
+            batch.translatedExpr.type = batch.returnTypeOfBatch;
+            result = batch.translatedExpr;
+        }
+        
+        private List<JCStatement> translateBatchMessage() {
+            JCExpression runBatchMethodInvocation = createMethodInvocation();
+            List<JCExpression> runBatchArguments = createBatchMessageInvocationParams();
+            List<JCExpression> typeargs = createRunBatchCallTypeParams();
+            JCMethodInvocation runBatchCall = make.Apply(typeargs, runBatchMethodInvocation, runBatchArguments);
+            runBatchCall = appendExtractorToPrimitiveTypes(runBatchCall);
+            batch.translatedExpr = runBatchCall;
+            return List.<JCStatement>of(make.Exec(runBatchCall));
+        }
+
+        private JCMethodInvocation appendExtractorToPrimitiveTypes(JCMethodInvocation app) {
+            Name valueMethodName = typeTagToValueMethodCall.get(batch.returnTypeOfBatch.tag);
+            if(valueMethodName != null) {
+                JCFieldAccess valMeth = make.Select(app, valueMethodName);
+                return make.Apply(List.<JCExpression> nil(), valMeth, List.<JCExpression> nil());
+            } else if (batch.returnTypeOfBatch.tsym.toString().equals("java.lang.String")){
+                //TODO batch: treating strings like this seems like quite the hack.
+                JCFieldAccess stringVal = make.Select(app, names.panini.PaniniDuckGet);
+                return make.Apply(List.<JCExpression> nil(), stringVal, List.<JCExpression> nil());
+            }
+           return app; 
+        }
+
+        private List<JCExpression> createRunBatchCallTypeParams() {
+            return List.<JCExpression>of(batch.typeArgumentValue, make.Ident(batch.duckClass.name));
+        }
+
+        private List<JCExpression> createBatchMessageInvocationParams() {
+            JCNewClass duck = createNewGeneratedDuck();
+            return List.<JCExpression>of(duck);
+        }
+        
+        //TODO batch: clean-up
+        private JCClassDecl generateDuck(){
+            ListBuffer<JCClassDecl> classes = new ListBuffer<JCClassDecl>();
+            pAttr.generateDuckForProcedure(enclosingCapsuleDef.name, enclosingMethodDef.name, enclosingMethodDef.params, batch.returnTypeOfBatch, classes, existingBatchDuckClasses, env);
+            JCClassDecl duckClass = classes.toList().head;
+            
+            //FIXME batch: refactor this whole thing so that creating these names is more streamlined.
+            final String newDuckName = "Panini$Duck$Batch$" + enclosingCapsuleDef.name.toString() + "$" + batch.typeArgumentValue.toString();
+            if (existingBatchDuckClasses.containsKey(newDuckName)) {
+                return existingBatchDuckClasses.get(newDuckName);
+            } else {
+                existingBatchDuckClasses.put(newDuckName, duckClass);
+            }
+            duckClass.name = names.fromString(newDuckName);
+            JCTypeApply typeApply = createBatchMessageTypeApply(batch);
+            JCTree temp = ListUtils.<JCTree> findFirst(duckClass.defs, new Predicate<JCTree>() {
+                @Override
+                public boolean apply(JCTree t) {
+                    if (t.hasTag(METHODDEF)) {
+                        JCMethodDecl m = (JCMethodDecl) t;
+                        return m.name.toString().equals("<init>");
+                    }
+                    return false;
+                }
+            });
+            JCMethodDecl constructor = (JCMethodDecl) temp;
+            Name nameOfBatchMessageField = names.fromString("batchM");
+            JCVariableDecl batchParam = make.VarDef(make.Modifiers(0), nameOfBatchMessageField, typeApply, null);
+            List<JCVariableDecl> newParams = ListUtils.<JCVariableDecl> append(batchParam, constructor.params);
+            constructor.params = newParams;
+            JCFieldAccess batchMFieldAccess = make.Select(make.Ident(names.fromString("this")), nameOfBatchMessageField);
+            JCAssign initField = make.Assign(batchMFieldAccess, make.Ident(nameOfBatchMessageField));
+            List<JCStatement> newCtorBodyStats = ListUtils.<JCStatement> append(make.Exec(initField), constructor.body.stats);
+            constructor.body.stats = newCtorBodyStats;
+
+            List<JCTree> defsWithNoGetM = ListUtils.<JCTree> filterNot(duckClass.defs, new Predicate<JCTree>() {
+                @Override
+                public boolean apply(JCTree t) {
+                    if (t.hasTag(METHODDEF)) {
+                        JCMethodDecl m = (JCMethodDecl) t;
+                        return m.name.toString().equals("panini$getMessage");
+                    }
+                    return false;
+                }
+            });
+            duckClass.defs = defsWithNoGetM;
+            // Add new fieldDeclarationToDuck;
+            JCVariableDecl batchFieldDecl = make.VarDef(make.Modifiers(PRIVATE), nameOfBatchMessageField, typeApply, null);
+            JCMethodDecl getBatchM = createPaniniGetMessageMeth(nameOfBatchMessageField, typeApply, batchMFieldAccess);
+            List<JCTree> newDefs = ListUtils.<JCTree> append(batchFieldDecl, duckClass.defs);
+            newDefs = ListUtils.<JCTree> append(getBatchM, newDefs);
+            duckClass.defs = newDefs;
+            enter.classEnter(List.<JCClassDecl> of(duckClass), env.outer);
+            return classes.first();
+        }
+        
+        private JCMethodDecl createPaniniGetMessageMeth(Name nameOfBatchMessageField, JCTypeApply typeApply, JCFieldAccess batchMFieldAccess) {
+            JCModifiers mods = make.Modifiers(PUBLIC);
+            Name name = names.fromString(PaniniConstants.PANINI_DUCK_GET_MESSAGE);
+            JCExpression restype = typeApply;
+            List<JCTypeParameter> typarams = List.<JCTypeParameter>nil();
+            List<JCVariableDecl> params = List.<JCVariableDecl>nil();
+            List<JCExpression> thrown = List.<JCExpression>nil();
+            ListBuffer<JCStatement> stats = new ListBuffer<JCStatement>();
+            stats.add(make.Return(batchMFieldAccess));
+            JCBlock body = make.Block(0, stats.toList());
+            JCExpression defaultValue = null;
+            return make.MethodDef(mods, name, restype, typarams, params, thrown, body, defaultValue);
+        }
+        
+        private JCNewClass createNewGeneratedDuck() {
+            JCExpression classCtor = make.Ident(batch.duckClass.name);
+            JCNewClass lambda = createAnonBatchBody(batch);
+            JCLiteral duckConstant = make.Literal(0);
+            JCNewClass newDuck = make.NewClass(null, null, classCtor, List.<JCExpression>of(duckConstant, lambda), null);
+            return newDuck;
+        }
+
+        private JCNewClass createAnonBatchBody(JCBatchMessage batch) {
+            JCExpression genericType = batch.typeArgumentValue;
+            JCExpression classCtor = createBatchMessageTypeApply(batch);
+            JCClassDecl def = make.AnonymousClassDef(make.Modifiers(0), createBatchApplyMethod(batch, genericType));
+            JCNewClass lambda = make.NewClass(null, null, classCtor, List.<JCExpression>nil(), def);
+            return lambda;
+        }
+
+        private JCTypeApply createBatchMessageTypeApply(JCBatchMessage batch) {
+            List<JCExpression> typeParams = List.<JCExpression>of(batch.typeArgumentValue);
+            return make.TypeApply(make.Ident(names.fromString(PaniniConstants.PANINI_BATCH_MESSAGE_TYPE_NAME)),
+                    typeParams);
+        }
+        
+        private List<JCTree> createBatchApplyMethod(JCBatchMessage batch, JCExpression genericType) {
+            Name name = names.fromString(PaniniConstants.PANINI_BATCH_MESSAGE_APPLY_METH_NAME);
+            JCExpression restype = genericType;
+            List<JCTypeParameter> typarams = List.<JCTypeParameter>nil();
+            List<JCVariableDecl> params = List.<JCVariableDecl>nil();
+            List<JCExpression> thrown = List.<JCExpression>nil();;
+            batch.bodyRewritten = rewriteBody();
+            JCExpression defaultValue = null;
+            JCMethodDecl applyMeth = make.MethodDef(make.Modifiers(PUBLIC), name, restype, typarams, params, thrown, batch.bodyRewritten, defaultValue);
+            return List.<JCTree>of(applyMeth);
+        }
+
+        private JCBlock rewriteBody() {
+            ProcedureCallOriginalAppender original$Subst = new ProcedureCallOriginalAppender();
+            JCBlock newBlock = copier.copy(batch.body);
+            original$Subst.translate(newBlock);
+            return newBlock;
+        }
+
+        private JCExpression createGenericTypeArgumentOfBatchMessage() {
+            if((batch.returnTypeOfBatch.tag == CLASS)) {
+                return make.Ident(batch.returnTypeOfBatch.tsym.name);
+            }
+            return make.Ident(typeTagToTypeNameMap.get(batch.returnTypeOfBatch.tag));
+        }
+        
+        private JCExpression createMethodInvocation() {
+            JCFieldAccess select = null;
+            if (batch.returnTypeOfBatch.tag == VOID) {
+                JCLiteral nullLiteral = make.Literal(TypeTags.BOT, null);
+                JCReturn newRet = make.Return(nullLiteral);
+                batch.body.stats = ListUtils.<JCStatement> append(newRet, batch.body.stats);
+            }
+            Name runBatchMethodName = names.panini.RunBatch;
+            select = make.Select(batch.targetCapsule, runBatchMethodName);
+            select.type = batch.returnTypeOfBatch;
+            return select;
+        }
+        
+        private Type checkTypeOfBatchTargetCapsule(){
+            JCExpression targetCapsule = batch.targetCapsule;
+            Type typeOfTargetCapsule = attribExpr(targetCapsule, env);
+            Type actualType = types.createErrorType(typeOfTargetCapsule);
+            if (!typeOfTargetCapsule.tsym.isCapsule()) {
+                log.error(targetCapsule.pos(), "only.capsule.types.allowed",
+                        typeOfTargetCapsule);
+                return actualType;
+            }
+            return actualType;
+        }
+        
+        private Type checkReturnTypeOfBatch(JCBlock body) {
+            Env<AttrContext> localEnv =
+                env.dup(body, env.info.dup(env.info.scope.dup()));
+            ListBuffer<JCExpression> returnTypes = new ListBuffer<JCExpression>();
+            for (List<JCStatement> l = body.stats; l.nonEmpty(); l = l.tail) {
+                if (l.head.getTag() == RETURN) {
+                    JCReturn retStat = (JCReturn)l.head;
+                    attribExpr(retStat.expr, localEnv);
+                    returnTypes.add(retStat.expr);
+                } else {
+                    attribStat(l.head, localEnv);
+                }
+            }
+            //verify that all types are the same.
+            Type returnType = syms.voidType;
+            for (List<JCExpression> l = returnTypes.toList(); l.nonEmpty(); l = l.tail) {
+                Type currentType = l.head.type;
+                if(returnType.tag == VOID) 
+                    returnType = currentType;
+                else{
+                    //TODO: better error message and position
+                    chk.typeTagError(body, returnType, currentType);
+                }
+            }
+            localEnv.info.scope.leave();
+            return returnType;
+        }
+        
+        /**
+         * Assumptions:
+         *   (1) the topmost tree it will be used on is a JCBlock
+         * 
+         * This visitor will go through all JCMethodApply nodes in a given block
+         * and append $Original to all of those that are procedures calls within
+         * a batch message block. All other methods or procedure calls will be left
+         * unchanged.
+         *
+         * @author lorand
+         */
+        private class ProcedureCallOriginalAppender extends TreeTranslator{
+            @Override
+            public void visitApply(JCMethodInvocation tree) {
+                if (isProcedureCallWithinBatch(tree)) {
+                    JCFieldAccess fieldAccess = extractFieldAccess(tree);
+                    result = createNewMethodCall(fieldAccess.selected, appendOriginal(fieldAccess, batch), List.<JCExpression> nil());
+                } else result = tree;
+            }
+            
+            private boolean isProcedureCallWithinBatch(JCMethodInvocation stat){
+                JCFieldAccess fAccess = extractFieldAccess(stat);
+                if(fAccess == null)
+                    return false;
+                boolean result = (fAccess.selected.toString().equals(batch.targetCapsule.toString()));
+                return result;
+            }
+            
+            private JCFieldAccess extractFieldAccess(JCMethodInvocation mInvoc){
+                if (mInvoc.meth.hasTag(Tag.SELECT)) {
+                    return (JCFieldAccess) mInvoc.meth;
+                }
+                return null;
+            }
+            
+            //TODO batch: extract "$Original" to a constant.
+            private String appendOriginal(JCFieldAccess procedureInvocation, JCBatchMessage batch) {
+                return procedureInvocation.name.toString() + "$Original";
+            }
+            
+            private JCMethodInvocation createNewMethodCall(JCExpression selection, String function, List<JCExpression> args) {
+                return make.Apply(List.<JCExpression>nil(),
+                       make.Select(selection, names.fromString(function)),
+                          args);
+            }
+        } //end MethodCallNameReplacer;
+    }
+    // end Panini code
 }
