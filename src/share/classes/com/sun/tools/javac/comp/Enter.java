@@ -30,8 +30,6 @@ import java.util.*;
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileManager;
 
-import com.sun.source.tree.TreeVisitor;
-import com.sun.source.tree.Tree.Kind;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Scope.*;
 import com.sun.tools.javac.code.Symbol.*;
@@ -51,9 +49,6 @@ import com.sun.tools.javac.util.List;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
-import static com.sun.tools.javac.code.TypeTags.PACKAGE;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.DOT;
-import static com.sun.tools.javac.parser.Tokens.TokenKind.STAR;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
 // Panini code
@@ -450,18 +445,7 @@ public class Enter extends JCTree.Visitor {
                                     tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(capsule.defs));
                     copyTask.accessMods = capsule.mods.flags;
                     //TODO batch: adding the $original methods to the interface declaration
-                    ListBuffer<JCTree> newMeths = new ListBuffer<JCTree>();
-                    for (List<JCTree> c = capsule.defs; c.nonEmpty(); c = c.tail){
-                        //TODO: batch make this filter out non JCMethodDecls
-                        if(c.head instanceof JCMethodDecl){
-                            JCMethodDecl md = (JCMethodDecl) c.head;
-                            newMeths.add(md);
-                            JCMethodDecl mdCopy = tc.copy(md);
-                            mdCopy.name = names.fromString(mdCopy.name.toString() + "$Original");
-                            newMeths.add(mdCopy);
-                        }
-                    }
-                    List<JCTree> methodDecls = newMeths.toList();
+                    List<JCTree> methodDecls = appendOriginalToPublicProcedures(tc, capsule);
                     JCCapsuleDecl copySerial =
                             make.CapsuleDef(make.Modifiers(FINAL, annotationProcessor.createCapsuleAnnotation(Flags.SERIAL, capsule)), names.fromString(capsule.name + "$serial"), 
                                     tc.copy(capsule.params), List.<JCExpression>of(make.Ident(capsule.name)), tc.copy(methodDecls));
@@ -483,11 +467,43 @@ public class Enter extends JCTree.Visitor {
         }
         return copiedDefs.toList();
     }
+
+    /**
+     * For every capsule procedure X this method will add another method X$Original
+     * to the capsule's interface.
+     */
+    private List<JCTree> appendOriginalToPublicProcedures(TreeCopier<Void> tc, JCCapsuleDecl capsule) {
+        ListBuffer<JCTree> newCapsuleDefs = new ListBuffer<JCTree>();
+        for (List<JCTree> cDef = capsule.defs; cDef.nonEmpty(); cDef = cDef.tail){
+            //FIXME batch: make this filter out non JCMethodDecls
+            if (cDef.head.hasTag(Tag.METHODDEF)) {
+                JCMethodDecl md = (JCMethodDecl) cDef.head;
+                boolean isInit = md.name.toString().contains(PaniniConstants.PANINI_CAPSULE_INIT);
+                boolean isPrivate = ((md.mods.flags & PRIVATE) != 0); 
+                // we only want to add $Original method names to capsule public procedures.
+                if ( isPrivate || isInit ) {
+                    newCapsuleDefs.add(md);
+                } else {
+                    newCapsuleDefs.add(md);
+                    JCMethodDecl mdCopy = tc.copy(md);
+                    mdCopy.name = names.fromString(mdCopy.name.toString() + PaniniConstants.PANINI_ORIGINAL_METHOD_SUFFIX);
+                    newCapsuleDefs.add(mdCopy);
+                }
+            } else {
+                //this is capsule state
+                newCapsuleDefs.add(cDef.head);
+            }
+        }
+        List<JCTree> methodDecls = newCapsuleDefs.toList();
+        return methodDecls;
+    }
     
-  /**
-   * public <FunType, DuckType extends Panini$Duck<FunType>> DuckType runBatch(DuckType returnedDuck);
-   * @return returns a JCMethodDecl as described in the comment above.
-   */
+    /**
+     * <code>
+     * public <FunType, DuckType extends Panini$Duck<FunType>> DuckType runBatch(DuckType returnedDuck);
+     * </code>
+     * @return returns a JCMethodDecl as described in the comment above.
+     */
     private JCMethodDecl createRunBatchMethod(){
         JCModifiers modifiers = make.Modifiers(PUBLIC);
         Name methodName = names.panini.RunBatch;
