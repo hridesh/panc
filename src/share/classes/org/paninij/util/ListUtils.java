@@ -14,16 +14,21 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  *
- * Contributor(s):
+ * Contributor(s): Sean L. Mooney, Lorand Szakacs
  */
 package org.paninij.util;
 
 import com.sun.tools.javac.util.List;
+import com.sun.tools.javac.util.ListBuffer;
 
 /**
  * Utility methods for operations on lists
  * @author Sean L. Mooney
  * @since panini-0.9.2
+ */
+/**
+ * @author lorand
+ *
  */
 public class ListUtils {
 
@@ -58,5 +63,67 @@ public class ListUtils {
             }
         }
         return head;
+    }
+    
+    /**
+     * Appends an element to the end of the given list
+     * 
+     * @param toAppend
+     * @param list
+     * @return returns a new list containing all the elements of the previous
+     *         list to which the new value was appended.
+     */
+    public static <T> List<T> append(T toAppend, List<T> list) {
+        ListBuffer<T> temp = new ListBuffer<T>();
+        for (List<T> l = list; l.nonEmpty(); l = l.tail) {
+            temp.add(l.head);
+        }
+        temp.add(toAppend);
+        return temp.toList();
+    }
+    
+    /**
+     * @param list
+     * @param pred
+     * @return the first element in the list found to match the given predicate
+     */
+    public static <T> T findFirst(List<T> list, Predicate<T> pred){
+        for (List<T> l = list; l.nonEmpty(); l = l.tail) {
+            if(pred.apply(l.head))
+                return l.head;
+        }
+        return null;
+    }
+    
+    
+    /**
+     * Filters the list by the given predicate
+     * @param list
+     * @param pred
+     * @return returns a list containing all elements from the initial list that
+     *         matched the given predicate
+     */
+    public static <T> List<T> filter(List<T> list, Predicate<T> pred){
+        ListBuffer<T> temp = new ListBuffer<T>();
+        for (List<T> l = list; l.nonEmpty(); l = l.tail) {
+            if(pred.apply(l.head))
+                temp.add(l.head);
+        }
+        return temp.toList();
+    }
+    
+    /**
+     * Same as filter, but returns the elements that did not match the predicate.
+     * @param list
+     * @param pred
+     * @return
+     */
+    public static <T> List<T> filterNot(List<T> list, Predicate<T> pred){
+        ListBuffer<T> temp = new ListBuffer<T>();
+        for (List<T> l = list; l.nonEmpty(); l = l.tail) {
+            if(!pred.apply(l.head))
+                temp.add(l.head);
+        }
+        return temp.toList();
     }
 }
