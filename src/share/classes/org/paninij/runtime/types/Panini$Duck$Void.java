@@ -19,6 +19,8 @@
 
 package org.paninij.runtime.types;
 
+import org.paninij.runtime.PaniniBatchMessage;
+
 public class Panini$Duck$Void implements Panini$Duck<Void> {
 
 	public Panini$Duck$Void(int messageId) {
@@ -56,4 +58,9 @@ public class Panini$Duck$Void implements Panini$Duck<Void> {
 	
     private final int messageId;
     private boolean redeemed = false;
+    
+    @Override
+    public PaniniBatchMessage<Void> panini$getMessage() {
+        return null;
+    }
 }

@@ -29,6 +29,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Comparator;
 
+import org.paninij.runtime.PaniniBatchMessage;
 import org.paninij.runtime.types.Panini$Duck;
 
 /**
@@ -2468,4 +2469,10 @@ public class String extends Object implements CharSequence,
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
     private static final long serialVersionUID = -6849794470754667710L;
+
+    @Override
+    public PaniniBatchMessage<java.lang.String> panini$getMessage() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

@@ -25,7 +25,9 @@
 
 package org.paninij.lang;
 
+import org.paninij.runtime.PaniniBatchMessage;
 import org.paninij.runtime.types.Panini$Duck;
+
 import java.lang.String;
 /**
  * The {@code Boolean} class wraps a value of the primitive type {@code
@@ -390,4 +392,9 @@ public class Boolean extends Object implements java.io.Serializable,
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
     private static final long serialVersionUID = -3665804199014368530L;
+
+    @Override
+    public PaniniBatchMessage<java.lang.Boolean> panini$getMessage() {
+        return null;
+    }
 }

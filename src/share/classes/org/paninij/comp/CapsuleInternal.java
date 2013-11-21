@@ -1092,6 +1092,7 @@ public class CapsuleInternal extends Internal {
 		return value;
 	}
 	
+	//FIXME batch: make this a non-stub.
     private JCMethodDecl createBatchGetMessageMethodStub(List<JCExpression> genericTypes) {
         ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
 

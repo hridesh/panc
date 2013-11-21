@@ -125,6 +125,10 @@ public class LeakDetection {
 	}
 
 	private void forwardintra(JCCapsuleDecl capsule, JCMethodDecl meth) {
+	    if(meth.toString().contains("runBatch")) {
+	        //FIXME batch: figure this out.
+	        return;
+	    }
 		curr = meth;
 		defs = capsule.defs;
 

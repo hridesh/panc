@@ -18,7 +18,16 @@
  */
 
 package org.paninij.runtime;
+
+import org.paninij.runtime.types.Panini$Duck;
+
 public interface PaniniCapsule{
+    
+    /**
+     * All capsules support the batch message operation. Therefore
+     * 0 will be the universal constant for this operation.
+     */
+    public final int panini$methodConst$BatchMessage = 0;
    
   	/**
   	 * Causes the current capsule to sleep (temporarily cease execution) 
@@ -51,6 +60,17 @@ public interface PaniniCapsule{
   	 * 
   	 */
   	public void exit ();
+  	
+  	/**
+  	 * When invoked the client will have to provide the concrete type of the duck that
+  	 * is to be returned for the 'DuckType'. This is required so that type checking
+  	 * can go smoothly.
+  	 * 
+  	 * @param returnedDuck
+  	 * @return
+  	 */
+  	public <FunType, DuckType extends Panini$Duck<FunType>> DuckType runBatch(DuckType returnedDuck);
+  	
   	
   	public void start();
   	public void join() throws java.lang.InterruptedException; 

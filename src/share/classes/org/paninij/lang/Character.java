@@ -25,7 +25,9 @@
 
 package org.paninij.lang;
 
+import org.paninij.runtime.PaniniBatchMessage;
 import org.paninij.runtime.types.Panini$Duck;
+
 import java.lang.String;
 /**
  * The {@code Character} class wraps a value of the primitive type {@code
@@ -2994,4 +2996,10 @@ Panini$Duck<java.lang.Character>, Comparable<Character> {
 
 	/** use serialVersionUID from JDK 1.0.2 for interoperability */
 	private static final long serialVersionUID = 3786198910865385080L;
+
+    @Override
+    public PaniniBatchMessage<java.lang.Character> panini$getMessage() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

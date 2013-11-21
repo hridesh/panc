@@ -18,6 +18,8 @@
  */
 package org.paninij.runtime.types;
 
+import org.paninij.runtime.PaniniBatchMessage;
+
 public class Panini$Duck$Array$Types implements Panini$Duck<Object>{
 	private Object panini$wrapped = null;
     private final int panini$message$id = 0;
@@ -48,5 +50,10 @@ public class Panini$Duck$Array$Types implements Panini$Duck<Object>{
     public Object arrayValue() {
     	if (panini$redeemed == false) panini$get();
         return panini$wrapped;
+    }
+
+    @Override
+    public PaniniBatchMessage<Object> panini$getMessage() {
+        return null;
     }
 }

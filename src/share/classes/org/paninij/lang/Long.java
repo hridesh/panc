@@ -25,7 +25,9 @@
 
 package org.paninij.lang;
 
+import org.paninij.runtime.PaniniBatchMessage;
 import org.paninij.runtime.types.Panini$Duck;
+
 import java.lang.String;
 /**
  * The {@code Long} class wraps a value of the primitive type {@code
@@ -1094,4 +1096,10 @@ public class Long extends Number
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
     private static final long serialVersionUID = 4290774380558885855L;
+
+    @Override
+    public PaniniBatchMessage<java.lang.Long> panini$getMessage() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

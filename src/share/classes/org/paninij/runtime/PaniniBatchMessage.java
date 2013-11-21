@@ -13,15 +13,15 @@
  * 
  * For more details and the latest version of this code please see
  * http://paninij.org
- * 
- * Contributor(s): Hridesh Rajan
+ *
+ * Contributor(s): Lorand Szakacs
  */
-package org.paninij.runtime.types;
-import org.paninij.runtime.PaniniBatchMessage;
+package org.paninij.runtime;
 
-public interface Panini$Duck<T> {
-    public void panini$finish(T t);
-    public int panini$message$id(); 
-    public T panini$get();
-    public PaniniBatchMessage<T> panini$getMessage();
+/**
+ * @author Lorand Szakacs
+ * @param <T>
+ */
+public interface PaniniBatchMessage<T> {
+    T apply();
 }

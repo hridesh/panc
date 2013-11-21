@@ -25,7 +25,9 @@
 
 package org.paninij.lang;
 
+import org.paninij.runtime.PaniniBatchMessage;
 import org.paninij.runtime.types.Panini$Duck;
+
 import java.lang.String;
 /**
  * The {@code Float} class wraps a value of the primitive type {@code
@@ -992,4 +994,10 @@ public class Float extends Number
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
     private static final long serialVersionUID = -2671257302660747028L;
+
+    @Override
+    public PaniniBatchMessage<java.lang.Float> panini$getMessage() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

@@ -51,6 +51,7 @@ public class Names {
      */
     public final Name Wiring;
     public final Name PaniniFinish;
+    public final Name PaniniDuckTypeName;
     public final Name PaniniDuckGet;
     public final Name PaniniDuckGetMessage;
     public final Name PaniniDuckFuture;
@@ -65,6 +66,7 @@ public class Names {
     public final Name Org;
     public final Name Paninij;
     public final Name Runtime;
+    public final Name Types;
     public final Name UnrunnableCapsuleExceptionClass;
     
     // names related to batch messages
@@ -107,6 +109,7 @@ public class Names {
         //Capsule related
         Capsule = names.fromString("Capsule");
         Wiring = names.fromString("Wiring");
+        PaniniDuckTypeName = names.fromString(PaniniConstants.DUCK_INTERFACE_NAME);
         PaniniFinish = names.fromString(PaniniConstants.PANINI_FINISH);
         PaniniDuckGet = names.fromString(PaniniConstants.PANINI_DUCK_GET);
         PaniniDuckGetMessage = names.fromString(PaniniConstants.PANINI_DUCK_GET_MESSAGE);
@@ -142,6 +145,7 @@ public class Names {
         Org = names.fromString("org");
         Paninij = names.fromString("paninij");
         Runtime = names.fromString("runtime");
+        Types = names.fromString("types");
         UnrunnableCapsuleExceptionClass = names.fromString(PaniniConstants.UNRUNNABLE_EXCEPTION_CLASS);
     }
 }

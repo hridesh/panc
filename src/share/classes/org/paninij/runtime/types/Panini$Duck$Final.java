@@ -18,6 +18,8 @@
  */
 package org.paninij.runtime.types;
 
+import org.paninij.runtime.PaniniBatchMessage;
+
 public class Panini$Duck$Final<T> implements Panini$Duck<T>{
 	private T panini$wrapped = null;
     private final int panini$message$id = 0;
@@ -48,5 +50,10 @@ public class Panini$Duck$Final<T> implements Panini$Duck<T>{
     public T finalValue() {
     	if (panini$redeemed == false) panini$get();
         return panini$wrapped;
+    }
+
+    @Override
+    public PaniniBatchMessage<T> panini$getMessage() {
+        return null;
     }
 }

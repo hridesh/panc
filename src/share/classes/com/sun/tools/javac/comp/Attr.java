@@ -823,7 +823,9 @@ public class Attr extends JCTree.Visitor {
         return owntype;
     }
 
+    @Override
     public final void visitCapsuleDef(final JCCapsuleDecl tree){
+        this.enclosingCapsuleDef = tree;
     	pAttr.visitCapsuleDef(tree, this, env, rs);
     }
 
@@ -1112,6 +1114,7 @@ public class Attr extends JCTree.Visitor {
         MethodSymbol m = tree.sym;
         
         // Panini code
+        this.enclosingMethodDef = tree;
         pAttr.preVisitMethodDef(tree, this);
         // end Panini code
 
@@ -1344,7 +1347,7 @@ public class Attr extends JCTree.Visitor {
      * with calls to runBatch. Additionally, it will generate the appropriate classes and ducks.
      * @param tree
      */
-    private void replaceBatchMessages(JCBlock tree){
+    private void replaceBatchMessages(JCBlock tree) {
         BatchRewriter batchRewriter = new BatchRewriter(make, alreadedAddedBatchDuckClasses);
         batchRewriter.translate(tree);
     }
@@ -1957,6 +1960,7 @@ public class Attr extends JCTree.Visitor {
             Type mtype = attribExpr(tree.meth, localEnv, mpt);
             
             // Panini Code
+            //FIXME batch: $task and $thread capsule $Originals are added here, while for the other two they are added in Enter.capsuleSplitter
             if( (((MethodSymbol)TreeInfo.symbol(tree.meth)).flags()&Flags.PRIVATE)==0 &&(((MethodSymbol)TreeInfo.symbol(tree.meth)).flags()&Flags.PROTECTED)==0 ){
                 if(env.enclClass.sym.isCapsule() &&((env.enclClass.sym.flags_field&Flags.SERIAL)==0)&&((env.enclClass.sym.flags_field&Flags.MONITOR)==0)){
                     if(tree.meth.hasTag(Tag.IDENT)){
@@ -3923,6 +3927,7 @@ public class Attr extends JCTree.Visitor {
                     return false;
                 }
             });
+            //FIXME batch: move constructor building to the duckgenerator part
             JCMethodDecl constructor = (JCMethodDecl) temp;
             Name nameOfBatchMessageField = names.fromString("batchM");
             JCVariableDecl batchParam = make.VarDef(make.Modifiers(0), nameOfBatchMessageField, typeApply, null);
@@ -3951,7 +3956,7 @@ public class Attr extends JCTree.Visitor {
             newDefs = ListUtils.<JCTree> append(getBatchM, newDefs);
             duckClass.defs = newDefs;
             enter.classEnter(List.<JCClassDecl> of(duckClass), env.outer);
-            return classes.first();
+            return duckClass;
         }
         
         private JCMethodDecl createPaniniGetMessageMeth(Name nameOfBatchMessageField, JCTypeApply typeApply, JCFieldAccess batchMFieldAccess) {

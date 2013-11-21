@@ -73,7 +73,7 @@ public class PaniniConstants {
 	public final static String PANINI_DISCONNECT = "panini$disconnect";
 	
 	public final static String PANINI_DUCK_RUN_BATCH_PIMITIVE_METH_NAME = "runBatch";
-    public final static String PANINI_BATCH_MESSAGE_TYPE_NAME = "BatchMessage";
+    public final static String PANINI_BATCH_MESSAGE_TYPE_NAME = "PaniniBatchMessage";
     public final static String PANINI_BATCH_MESSAGE_APPLY_METH_NAME = "apply";
 
 	public final static String UNRUNNABLE_EXCEPTION_CLASS =
