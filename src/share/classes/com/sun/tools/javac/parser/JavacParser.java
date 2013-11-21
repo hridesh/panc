@@ -28,7 +28,6 @@ package com.sun.tools.javac.parser;
 import java.util.*;
 
 import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
-import com.sun.source.tree.Tree.Kind;
 
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.parser.Tokens.*;
@@ -54,7 +53,6 @@ import static com.sun.tools.javac.parser.Tokens.TokenKind.IMPORT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.LT;
 
 // Panini code
-import org.paninij.parser.PaniniTokens;
 import org.paninij.parser.DesignDeclParser;
 import org.paninij.parser.DesignDeclParser.DesignDeclResult;
 // end Panini code
@@ -96,8 +94,6 @@ public class JavacParser implements Parser {
 
     /** End position mappings container */
     private final AbstractEndPosTable endPosTable;
-    
-    private Name currentToken;
 
     /** Construct a parser from a given scanner, tree factory and log.
      */
@@ -1127,7 +1123,10 @@ public class JavacParser implements Parser {
         case IDENTIFIER: case ASSERT: case ENUM:
             if (typeArgs != null) return illegal();
             if ((mode & EXPR) != 0 && peekToken(ARROW)) {
-                t = lambdaExpressionOrStatement(false, false, pos);
+                // Panini code
+                // t = lambdaExpressionOrStatement(false, false, pos);
+                t = batchMessage();
+                // end Panini code
             } else {
                 t = toP(F.at(token.pos).Ident(ident()));
                 loop: while (true) {
@@ -2927,31 +2926,38 @@ public class JavacParser implements Parser {
      }
      
      JCStatement signatureDecl(JCModifiers mod, String dc){
-    	 mod.flags |= Flags.INTERFACE;
-      	accept(IDENTIFIER);
-      	int pos = token.pos;
-      	Name name = ident();
-      	if(token.kind == EXTENDS){
-      		log.error(token.pos, "capsule.extend.error");
-      		nextToken();
-      		parseType();
-      	}
-  		List<JCVariableDecl> params; 
-      	if(token.kind == LPAREN)
-      		params = formalParameters();
-      	else
-      		params = List.<JCVariableDecl>nil();
-      	List<JCExpression> implementing = List.nil();
-      	List<JCTree> defs = classOrInterfaceBody(name, true);
-      	JCCapsuleDecl result = 
-      			toP(F.at(pos).CapsuleDef(mod, name, params, implementing, defs));
-      	attach(result, dc);
-      	return result;
-      }
+        mod.flags |= Flags.INTERFACE;
+        accept(IDENTIFIER);
+        int pos = token.pos;
+        Name name = ident();
+        if (token.kind == EXTENDS) {
+            log.error(token.pos, "capsule.extend.error");
+            nextToken();
+            parseType();
+        }
+        List<JCVariableDecl> params;
+        if (token.kind == LPAREN)
+            params = formalParameters();
+        else
+            params = List.<JCVariableDecl> nil();
+        List<JCExpression> implementing = List.nil();
+        List<JCTree> defs = classOrInterfaceBody(name, true);
+        JCCapsuleDecl result = toP(F.at(pos).CapsuleDef(mod, name, params, implementing, defs));
+        attach(result, dc);
+        return result;
+    }
      
      public List<JCVariableDecl> capsuleParameters(){
-    	 return formalParameters();
+         return formalParameters();
      }
+   //parses capsuleVar -> { statements;}
+     private JCExpression batchMessage() {
+         JCIdent targetCapsule = toP(F.at(token.pos).Ident(ident()));
+         accept(ARROW);
+         JCBlock body = block();
+         return toP(F.at(token.pos).BatchMessage(targetCapsule, body));
+     }
+     
      // end Panini code
 
     /** ClassDeclaration = CLASS Ident TypeParametersOpt [EXTENDS Type]

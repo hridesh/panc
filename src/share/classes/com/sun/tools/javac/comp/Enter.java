@@ -1091,42 +1091,42 @@ public class Enter extends JCTree.Visitor {
 		if (returnType.equals("long")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
 					.Select(make.Ident(duckFuture),
-							names.fromString("longValue")), List
+							names.panini.longValue), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("boolean")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
 					.Select(make.Ident(duckFuture),
-							names.fromString("booleanValue")), List
+							names.panini.booleanValue), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("byte")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
 					.Select(make.Ident(duckFuture),
-							names.fromString("byteValue")), List
+							names.panini.byteValue), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("char")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
 					.Select(make.Ident(duckFuture),
-							names.fromString("charValue")), List
+							names.panini.charValue), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("double")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
 					.Select(make.Ident(duckFuture),
-							names.fromString("doubleValue")), List
+							names.panini.doubleValue), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("float")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
 					.Select(make.Ident(duckFuture),
-							names.fromString("floatValue")), List
+							names.panini.floatValue), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("int")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
 					.Select(make.Ident(duckFuture),
-							names.fromString("intValue")), List
+							names.panini.intValue), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("short")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
 					.Select(make.Ident(duckFuture),
-							names.fromString("shortValue")), List
+							names.panini.shortValue), List
 					.<JCExpression> nil()));
 		} else if (returnType.equals("String")) {
 			returnStat = make.Return(make.Apply(List.<JCExpression> nil(), make
