@@ -264,78 +264,104 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 		return defaultAction(node, p);
 	}
 
-	// Panini code
-	public R visitInit(InitMethodTree node, P p) {
-		return defaultAction(node, p);
-	}
-	
-	public R visitProc(ProcedureTree node, P p) {
-		return defaultAction(node, p);
-	}
-	
-	public R visitProcInvocation(ProcInvocationTree node, P p) {
-		return defaultAction(node, p);
-	}
-	
-	public R visitState(StateTree node, P p) {
-		return defaultAction(node, p);
-	}
 
-	@Override
-	public R visitCapsuleWiring(CapsuleWiringTree node, P p) {
-	    return defaultAction(node, p);
-	}
 
-	public R visitIndexedCapsuleWiring(CapsuleArrayCallTree node, P p) {
-		return defaultAction(node, p);
-	}
-	
-	public R visitCapsuleArray(CapsuleArrayTree node, P p) {
-		return defaultAction(node, p);
-	}
+    // Panini code
+    @Override
+    public R visitBatchMessage(BatchMessageTree node, P p) {
+        return defaultAction(node, p);
+    }
+    
+    @Override
+    public R visitInit(InitMethodTree node, P p) {
+        return defaultAction(node, p);
+    }
 
-	public R visitWiringBlock(InternalWiringMethod node, P p) {
-		return defaultAction(node, p);
-	}
+    @Override
+    public R visitProc(ProcedureTree node, P p) {
+        return defaultAction(node, p);
+    }
 
-	public R visitLibrary(LibraryTree node, P p) {
-		return defaultAction(node, p);
-	}
+    @Override
+    public R visitProcInvocation(ProcInvocationTree node, P p) {
+        return defaultAction(node, p);
+    }
 
-	public R visitCapsule(CapsuleTree node, P p) {
-		return defaultAction(node, p);
-	}
+    @Override
+    public R visitState(StateTree node, P p) {
+        return defaultAction(node, p);
+    }
 
-	public R visitFree(FreeTree node, P p) {
-		return defaultAction(node, p);
-	}
+    @Override
+    public R visitCapsuleWiring(CapsuleWiringTree node, P p) {
+        return defaultAction(node, p);
+    }
 
-	public R visitInclude(IncludeTree node, P p) {
-		return defaultAction(node, p);
-	}
-	
-	public R visitForAll(ForAllTree node, P p) {
-		return defaultAction(node, p);
-	}
-	
-	public R visitForeach(ForeachTree node, P p) {
-		return defaultAction(node, p);
-	}
+    @Override
+    public R visitIndexedCapsuleWiring(CapsuleArrayCallTree node, P p) {
+        return defaultAction(node, p);
+    }
 
-	public R visitWireall(WireallTree node, P p) {
-	    return defaultAction(node, p);
-	}
+    @Override
+    public R visitCapsuleArray(CapsuleArrayTree node, P p) {
+        return defaultAction(node, p);
+    }
 
-	public R visitStar(StarTree node, P p){
-		return defaultAction(node, p);
-	}
+    @Override
+    public R visitWiringBlock(InternalWiringMethod node, P p) {
+        return defaultAction(node, p);
+    }
 
-	public R visitRing(RingTree node, P p){
-		return defaultAction(node, p);
-	}
+    //FIXME remove: dead code 
+    @Deprecated
+    public R visitLibrary(LibraryTree node, P p) {
+        return defaultAction(node, p);
+    }
+    
+    @Override
+    public R visitCapsule(CapsuleTree node, P p) {
+        return defaultAction(node, p);
+    }
 
-	public R visitAssociate(AssociateTree node, P p){
-		return defaultAction(node, p);
-	};
+    @Override
+    public R visitFree(FreeTree node, P p) {
+        return defaultAction(node, p);
+    }
+
+    //FIXME: remove: dead code
+    @Deprecated
+    public R visitInclude(IncludeTree node, P p) {
+        return defaultAction(node, p);
+    }
+
+    @Override
+    public R visitForAll(ForAllTree node, P p) {
+        return defaultAction(node, p);
+    }
+
+    @Override
+    public R visitForeach(ForeachTree node, P p) {
+        return defaultAction(node, p);
+    }
+
+    @Override
+    public R visitWireall(WireallTree node, P p) {
+        return defaultAction(node, p);
+    }
+
+    @Override
+    public R visitStar(StarTree node, P p) {
+        return defaultAction(node, p);
+    }
+
+    @Override
+    public R visitRing(RingTree node, P p) {
+        return defaultAction(node, p);
+    }
+
+    @Override
+    public R visitAssociate(AssociateTree node, P p) {
+        return defaultAction(node, p);
+    };
 	// end Panini code
 }

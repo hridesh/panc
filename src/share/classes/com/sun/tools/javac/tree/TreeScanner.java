@@ -62,42 +62,57 @@ public class TreeScanner extends Visitor {
  * Visitor methods
  ****************************************************************************/
     // Panini code
+    @Override
+    public void visitBatchMessage(JCBatchMessage tree) {
+        scan(tree.targetCapsule);
+        scan(tree.body);
+    }
+    
+    @Override
     public void visitInitDef(JCInitDecl tree) {
         visitMethodDef(tree);
     }
     
+    @Override
     public void visitProcDef(JCProcDecl tree) {
         visitMethodDef(tree);
     }
     
+    @Override
     public void visitProcApply(JCProcInvocation tree) {
         visitApply(tree);
     }
     
+    @Override
     public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
         scan(tree.arguments);
     }
     
+    @Override
     public void visitCapsuleArray(JCCapsuleArray tree) {
         scan(tree.elemtype);
     }
     
+    @Override
     public void visitCapsuleDef(JCCapsuleDecl tree){
     	visitClassDef(tree);
     }
     
+    @Override
     public void visitStateDef(JCStateDecl tree) {
         visitVarDef(tree);
     }
 
+    @Override
     public void visitFree(JCFree tree){
     	scan(tree.exp);
     }
-        
+
+    @Override
     public void visitForAllLoop(JCForAllLoop tree){
-    	scan(tree.var);
-    	scan(tree.expr);
-    	scan(tree.body);
+        scan(tree.var);
+        scan(tree.expr);
+        scan(tree.body);
     }
 
     @Override

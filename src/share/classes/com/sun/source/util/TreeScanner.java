@@ -399,104 +399,126 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     }
 
 	// Panini code
+    @Override
+    public R visitBatchMessage(BatchMessageTree node, P p) {
+        return visitBlock(node.getBody(), p);
+    }
+    
+    @Override
     public R visitInit(InitMethodTree node, P p) {
-		return visitMethod(node, p);
-	}
+        return visitMethod(node, p);
+    }
     
+    @Override
     public R visitProc(ProcedureTree node, P p) {
-		return visitMethod(node, p);
-	}
+        return visitMethod(node, p);
+    }
     
+    @Override
     public R visitProcInvocation(ProcInvocationTree node, P p) {
-		return visitMethodInvocation(node, p);
-	}
+        return visitMethodInvocation(node, p);
+    }
     
+    @Override
     public R visitState(StateTree node, P p) {
-		return visitVariable(node, p);
-	}
+        return visitVariable(node, p);
+    }
     
     @Override
     public R visitCapsuleWiring(CapsuleWiringTree node, P p) {
         R r = scan(node.getArguments(), p);
         return r;
     }
-
-    public R visitIndexedCapsuleWiring(CapsuleArrayCallTree node, P p) {
-		R r = scan(node.getArgs(), p);
-		return r;
-	}
-	
-    public R visitCapsuleArray(CapsuleArrayTree node, P p) {
-		R r = scan(node.getType(), p);
-		return r;
-	}
     
-	public R visitWiringBlock(InternalWiringMethod node, P p) {
-		R r = scan(node.getBody(), p);
-		return r;
-	}
+    @Override
+    public R visitIndexedCapsuleWiring(CapsuleArrayCallTree node, P p) {
+        R r = scan(node.getArgs(), p);
+        return r;
+        }
 
-	public R visitLibrary(LibraryTree node, P p) {
-		R r = scan(node.getMembers(), p);
-		return r;
-	}
+    @Override
+    public R visitCapsuleArray(CapsuleArrayTree node, P p) {
+        R r = scan(node.getType(), p);
+        return r;
+    }
+    
+    @Override
+    public R visitWiringBlock(InternalWiringMethod node, P p) {
+        R r = scan(node.getBody(), p);
+        return r;
+    }
 
-	public R visitCapsule(CapsuleTree node, P p) {
-		R r = scan(node.getParameters(), p);
-		r = scanAndReduce(node.getImplementsClause(), p, r);
-		r = scanAndReduce(node.getMembers(), p, r);
-		return r;
-	}
-	
+    //FIXME remove; dead code
+    public R visitLibrary(LibraryTree node, P p) {
+        R r = scan(node.getMembers(), p);
+        return r;
+    }
+
+    @Override
+    public R visitCapsule(CapsuleTree node, P p) {
+        R r = scan(node.getParameters(), p);
+        r = scanAndReduce(node.getImplementsClause(), p, r);
+        r = scanAndReduce(node.getMembers(), p, r);
+        return r;
+    }
+    
+    @Override
 	public R visitFree(FreeTree node, P p){
-		R r = scan(node.getExpression(), p);
-		return r;
-	}
-	
-	public R visitInclude(IncludeTree node, P p){
-		R r = scan(node.getExpression(), p);
-		return r;
-	}
-	
-	public R visitForAll(ForAllTree node, P p){
-		R r = scan(node.getVariable(), p);
+        R r = scan(node.getExpression(), p);
+        return r;
+    }
+
+    //FIXME remove; dead code
+    public R visitInclude(IncludeTree node, P p) {
+        R r = scan(node.getExpression(), p);
+        return r;
+    }
+
+    @Override
+    public R visitForAll(ForAllTree node, P p) {
+        R r = scan(node.getVariable(), p);
         r = scanAndReduce(node.getExpression(), p, r);
         r = scanAndReduce(node.getStatement(), p, r);
         return r;
-	}
-	
-	public R visitForeach(ForeachTree node, P p){
-    	R r = scan(node.getVariable(), p);
-    	r = scanAndReduce(node.getCapsuleArray(), p, r);
-    	r = scanAndReduce(node.getMethod(), p, r);
-    	return r;
     }
 
-	public R visitWireall(WireallTree node, P p) {
-	    return null; //FIXME
-	};
+    @Override
+    public R visitForeach(ForeachTree node, P p) {
+        R r = scan(node.getVariable(), p);
+        r = scanAndReduce(node.getCapsuleArray(), p, r);
+        r = scanAndReduce(node.getMethod(), p, r);
+        return r;
+    }
 
-	public R visitStar(StarTree node, P p){
-		R r = scan(node.getCenter(), p);
-		r = scanAndReduce(node.getOrbiters(), p, r);
-		r = scanAndReduce(node.getArgs(), p, r);
-		return r;
-	}
+    @Override
+    public R visitWireall(WireallTree node, P p) {
+        return null; // FIXME
+    };
 
-	public R visitRing(RingTree node, P p){
-		R r = scan(node.getCapsules(), p);
-		r = scanAndReduce(node.getArgs(), p, r);
-		return r;
-	}
+    @Override
+    public R visitStar(StarTree node, P p) {
+        R r = scan(node.getCenter(), p);
+        r = scanAndReduce(node.getOrbiters(), p, r);
+        r = scanAndReduce(node.getArgs(), p, r);
+        return r;
+    }
 
-	public R visitAssociate(AssociateTree node, P p){
-		R r = scan(node.getSrc(), p);
-		r = scanAndReduce(node.getSrcPosition(), p, r);
-		r = scanAndReduce(node.getDest(), p, r);
-		r = scanAndReduce(node.getDestPosition(), p, r);
-		r = scanAndReduce(node.getLength(), p, r);
-		r = scanAndReduce(node.getArgs(), p, r);
-		return r;
-	}
-	//end Panini code
+    @Override
+    public R visitRing(RingTree node, P p) {
+        R r = scan(node.getCapsules(), p);
+        r = scanAndReduce(node.getArgs(), p, r);
+        return r;
+    }
+
+    @Override
+    public R visitAssociate(AssociateTree node, P p) {
+        R r = scan(node.getSrc(), p);
+        r = scanAndReduce(node.getSrcPosition(), p, r);
+        r = scanAndReduce(node.getDest(), p, r);
+        r = scanAndReduce(node.getDestPosition(), p, r);
+        r = scanAndReduce(node.getLength(), p, r);
+        r = scanAndReduce(node.getArgs(), p, r);
+        return r;
+    }
+    // end Panini code
 }

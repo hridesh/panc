@@ -34,11 +34,10 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.code.*;
 
-import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
 
-import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Flags.ANNOTATION;
+import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
 // Panini code
@@ -388,8 +387,20 @@ public class Pretty extends JCTree.Visitor {
      * Visitor methods
      *************************************************************************/
     // Panini code
+    @Override
+    public void visitBatchMessage(JCBatchMessage that) {
+        try {
+            printExpr(that.targetCapsule);
+            print(" -> ");
+            printBlock(that.body.stats);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    @Override
     public void visitInitDef(JCInitDecl tree){
-    	try {
+        try {
             // when producing source output, omit anonymous constructors
             if (tree.name == tree.name.table.names.init &&
                     enclClassName == null &&
@@ -426,8 +437,9 @@ public class Pretty extends JCTree.Visitor {
         }
     }
     
+    @Override
     public void visitProcDef(JCProcDecl tree){
-    	try {
+        try {
             // when producing source output, omit anonymous constructors
             if (tree.name == tree.name.table.names.init &&
                     enclClassName == null &&
@@ -464,8 +476,9 @@ public class Pretty extends JCTree.Visitor {
         }
     }
     
+    @Override
     public void visitProcApply(JCProcInvocation tree){
-    	try {
+        try {
             if (!tree.typeargs.isEmpty()) {
                 if (tree.meth.hasTag(SELECT)) {
                     JCFieldAccess left = (JCFieldAccess)tree.meth;
@@ -490,16 +503,18 @@ public class Pretty extends JCTree.Visitor {
         }
     }
     
+    @Override
     public void visitStateDef(JCStateDecl tree){
-    	visitVarDef(tree);
+        visitVarDef(tree);
     }
     
-    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree){
-    	try {
-			print(tree.name + "[" + tree.index + "]" + "(" + tree.arguments + ")");
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
+    @Override
+    public void visitIndexedCapsuleWiring(JCCapsuleArrayCall tree) {
+        try {
+            print(tree.name + "[" + tree.index + "]" + "(" + tree.arguments + ")");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
     
     @Override
@@ -514,6 +529,7 @@ public class Pretty extends JCTree.Visitor {
         }
     }
 
+    @Override
     public void visitCapsuleArray(JCCapsuleArray tree) {
         try {
             printBaseElementType(tree);
@@ -590,30 +606,32 @@ public class Pretty extends JCTree.Visitor {
             throw new UncheckedIOException(e);
         }
     }
-        
+
+    @Override
     public void visitCapsuleDef(JCCapsuleDecl tree){
-    	try{
-    		println();align();
-    		printDocComment(tree);
-    		print("capsule "); // Bryan Shrader 1/14/2013 'module' changed to 'capsule'
-    		print(tree.name + "(");
-    		printExprs(tree.params);
-    		print(")");
-    		if (tree.extending != null) {
-	    		print(" extends ");
-	    		print(tree.extending);
-    		}
-    		if (tree.implementing.nonEmpty()) {
+        try{
+            println();align();
+            printDocComment(tree);
+            print("capsule "); // Bryan Shrader 1/14/2013 'module' changed to 'capsule'
+            print(tree.name + "(");
+            printExprs(tree.params);
+            print(")");
+            if (tree.extending != null) {
+                print(" extends ");
+                print(tree.extending);
+            }
+            if (tree.implementing.nonEmpty()) {
                 print(" implements ");
                 printExprs(tree.implementing);
             }
-    		print(" ");
-    		printBlock(tree.defs);
-    	} catch (IOException e){
-    		throw new UncheckedIOException(e);
-    	}
+            print(" ");
+            printBlock(tree.defs);
+        } catch (IOException e){
+            throw new UncheckedIOException(e);
+        }
     }
     
+    @Override
     public void visitFree(JCFree tree) {
         try {
             print("free ");
@@ -624,17 +642,18 @@ public class Pretty extends JCTree.Visitor {
         }
     }
     
+    @Override
     public void visitForAllLoop(JCForAllLoop tree){
-    	try{
-    		print("forall(");
-    		print(tree.var);
-    		print(" : ");
-    		printExpr(tree.expr);
-    		print(") ");
-    		printStat(tree.body);
-    	}catch (IOException e){
-    		throw new UncheckedIOException(e);
-    	}
+        try {
+            print("forall(");
+            print(tree.var);
+            print(" : ");
+            printExpr(tree.expr);
+            print(") ");
+            printStat(tree.body);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
     // end Panini code
     public void visitTopLevel(JCCompilationUnit tree) {

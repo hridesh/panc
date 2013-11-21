@@ -124,42 +124,40 @@ public class TreeMaker implements JCTree.Factory {
         this.pos = (pos == null ? Position.NOPOS : pos.getStartPosition());
         return this;
     }
+
     // Panini code
-	public JCInitDecl InitDef(JCModifiers mods, JCBlock body) {
-		JCInitDecl tree = new JCInitDecl(mods,
-				names.fromString(PaniniConstants.PANINI_CAPSULE_INIT),
-				TypeIdent(TypeTags.VOID), List.<JCTypeParameter> nil(),
-				List.<JCVariableDecl> nil(), List.<JCExpression> nil(), body,
-				null, null);
-		tree.pos = pos;
-		tree.switchToMethod();
-		return tree;
-	}
+    public JCBatchMessage BatchMessage(JCIdent targetCapsule, JCBlock body) {
+        return new JCBatchMessage(targetCapsule, body);
+    }
+    
+    public JCInitDecl InitDef(JCModifiers mods, JCBlock body) {
+        JCInitDecl tree = new JCInitDecl(mods, names.fromString(PaniniConstants.PANINI_CAPSULE_INIT), TypeIdent(TypeTags.VOID),
+                List.<JCTypeParameter> nil(), List.<JCVariableDecl> nil(), List.<JCExpression> nil(), body, null, null);
+        tree.pos = pos;
+        tree.switchToMethod();
+        return tree;
+    }
 
-	public JCProcDecl ProcDef(JCModifiers mods, Name name,
-			JCExpression restype, List<JCTypeParameter> typarams,
-			List<JCVariableDecl> params, List<JCExpression> thrown,
-			JCBlock body, JCExpression defaultValue) {
-		JCProcDecl tree = new JCProcDecl(mods, name, restype, typarams, params,
-				thrown, body, defaultValue, null);
-		tree.pos = pos;
-		return tree;
-	}
+    public JCProcDecl ProcDef(JCModifiers mods, Name name, JCExpression restype, List<JCTypeParameter> typarams,
+            List<JCVariableDecl> params, List<JCExpression> thrown, JCBlock body, JCExpression defaultValue) {
+        JCProcDecl tree = new JCProcDecl(mods, name, restype, typarams, params, thrown, body, defaultValue, null);
+        tree.pos = pos;
+        return tree;
+    }
 
-	public JCProcInvocation ProcApply(List<JCExpression> typeargs,
-			JCExpression fn, List<JCExpression> args) {
-		JCProcInvocation tree = new JCProcInvocation(typeargs, fn, args);
-		tree.pos = pos;
-		return tree;
-	}
+    public JCProcInvocation ProcApply(List<JCExpression> typeargs, JCExpression fn, List<JCExpression> args) {
+        JCProcInvocation tree = new JCProcInvocation(typeargs, fn, args);
+        tree.pos = pos;
+        return tree;
+    }
 
-	public JCWireall ManyToOne(List<JCExpression> args){
-		JCWireall tree = new JCWireall(null, args);
-		tree.pos = pos;
-		return tree;
-	}
+    public JCWireall ManyToOne(List<JCExpression> args) {
+        JCWireall tree = new JCWireall(null, args);
+        tree.pos = pos;
+        return tree;
+    }
 
-	public JCWireall ManyToOne(JCExpression many, List<JCExpression> args){
+    public JCWireall ManyToOne(JCExpression many, List<JCExpression> args) {
         JCWireall tree = new JCWireall(many, args);
         tree.pos = pos;
         return tree;

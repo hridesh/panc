@@ -427,27 +427,37 @@ public class TreeTranslator extends JCTree.Visitor {
     }
 
     // Panini code
+    @Override
+    public void visitBatchMessage(JCBatchMessage tree) {
+        tree.targetCapsule = translate(tree.targetCapsule);
+        tree.body = translate(tree.body);
+    }
     
+    @Override
     public void visitProcApply(JCProcInvocation tree) {
         tree.meth = translate(tree.meth);
         tree.args = translate(tree.args);
         result = tree;
     }
     
+    @Override
     public void visitCapsuleDef(JCCapsuleDecl tree){
     	result = tree;
     }
 
+    @Override
     public void visitCapsuleArray(JCCapsuleArray tree) {
         tree.elemtype = translate(tree.elemtype);
         tree.sizeExpr = translate(tree.sizeExpr);
         result = tree;
     }
 
+    @Override
     public void visitInitDef(JCInitDecl tree){
-    	visitMethodDef(tree);
+        visitMethodDef(tree);
     }
-    
+
+    @Override
     public void visitProcDef(JCProcDecl tree){
     	tree.mods = translate(tree.mods);
         tree.restype = translate(tree.restype);
@@ -464,7 +474,6 @@ public class TreeTranslator extends JCTree.Visitor {
         tree.args = translate(tree.args);
         result = tree;
     }
-
 
     @Override
     public void visitWireall(JCWireall tree) {

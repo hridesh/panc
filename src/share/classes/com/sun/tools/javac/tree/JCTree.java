@@ -379,7 +379,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         TOP_RING,
         /** one-to-one capsule mapping/association
          */
-        TOP_ASSOC;
+        TOP_ASSOC,
+        
+        BATCH_MESSAGE;
         // end Panini code
 
 
@@ -533,7 +535,52 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         return TreeInfo.getEndPos(this, endPosTable);
     }
     
-	// Panini code
+    // Panini code
+    public static class JCBatchMessage extends JCExpression implements BatchMessageTree {
+
+        public JCBlock body;
+        public JCBlock bodyRewritten;
+        public JCIdent targetCapsule;
+        public Type typeOfTargetCapsule;
+        
+        public Type returnTypeOfBatch;
+        public JCExpression typeArgumentValue;
+        
+        public JCExpression translatedExpr = null;
+        
+        public JCClassDecl duckClass = null;
+
+        public JCBatchMessage(JCIdent targetCapsule, JCBlock body) {
+            this.targetCapsule = targetCapsule;
+            this.body = body;
+        }
+        
+        @Override
+        public Kind getKind() {
+            return Kind.BATCH_MESSAGE;
+        }
+
+        @Override
+        public BlockTree getBody() {
+            return body;
+        }
+
+        @Override
+        public Tag getTag() {
+            return Tag.BATCH_MESSAGE;
+        }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visitBatchMessage(this);
+        }
+
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            return v.visitBatchMessage(this, d);
+        }
+    }
+    
     public static class JCInitDecl extends JCMethodDecl implements InitMethodTree {
 		public Kind kind;
 		public Tag tag;
@@ -3400,6 +3447,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
         // Panini code
+        public void visitBatchMessage(JCBatchMessage that)   { visitTree(that); }
         public void visitProcDef(JCProcDecl that)            { visitTree(that); }
         public void visitProcApply(JCProcInvocation that)    { visitTree(that); }
         public void visitStateDef(JCStateDecl that)	         { visitTree(that); }

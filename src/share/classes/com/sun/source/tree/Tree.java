@@ -45,25 +45,26 @@ public interface Tree {
      * Enumerates all kinds of trees.
      */
     public enum Kind {
-    	// Panini code
-    	PROCCALL(ProcInvocationTree.class),
-    	PROCEDURE(ProcedureTree.class),
-    	STATE(StateTree.class),
-    	CAPSULE_WIRING(CapsuleWiringTree.class),
-    	CAPSULE_ARRAY_CALL(CapsuleArrayCallTree.class),
-    	CAPSULE_ARRAY(CapsuleArrayTree.class),
-    	/**
-    	 * Internal wiring block between capsules inside a capsule decl.
-    	 * Replaces the SystemDecl from panini 0.9.1.
-    	 */
-    	WIRING_BLOCK(InternalWiringMethod.class),
-    	LIBRARY(LibraryTree.class),
-    	CAPSULE(CapsuleTree.class),
-    	INCLUDE(IncludeTree.class),
-    	FREE(FreeTree.class),
-    	FORALLLOOP(ForAllTree.class),
-    	FOREACH(ForeachTree.class),
-    	INIT(InitMethodTree.class),
+        // Panini code
+        BATCH_MESSAGE(BatchMessageTree.class),
+        PROCCALL(ProcInvocationTree.class),
+        PROCEDURE(ProcedureTree.class),
+        STATE(StateTree.class),
+        CAPSULE_WIRING(CapsuleWiringTree.class),
+        CAPSULE_ARRAY_CALL(CapsuleArrayCallTree.class),
+        CAPSULE_ARRAY(CapsuleArrayTree.class),
+        /**
+         * Internal wiring block between capsules inside a capsule decl.
+         * Replaces the SystemDecl from panini 0.9.1.
+         */
+        WIRING_BLOCK(InternalWiringMethod.class),
+        LIBRARY(LibraryTree.class),
+        CAPSULE(CapsuleTree.class),
+        INCLUDE(IncludeTree.class),
+        FREE(FreeTree.class),
+        FORALLLOOP(ForAllTree.class),
+        FOREACH(ForeachTree.class),
+        INIT(InitMethodTree.class),
         /**
          * Used for instances of {@link ManyToOne} topology construction.
          */
@@ -71,7 +72,7 @@ public interface Tree {
         STAR_TOP(StarTree.class),
         RING(RingTree.class),
         ASSOCIATE(AssociateTree.class),
-    	// end Panini code
+        // end Panini code
         /**
          * Used for instances of {@link AnnotationTree}.
          */

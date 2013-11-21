@@ -26,8 +26,6 @@
 package com.sun.tools.javac.tree;
 
 import com.sun.source.tree.*;
-import com.sun.tools.javac.tree.JCTree.JCExpression;
-import com.sun.tools.javac.tree.JCTree.JCWireall;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
@@ -184,6 +182,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     }
     
     // Panini code
+    @Override
     public JCTree visitForeach(ForeachTree node, P p) {
     	JCForeach t = (JCForeach) node;
     	JCVariableDecl var = copy(t.var, p);
@@ -442,7 +441,15 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
                 throw new AssertionError("unknown tree tag: " + tree.getTag());
         }
     }
-	// Panini code
+    // Panini code
+    @Override
+    public JCTree visitBatchMessage(BatchMessageTree node, P p) {
+        JCBatchMessage t = (JCBatchMessage)node;
+        JCIdent copyTargetCapsule = copy(t.targetCapsule, p);
+        JCBlock copyBody = copy(t.body, p);
+        return M.at(t.pos).BatchMessage(copyTargetCapsule, copyBody);
+    }
+    
     public JCTree visitProc(ProcedureTree node, P p){
     	JCMethodDecl t  = (JCMethodDecl) node;
         JCModifiers mods = copy(t.mods, p);
