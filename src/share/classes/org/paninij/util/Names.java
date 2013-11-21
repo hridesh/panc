@@ -51,6 +51,7 @@ public class Names {
      */
     public final Name Wiring;
     public final Name PaniniFinish;
+    public final Name PaniniDuckGet;
     public final Name PaniniDuckGetMessage;
     public final Name PaniniDuckFuture;
     public final Name PaniniDisconnect;
@@ -107,6 +108,7 @@ public class Names {
         Capsule = names.fromString("Capsule");
         Wiring = names.fromString("Wiring");
         PaniniFinish = names.fromString(PaniniConstants.PANINI_FINISH);
+        PaniniDuckGet = names.fromString(PaniniConstants.PANINI_DUCK_GET);
         PaniniDuckGetMessage = names.fromString(PaniniConstants.PANINI_DUCK_GET_MESSAGE);
         PaniniDuckFuture = names.fromString(PaniniConstants.PANINI_DUCK_TYPE);
         PaniniDisconnect = names.fromString(PaniniConstants.PANINI_DISCONNECT);
