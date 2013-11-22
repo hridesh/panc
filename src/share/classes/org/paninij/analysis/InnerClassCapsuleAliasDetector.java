@@ -143,12 +143,12 @@ public class InnerClassCapsuleAliasDetector extends TreeScanner {
 	
     /**
      * Take the following batch message invocation as an example:
-     * <div>
+     * <code>
      * capRef -> {
      *      capRef.foo(); //ok
      *      otherCapRef.bar(); //not ok
      * }
-     * </div>
+     * </code>
      * 
      * This is translated to a test.runBatch(...) method call with an anonymous
      * class as a parameter containing the code in the block. If the variable
