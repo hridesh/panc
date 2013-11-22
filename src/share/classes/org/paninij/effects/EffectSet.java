@@ -300,6 +300,28 @@ public class EffectSet {
 		write.clear();
 	}
 
+	private static void clearNonPrimitiveReadWrite(HashSet<EffectEntry> es) {
+		HashSet<EffectEntry> toberemoved = new HashSet<EffectEntry>();
+
+		for (EffectEntry effect : es) {
+			if (effect instanceof ArrayEffect) {
+				toberemoved.add(effect);
+			} else if (effect instanceof FieldEffect) {
+				FieldEffect fe = (FieldEffect) effect;
+				if (!fe.f.type.isPrimitive()) {
+					toberemoved.add(effect);
+				}
+			} else throw new Error("incorrect effect type");
+		}
+
+		es.removeAll(toberemoved);
+	}
+
+	public void clearNonPrimitiveEffect() {
+		clearNonPrimitiveReadWrite(read);
+		clearNonPrimitiveReadWrite(write);
+	}
+
 	private static void putStaticFinalFromConcreteToType(
 			HashSet<EffectEntry> set) {
 		HashSet<EffectEntry> toberemoved = new HashSet<EffectEntry>();
