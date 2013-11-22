@@ -52,6 +52,21 @@ public class AnalysisUtil {
 		return true;
 	}
 
+	public static boolean primitiveStateCapsule(JCTree tree) {
+		JCCapsuleDecl cap_decl = (JCCapsuleDecl)tree;
+
+		for (JCTree def : cap_decl.defs) {
+			if (def instanceof JCVariableDecl) {
+				JCVariableDecl jcvd = (JCVariableDecl)def;
+
+				if (!jcvd.type.isPrimitive()) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
 	public static boolean shouldAnalyze(JCCapsuleDecl capsule,
 			JCMethodDecl meth) {
 		if ((meth.mods.flags & Flags.PRIVATE) != 0 ||
