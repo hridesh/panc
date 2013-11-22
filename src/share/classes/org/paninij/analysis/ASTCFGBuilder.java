@@ -992,6 +992,10 @@ public class ASTCFGBuilder extends TreeScanner {
 			if (!elems.isEmpty()) {
 				visitStatements(elems);
 				finalExcEndNodes.addAll(currentExitNodes);
+
+				if (dims.isEmpty()) {
+					finalStartNodes = currentStartNodes;
+				}
 			}
 		}
 
@@ -1024,6 +1028,14 @@ public class ASTCFGBuilder extends TreeScanner {
 				}
 			} else {
 				connectToEndNodesOf(lastDimension, tree);
+			}
+		} else {
+			if (elems != null) {
+				if (!elems.isEmpty()) {
+					JCTree lastElement = visitList(elems);
+
+					connectToEndNodesOf(lastElement, tree);
+				}
 			}
 		}
 	}
