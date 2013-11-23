@@ -235,4 +235,9 @@ public class AnalysisUtil {
 	public static final boolean int_type(Type type) {
 		return type.getKind() == TypeKind.INT;
 	}
+
+	public static boolean isNewExpression(JCExpression exp) {
+		exp = getEssentialExpr(exp);
+		return (exp instanceof JCNewClass) || (exp instanceof JCNewArray);
+	}
 }

@@ -366,6 +366,21 @@ public class LeakDetection {
 			// If this is inter procedural capsule call, all the parameters
 			// will be leaked.
 			if (!innerCall) { warningList(jcmi.args, preLeak, true); }
+		} else if (curr instanceof JCVariableDecl) {
+			JCVariableDecl jcvd = (JCVariableDecl)curr;
+			JCExpression init = jcvd.init;
+			if (init != null && AnalysisUtil.isNewExpression(init)) {
+				preLeak.remove(jcvd.sym);
+			}
+		} else if (curr instanceof JCAssign) {
+			JCAssign jca = (JCAssign)curr;
+			JCExpression lhs = AnalysisUtil.getEssentialExpr(jca.lhs);
+			JCExpression rhs = AnalysisUtil.getEssentialExpr(jca.rhs);
+			
+			if (AnalysisUtil.isNewExpression(rhs) && lhs instanceof JCIdent) {
+				JCIdent jci = (JCIdent)lhs;
+				preLeak.remove(jci.sym);
+			}
 		}
 	}
 
