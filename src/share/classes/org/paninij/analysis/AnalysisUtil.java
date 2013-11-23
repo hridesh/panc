@@ -31,6 +31,7 @@ import javax.lang.model.type.TypeKind;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.tree.JCTree;
@@ -236,8 +237,36 @@ public class AnalysisUtil {
 		return type.getKind() == TypeKind.INT;
 	}
 
+	private static boolean isCloneMethod(JCMethodInvocation jcmi) {
+		JCExpression meth = getEssentialExpr(jcmi.meth);
+		if (jcmi.args.isEmpty() && meth instanceof JCFieldAccess) {
+			JCFieldAccess jcfa = (JCFieldAccess)meth;
+			if (jcfa.sym.toString().compareTo("clone()") == 0) {
+				return jcfa.selected.type instanceof ArrayType;
+			}
+		}
+		return false;
+	}
 	public static boolean isNewExpression(JCExpression exp) {
 		exp = getEssentialExpr(exp);
-		return (exp instanceof JCNewClass) || (exp instanceof JCNewArray);
+		if ((exp instanceof JCNewClass) || (exp instanceof JCNewArray)) {
+			return true;
+		}
+
+		// array clone returns an new object;
+		if (exp instanceof JCTypeCast) {
+			JCTypeCast jctc = (JCTypeCast)exp;
+			JCTree clazz = jctc.clazz;
+			JCExpression expr = getEssentialExpr(jctc.expr);
+
+			if (clazz instanceof JCArrayTypeTree &&
+					expr instanceof JCMethodInvocation) {
+				return isCloneMethod((JCMethodInvocation)expr);
+			}
+		} else if (exp instanceof JCMethodInvocation) {
+			return isCloneMethod((JCMethodInvocation)exp);
+		}
+
+		return false;
 	}
 }

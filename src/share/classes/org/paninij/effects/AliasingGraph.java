@@ -747,6 +747,13 @@ public class AliasingGraph {
 				field), right.type);
 	}
 
+	// left = new ...;
+	public void assignNewToThisField(Symbol field, Type right) {
+		writeField(field);
+		pathsToNewNode.put(new Path_Compound(new Path_Parameter(null, 0),
+				field), right);
+	}
+
 	// X.f = var;
 	public void assignLocalToField(JCFieldAccess left, Symbol var) {
 		writePath(left);
@@ -849,6 +856,15 @@ public class AliasingGraph {
 		Path p = createPathForField(left);
 		if (p != null) {
 			pathsToNewNode.put(p, jcn.type);
+		}
+	}
+
+	// X.f = new C();
+	public void assignNewToField(JCFieldAccess left, Type type) {
+		writePath(left);
+		Path p = createPathForField(left);
+		if (p != null) {
+			pathsToNewNode.put(p, type);
 		}
 	}
 

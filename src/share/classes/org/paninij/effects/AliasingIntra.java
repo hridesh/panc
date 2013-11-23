@@ -203,6 +203,8 @@ public class AliasingIntra {
 								EffectInter.capsuleCall(jcmi, outValue, cap));
 					} else if (EffectInter.isCallReturnNew(jcmi, outValue)) {
 						outValue.assignCapsuleCallToLocal(left, null);
+					} else if (AnalysisUtil.isNewExpression(rightOp)) {
+						outValue.assignNewObjectToLocal(left, rightOp.type);
 					} else {
 						outValue.removeLocal(left);
 					}
@@ -255,7 +257,11 @@ public class AliasingIntra {
 					JCNewClass jcn = (JCNewClass)rightOp;
 					outValue.assignNewToThisField(left, jcn);
 				} else if (rightOp instanceof JCMethodInvocation) {
-					outValue.writeField(left);
+					if (AnalysisUtil.isNewExpression(rightOp)) {
+						outValue.assignNewToThisField(left, rightOp.type);
+					} else {
+						outValue.writeField(left);
+					}
 				} else if (rightOp instanceof JCAssignOp ||
 						rightOp instanceof JCBinary ||
 						rightOp instanceof JCConditional || 
@@ -312,6 +318,8 @@ public class AliasingIntra {
 				if (!EffectInter.isCapsuleCall((JCMethodInvocation)rightOp,
 						outValue)) {
 					outValue.writePath(left);
+				} else if (AnalysisUtil.isNewExpression(rightOp)) {
+					outValue.assignNewToField(left, rightOp.type);
 				} else {
 					outValue.assignCapsuleCallToField(left);
 				}
