@@ -317,9 +317,11 @@ public class AliasingIntra {
 			} else if (rightOp instanceof JCMethodInvocation) {
 				if (!EffectInter.isCapsuleCall((JCMethodInvocation)rightOp,
 						outValue)) {
-					outValue.writePath(left);
-				} else if (AnalysisUtil.isNewExpression(rightOp)) {
-					outValue.assignNewToField(left, rightOp.type);
+					if (AnalysisUtil.isNewExpression(rightOp)) {
+						outValue.assignNewToField(left, rightOp.type);
+					} else {
+						outValue.writePath(left);
+					}
 				} else {
 					outValue.assignCapsuleCallToField(left);
 				}

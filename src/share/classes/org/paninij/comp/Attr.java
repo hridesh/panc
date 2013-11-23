@@ -34,13 +34,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.paninij.analysis.ASTCFGBuilder;
-import org.paninij.consistency.ConsistencyUtil;
-import org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
-import org.paninij.consistency.SeqConstCheckAlgorithm;
-import org.paninij.systemgraph.SystemGraph;
-import org.paninij.systemgraph.SystemGraphBuilder;
-
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
@@ -72,6 +65,12 @@ import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 
+import org.paninij.analysis.ASTCFGBuilder;
+import org.paninij.consistency.ConsistencyUtil;
+import org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
+import org.paninij.consistency.SeqConstCheckAlgorithm;
+import org.paninij.systemgraph.SystemGraph;
+import org.paninij.systemgraph.SystemGraphBuilder;
 import org.paninij.util.PaniniConstants;
 
 /***

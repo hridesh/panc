@@ -30,8 +30,9 @@ import javax.lang.model.type.TypeKind;
 
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.code.Type.ArrayType;
+import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.tree.JCTree;
@@ -39,6 +40,42 @@ import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.List;
 
 public class AnalysisUtil {
+	private static boolean capType(Type type) {
+		if (type instanceof ClassType) {
+			ClassType ct = (ClassType)type;
+			TypeSymbol ts = ct.tsym;
+			if (ts instanceof ClassSymbol) {
+				ClassSymbol cs = (ClassSymbol)ts;
+				if (cs.capsule_info != null) {
+					return true;
+				}
+			}
+		} else if (type instanceof ArrayType) {
+			Type elemtype = ((ArrayType) type).elemtype;
+			return capType(elemtype);
+		}
+
+		return false;
+	}
+	// whether a capusle has any reference to other capsule.
+	public static boolean leafCapsule(JCTree tree) {
+		JCCapsuleDecl cap_decl = (JCCapsuleDecl)tree;
+
+		for (JCTree def : cap_decl.defs) {
+			if (def instanceof JCVariableDecl) {
+				JCVariableDecl jcvd = (JCVariableDecl)def;
+				Type t = jcvd.type;
+
+				if (capType(t)) {
+					return false;
+				}
+			} else if (def instanceof JCDesignBlock) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public static boolean statelessCapsule(JCTree tree) {
 		JCCapsuleDecl cap_decl = (JCCapsuleDecl)tree;
 

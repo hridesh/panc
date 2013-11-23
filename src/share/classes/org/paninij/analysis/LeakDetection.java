@@ -24,9 +24,11 @@ import java.util.HashSet;
 import java.util.TreeSet;
 
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.type.TypeKind;
 
 import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
@@ -61,6 +63,7 @@ public class LeakDetection {
 	public void inter(JCCapsuleDecl capsule, Log log) {
 		this.log = log;
 		this.capsule = capsule;
+		ClassSymbol cs = capsule.sym;
 
 		icca = new InnerClassCapsuleAliasDetector(log);
 
@@ -69,6 +72,7 @@ public class LeakDetection {
 		HashMap<JCMethodDecl, MethodWrapper> map =
 			new HashMap<JCMethodDecl, MethodWrapper>();
 
+		boolean noReturnLeak = true;
 		for (JCTree jct : defs) {
 			if (jct instanceof JCMethodDecl) {
 				if (((JCMethodDecl) jct).body != null) {
@@ -76,8 +80,11 @@ public class LeakDetection {
 
 					if (AnalysisUtil.shouldAnalyze(capsule, meth)) {
 						if (meth.body != null) {
-							meth.body.accept(icca);
+							if (!noReturnLeak(meth, cs)) {
+								noReturnLeak = false;
+							}
 
+							meth.body.accept(icca);
 							MethodWrapper temp = new MethodWrapper(meth);
 							map.put(meth, temp);
 							queue.add(temp);
@@ -85,6 +92,12 @@ public class LeakDetection {
 					}
 				}
 			}
+		}
+
+		// if a capsule does not have reference to other capsule and if it only
+		// returns primitives or new objects, it will never leak.
+		if (AnalysisUtil.leafCapsule(capsule) && noReturnLeak) {
+			return;
 		}
 
 		while (!queue.isEmpty()) {
@@ -122,6 +135,53 @@ public class LeakDetection {
 				}
 			}
 		}
+	}
+
+	private static boolean noLeakNew(JCNewClass jcr) {
+		for (JCExpression arg : jcr.args) {
+			arg = AnalysisUtil.getEssentialExpr(arg);
+			if (arg.type.isPrimitive()) {
+				continue;
+			}
+			if (arg instanceof JCNewClass) {
+				JCNewClass jcnc = (JCNewClass)arg;
+				if (noLeakNew(jcnc)) {
+					continue;
+				}
+			}
+			return false;
+		}
+		return false;
+	}
+	// whether a method can leak object by return
+	private static boolean noReturnLeak(JCMethodDecl jcmd, ClassSymbol cs) {
+		String tree_name = jcmd.sym.toString();
+
+		if (!AnalysisUtil.activeThread(cs, tree_name)) {
+			String capsule_name = cs.toString();
+			if ((capsule_name.substring(capsule_name.indexOf("$")
+					+ 1).compareTo("thread") == 0) &&
+					(tree_name.indexOf("$Original") == -1)) {
+				return true;
+			}
+		}
+
+		Type type = jcmd.restype.type;
+		if (type.getKind() == TypeKind.VOID) {
+			return true;
+		}
+
+		for (JCTree endNode : jcmd.body.endNodes) {
+			if (endNode instanceof JCReturn) {
+				JCReturn jcr = (JCReturn)endNode;
+				JCExpression arg = AnalysisUtil.getEssentialExpr(jcr.expr);
+				if (arg instanceof JCNewClass) {
+					JCNewClass jcnc = (JCNewClass)arg;
+					if (!noLeakNew(jcnc)) { return false; }
+				}
+			}
+		}
+		return true;
 	}
 
 	private void forwardintra(JCCapsuleDecl capsule, JCMethodDecl meth) {
