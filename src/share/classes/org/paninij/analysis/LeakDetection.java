@@ -19,6 +19,7 @@
 
 package org.paninij.analysis;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TreeSet;
@@ -60,6 +61,9 @@ public class LeakDetection {
 
 	private HashSet<String> warnings = new HashSet<String>();
 
+	// state that is assigned to new object before any use.
+	private HashSet<Symbol> nonLeakStates;
+
 	public void inter(JCCapsuleDecl capsule, Log log) {
 		this.log = log;
 		this.capsule = capsule;
@@ -75,21 +79,18 @@ public class LeakDetection {
 		boolean noReturnLeak = true;
 		for (JCTree jct : defs) {
 			if (jct instanceof JCMethodDecl) {
-				if (((JCMethodDecl) jct).body != null) {
-					JCMethodDecl meth = (JCMethodDecl)jct;
+				JCMethodDecl meth = (JCMethodDecl)jct;
 
-					if (AnalysisUtil.shouldAnalyze(capsule, meth)) {
-						if (meth.body != null) {
-							if (!noReturnLeak(meth, cs)) {
-								noReturnLeak = false;
-							}
-
-							meth.body.accept(icca);
-							MethodWrapper temp = new MethodWrapper(meth);
-							map.put(meth, temp);
-							queue.add(temp);
-						}
+				if (AnalysisUtil.shouldAnalyze(capsule, meth) &&
+						meth.body != null) {
+					if (!noReturnLeak(meth, cs)) {
+						noReturnLeak = false;
 					}
+
+					meth.body.accept(icca);
+					MethodWrapper temp = new MethodWrapper(meth);
+					map.put(meth, temp);
+					queue.add(temp);
 				}
 			}
 		}
@@ -98,6 +99,22 @@ public class LeakDetection {
 		// returns primitives or new objects, it will never leak.
 		if (AnalysisUtil.leafCapsule(capsule) && noReturnLeak) {
 			return;
+		}
+
+		nonLeakStates = new HashSet<Symbol>();
+		if (AnalysisUtil.leafCapsule(capsule)) {
+			for (Symbol s : AnalysisUtil.allCapsuleStates(capsule)) {
+				FreshStateDetection fsd = new FreshStateDetection(s);
+
+				for (JCMethodDecl jcmd : map.keySet()) {
+					if (fsd.nonLeak) {
+						fsd.scan(jcmd);
+					}
+				}
+				if (fsd.nonLeak) {
+					nonLeakStates.add(s);
+				}
+			}
 		}
 
 		while (!queue.isEmpty()) {
@@ -171,14 +188,21 @@ public class LeakDetection {
 			return true;
 		}
 
-		for (JCTree endNode : jcmd.body.endNodes) {
+		JCTree body = jcmd.body;
+		ArrayList<JCTree> finalNodes = new ArrayList<JCTree>(body.exitNodes);
+		finalNodes.addAll(body.endNodes);
+		for (JCTree endNode : finalNodes) {
 			if (endNode instanceof JCReturn) {
 				JCReturn jcr = (JCReturn)endNode;
 				JCExpression arg = AnalysisUtil.getEssentialExpr(jcr.expr);
-				if (arg instanceof JCNewClass) {
+				if (arg.type.isPrimitive()) {
+					continue;
+				} else if (arg instanceof JCNewClass) {
 					JCNewClass jcnc = (JCNewClass)arg;
 					if (!noLeakNew(jcnc)) { return false; }
+					continue;
 				}
+				return false;
 			}
 		}
 		return true;
@@ -603,7 +627,8 @@ public class LeakDetection {
 			AnalysisUtil.rmDollar(capSym.toString()) +
 			AnalysisUtil.rmDollar(meth_string);
 
-		if (!warnings.contains(warningStr)) {
+		if (!warnings.contains(warningStr) &&
+				(nonLeakStates == null || !nonLeakStates.contains(sym))) {
 			warnings.add(warningStr);
 
 			log.useSource (sym.outermostClass().sourcefile);

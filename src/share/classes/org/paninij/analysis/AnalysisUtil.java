@@ -40,6 +40,25 @@ import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.List;
 
 public class AnalysisUtil {
+	public static HashSet<Symbol> allCapsuleStates(JCTree tree) {
+		JCCapsuleDecl cap_decl = (JCCapsuleDecl)tree;
+		HashSet<Symbol> result = new HashSet<Symbol>();
+
+		for (JCTree def : cap_decl.defs) {
+			if (def instanceof JCVariableDecl) {
+				JCVariableDecl jcvd = (JCVariableDecl)def;
+				Type t = jcvd.type;
+
+				if (((jcvd.mods.flags & Flags.STATIC) == 0 ||
+						(jcvd.mods.flags & Flags.FINAL) == 0) &&
+						!capType(t)) {
+					result.add(jcvd.sym);
+				}
+			}
+		}
+		return result;
+	}
+
 	private static boolean capType(Type type) {
 		if (type instanceof ClassType) {
 			ClassType ct = (ClassType)type;
@@ -146,6 +165,20 @@ public class AnalysisUtil {
 				expr = ((JCTypeCast)expr).expr;
 			} else if (expr instanceof JCParens) {
 				expr = ((JCParens)expr).expr;
+			}
+		}
+		return expr;
+	}
+
+	public static JCTree getEssentialTree(JCTree expr) {
+		while (expr instanceof JCTypeCast || expr instanceof JCParens ||
+				expr instanceof JCExpressionStatement) {
+			if (expr instanceof JCTypeCast) {
+				expr = ((JCTypeCast)expr).expr;
+			} else if (expr instanceof JCParens) {
+				expr = ((JCParens)expr).expr;
+			} else if (expr instanceof JCExpressionStatement) {
+				expr = ((JCExpressionStatement)expr).expr;
 			}
 		}
 		return expr;
