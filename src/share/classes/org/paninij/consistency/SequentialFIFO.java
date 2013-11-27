@@ -58,8 +58,6 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 		EffectSet es = ms.effect;
 		Edge e1 = l1.get(0);
 		Edge e2 = l2.get(0);
-		int pos1 = e1.pos;
-		int pos2 = e2.pos;
 		int size2 = ns2.size();
 
 		HashSet<BiCall> direct = es.direct;
@@ -78,7 +76,7 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 				for (Route r : paths) {
 					int temp = j;
 					if (!first || twoPathsMayConflict(allpairs,
-							r.edges.get(0).pos, pos2)) {
+							r.edges.get(0), e2)) {
 						j = check(r, 0, r2, j, er1, er2);
 
 						if (j >= size2 - 1) {
@@ -116,13 +114,13 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 		}
 
 		// boolean existReverse = false;
-		if (twoPathsMayConflict(direct, pos1, pos2)) {
+		if (twoPathsMayConflict(direct, e1, e2)) {
 			check(r1, 1, r2, 1, er1, er2);
 			return;
 		}
 
 		// if (existReverse) { return; }
-		if (twoPathsMayConflict(indirect, pos1, pos2)) {
+		if (twoPathsMayConflict(indirect, e1, e2)) {
 			if (2 < size1) {
 				int i = 1;
 				ClassMethod cm = ns1.get(i);

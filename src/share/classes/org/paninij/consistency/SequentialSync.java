@@ -58,8 +58,6 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 		EffectSet es = ms.effect;
 		Edge e1 = l1.get(0);
 		Edge e2 = l2.get(0);
-		int pos1 = e1.pos;
-		int pos2 = e2.pos;
 
 		HashSet<BiCall> direct = es.direct;
 		HashSet<BiCall> indirect = es.indirect;
@@ -72,7 +70,7 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 		if (paths != null) {
 			boolean encountered = false;
 			for (Route r : paths) {
-				if (twoPathsMayConflict(allpairs, r.edges.get(0).pos, pos2)) {
+				if (twoPathsMayConflict(allpairs, r.edges.get(0), e2)) {
 					if (check(r, 0, er1, er2)) {
 						return;
 					}
@@ -90,12 +88,12 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 			}
 		}
 
-		if (twoPathsMayConflict(direct, pos1, pos2)) {
+		if (twoPathsMayConflict(direct, e1, e2)) {
 			warnings.add(new BiRoute(er1, er2));
 			return;
 		}
 
-		if (twoPathsMayConflict(indirect, pos1, pos2)) {
+		if (twoPathsMayConflict(indirect, e1, e2)) {
 			check(r1, 1, er1, er2);
 			return;
 		}

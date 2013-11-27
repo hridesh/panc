@@ -266,14 +266,19 @@ public abstract class SeqConstCheckAlgorithm {
 	}
 
 	public static boolean twoPathsMayConflict(HashSet<BiCall> allpairs,
-			int pos1, int pos2) {
+			Edge e1, Edge e2) {
+		int pos1 = e1.pos;
+		int pos2 = e2.pos;
+		Node n1 = e1.toNode;
+		Node n2 = e2.toNode;
 		for (BiCall bc : allpairs) {
 			CallEffect ce1 = bc.ce1;
 			CallEffect ce2 = bc.ce2;
 
 			// match
 			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
+				if (!n1.equals(n2) || ce1.pos() != ce2.pos() ||
+						!bc.notsameindex) {
 					return true;
 				}
 			}

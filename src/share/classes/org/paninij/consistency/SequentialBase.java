@@ -59,8 +59,6 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 		EffectSet es = ms.effect;
 		Edge e1 = l1.get(0);
 		Edge e2 = l2.get(0);
-		int pos1 = e1.pos;
-		int pos2 = e2.pos;
 
 		HashSet<BiCall> allpairs = new HashSet<BiCall>(es.direct);
 		allpairs.addAll(es.indirect);
@@ -68,14 +66,14 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 		HashSet<Route> paths = loops.get(h1);
 		if (paths != null) {
 			for (Route r : paths) {
-				if (twoPathsMayConflict(allpairs, r.edges.get(0).pos, pos2)) {
+				if (twoPathsMayConflict(allpairs, r.edges.get(0), e2)) {
 					warnings.add(new BiRoute(er1, er2));
 					return;
 				}
 			}
 		}
 
-		if (twoPathsMayConflict(allpairs, pos1, pos2)) {
+		if (twoPathsMayConflict(allpairs, e1, e2)) {
 			warnings.add(new BiRoute(er1, er2));
 		}
 	}
