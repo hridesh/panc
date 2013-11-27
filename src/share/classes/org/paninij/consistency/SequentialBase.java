@@ -67,21 +67,16 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 
 		HashSet<Route> paths = loops.get(h1);
 		if (paths != null) {
-			warnings.add(new BiRoute(er1, er2));
-			return;
-		}
-
-		for (BiCall bc : allpairs) {
-			CallEffect ce1 = bc.ce1;
-			CallEffect ce2 = bc.ce2;
-
-			// match
-			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
+			for (Route r : paths) {
+				if (twoPathsMayConflict(allpairs, r.edges.get(0).pos, pos2)) {
 					warnings.add(new BiRoute(er1, er2));
 					return;
 				}
 			}
+		}
+
+		if (twoPathsMayConflict(allpairs, pos1, pos2)) {
+			warnings.add(new BiRoute(er1, er2));
 		}
 	}
 }

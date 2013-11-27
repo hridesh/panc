@@ -61,49 +61,49 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 		int pos1 = e1.pos;
 		int pos2 = e2.pos;
 
-		HashSet<Route> paths = loops.get(h1);
-		if (paths != null) {
-			for (Route r : paths) {
-				check(r, 0, er1, er2);
-			}
-		}
-
 		HashSet<BiCall> direct = es.direct;
-		// boolean existReverse = false;
-		for (BiCall bc : direct) {
-			CallEffect ce1 = bc.ce1;
-			CallEffect ce2 = bc.ce2;
-
-			// match
-			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
-					warnings.add(new BiRoute(er1, er2));
-					return;
-				}
-			} /*else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
-				// return;
-				existReverse = true;
-			}*/
-		}
-		// if (existReverse) { return; }
 		HashSet<BiCall> indirect = es.indirect;
-		for (BiCall bc : indirect) {
-			CallEffect ce1 = bc.ce1;
-			CallEffect ce2 = bc.ce2;
 
-			// match
-			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
-					check(r1, 1, er1, er2);
-					return;
+		HashSet<BiCall> allpairs = new HashSet<BiCall>(direct);
+		allpairs.addAll(indirect);
+
+		HashSet<Route> paths = loops.get(h1);
+		HashSet<Route> pending = new HashSet<Route>();
+		if (paths != null) {
+			boolean encountered = false;
+			for (Route r : paths) {
+				if (twoPathsMayConflict(allpairs, r.edges.get(0).pos, pos2)) {
+					if (check(r, 0, er1, er2)) {
+						return;
+					}
+					encountered = true;
+				} else {
+					pending.add(r);
 				}
 			}
+			if (encountered) {
+				for (Route r : pending) {
+					if (check(r, 0, er1, er2)) {
+						return;
+					}
+				}
+			}
+		}
+
+		if (twoPathsMayConflict(direct, pos1, pos2)) {
+			warnings.add(new BiRoute(er1, er2));
+			return;
+		}
+
+		if (twoPathsMayConflict(indirect, pos1, pos2)) {
+			check(r1, 1, er1, er2);
+			return;
 		}
 	}
 
 	// this method should be called when the first edge of the first path is
 	// asynchronous call.
-	private final void check(Route r1, int i, Route er1, Route er2) {
+	private final boolean check(Route r1, int i, Route er1, Route er2) {
 		int size1 = r1.size();
 		ArrayList<ClassMethod> ns1 = r1.nodes;
 		ArrayList<Edge> l1 = r1.edges;
@@ -114,8 +114,18 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 
 			if (!synchronousCall(cm, ee.pos)) {
 				warnings.add(new BiRoute(er1, er2));
-				return;
+				return true;
+			}
+
+			HashSet<Route> paths = loops.get(cm);
+			if (paths != null) {
+				for (Route r : paths) {
+					if (check(r, 0, er1, er2)) {
+						return true;
+					}
+				}
 			}
 		}
+		return false;
 	}
 }

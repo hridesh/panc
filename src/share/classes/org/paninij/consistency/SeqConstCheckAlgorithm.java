@@ -264,4 +264,20 @@ public abstract class SeqConstCheckAlgorithm {
         HashSet<BiRoute> trimmed = ConsistencyUtil.trim(warnings);
         reportTrimmedWarnings(trimmed);
 	}
+
+	public static boolean twoPathsMayConflict(HashSet<BiCall> allpairs,
+			int pos1, int pos2) {
+		for (BiCall bc : allpairs) {
+			CallEffect ce1 = bc.ce1;
+			CallEffect ce2 = bc.ce2;
+
+			// match
+			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
+				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }

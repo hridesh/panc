@@ -62,24 +62,35 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 		int pos2 = e2.pos;
 		int size2 = ns2.size();
 
+		HashSet<BiCall> direct = es.direct;
+		HashSet<BiCall> indirect = es.indirect;
+
+		HashSet<BiCall> allpairs = new HashSet<BiCall>(direct);
+		allpairs.addAll(indirect);
+
 		int j = 0;
 		HashSet<Route> paths = loops.get(h1);
 		if (paths != null) {
 			boolean changed;
 			do {
 				changed = false;
+				boolean first = true;
 				for (Route r : paths) {
 					int temp = j;
-					j = check(r, 0, r2, j, er1, er2);
+					if (!first || twoPathsMayConflict(allpairs,
+							r.edges.get(0).pos, pos2)) {
+						j = check(r, 0, r2, j, er1, er2);
 
-					if (j >= size2 - 1) {
-						warnings.add(new BiRoute(er1, er2));
-						return;
-					}
-					if (j != temp) {
-						changed = true;
+						if (j >= size2 - 1) {
+							warnings.add(new BiRoute(er1, er2));
+							return;
+						}
+						if (j != temp) {
+							changed = true;
+						}
 					}
 				}
+				first = false;
 			} while(changed);
 		}
 
@@ -104,50 +115,28 @@ public class SequentialFIFO extends SeqConstCheckAlgorithm {
 			return;
 		}
 
-		HashSet<BiCall> direct = es.direct;
 		// boolean existReverse = false;
-		for (BiCall bc : direct) {
-			CallEffect ce1 = bc.ce1;
-			CallEffect ce2 = bc.ce2;
-
-			// match
-			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
-					check(r1, 1, r2, 1, er1, er2);
-					return;
-				}
-			} /*else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
-				// return;
-				existReverse = true;
-			}*/
+		if (twoPathsMayConflict(direct, pos1, pos2)) {
+			check(r1, 1, r2, 1, er1, er2);
+			return;
 		}
-		// if (existReverse) { return; }
-		HashSet<BiCall> indirect = es.indirect;
-		for (BiCall bc : indirect) {
-			CallEffect ce1 = bc.ce1;
-			CallEffect ce2 = bc.ce2;
 
-			// match
-			if (ce1.pos() == pos1 && ce2.pos() == pos2) {
-				if (ce1.pos() != ce2.pos() || !bc.notsameindex) {
-					if (2 < size1) {
-						int i = 1;
-						ClassMethod cm = ns1.get(i);
-						Edge ee = l1.get(i);
-						while (i < size1 - 1 && synchronousCall(cm, ee.pos)) {
-							i++;
-							cm = ns1.get(i);
-							ee = l1.get(i);
-						}
-						if (i < size1 - 1) {
-							check(r1, i + 1, r2, j, er1, er2);
-						}
-					}
-					return;
+		// if (existReverse) { return; }
+		if (twoPathsMayConflict(indirect, pos1, pos2)) {
+			if (2 < size1) {
+				int i = 1;
+				ClassMethod cm = ns1.get(i);
+				Edge ee = l1.get(i);
+				while (i < size1 - 1 && synchronousCall(cm, ee.pos)) {
+					i++;
+					cm = ns1.get(i);
+					ee = l1.get(i);
 				}
-			} /* else if (ce1.pos() == pos2 && ce2.pos() == pos1) {
-				return;
-			}*/
+				if (i < size1 - 1) {
+					check(r1, i + 1, r2, j, er1, er2);
+				}
+			}
+			return;
 		}
 	}
 
