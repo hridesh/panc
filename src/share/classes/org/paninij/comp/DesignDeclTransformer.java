@@ -275,6 +275,8 @@ public class DesignDeclTransformer extends TreeTranslator {
 							where = ((JCIdent) mi.arguments.get(j)).sym.owner.name;
 						} else if (mi.arguments.get(j) instanceof JCArrayAccess) {
 							JCIdent indexed = (JCIdent)((JCArrayAccess) mi.arguments.get(j)).indexed;
+							if (indexed.sym == null)
+								indexed.sym = rs.findType(env, variables.get(indexed.name));
 							where = indexed.sym.owner.name;
 						} else {
 							where = null; // do not process any other types.
