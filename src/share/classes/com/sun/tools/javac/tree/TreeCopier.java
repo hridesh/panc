@@ -231,6 +231,11 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     public JCTree visitLabeledStatement(LabeledStatementTree node, P p) {
         JCLabeledStatement t = (JCLabeledStatement) node;
         JCStatement body = copy(t.body, p);
+        //Panini code
+        if(true)
+        	return M.at(t.pos).Labelled(t.label, body);
+        else
+        // end Panini code
         return M.at(t.pos).Labelled(t.label, t.body);
     }
 
