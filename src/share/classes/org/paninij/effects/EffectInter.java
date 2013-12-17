@@ -226,7 +226,7 @@ public class EffectInter {
 									int pos = jcf.getPreferredPosition();
 
 									ForeachEffect fe = new ForeachEffect(
-											curr_cap, tsym,
+											curr_cap, tsym, false,
 											(MethodSymbol)(jcfa.sym), pos,
 											ds.getLineNumber(pos),
 											ds.getColumnNumber(pos, false),
@@ -315,8 +315,9 @@ public class EffectInter {
 							new DiagnosticSource(cap.sourcefile, null);
 						int pos = tree.getPreferredPosition();
 
-						return new ForeachEffect(cap, cs, (MethodSymbol)jcf.sym,
-								pos, ds.getLineNumber(pos), // do not expend tab
+						return new ForeachEffect(cap, cs, jcaa.index,
+								(MethodSymbol)jcf.sym, pos,
+								ds.getLineNumber(pos), // do not expend tab
 								ds.getColumnNumber(pos, false),
 								cap.sourcefile.toString());
 					}
@@ -457,7 +458,7 @@ public class EffectInter {
 						new DiagnosticSource(curr_cap.sourcefile, null);
 					int pos = jcmd.getPreferredPosition();
 
-					return new ForeachEffect(curr_cap, caps,
+					return new ForeachEffect(curr_cap, caps, jcaa.index,
 							ms, pos, ds.getLineNumber(pos), // do not expend tab
 							ds.getColumnNumber(pos, false),
 							curr_cap.sourcefile.toString());
@@ -549,11 +550,23 @@ public class EffectInter {
 								new DiagnosticSource(curr_cap.sourcefile, null);
 							int pos = tree.getPreferredPosition();
 
-							ForeachEffect fe = new ForeachEffect(curr_cap, fld,
-									(MethodSymbol)jcf.sym, pos,
-									ds.getLineNumber(pos),
-									ds.getColumnNumber(pos, false),
-									curr_cap.sourcefile.toString());
+							JCExpression jce = AnalysisUtil.getEssentialExpr(
+									jcf.selected);
+							ForeachEffect fe;
+							if (jce instanceof JCArrayAccess) {
+								JCArrayAccess jcaa = (JCArrayAccess)jce;
+								fe = new ForeachEffect(curr_cap, fld,
+										jcaa.index, (MethodSymbol)jcf.sym, pos,
+										ds.getLineNumber(pos),
+										ds.getColumnNumber(pos, false),
+										curr_cap.sourcefile.toString());
+							} else {
+								fe = new ForeachEffect(curr_cap, fld, false,
+										(MethodSymbol)jcf.sym, pos,
+										ds.getLineNumber(pos),
+										ds.getColumnNumber(pos, false),
+										curr_cap.sourcefile.toString());
+							}
 
 							// pair of calls that need to be tested
 							for (CallEffect ce : rs.alive) {
@@ -594,7 +607,7 @@ public class EffectInter {
 						int pos = tree.getPreferredPosition();
 
 						ForeachEffect fe = new ForeachEffect(curr_cap, fld,
-								(MethodSymbol)jcf.sym, pos,
+								jcaa.index, (MethodSymbol)jcf.sym, pos,
 								ds.getLineNumber(pos),
 								ds.getColumnNumber(pos, false), // no expend tab
 								curr_cap.sourcefile.toString());

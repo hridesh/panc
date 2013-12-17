@@ -146,7 +146,9 @@ public class SystemGraphBuilder {
 				for (Name key : connections.keySet()) {
 					String keyS = key.toString();
 					if (keyS.startsWith(calleeName.toString()) &&
-							keyS.charAt(size) == '[') {
+							keyS.charAt(size) == '[' && (!fe.index ||
+									keyS.charAt(size + 1) == '0' &&
+									keyS.charAt(size + 2) == ']')) {
 						Node n = connections.get(key);
 						for (MethodSymbol ms :
 							n.capsule.capsule_info.procedures.keySet()) {

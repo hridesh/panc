@@ -35,8 +35,7 @@ import com.sun.tools.javac.util.*;
 import org.paninij.effects.*;
 import org.paninij.path.*;
 
-public class AnnotationProcessor extends Internal{
-
+public class AnnotationProcessor extends Internal {
 	Names names;
 	TreeMaker make;
 	ParserFactory parserFactory;
@@ -223,7 +222,7 @@ public class AnnotationProcessor extends Internal{
 					m = findMethod(rs.findIdent(env,
 							names.fromString(split[2]), Kinds.TYP), split);
 					effect = new ForeachEffect( (ClassSymbol)ownerSymbol,
-							findField(ownerSymbol, split[1]), m,
+							findField(ownerSymbol, split[1]), false, m,
 							Integer.parseInt(split[split.length - 4]),
 							Integer.parseInt(split[split.length - 3]),
 							Integer.parseInt(split[split.length - 2]),

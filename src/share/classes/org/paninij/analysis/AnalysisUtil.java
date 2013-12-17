@@ -339,4 +339,18 @@ public class AnalysisUtil {
 
 		return false;
 	}
+
+	// decide whether a expression is the constant 0
+	public static final boolean isZero(JCExpression tree) {
+		tree = getEssentialExpr(tree);
+		if (tree instanceof JCLiteral) {
+			JCLiteral jci = (JCLiteral)tree;
+			Object obj = jci.value;
+			if (obj instanceof Integer) {
+				int value = (Integer)obj;
+				return value == 0;
+			}
+		}
+		return false;
+	}
 }

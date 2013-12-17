@@ -21,11 +21,18 @@ package org.paninij.effects;
 
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.tree.JCTree.JCExpression;
+
+import org.paninij.analysis.AnalysisUtil;
 
 public class ForeachEffect implements CallEffect {
 	public final ClassSymbol caller;
 	public final Symbol callee;
 	public final MethodSymbol meth;
+
+	// indicate whether the index of the call is 0.
+	// the index of cap[i] is i and cap[0] is 0
+	public final boolean index;
 
 	// the following fields are for warning messages
 	// the file position of this call
@@ -37,10 +44,17 @@ public class ForeachEffect implements CallEffect {
 	// the file of this call
 	public final String fileName;
 
-	public ForeachEffect(ClassSymbol caller, Symbol callee,
+	public ForeachEffect(ClassSymbol caller, Symbol callee, JCExpression index,
+			MethodSymbol meth, int pos, int line, int col, String fileName) {
+		this(caller, callee, AnalysisUtil.isZero(index), meth, pos, line, col,
+				fileName);
+	}
+
+	public ForeachEffect(ClassSymbol caller, Symbol callee, boolean index,
 			MethodSymbol meth, int pos, int line, int col, String fileName) {
 		this.caller = caller;
 		this.callee = callee;
+		this.index = index;
 		this.meth = meth;
 		this.pos = pos;
 		this.line = line;
@@ -62,7 +76,7 @@ public class ForeachEffect implements CallEffect {
 		if (obj instanceof ForeachEffect) {
 			ForeachEffect fe = (ForeachEffect) obj;
 			return caller.equals(fe.caller) && callee.equals(fe.callee) &&
-			meth.equals(fe.meth)  && pos == fe.pos;
+			index == fe.index && meth.equals(fe.meth)  && pos == fe.pos;
 		}
 		return false;
 	}
