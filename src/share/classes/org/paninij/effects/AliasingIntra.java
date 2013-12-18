@@ -76,7 +76,7 @@ public class AliasingIntra {
 					ElementKind kind = jcisym.getKind();
 					if (kind == ElementKind.LOCAL_VARIABLE ||
 							kind == ElementKind.PARAMETER) {
-						if (!jci.type.isPrimitive()) { // reference types
+						// if (!jci.type.isPrimitive()) { // reference types
 							rightOp = AnalysisUtil.getEssentialExpr(rightOp);
 
 							if (rightOp instanceof JCMethodInvocation) {
@@ -89,10 +89,10 @@ public class AliasingIntra {
 											EffectInter.capsuleCall(jcmi, out,
 													cap));
 								}
-							} else {
+							} /* else {
 								out.removeLocal(jcisym);
-							}
-						}
+							} */
+						// }
 					}
 				}
 			} else if (leftOp instanceof JCAnnotation ||
