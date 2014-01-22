@@ -222,7 +222,7 @@ public class AnnotationProcessor extends Internal {
 					m = findMethod(rs.findIdent(env,
 							names.fromString(split[2]), Kinds.TYP), split);
 					effect = new ForeachEffect( (ClassSymbol)ownerSymbol,
-							findField(ownerSymbol, split[1]), false, m,
+							findField(ownerSymbol, split[1]), Boolean.parseBoolean(split[split.length - 5]), m,
 							Integer.parseInt(split[split.length - 4]),
 							Integer.parseInt(split[split.length - 3]),
 							Integer.parseInt(split[split.length - 2]),
