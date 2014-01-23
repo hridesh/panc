@@ -195,7 +195,10 @@ public class SystemGraph {
 				s.append("\t\t");
 				s.append(c.getKey());
 				s.append(" --> ");
-				s.append(c.getValue().name);
+				if(c.getValue()!=null)
+					s.append(c.getValue().name);
+				else
+					s.append("null");
 				s.append("\n");;
 			}
 		}
