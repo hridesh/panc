@@ -169,7 +169,9 @@ public class ASTCFGBuilder extends TreeScanner {
 		    Assert.checkNonNull(cs.capsule_info);
 
 		    String tree_name = tree_sym.toString();
-	        if (AnalysisUtil.activeThread(cs, tree_name) ||
+		    ClassSymbol encl = tree_sym.enclClass();
+	        if ((encl != null && encl.capsule_info != null) &&
+	        		AnalysisUtil.activeThread(cs, tree_name) ||
 	        		AnalysisUtil.originalMethod(cs, tree, tree_name)) {
 				ArrayList<JCTree> previous = order;
 				order = new ArrayList<JCTree>();
