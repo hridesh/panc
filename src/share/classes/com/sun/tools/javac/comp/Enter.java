@@ -487,6 +487,9 @@ public class Enter extends JCTree.Visitor {
                 // We are seeing a member class.
                 c = reader.enterClass(tree.name, (TypeSymbol)owner);
                 if ((owner.flags_field & INTERFACE) != 0) {
+                	// Panini code
+                	if((owner.flags_field & CAPSULE) == 0)
+                	// end Panini code
                     tree.mods.flags |= PUBLIC | STATIC;
                 }
             } else {
