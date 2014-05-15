@@ -44,6 +44,7 @@ cp ../examples/EchoServer.java panini/examples/
 cp -pr ../examples/AddressBook panini/examples/
 cp ../examples/Asteroids.java panini/examples/
 cp ../examples/Fibonacci.java panini/examples/
+cp ../examples/Mandelbrot.java panini/examples/
  
 cp export/README panini/
 perl -pe 's/\r\n|\n|\r/\r\n/g' export/README > panini/README.txt
