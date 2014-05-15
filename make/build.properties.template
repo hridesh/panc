@@ -46,7 +46,7 @@ boot.javac.target = 6
 target.java = ${target.java.home}/bin/java
 
 # Version info -- override as needed
-panini_rt.version = 0.9.1
+panini_rt.version = 0.9.3
 jdk.version = 1.7.0
 build.number = b00
 milestone = internal
