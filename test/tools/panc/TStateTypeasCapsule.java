@@ -14,7 +14,7 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  *
- * Contributor(s): Sean L. Mooney
+ * Contributor(s): Eric Lin
  */
 
 /* @test
