@@ -109,8 +109,9 @@ public abstract class SeqConstCheckAlgorithm {
 	            route1.routeStr(), route2.routeStr());
 	}
 
-	private final void detect(HashSet<EffectEntry> s1, HashSet<EffectEntry> s2,
-			Route path1, Route path2, Route er1, Route er2) {
+	private final boolean detect(HashSet<EffectEntry> s1,
+			HashSet<EffectEntry> s2, Route path1, Route path2, Route er1,
+			Route er2) {
 		for (EffectEntry ee1 : s1) {
 			for (EffectEntry ee2 : s2) {
 				if (ee1 instanceof ArrayEffect) {
@@ -119,8 +120,10 @@ public abstract class SeqConstCheckAlgorithm {
 						ArrayEffect ae2 = (ArrayEffect)ee2;
 						if (ae1.path.equals(ae2)) {
 							pathsAlgorithm(path1, path2, er1, er2);
+							return false;
 						}
 					}
+					continue;
 				}
 				if (ee1 instanceof FieldEffect) {
 					if (ee2 instanceof FieldEffect) {
@@ -129,11 +132,13 @@ public abstract class SeqConstCheckAlgorithm {
 
 						if (ae1.f.equals(ae2.f)) {
 							pathsAlgorithm(path1, path2, er1, er2);
+							return false;
 						}
 					}
 				}
 			}
 		}
+		return true;
 	}
 
 	private final void pathsAlgorithm(Route r1, Route r2, Route er1,
@@ -150,10 +155,10 @@ public abstract class SeqConstCheckAlgorithm {
 		while (i < size1 - 1 && i < size2 - 1 && n1.get(i).equals(n2.get(i))
 				&& e1.get(i).equals(e2.get(i))) {
 			Edge ee = e1.get(i);
-			EffectSet es = n1.get(i).meth.effect;
+			ClassMethod cm = n1.get(i);
+			EffectSet es = cm.meth.effect;
 			HashSet<BiCall> pair = new HashSet<BiCall>(es.direct);
 			pair.addAll(es.indirect);
-			ClassMethod cm = n1.get(i);
 
 			for (BiCall bc : pair) {
 				CallEffect ce1 = bc.ce1;
@@ -162,6 +167,7 @@ public abstract class SeqConstCheckAlgorithm {
 					if (ee.pos == ce1.pos()) {
 						distinctPath(r1.cloneSubPath(cm), r2.cloneSubPath(cm),
 								er1, er2);
+						break;
 					}
 				}
 			}
@@ -201,32 +207,43 @@ public abstract class SeqConstCheckAlgorithm {
 	}
 
 	private final void checkPaths(HashSet<Route> paths) {
-		int i = 0;
+		// avoid analyzing the analyzed path.
+		HashSet<BiRoute> analyzed = new HashSet<BiRoute>();
 		for (Route path1 : paths) {
-			int j = 0;
 			for (Route path2 : paths) {
-					ArrayList<ClassMethod[]> pairs = getPairs(path1, path2);
-					for (ClassMethod[] pair : pairs) {
-						ClassMethod cmn1 = pair[0];
-						ClassMethod cmn2 = pair[1];
-						EffectSet es1 = cmn1.meth.effect;
-						EffectSet es2 = cmn2.meth.effect;
+				ArrayList<ClassMethod[]> pairs = getPairs(path1, path2);
+				for (ClassMethod[] pair : pairs) {
+					ClassMethod cmn1 = pair[0];
+					ClassMethod cmn2 = pair[1];
+					EffectSet es1 = cmn1.meth.effect;
+					EffectSet es2 = cmn2.meth.effect;
 
-						if (es1 != null && es2 != null) {
-							Route t1 = path1.clonePrefixPath(cmn1);
-							Route t2 = path2.clonePrefixPath(cmn2);
-							if ((es1.isBottom && !es2.isPure()) ||
-									(!es1.isPure() && es2.isBottom)) {
-								pathsAlgorithm(t1, t2, path1, path2);
+					if (es1 != null && es2 != null) {
+						Route t1 = path1.clonePrefixPath(cmn1);
+						Route t2 = path2.clonePrefixPath(cmn2);
+
+						BiRoute br = new BiRoute(t1, t2);
+						if (analyzed.contains(br)) {
+							continue;
+						}
+						analyzed.add(br);
+
+						if ((es1.isBottom && !es2.isPure()) ||
+								(!es1.isPure() && es2.isBottom)) {
+							pathsAlgorithm(t1, t2, path1, path2);
+						} else {
+							if (detect(es1.write, es2.write, t1, t2, path1,
+									path2)) {
+								if (detect(es1.write, es2.read, t1, t2, path1,
+										path2)) {
+									detect(es1.read, es2.write, t1, t2, path1,
+											path2);
+								}
 							}
-							detect(es1.write, es2.write, t1, t2, path1, path2);
-							detect(es1.write, es2.read, t1, t2, path1, path2);
-							detect(es1.read, es2.write, t1, t2, path1, path2);
 						}
 					}
-				j++;
+				}
 			}
-			i++;
 		}
 	}
 

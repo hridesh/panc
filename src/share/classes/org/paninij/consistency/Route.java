@@ -20,6 +20,7 @@
 package org.paninij.consistency;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.paninij.systemgraph.SystemGraph.Edge;
 
@@ -54,9 +55,15 @@ public class Route {
 		return -1;
 	}
 
+	// Cached the clone path for reuse.
+	public HashMap<ClassMethod, Route> cached =
+			new HashMap<ClassMethod, Route>();
 	// clone the subpath that starts from node cm
 	public final Route clonePrefixPath(ClassMethod cm) {
-		Route loop = new Route();
+		Route loop = cached.get(cm);
+		if (loop != null) { return loop; }
+		loop = new Route();
+		cached.put(cm, loop);
 		int size = nodes.size();
 		for (int i = 0; i < size; i++) {
 			ClassMethod n = nodes.get(i);
