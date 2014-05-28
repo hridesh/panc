@@ -26,7 +26,6 @@
 package com.sun.tools.javac.tree;
 
 import java.util.*;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import javax.lang.model.element.Modifier;
