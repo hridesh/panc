@@ -386,6 +386,13 @@ public class Enter extends JCTree.Visitor {
 	    							tc.copy(mdecl.typarams), 
 	    							tc.copy(mdecl.params), 
 	    							tc.copy(mdecl.thrown), null, tc.copy(mdecl.defaultValue)));
+	    					if(!hasRun)
+	    					interfaceBody.add(make.MethodDef(tc.copy(mdecl.mods), 
+	    					        mdecl.name.append(names.fromString(PaniniConstants.PANINI_ORIGINAL_METHOD_SUFFIX)),
+	    							tc.copy(mdecl.restype), 
+	    							tc.copy(mdecl.typarams), 
+	    							tc.copy(mdecl.params), 
+	    							tc.copy(mdecl.thrown), null, tc.copy(mdecl.defaultValue)));
     					}
     					if(mdecl.name.equals(names.panini.PaniniCapsuleInit)) {
     					    initMethods.add(mdecl);
@@ -414,7 +421,7 @@ public class Enter extends JCTree.Visitor {
     			copyActive.accessMods = capsule.mods.flags;
     			JCCapsuleDecl copyCapsule = 
     					make.CapsuleDef(make.Modifiers(INTERFACE, annotationProcessor.createCapsuleAnnotation(Flags.INTERFACE, capsule)), 
-    							capsule.name, tc.copy(capsule.params), tc.copy(capsule.implementing), interfaceBody.toList());
+    							capsule.name, tc.copy(capsule.params), tc.copy(capsule.implementing).append(make.Ident(names.fromString("PaniniCapsule"))), interfaceBody.toList());
     			//Record the init methods and state decls that still need initialized.
     			copyCapsule.initMethods = initMethods.toList();
     			copyCapsule.stateToInit = stateToInit.toList();
@@ -820,6 +827,16 @@ public class Enter extends JCTree.Visitor {
 						p.mods.flags |= Flags.SYNCHRONIZED;
 					p.switchToMethod();
 					tree.publicMethods = tree.publicMethods.append(p);
+					TreeCopier<Void> tc = new TreeCopier<Void>(make);
+					JCMethodDecl methodCopy = make.MethodDef(
+							make.Modifiers(PUBLIC | FINAL),
+							mdecl.name.append(names.fromString("$Original")),
+							tc.copy(mdecl.restype), tc.copy(mdecl.typarams),
+							tc.copy(mdecl.params), tc.copy(mdecl.thrown),
+							tc.copy(mdecl.body), null);
+					methodCopy.sym = new MethodSymbol(PUBLIC, methodCopy.name,
+							mdecl.restype.type, tree.sym);
+					definitions.add(methodCopy);
 					definitions.add(p);
 				} else
 					definitions.add(mdecl);
@@ -946,12 +963,12 @@ public class Enter extends JCTree.Visitor {
 			}
 
 			JCMethodDecl methodCopy = make.MethodDef(
-					make.Modifiers(PRIVATE | FINAL),
+					make.Modifiers(PUBLIC | FINAL),
 					mdecl.name.append(names.fromString("$Original")),
 					tc.copy(mdecl.restype), tc.copy(mdecl.typarams),
 					tc.copy(vars.toList()), tc.copy(mdecl.thrown),
 					tc.copy(mdecl.body), null);
-			methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name,
+			methodCopy.sym = new MethodSymbol(PUBLIC, methodCopy.name,
 					mdecl.restype.type, tree.sym);
 			definitions.add(methodCopy);
 			definitions.add(mdecl);
@@ -1015,12 +1032,12 @@ public class Enter extends JCTree.Visitor {
 				copyBody.append(procedureReturnStatement(mdecl));
 
 			JCMethodDecl methodCopy = make.MethodDef(
-					make.Modifiers(PRIVATE | FINAL),
+					make.Modifiers(PUBLIC | FINAL),
 					mdecl.name.append(names.fromString("$Original")),
 					tc.copy(mdecl.restype), tc.copy(mdecl.typarams),
 					vars.toList(), tc.copy(mdecl.thrown), tc.copy(mdecl.body),
 					null);
-			methodCopy.sym = new MethodSymbol(PRIVATE, methodCopy.name,
+			methodCopy.sym = new MethodSymbol(PUBLIC, methodCopy.name,
 					mdecl.restype.type, tree.sym);
 			mdecl.mods.flags |= FINAL;
 			mdecl.body = make.Block(0, copyBody.toList());

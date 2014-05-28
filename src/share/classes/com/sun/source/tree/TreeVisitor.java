@@ -114,6 +114,7 @@ public interface TreeVisitor<R,P> {
     R visitState(StateTree tree, P p);
     R visitCapsuleWiring(CapsuleWiringTree node, P p);
     R visitIndexedCapsuleWiring(CapsuleArrayCallTree tree, P p);
+    R visitCapsuleLambda(CapsuleLambdaExpressionTree tree, P p);
     R visitCapsuleArray(CapsuleArrayTree tree, P p);
     R visitWiringBlock(InternalWiringMethod node, P p);
     R visitCapsule(CapsuleTree node, P p);

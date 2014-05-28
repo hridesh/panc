@@ -105,6 +105,13 @@ public class TreeScanner extends Visitor {
         scan(tree.capsule);
         scan(tree.args);
     }
+    
+    @Override
+    public void visitCapsuleLambda(JCCapsuleLambda tree) {
+        scan(tree.params);
+        scan(tree.restype);
+        scan(tree.body);
+    }
 
 	@Override
 	public void visitWireall(JCWireall tree) {

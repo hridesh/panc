@@ -48,6 +48,7 @@ public interface Tree {
     	// Panini code
     	PROCCALL(ProcInvocationTree.class),
     	PROCEDURE(ProcedureTree.class),
+    	CAPSULE_LAMBDA(CapsuleLambdaExpressionTree.class),
     	STATE(StateTree.class),
     	CAPSULE_WIRING(CapsuleWiringTree.class),
     	CAPSULE_ARRAY_CALL(CapsuleArrayCallTree.class),

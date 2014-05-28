@@ -82,6 +82,7 @@ public abstract class PaniniCapsuleSequential implements PaniniCapsule{
   		panini$capsule$init();
   	}
   	
+  	public final void panini$push(Object o){}
   	public final void join() throws java.lang.InterruptedException {} // TODO:
 
 }

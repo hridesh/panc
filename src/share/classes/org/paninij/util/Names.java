@@ -22,73 +22,81 @@ import com.sun.tools.javac.util.Name;
 import org.paninij.util.PaniniConstants;
 
 /**
- * Names for the panc compiler. Parallel to {@link com.sun.tools.javac.util.Names}.
- *
+ * Names for the panc compiler. Parallel to
+ * {@link com.sun.tools.javac.util.Names}.
+ * 
  * @author Sean L. Mooney
  * @since panini-0.9.2
  */
 public class Names {
-    /**
-     * Capsule Initialization method.
-     */
-    public final Name PaniniCapsuleInit;
-    /**
-    * Name of the 'run' method.
-    */
-    public final Name Run;
+	/**
+	 * Capsule Initialization method.
+	 */
+	public final Name PaniniCapsuleInit;
+	/**
+	 * Name of the 'run' method.
+	 */
+	public final Name Run;
 
-    /** Name a start method. */
-    public final Name Start;
+	/** Name a start method. */
+	public final Name Start;
 
-    /**
-     * main
-     */
-    public final Name Main;
+	/**
+	 * main
+	 */
+	public final Name Main;
 
-    public final Name Capsule;
-    /**
-     * Name used for a capsule (external) wiring symbol.
-     */
-    public final Name Wiring;
-    public final Name PaniniFinish;
-    public final Name PaniniDuckFuture;
-    public final Name PaniniDisconnect;
-    public final Name PaniniRefCountField;
+	public final Name Capsule;
+	/**
+	 * Name used for a capsule (external) wiring symbol.
+	 */
+	public final Name Wiring;
+	public final Name PaniniFinish;
+	public final Name PaniniDuckFuture;
+	public final Name PaniniLambdaBody;
+	public final Name PaniniDisconnect;
+	public final Name PaniniRefCountField;
 
-    /**
-     * Name of the method used to wire internal 'systems' in a capsule.
-     */
-    public final Name InternalCapsuleWiring;
+	/**
+	 * Name of the method used to wire internal 'systems' in a capsule.
+	 */
+	public final Name InternalCapsuleWiring;
 
-    public final Name Org;
-    public final Name Paninij;
-    public final Name Runtime;
-    public final Name UnrunnableCapsuleExceptionClass;
+	public final Name Org;
+	public final Name Paninij;
+	public final Name Runtime;
+	public final Name UnrunnableCapsuleExceptionClass;
 
-    /**
-     * Construct more names, using an exitings Names table.
-     * @param names
-     */
-    public Names(com.sun.tools.javac.util.Names names) {
-        //Method Names
-        PaniniCapsuleInit = names.fromString(PaniniConstants.PANINI_CAPSULE_INIT);
-        Run = names.fromString("run");
-        Start = names.fromString(PaniniConstants.PANINI_START);
-        Main = names.fromString("main");
+	/**
+	 * Construct more names, using an exitings Names table.
+	 * 
+	 * @param names
+	 */
+	public Names(com.sun.tools.javac.util.Names names) {
+		// Method Names
+		PaniniCapsuleInit = names
+				.fromString(PaniniConstants.PANINI_CAPSULE_INIT);
+		Run = names.fromString("run");
+		Start = names.fromString(PaniniConstants.PANINI_START);
+		Main = names.fromString("main");
 
-        //Capsule related
-        Capsule = names.fromString("Capsule");
-        Wiring = names.fromString("Wiring");
-        PaniniFinish = names.fromString(PaniniConstants.PANINI_FINISH);
-        PaniniDuckFuture = names.fromString(PaniniConstants.PANINI_DUCK_TYPE);
-        PaniniDisconnect = names.fromString(PaniniConstants.PANINI_DISCONNECT);
-        InternalCapsuleWiring = names.fromString(PaniniConstants.CAPSULE_SYS_WIRE);
-        PaniniRefCountField = names.fromString(PaniniConstants.PANINI_REF_COUNT);
+		// Capsule related
+		Capsule = names.fromString("Capsule");
+		Wiring = names.fromString("Wiring");
+		PaniniFinish = names.fromString(PaniniConstants.PANINI_FINISH);
+		PaniniLambdaBody = names.fromString(PaniniConstants.PANINI_LAMBDA_BODY);
+		PaniniDuckFuture = names.fromString(PaniniConstants.PANINI_DUCK_TYPE);
+		PaniniDisconnect = names.fromString(PaniniConstants.PANINI_DISCONNECT);
+		InternalCapsuleWiring = names
+				.fromString(PaniniConstants.CAPSULE_SYS_WIRE);
+		PaniniRefCountField = names
+				.fromString(PaniniConstants.PANINI_REF_COUNT);
 
-        //Class and package Names
-        Org = names.fromString("org");
-        Paninij = names.fromString("paninij");
-        Runtime = names.fromString("runtime");
-        UnrunnableCapsuleExceptionClass = names.fromString(PaniniConstants.UNRUNNABLE_EXCEPTION_CLASS);
-    }
+		// Class and package Names
+		Org = names.fromString("org");
+		Paninij = names.fromString("paninij");
+		Runtime = names.fromString("runtime");
+		UnrunnableCapsuleExceptionClass = names
+				.fromString(PaniniConstants.UNRUNNABLE_EXCEPTION_CLASS);
+	}
 }

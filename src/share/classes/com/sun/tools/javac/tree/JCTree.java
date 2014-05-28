@@ -360,6 +360,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         /** Capsule wiring expressions.
          */
         CAPSULE_WIRING,
+        CAPSULELAMBDA,
         CAPSULEARRAY,
         SYSTEMDEF,
         CAPSULEDEF,
@@ -928,6 +929,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		 * Store a list of initializer methods. Don't use after capsule splitter.
 		 */
 		public List<JCMethodDecl> initMethods = List.<JCMethodDecl>nil();
+		/**
+		 * To store the number of lambda expression in the body of this capsule.
+		 * This is used to enumerate the lamdba ducks created from the lamdba expressions.
+		 */
+		public int lambdaExpressionCounts;
 
 		public JCCapsuleDecl(JCModifiers mods, Name name,
 				List<JCVariableDecl> params, List<JCExpression> implementing,
@@ -945,6 +951,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 			this.publicMethods = List.<JCMethodDecl> nil();
 			this.needsDefaultRun = false;
 			this.hasSynthRunMethod = false;
+			this.lambdaExpressionCounts = 0;
 		}
 
 		public Kind getKind() {
@@ -1001,6 +1008,80 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		}
 
 	}
+	
+	/**
+     * A capsule lambda expression.
+     */
+    public static class JCCapsuleLambda extends JCNewClass implements CapsuleLambdaExpressionTree {
+
+        public List<JCVariableDecl> params;
+        public JCTree body;
+        public Type targetType;
+        public boolean canCompleteNormally = true;
+        public List<Type> inferredThrownTypes;
+        public JCExpression restype;
+        public Name capsuleName;
+        public boolean newClass = false;
+
+        public JCCapsuleLambda(List<JCVariableDecl> params, JCExpression restype,
+                        JCTree body) {
+        	super(null, List.<JCExpression>nil(), restype, List.<JCExpression>nil(), null);
+            this.params = params;
+            this.restype = restype;
+            this.body = body;
+            this.capsuleName = params.head.name;
+        }
+        @Override
+        public Tag getTag() {
+        	if(!newClass)
+        		return LAMBDA;
+        	else
+        		return NEWCLASS;
+        				
+        }
+        @Override
+        public void accept(Visitor v) {
+        	if(!newClass)
+        		v.visitCapsuleLambda(this);
+        	else
+        		v.visitNewClass(this);
+        }
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+        	if(!newClass)
+        		return v.visitCapsuleLambda(this, d);
+        	else
+        		return v.visitNewClass(this, d);
+            
+        }
+        public Kind getKind() {
+        	if(!newClass)
+        		return Kind.CAPSULE_LAMBDA;
+        	else
+        		return Kind.NEW_CLASS;
+        }
+        public JCTree getBody() {
+            return body;
+        }
+        public java.util.List<? extends VariableTree> getParameters() {
+            return params;
+        }
+        @Override
+        public JCCapsuleLambda setType(Type type) {
+            super.setType(type);
+            return this;
+        }
+        @Override
+        public BodyKind getBodyKind() {
+            return body.hasTag(BLOCK) ?
+                    BodyKind.STATEMENT :
+                    BodyKind.EXPRESSION;
+        }
+		@Override
+		public Tree getReturnType() {
+			return restype;
+		}
+    }
 
 	public static class JCFree extends JCExpression implements FreeTree {
 		public JCExpression exp;
@@ -3406,6 +3487,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitCapsuleWiring(JCCapsuleWiring that) { visitTree(that); }
         public void visitIndexedCapsuleWiring(JCCapsuleArrayCall that) { visitTree(that); }
         public void visitCapsuleArray(JCCapsuleArray that)   { visitTree(that); }
+        public void visitCapsuleLambda(JCCapsuleLambda that)   { visitTree(that); }
         /**
          * Wiring blocks/system decls delegate to visitMethodDef unless specifically
          * overriden for a reason. Keeps the common case of 'this is a method decl'.

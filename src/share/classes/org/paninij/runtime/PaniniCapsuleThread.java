@@ -145,7 +145,7 @@ public abstract class PaniniCapsuleThread extends Thread implements PaniniCapsul
     * Pushes a single object on this capsule's queue.
     * @param o - Object to be stored.
     */
-   protected final synchronized void panini$push(Object o) {
+   public final synchronized void panini$push(Object o) {
    	panini$ensureSpace(1);
    	panini$capsule$size = panini$capsule$size + 1;
    	panini$capsule$objects[panini$capsule$tail++] = o;

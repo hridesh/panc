@@ -153,6 +153,17 @@ public class Internal {
                                  null);
     }
 
+    protected JCMethodDecl method(JCModifiers mods, Name name, JCExpression type, List<JCVariableDecl> params) {
+        return make0().MethodDef(mods, 
+                                 name, 
+                                 type, 
+                                 List.<JCTypeParameter>nil(), 
+                                 params, 
+                                 List.<JCExpression>nil(),
+                                 body(),
+                                 null);
+    }
+    
     protected JCMethodDecl method(JCModifiers mods, Name name, JCExpression type, ListBuffer<JCVariableDecl> params, JCBlock body) {
         return make0().MethodDef(mods, 
                                  name, 
@@ -408,6 +419,13 @@ public class Internal {
         return newt(List.<JCExpression>nil(), make0().Ident(names.fromString(type)), args);
     }
 
+	protected JCNewClass newt(String type, ListBuffer<JCExpression> args,
+			ListBuffer<JCTree> body) {
+		return make0().NewClass(null, List.<JCExpression> nil(),
+				make0().Ident(names.fromString(type)), args.toList(),
+				make0().AnonymousClassDef(mods(0), body.toList()));
+    }
+    
     protected JCNewClass newt(String type) {
         return newt(List.<JCExpression>nil(), make0().Ident(names.fromString(type)), new ListBuffer<JCExpression>());
     }
@@ -480,6 +498,10 @@ public class Internal {
     
     protected JCFieldAccess select(String object, Name n) {
         return make0().Select(make0().Ident(names.fromString(object)), n);
+    }
+    
+    protected JCFieldAccess select(Name object, Name n) {
+        return make0().Select(make0().Ident(object), n);
     }
 
     protected JCFieldAccess select(JCExpression object, String subobject) {

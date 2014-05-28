@@ -842,7 +842,10 @@ public class Attr extends JCTree.Visitor {
         checkWiring(tree, owntype, tree.arguments, argtypes);
     }
 
-
+    @Override
+    public void visitCapsuleLambda(JCCapsuleLambda tree){
+    	pAttr.visitCapsuleLambda(tree, this, env, rs);
+    }
 
     @Override
     public void visitCapsuleArray(JCCapsuleArray tree) {
@@ -1297,7 +1300,7 @@ public class Attr extends JCTree.Visitor {
         }
         // Panini code
         if( (tree.sym.owner.flags_field & SYNTHETIC) == 0 //Ignore assigns in generated blocks.
-                && env.enclClass.sym.isCapsule() && tree.init!=null){
+                && env.enclClass.sym.isCapsule() && tree.init!=null && tree.init.type!=null){
             if(syms.capsules.containsKey(names.fromString(tree.init.type.toString()))) {
                 log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
             }
@@ -1938,30 +1941,44 @@ public class Attr extends JCTree.Visitor {
             Type mtype = attribExpr(tree.meth, localEnv, mpt);
             
             // Panini Code
-            if( (((MethodSymbol)TreeInfo.symbol(tree.meth)).flags()&Flags.PRIVATE)==0 &&(((MethodSymbol)TreeInfo.symbol(tree.meth)).flags()&Flags.PROTECTED)==0 ){
-            	if(env.enclClass.sym.isCapsule() &&((env.enclClass.sym.flags_field&Flags.SERIAL)==0)&&((env.enclClass.sym.flags_field&Flags.MONITOR)==0)){
-            		if(tree.meth.hasTag(Tag.IDENT)){
-            			if(!tree.meth.toString().contains("$") 
-            					&& !tree.meth.toString().equals(PaniniConstants.PANINI_YIELD)
-            					&& !tree.meth.toString().equals(PaniniConstants.PANINI_SHUTDOWN)
-            					&& !tree.meth.toString().equals(PaniniConstants.PANINI_EXIT)){
-            				tree.meth = make.Ident(names.fromString(((JCIdent)tree.meth).name.toString().concat("$Original")));
-            				mtype = attribExpr(tree.meth, localEnv, mpt);
-            			}
-            		}else if(tree.meth.hasTag(Tag.SELECT)){
-            			JCFieldAccess clazz = (JCFieldAccess)tree.meth;
-            			if(clazz.selected.hasTag(Tag.IDENT)&&((JCIdent)clazz.selected).name.equals(names._this)&&clazz.sym.owner == env.enclClass.sym)
-            				if(!clazz.name.toString().contains("$") 
-            						&&!clazz.name.toString().equals(PaniniConstants.PANINI_YIELD)
-            						&&!clazz.name.toString().equals(PaniniConstants.PANINI_SHUTDOWN)
-            						&&!clazz.name.toString().equals(PaniniConstants.PANINI_EXIT)
-            						){
-            					clazz.name = clazz.name.append(names.fromString("$Original"));
-            					mtype = attribExpr(tree.meth, localEnv, mpt);
-            					}
-            		}
-        		}
-            }
+			if ((((MethodSymbol) TreeInfo.symbol(tree.meth)).flags() & Flags.PRIVATE) == 0
+					&& (((MethodSymbol) TreeInfo.symbol(tree.meth)).flags() & Flags.PROTECTED) == 0) {
+				if (env.enclClass.sym.isCapsule()
+						&& ((env.enclClass.sym.flags_field & Flags.SERIAL) == 0)
+						&& ((env.enclClass.sym.flags_field & Flags.MONITOR) == 0)) {
+					if (tree.meth.hasTag(Tag.IDENT)) {
+						if (!tree.meth.toString().contains("$")
+								&& !tree.meth.toString().equals(
+										PaniniConstants.PANINI_YIELD)
+								&& !tree.meth.toString().equals(
+										PaniniConstants.PANINI_SHUTDOWN)
+								&& !tree.meth.toString().equals(
+										PaniniConstants.PANINI_EXIT)) {
+							tree.meth = make.Ident(names
+									.fromString(((JCIdent) tree.meth).name
+											.toString().concat("$Original")));
+							mtype = attribExpr(tree.meth, localEnv, mpt);
+						}
+					} else if (tree.meth.hasTag(Tag.SELECT)) {
+						JCFieldAccess clazz = (JCFieldAccess) tree.meth;
+						if (clazz.selected.hasTag(Tag.IDENT)
+								&& ((JCIdent) clazz.selected).name
+										.equals(names._this)
+								&& clazz.sym.owner == env.enclClass.sym)
+							if (!clazz.name.toString().contains("$")
+									&& !clazz.name.toString().equals(
+											PaniniConstants.PANINI_YIELD)
+									&& !clazz.name.toString().equals(
+											PaniniConstants.PANINI_SHUTDOWN)
+									&& !clazz.name.toString().equals(
+											PaniniConstants.PANINI_EXIT)) {
+								clazz.name = clazz.name.append(names
+										.fromString("$Original"));
+								mtype = attribExpr(tree.meth, localEnv, mpt);
+							}
+					}
+				}
+			}
             // end Panini code
 
             // Compute the result type.

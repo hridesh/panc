@@ -50,6 +50,8 @@ import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.Resolve;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
+import com.sun.tools.javac.tree.JCTree.JCCapsuleLambda;
+import com.sun.tools.javac.tree.JCTree.JCLambda;
 import com.sun.tools.javac.tree.JCTree.JCStateDecl;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
@@ -74,13 +76,13 @@ import org.paninij.systemgraph.SystemGraphBuilder;
 import org.paninij.util.PaniniConstants;
 
 /***
- * Panini-specific context-dependent analysis. All public functions in 
- * this class, are called from com.sun.tools.javac.comp.Attr to separate 
- * out Panini code. So, visitX in this class is called from method visitX 
- * in the class com.sun.tools.javac.comp.Attr.
+ * Panini-specific context-dependent analysis. All public functions in this
+ * class, are called from com.sun.tools.javac.comp.Attr to separate out Panini
+ * code. So, visitX in this class is called from method visitX in the class
+ * com.sun.tools.javac.comp.Attr.
  * 
  * @author hridesh
- *
+ * 
  */
 public final class Attr extends CapsuleInternal {
 	Log log;
@@ -89,29 +91,28 @@ public final class Attr extends CapsuleInternal {
 	SystemGraphBuilder systemGraphBuilder;
 	final com.sun.tools.javac.comp.Check jchk;
 	public final Check pchk;
-	public List<JCDesignBlock> designBlocks = List.<JCDesignBlock>nil();
-	public final Map<Name, java.util.List<Name>> capsuleAliases = 
-			new HashMap<Name, java.util.List<Name>>();
+	public List<JCDesignBlock> designBlocks = List.<JCDesignBlock> nil();
+	public final Map<Name, java.util.List<Name>> capsuleAliases = new HashMap<Name, java.util.List<Name>>();
 
-    final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
+	final ConsistencyUtil.SEQ_CONST_ALG seqConstAlg;
 
-    protected static final Context.Key<Attr> attrKey =
-            new Context.Key<Attr>();
+	protected static final Context.Key<Attr> attrKey = new Context.Key<Attr>();
 
-    public static Attr instance(Context context) {
-        Attr instance = context.get(attrKey);
-        if (instance == null)
-            instance = new Attr(context);
-        return instance;
-    }
+	public static Attr instance(Context context) {
+		Attr instance = context.get(attrKey);
+		if (instance == null)
+			instance = new Attr(context);
+		return instance;
+	}
 
 	/**
-	 * Whether or not capsule state access should be reported as an error.
-	 * Used to the keep errors from being reported once a wiring block is
-	 * converted to actual wiring statements.
-	 *<p>
-	 * Any logic which toggles this off must ensure it's state is restored
-	 * after the specific case for turning it off has finished. e.g.
+	 * Whether or not capsule state access should be reported as an error. Used
+	 * to the keep errors from being reported once a wiring block is converted
+	 * to actual wiring statements.
+	 * <p>
+	 * Any logic which toggles this off must ensure it's state is restored after
+	 * the specific case for turning it off has finished. e.g.
+	 * 
 	 * <pre>
 	 * boolean prevCheckCapState = checkCapStateAcc;
 	 * try {
@@ -124,76 +125,219 @@ public final class Attr extends CapsuleInternal {
 	 */
 	public boolean checkCapStateAcc = true;
 
-    protected Attr(Context context) {
-        super(TreeMaker.instance(context),
-                com.sun.tools.javac.util.Names.instance(context),
-                com.sun.tools.javac.code.Types.instance(context),
-                com.sun.tools.javac.comp.Enter.instance(context),
-                com.sun.tools.javac.comp.MemberEnter.instance(context),
-                com.sun.tools.javac.code.Symtab.instance(context),
-                com.sun.tools.javac.comp.Resolve.instance(context));
-        context.put(attrKey, this);
+	protected Attr(Context context) {
+		super(TreeMaker.instance(context), com.sun.tools.javac.util.Names
+				.instance(context), com.sun.tools.javac.code.Types
+				.instance(context), com.sun.tools.javac.comp.Enter
+				.instance(context), com.sun.tools.javac.comp.MemberEnter
+				.instance(context), com.sun.tools.javac.code.Symtab
+				.instance(context), com.sun.tools.javac.comp.Resolve
+				.instance(context));
+		context.put(attrKey, this);
 
-        this.log = com.sun.tools.javac.util.Log.instance(context);
-        this.annotate = Annotate.instance(context);
-        this.annotationProcessor = new AnnotationProcessor(names, make, log);
-        this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
-        this.jchk = com.sun.tools.javac.comp.Check.instance(context);
-        this.pchk = Check.instance(context);
+		this.log = com.sun.tools.javac.util.Log.instance(context);
+		this.annotate = Annotate.instance(context);
+		this.annotationProcessor = new AnnotationProcessor(names, make, log);
+		this.systemGraphBuilder = new SystemGraphBuilder(syms, names, log);
+		this.jchk = com.sun.tools.javac.comp.Check.instance(context);
+		this.pchk = Check.instance(context);
 
-        this.seqConstAlg = SEQ_CONST_ALG.instance(context);
-    }
+		this.seqConstAlg = SEQ_CONST_ALG.instance(context);
+	}
 
-	public void visitTopLevel(JCCompilationUnit tree) { /* SKIPPED */ }
-	public void visitImport(JCImport tree) { /* SKIPPED */ }
-	public void visitLetExpr(LetExpr tree) { /* SKIPPED */ }
-	public void visitAnnotation(JCAnnotation tree) { /* SKIPPED */ }
-	public void visitModifiers(JCModifiers tree) { /* SKIPPED */ }
-	public void visitErroneous(JCErroneous tree) { /* SKIPPED */ }
-	public void visitTypeIdent(JCPrimitiveTypeTree tree) { /* SKIPPED */ }
-	public void visitTypeApply(JCTypeApply tree) { /* SKIPPED */ }
-	public void visitTypeUnion(JCTypeUnion tree) { /* SKIPPED */ }
-	public void visitTypeParameter(JCTypeParameter tree) { /* SKIPPED */ }
-	public void visitWildcard(JCWildcard tree) { /* SKIPPED */ }
-	public void visitTypeBoundKind(TypeBoundKind tree) { /* SKIPPED */ }
-	public void visitIdent(JCIdent tree) {  /* SKIPPED */ }
-	public void visitLiteral(JCLiteral tree) {  /* SKIPPED */ }
-	public void visitTypeArray(JCArrayTypeTree tree) {  /* SKIPPED */ }
-	public void visitSkip(JCSkip tree) {  /* SKIPPED */ }
-	public final void visitClassDef(JCClassDecl tree) {  /* SKIPPED */ }
-	public final void visitLabelled(JCLabeledStatement tree) {  /* SKIPPED */ }
-	public final void visitAssert(JCAssert tree) {  /* SKIPPED */ }
+	public void visitTopLevel(JCCompilationUnit tree) { /* SKIPPED */
+	}
 
-	public final void visitVarDef(JCVariableDecl tree) { /* SKIPPED */ }
-	public final void visitBlock(JCBlock tree) { /* SKIPPED */ }
-	public final void visitDoLoop(JCDoWhileLoop tree) { /* SKIPPED */ }
-	public final void visitWhileLoop(JCWhileLoop tree) { /* SKIPPED */ }
-	public final void visitForLoop(JCForLoop tree) { /* SKIPPED */ }
-	public final void visitForeachLoop(JCEnhancedForLoop tree) { /* SKIPPED */ }
-	public final void visitSwitch(JCSwitch tree) { /* SKIPPED */ }
-	public final void visitCase(JCCase tree) { /* SKIPPED */ }
-	public final void visitSynchronized(JCSynchronized tree) { /* SKIPPED */ }
-	public final void visitTry(JCTry tree) { /* SKIPPED */ }
-	public final void visitCatch(JCCatch tree) { /* SKIPPED */ }
-	public final void visitConditional(JCConditional tree) { /* SKIPPED */ }
-	public final void visitIf(JCIf tree) { /* SKIPPED */ }
-	public final void visitExec(JCExpressionStatement tree) { /* SKIPPED */ }
-	public final void visitBreak(JCBreak tree) { /* SKIPPED */ }
-	public final void visitContinue(JCContinue tree) { /* SKIPPED */ }
-	public final void visitReturn(JCReturn tree) { /* SKIPPED */ }
-	public final void visitThrow(JCThrow tree) { /* SKIPPED */ }
-	public final void visitApply(JCMethodInvocation tree) { /* SKIPPED */ }
-	public final void visitNewClass(JCNewClass tree) { /* SKIPPED */ }
-	public final void visitNewArray(JCNewArray tree) { /* SKIPPED */ }
-	public final void visitParens(JCParens tree) { /* SKIPPED */ }
-	public final void visitAssign(JCAssign tree) { /* SKIPPED */ }
-	public final void visitAssignop(JCAssignOp tree) { /* SKIPPED */ }
-	public final void visitUnary(JCUnary tree) { /* SKIPPED */ }
-	public final void visitBinary(JCBinary tree) { /* SKIPPED */ }
-	public void visitTypeCast(JCTypeCast tree) { /* SKIPPED */ }
-	public void visitTypeTest(JCInstanceOf tree) { /* SKIPPED */ }
-	public void visitIndexed(JCArrayAccess tree) { /* SKIPPED */ }
-	public void visitSelect(JCFieldAccess tree) { /* SKIPPED */ }
+	public void visitImport(JCImport tree) { /* SKIPPED */
+	}
+
+	public void visitLetExpr(LetExpr tree) { /* SKIPPED */
+	}
+
+	public void visitAnnotation(JCAnnotation tree) { /* SKIPPED */
+	}
+
+	public void visitModifiers(JCModifiers tree) { /* SKIPPED */
+	}
+
+	public void visitErroneous(JCErroneous tree) { /* SKIPPED */
+	}
+
+	public void visitTypeIdent(JCPrimitiveTypeTree tree) { /* SKIPPED */
+	}
+
+	public void visitTypeApply(JCTypeApply tree) { /* SKIPPED */
+	}
+
+	public void visitTypeUnion(JCTypeUnion tree) { /* SKIPPED */
+	}
+
+	public void visitTypeParameter(JCTypeParameter tree) { /* SKIPPED */
+	}
+
+	public void visitWildcard(JCWildcard tree) { /* SKIPPED */
+	}
+
+	public void visitTypeBoundKind(TypeBoundKind tree) { /* SKIPPED */
+	}
+
+	public void visitIdent(JCIdent tree) { /* SKIPPED */
+	}
+
+	public void visitLiteral(JCLiteral tree) { /* SKIPPED */
+	}
+
+	public void visitTypeArray(JCArrayTypeTree tree) { /* SKIPPED */
+	}
+
+	public void visitSkip(JCSkip tree) { /* SKIPPED */
+	}
+
+	public final void visitClassDef(JCClassDecl tree) { /* SKIPPED */
+	}
+
+	public final void visitLabelled(JCLabeledStatement tree) { /* SKIPPED */
+	}
+
+	public final void visitAssert(JCAssert tree) { /* SKIPPED */
+	}
+
+	public final void visitVarDef(JCVariableDecl tree) { /* SKIPPED */
+	}
+
+	public final void visitBlock(JCBlock tree) { /* SKIPPED */
+	}
+
+	public final void visitDoLoop(JCDoWhileLoop tree) { /* SKIPPED */
+	}
+
+	public final void visitWhileLoop(JCWhileLoop tree) { /* SKIPPED */
+	}
+
+	public final void visitForLoop(JCForLoop tree) { /* SKIPPED */
+	}
+
+	public final void visitForeachLoop(JCEnhancedForLoop tree) { /* SKIPPED */
+	}
+
+	public final void visitSwitch(JCSwitch tree) { /* SKIPPED */
+	}
+
+	public final void visitCase(JCCase tree) { /* SKIPPED */
+	}
+
+	public final void visitSynchronized(JCSynchronized tree) { /* SKIPPED */
+	}
+
+	public final void visitTry(JCTry tree) { /* SKIPPED */
+	}
+
+	public final void visitCatch(JCCatch tree) { /* SKIPPED */
+	}
+
+	public final void visitConditional(JCConditional tree) { /* SKIPPED */
+	}
+
+	public final void visitIf(JCIf tree) { /* SKIPPED */
+	}
+
+	public final void visitExec(JCExpressionStatement tree) { /* SKIPPED */
+	}
+
+	public final void visitBreak(JCBreak tree) { /* SKIPPED */
+	}
+
+	public final void visitContinue(JCContinue tree) { /* SKIPPED */
+	}
+
+	public final void visitReturn(JCReturn tree) { /* SKIPPED */
+	}
+
+	public final void visitThrow(JCThrow tree) { /* SKIPPED */
+	}
+
+	public final void visitApply(JCMethodInvocation tree) { /* SKIPPED */
+	}
+
+	public final void visitNewClass(JCNewClass tree) { /* SKIPPED */
+	}
+
+	public final void visitNewArray(JCNewArray tree) { /* SKIPPED */
+	}
+
+	public final void visitParens(JCParens tree) { /* SKIPPED */
+	}
+
+	public final void visitAssign(JCAssign tree) { /* SKIPPED */
+	}
+
+	public final void visitAssignop(JCAssignOp tree) { /* SKIPPED */
+	}
+
+	public final void visitUnary(JCUnary tree) { /* SKIPPED */
+	}
+
+	public final void visitBinary(JCBinary tree) { /* SKIPPED */
+	}
+
+	public void visitTypeCast(JCTypeCast tree) { /* SKIPPED */
+	}
+
+	public void visitTypeTest(JCInstanceOf tree) { /* SKIPPED */
+	}
+
+	public void visitIndexed(JCArrayAccess tree) { /* SKIPPED */
+	}
+
+	public void visitSelect(JCFieldAccess tree) { /* SKIPPED */
+	}
+
+	public void visitCapsuleLambda(JCCapsuleLambda tree,
+			final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env,
+			Resolve rs) {
+		transformCapsuleLambda(tree, attr, env, rs);
+	}
+
+	/**
+	 * 
+	 * @param tree
+	 * @param attr
+	 * @param env
+	 * @param rs
+	 */
+	private void transformCapsuleLambda(JCCapsuleLambda tree,
+			final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env,
+			Resolve rs) {
+		final JCCapsuleLambda lambda = tree;
+		// Make sure intracapsule calls in lambdas don't go through queues by
+		// calling %Original methods
+		class IntraCapsuleCallsTransformer extends TreeScanner {
+			@Override
+			public final void visitSelect(JCFieldAccess tree) {
+				if (tree.selected.toString().equals(
+						lambda.capsuleName.toString())) {
+					tree.name = tree.name
+							.append(names
+									.fromString(PaniniConstants.PANINI_ORIGINAL_METHOD_SUFFIX));
+				} else
+					tree.selected.accept(this);
+			}
+		}
+		IntraCapsuleCallsTransformer icct = new IntraCapsuleCallsTransformer();
+		tree.accept(icct);
+
+		JCClassDecl lambdaDuck;
+		lambdaDuck = createPaniniLambda(tree, env);
+		enter.classEnter(List.<JCClassDecl> of(lambdaDuck), env.outer);
+//		System.out.println(lambdaDuck);// -DEBUG: prints out resulting duck class
+		// Enumeration of lambda classes
+		((JCCapsuleDecl) env.enclClass).lambdaExpressionCounts++;
+		tree.newClass = true;
+		tree.clazz = id(lambdaDuck.name);
+		for (JCVariableDecl var : tree.params) {
+			tree.args = tree.args.append(id(var.name));
+		}
+	}
 
 	public final void preVisitMethodDef(JCMethodDecl tree,
 			final com.sun.tools.javac.comp.Attr attr) {
@@ -201,7 +345,8 @@ public final class Attr extends CapsuleInternal {
 			try {
 				((JCProcDecl) tree).switchToProc();
 				tree.accept(attr);
-			} catch (ClassCastException e) {}
+			} catch (ClassCastException e) {
+			}
 		}
 	}
 
@@ -214,74 +359,78 @@ public final class Attr extends CapsuleInternal {
 		MethodSymbol ms = tree.sym;
 		ClassSymbol owner = (ClassSymbol) ms.owner;
 		if ((owner.flags() & Flags.CAPSULE) != 0) {
-			CapsuleProcedure cp =
-				new CapsuleProcedure(owner, tree.name, ms.params);
+			CapsuleProcedure cp = new CapsuleProcedure(owner, tree.name,
+					ms.params);
 			owner.capsule_info.procedures.put(ms, cp);
 			if (ms.effect != null) {
 				annotationProcessor.setEffects(tree, ms.effect);
 				Attribute.Compound buf = annotate.enterAnnotation(
 						tree.mods.annotations.last(), Type.noType, env);
-				ms.attributes_field = ms.attributes_field.append(buf); 
+				ms.attributes_field = ms.attributes_field.append(buf);
 			}
 		}
 	}
-	
+
 	public final void visitCapsuleDef(final JCCapsuleDecl tree,
 			final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env,
 			Resolve rs) {
-	    tree.sym.capsule_info.connectedCapsules =
-	            tree.sym.capsule_info.connectedCapsules.appendList(tree.params);
+		tree.sym.capsule_info.connectedCapsules = tree.sym.capsule_info.connectedCapsules
+				.appendList(tree.params);
 
 		if (tree.needsDefaultRun) {
 			List<JCClassDecl> wrapperClasses = generateClassWrappers(tree, env);
 			enter.classEnter(wrapperClasses, env.outer);
-//			        	System.out.println(wrapperClasses);
+//			 System.out.println(wrapperClasses);
 			for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
 				JCTree def = l.head;
 				if (def.getTag() == Tag.METHODDEF) {
-					JCMethodDecl mdecl = (JCMethodDecl)def;
+					JCMethodDecl mdecl = (JCMethodDecl) def;
 					Type restype = ((MethodType) mdecl.sym.type).restype;
 					ClassSymbol c = checkAndResolveReturnType(env, rs, restype);
 
-					if (!mdecl.name.toString().contains("$Original") && restype.isFinal() && !c.toString().equals("java.lang.String")) {
+					if (!mdecl.name.toString().contains("$Original")
+							&& restype.isFinal()
+							&& !c.toString().equals("java.lang.String")) {
 						ListBuffer<JCStatement> statements = new ListBuffer<JCStatement>();
-						for (List<JCStatement> stats = mdecl.body.stats; stats.nonEmpty(); stats = stats.tail) {
+						for (List<JCStatement> stats = mdecl.body.stats; stats
+								.nonEmpty(); stats = stats.tail) {
 							JCStatement stat = stats.head;
 							if (stat.getTag() != Tag.RETURN) {
 								statements.append(stat);
 							}
 						}
-						statements.append(make.Return(make.TypeCast(mdecl.restype, make.Apply(List.<JCExpression> nil(), make
-								.Select(make.Ident(names.panini.PaniniDuckFuture),
+						statements.append(make.Return(make.TypeCast(
+								mdecl.restype, make.Apply(List
+										.<JCExpression> nil(), make.Select(make
+										.Ident(names.panini.PaniniDuckFuture),
 										names.fromString("finalValue")), List
-								.<JCExpression> nil()))));
+										.<JCExpression> nil()))));
 						mdecl.body.stats = statements.toList();
 					}
 				}
 			}
 			attr.attribClassBody(env, tree.sym);
-			if ((tree.sym.flags_field & TASK) !=0)
+			if ((tree.sym.flags_field & TASK) != 0)
 				tree.computeMethod.body = generateTaskCapsuleComputeMethodBody(tree);
 			else
 				tree.computeMethod.body = generateThreadCapsuleComputeMethodBody(tree);
 			attr.attribStat(tree.computeMethod, env);
-		}
-		else {
-		    attr.attribClassBody(env, tree.sym);
-		    if (tree.computeMethod != null) {
+		} else {
+			attr.attribClassBody(env, tree.sym);
+			if (tree.computeMethod != null) {
 				tree.computeMethod.body.stats = tree.computeMethod.body.stats
 						.prepend(make.Exec(make.Apply(
 								List.<JCExpression> nil(),
 								make.Ident(names.panini.PaniniCapsuleInit),
 								List.<JCExpression> nil())));
 				if ((tree.sym.flags_field & ACTIVE) != 0) {
-				    //Wire the system
-				    tree.computeMethod.body.stats = tree.computeMethod.body.stats
-	                        .prepend(make.Exec(createSimpleMethodCall(names.panini.InternalCapsuleWiring)));
+					// Wire the system
+					tree.computeMethod.body.stats = tree.computeMethod.body.stats
+							.prepend(make
+									.Exec(createSimpleMethodCall(names.panini.InternalCapsuleWiring)));
 					// Reference count disconnect()
 					ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
-					blockStats = createCapsuleMemberDisconnects(
-					                tree.sym.capsule_info.connectedCapsules);
+					blockStats = createCapsuleMemberDisconnects(tree.sym.capsule_info.connectedCapsules);
 					ListBuffer<JCStatement> body = new ListBuffer<JCStatement>();
 					body.add(make.Try(
 							make.Block(0, tree.computeMethod.body.stats),
@@ -290,27 +439,37 @@ public final class Attr extends CapsuleInternal {
 				}
 				attr.attribStat(tree.computeMethod, env);
 			}
-			if ((tree.sym.flags_field & SERIAL) != 0 || (tree.sym.flags_field & MONITOR) != 0) {
+			if ((tree.sym.flags_field & SERIAL) != 0
+					|| (tree.sym.flags_field & MONITOR) != 0) {
 				// For serial capsule version
 				ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
-				blockStats = createCapsuleMemberDisconnects(
-				                tree.sym.capsule_info.connectedCapsules);
+				blockStats = createCapsuleMemberDisconnects(tree.sym.capsule_info.connectedCapsules);
 				ListBuffer<JCStatement> methodStats = new ListBuffer<JCStatement>();
-				methodStats.append(make.Exec(make.Unary(JCTree.Tag.POSTDEC, make.Ident(names
-						.fromString(PaniniConstants.PANINI_REF_COUNT)))));
-			
+				methodStats
+						.append(make.Exec(make.Unary(
+								JCTree.Tag.POSTDEC,
+								make.Ident(names
+										.fromString(PaniniConstants.PANINI_REF_COUNT)))));
+
 				if (blockStats.size() > 0)
-					methodStats.append(make.If(make.Binary(JCTree.Tag.EQ, make.Ident(names
-							.fromString(PaniniConstants.PANINI_REF_COUNT)), make.Literal(TypeTags.INT, Integer.valueOf(0))), 
-							make.Block(0, blockStats.toList()), null));
+					methodStats
+							.append(make.If(
+									make.Binary(
+											JCTree.Tag.EQ,
+											make.Ident(names
+													.fromString(PaniniConstants.PANINI_REF_COUNT)),
+											make.Literal(TypeTags.INT,
+													Integer.valueOf(0))), make
+											.Block(0, blockStats.toList()),
+									null));
 
 				JCBlock body = make.Block(0, methodStats.toList());
 
 				JCMethodDecl disconnectMeth = null;
 				MethodSymbol msym = null;
 				msym = new MethodSymbol(PUBLIC | FINAL | Flags.SYNCHRONIZED,
-						names.panini.PaniniDisconnect,
-						new MethodType(List.<Type> nil(), syms.voidType,
+						names.panini.PaniniDisconnect, new MethodType(
+								List.<Type> nil(), syms.voidType,
 								List.<Type> nil(), syms.methodClass), tree.sym);
 				disconnectMeth = make.MethodDef(
 						make.Modifiers(PUBLIC | FINAL | Flags.SYNCHRONIZED),
@@ -328,15 +487,17 @@ public final class Attr extends CapsuleInternal {
 		for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
 			JCTree def = l.head;
 			if (def.getTag() == Tag.METHODDEF) {
-				JCMethodDecl mdecl = (JCMethodDecl)def;
+				JCMethodDecl mdecl = (JCMethodDecl) def;
 				for (List<JCVariableDecl> p = mdecl.params; p.nonEmpty(); p = p.tail) {
 					JCVariableDecl param = p.head;
-					if ((param.type.tsym.flags_field & Flags.CAPSULE) != 0 &&!mdecl.name.toString().contains("$Original")) {
-						log.error("procedure.argument.illegal", param, mdecl.name.toString(), tree.sym);
+					if ((param.type.tsym.flags_field & Flags.CAPSULE) != 0
+							&& !mdecl.name.toString().contains("$Original")) {
+						log.error("procedure.argument.illegal", param,
+								mdecl.name.toString(), tree.sym);
 					}
 				}
 			} else if (def.getTag() == Tag.VARDEF) {
-				JCVariableDecl vdecl = (JCVariableDecl)def;
+				JCVariableDecl vdecl = (JCVariableDecl) def;
 				if ((vdecl.type.tsym.flags_field & Flags.CAPSULE) != 0)
 					vdecl.mods.flags |= FINAL;
 			}
@@ -344,54 +505,52 @@ public final class Attr extends CapsuleInternal {
 
 		pchk.checkStateInit(tree.sym, env);
 	}
-	
+
 	private ListBuffer<JCStatement> createCapsuleMemberDisconnects(
 			List<JCVariableDecl> params) {
 		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
 		for (JCVariableDecl jcVariableDecl : params) {
 			if (jcVariableDecl.vartype.type.tsym.isCapsule()) {
-				JCStatement stmt = make
-						.Exec(make.Apply(
-								List.<JCExpression> nil(),
-								make.Select(
-										make.TypeCast(
-												make.Ident(names
-														.fromString(PaniniConstants.PANINI_QUEUE)),
-												make.Ident(jcVariableDecl.name)),
-										names.panini.PaniniDisconnect),
-								List.<JCExpression> nil()));
+				JCStatement stmt = make.Exec(make.Apply(List
+						.<JCExpression> nil(), make.Select(make.TypeCast(make
+						.Ident(names.fromString(PaniniConstants.PANINI_QUEUE)),
+						make.Ident(jcVariableDecl.name)),
+						names.panini.PaniniDisconnect), List
+						.<JCExpression> nil()));
 
 				blockStats.append(stmt);
-			} else if (jcVariableDecl.vartype.type.tsym.name.toString().equalsIgnoreCase("Array")) {
-				if (((ArrayType)jcVariableDecl.vartype.type).elemtype.tsym.isCapsule()) {
+			} else if (jcVariableDecl.vartype.type.tsym.name.toString()
+					.equalsIgnoreCase("Array")) {
+				if (((ArrayType) jcVariableDecl.vartype.type).elemtype.tsym
+						.isCapsule()) {
 					ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
-			        JCVariableDecl arraycache = make.VarDef(make.Modifiers(0),
-			                names.fromString("index$"),
-			                make.TypeIdent(INT),
-			                make.Literal(0));
-			        JCBinary cond = make.Binary(LT, make.Ident(names.fromString("index$")),
-			                make.Select(make.Ident(jcVariableDecl.name),
-			                        names.fromString("length")));
-			        JCUnary unary = make.Unary(PREINC, make.Ident(names.fromString("index$")));
-			        JCExpressionStatement step =
-			                make.Exec(unary);
-			        loopBody.add(make
-							.Exec(make.Apply(
-									List.<JCExpression> nil(),
-									make.Select(
-											make.TypeCast(
+					JCVariableDecl arraycache = make.VarDef(make.Modifiers(0),
+							names.fromString("index$"), make.TypeIdent(INT),
+							make.Literal(0));
+					JCBinary cond = make.Binary(
+							LT,
+							make.Ident(names.fromString("index$")),
+							make.Select(make.Ident(jcVariableDecl.name),
+									names.fromString("length")));
+					JCUnary unary = make.Unary(PREINC,
+							make.Ident(names.fromString("index$")));
+					JCExpressionStatement step = make.Exec(unary);
+					loopBody.add(make.Exec(make.Apply(
+							List.<JCExpression> nil(),
+							make.Select(
+									make.TypeCast(
+											make.Ident(names
+													.fromString(PaniniConstants.PANINI_QUEUE)),
+											make.Indexed(
+													make.Ident(jcVariableDecl.name),
 													make.Ident(names
-															.fromString(PaniniConstants.PANINI_QUEUE)),
-															make.Indexed(make.Ident(jcVariableDecl.name), 
-																	make.Ident(names.fromString("index$")))),
-																	names.panini.PaniniDisconnect),
-									List.<JCExpression> nil())));
-			        JCForLoop floop =
-			                make.ForLoop(List.<JCStatement>of(arraycache),
-			                        cond,
-			                        List.of(step),
-			                        make.Block(0, loopBody.toList()));
-			        blockStats.append(floop);
+															.fromString("index$")))),
+									names.panini.PaniniDisconnect), List
+									.<JCExpression> nil())));
+					JCForLoop floop = make.ForLoop(
+							List.<JCStatement> of(arraycache), cond,
+							List.of(step), make.Block(0, loopBody.toList()));
+					blockStats.append(floop);
 				}
 			}
 		}
@@ -406,7 +565,7 @@ public final class Attr extends CapsuleInternal {
 		final Name _this = names._this;
 		final Name paniniRCField = names.panini.PaniniRefCountField;
 		for (Name vdeclName : vars) {
-		    // Reference count update
+			// Reference count update
 			int refCount = 0;
 			refCount = sysGraph.nodes.get(vdeclName).indegree;
 			if (aliasRefCounts.containsKey(vdeclName)) {
@@ -421,12 +580,13 @@ public final class Attr extends CapsuleInternal {
 						make.TypeCast(make.Ident(capsule),
 								make.Ident(vdeclName)), paniniRCField);
 			} else if (_this.equals(vdeclName)) {
-			    accessStat = make.Select(make.Ident(_this), paniniRCField);
-		        env.enclClass.sym.capsule_info.refCount = refCount;
-		    }
+				accessStat = make.Select(make.Ident(_this), paniniRCField);
+				env.enclClass.sym.capsule_info.refCount = refCount;
+			}
 			if (accessStat == null)
 				continue;
-			JCAssignOp refCountAssignOp = make.Assignop(Tag.PLUS_ASG, accessStat, intlit(refCount));
+			JCAssignOp refCountAssignOp = make.Assignop(Tag.PLUS_ASG,
+					accessStat, intlit(refCount));
 			JCExpressionStatement refCountAssignStmt = make
 					.Exec(refCountAssignOp);
 			assigns.append(refCountAssignStmt);
@@ -436,110 +596,119 @@ public final class Attr extends CapsuleInternal {
 	public final void visitSystemDef(JCDesignBlock tree, Resolve rs,
 			com.sun.tools.javac.comp.Attr jAttr, // Javac Attributer.
 			Env<AttrContext> env, boolean doGraphs) {
-	    tree.sym.flags_field= pchk.checkFlags(tree, tree.sym.flags(), tree.sym);
+		tree.sym.flags_field = pchk
+				.checkFlags(tree, tree.sym.flags(), tree.sym);
+		// Use the scope of the out capsule, not the current system decl.
+		Scope scope = enterSystemScope(env);
+		moveWiringDecls(tree, scope);
+		ListBuffer<JCStatement> decls;
+		ListBuffer<JCStatement> inits;
+		ListBuffer<JCStatement> assigns;
+		ListBuffer<JCStatement> starts;
+		SystemGraph sysGraph;
 
-	    //Use the scope of the out capsule, not the current system decl.
-        Scope scope = enterSystemScope(env);
-        moveWiringDecls(tree, scope);
+		DesignDeclRewriter interp = new DesignDeclRewriter(make, log,
+				env.enclClass.sym);
+		JCDesignBlock rewritenTree = interp.rewrite(tree);
+		// we do not want to go on to generating the main method if there are
+		// errors in the design decl
+		if (log.nerrors > 0)
+			return;
+		DesignDeclTransformer mt = new DesignDeclTransformer(syms, names,
+				types, log, rs, env, make, systemGraphBuilder);
+		mt.setCapsuleAliases(capsuleAliases); // gc-fix
+		rewritenTree = mt.translate(rewritenTree);
 
-	    ListBuffer<JCStatement> decls;
-        ListBuffer<JCStatement> inits;
-        ListBuffer<JCStatement> assigns;
-        ListBuffer<JCStatement> starts;
-        SystemGraph sysGraph;
+		// Check for cyclic references and report it
+		pchk.checkCycleRepeat(mt.sysGraph, names._this, env);
 
-        DesignDeclRewriter interp = new DesignDeclRewriter(make, log, env.enclClass.sym);
-        JCDesignBlock rewritenTree = interp.rewrite(tree);
+		// pull data structures back out for reference here.
+		decls = mt.decls;
+		inits = mt.inits;
+		assigns = mt.assigns;
+		starts = mt.starts;
+		sysGraph = mt.sysGraph;
 
-        //we do not want to go on to generating the main method if there are errors in the design decl
-        if (log.nerrors > 0)
-            return;
-        
-        DesignDeclTransformer mt = new DesignDeclTransformer(syms, names, types, log,
-                rs, env, make, systemGraphBuilder);
-        mt.setCapsuleAliases(capsuleAliases); // gc-fix
-        rewritenTree = mt.translate(rewritenTree);
-
-        // Check for cyclic references and report it
-        pchk.checkCycleRepeat(mt.sysGraph, names._this, env);
-
-        //pull data structures back out for reference here.
-        decls = mt.decls;
-        inits = mt.inits;
-        assigns = mt.assigns;
-        starts = mt.starts;
-        sysGraph = mt.sysGraph;
-
-        if (rewritenTree.hasTaskCapsule)
+		if (rewritenTree.hasTaskCapsule)
 			processSystemAnnotation(rewritenTree, inits, env);
 
-        Map<Name, Integer> aliasRefCounts = mt.aliasRefCounts;
-        initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph, env, aliasRefCounts);
-        
-        //attribute the new statement.
-        ListBuffer<JCStatement> toAttr = new ListBuffer<JCTree.JCStatement>();
-        toAttr.addAll(decls);
-        toAttr.addAll(inits);
-        toAttr.addAll(assigns);
-        toAttr.addAll(starts);
-        final boolean prevCheckCapState = checkCapStateAcc;
-        try {
-            checkCapStateAcc = false;
-            for (List<JCStatement> l = toAttr.toList(); l.nonEmpty(); l = l.tail) {
-                jAttr.attribStat(l.head, env);
-            }
-        } finally {
-            checkCapStateAcc = prevCheckCapState;
-        }
-		
+		Map<Name, Integer> aliasRefCounts = mt.aliasRefCounts;
+		initRefCount(mt.variables, mt.refCountStats, assigns, sysGraph, env,
+				aliasRefCounts);
+
+		// attribute the new statement.
+		ListBuffer<JCStatement> toAttr = new ListBuffer<JCTree.JCStatement>();
+		toAttr.addAll(decls);
+		toAttr.addAll(inits);
+		toAttr.addAll(assigns);
+		toAttr.addAll(starts);
+		final boolean prevCheckCapState = checkCapStateAcc;
+		try {
+			checkCapStateAcc = false;
+			for (List<JCStatement> l = toAttr.toList(); l.nonEmpty(); l = l.tail) {
+				jAttr.attribStat(l.head, env);
+			}
+		} finally {
+			checkCapStateAcc = prevCheckCapState;
+		}
+
 		List<JCStatement> mainStmts;
-		mainStmts = decls.appendList(inits).appendList(assigns).appendList(starts).toList();
+		mainStmts = decls.appendList(inits).appendList(assigns)
+				.appendList(starts).toList();
 
 		tree.sysGraph = sysGraph;
-		this.designBlocks = this.designBlocks.append(tree); 
+		this.designBlocks = this.designBlocks.append(tree);
 
-		//replace the systemDef/wiring block with the new body.
+		// replace the systemDef/wiring block with the new body.
 		tree.body.stats = mainStmts;
+		// System.out.println(tree);
+		// System.out.println(tree.sysGraph);
 	}
-	
+
 	public final void postVisitSystemDefs(Env<AttrContext> env) {
 		for (List<JCDesignBlock> l = this.designBlocks; l.nonEmpty(); l = l.tail) {
 			JCDesignBlock tree = l.head;
 			postVisitSystemDef(tree, env);
 		}
-		this.designBlocks = List.<JCDesignBlock>nil();
+		this.designBlocks = List.<JCDesignBlock> nil();
 	}
-	
+
 	private final void postVisitSystemDef(JCDesignBlock tree,
 			Env<AttrContext> env) {
 		systemGraphBuilder.completeEdges(tree.sysGraph, annotationProcessor,
 				env, rs);
 
 		// Sequential consistency detection
-		SeqConstCheckAlgorithm sca = 
-		    ConsistencyUtil.createChecker(seqConstAlg, tree.sysGraph, log);
+		SeqConstCheckAlgorithm sca = ConsistencyUtil.createChecker(seqConstAlg,
+				tree.sysGraph, log);
 		sca.potentialPathCheck();
 	}
 
 	public final void visitProcDef(JCProcDecl tree) {
-		Type restype = ((MethodType)tree.sym.type).restype;
+		Type restype = ((MethodType) tree.sym.type).restype;
 		if ((restype.tsym.flags_field & Flags.CAPSULE) == 1) {
 			log.error(tree.pos(), "procedure.restype.illegal.capsule");
 		}
 		tree.switchToMethod();
 	}
-	
-	public final void visitStateDef(JCStateDecl tree) {
-	    if (tree.type.tsym.isCapsule()) {
-	        log.error(tree.pos(), "states.with.capsule.type.error");
-	    }
 
-	    //It's attributed. Make it look like a regular variable
-	    tree.switchToVar();
+	public final void visitStateDef(JCStateDecl tree) {
+		if (tree.type.tsym.isCapsule()) {
+			log.error(tree.pos(), "states.with.capsule.type.error");
+		}
+
+		// It's attributed. Make it look like a regular variable
+		tree.switchToVar();
+	}
+
+	public boolean visitLambda(JCLambda tree) {
+
+		return true;
 	}
 
 	// Helper functions
-	private void processSystemAnnotation(JCDesignBlock tree, ListBuffer<JCStatement> stats, Env<AttrContext> env) {
+	private void processSystemAnnotation(JCDesignBlock tree,
+			ListBuffer<JCStatement> stats, Env<AttrContext> env) {
 		int numberOfPools = 1;
 		for (List<JCAnnotation> l = tree.mods.annotations; l.nonEmpty(); l = l.tail) {
 			JCAnnotation annotation = l.head;
@@ -558,93 +727,98 @@ public final class Attr extends CapsuleInternal {
 				}
 			}
 		}
-		stats.prepend(make.Try(make.Block(0, List.<JCStatement> of(make
-				.Exec(make.Apply(List.<JCExpression> nil(), make
-						.Select(make.Ident(names
-								.fromString(PaniniConstants.PANINI_CAPSULE_TASK)),
-								names.fromString(PaniniConstants.PANINI_INIT)), List
-								.<JCExpression> of(make.Literal(numberOfPools)))))),
-								List.<JCCatch> of(make.Catch(make.VarDef(
-										make.Modifiers(0), names.fromString("e"),
-										make.Ident(names.fromString("Exception")),
-										null), make.Block(0,
-												List.<JCStatement> nil()))), null));
+		stats.prepend(make.Try(make.Block(0,
+				List.<JCStatement> of(make.Exec(make.Apply(List
+						.<JCExpression> nil(), make.Select(make.Ident(names
+						.fromString(PaniniConstants.PANINI_CAPSULE_TASK)),
+						names.fromString(PaniniConstants.PANINI_INIT)), List
+						.<JCExpression> of(make.Literal(numberOfPools)))))),
+				List.<JCCatch> of(make.Catch(make.VarDef(make.Modifiers(0),
+						names.fromString("e"),
+						make.Ident(names.fromString("Exception")), null), make
+						.Block(0, List.<JCStatement> nil()))), null));
 	}
 
-    /**
-     * @param tree
-     * @return
-     */
-    private List<JCVariableDecl> extractWiringBlockDecls(JCDesignBlock tree) {
-        class VarDeclCollector extends TreeScanner { //Helper visitor to collect var defs.
-            final ListBuffer<JCVariableDecl> varDecls = new ListBuffer<JCVariableDecl>();
-            @Override
-            public final void visitVarDef(JCVariableDecl tree) {
-                Type t = tree.vartype.type;
-                if (t.tsym.isCapsule() ||
-                        (types.isArray(t) && types.elemtype(t).tsym.isCapsule())) {
-                    varDecls.add(tree);
-                }
-            }
-        }
-        VarDeclCollector vdc = new VarDeclCollector();
-        tree.accept(vdc);
-        return vdc.varDecls.toList();
-    }
+	/**
+	 * @param tree
+	 * @return
+	 */
+	private List<JCVariableDecl> extractWiringBlockDecls(JCDesignBlock tree) {
+		class VarDeclCollector extends TreeScanner { // Helper visitor to
+														// collect var defs.
+			final ListBuffer<JCVariableDecl> varDecls = new ListBuffer<JCVariableDecl>();
 
-    /**
-     * Move the capsule declarations in a wiring/design block out to the
-     * 'field' scope and record the capsules decls in
-     * {@link ClassSymbol#capsule_info#connectedCapsules}
-     * @param wire
-     * @param capScope
-     */
-    private void moveWiringDecls(JCDesignBlock wire, Scope capScope) {
-        List<JCVariableDecl> capsuleDecls = extractWiringBlockDecls(wire);
-        ClassSymbol capSym = wire.sym.ownerCapsule();
-        capSym.capsule_info.connectedCapsules =
-                capSym.capsule_info.connectedCapsules.appendList(capsuleDecls);
+			@Override
+			public final void visitVarDef(JCVariableDecl tree) {
+				Type t = tree.vartype.type;
+				if (t.tsym.isCapsule()
+						|| (types.isArray(t) && types.elemtype(t).tsym
+								.isCapsule())) {
+					varDecls.add(tree);
+				}
+			}
+		}
+		VarDeclCollector vdc = new VarDeclCollector();
+		tree.accept(vdc);
+		return vdc.varDecls.toList();
+	}
 
-        // Enter the symbols into the capsule scope.
-        // Allows the symbols to be visible for other procedures
-        // and allows the symbols to be emitted as fields in the bytecode
-        for (List<JCVariableDecl> l = capsuleDecls;  l.nonEmpty(); l = l.tail) {
-            JCVariableDecl v = l.head;
-            v.sym.owner = capScope.owner;
-            jchk.checkUnique(v.pos(), v.sym, capScope);
-            capScope.enter(v.sym);
-        }
+	/**
+	 * Move the capsule declarations in a wiring/design block out to the 'field'
+	 * scope and record the capsules decls in {@link ClassSymbol#capsule_info
+	 * #connectedCapsules}
+	 * 
+	 * @param wire
+	 * @param capScope
+	 */
+	private void moveWiringDecls(JCDesignBlock wire, Scope capScope) {
+		List<JCVariableDecl> capsuleDecls = extractWiringBlockDecls(wire);
+		ClassSymbol capSym = wire.sym.ownerCapsule();
+		capSym.capsule_info.connectedCapsules = capSym.capsule_info.connectedCapsules
+				.appendList(capsuleDecls);
 
-        //TODO: Generics are being annoying. Find a way to not copy the list.
-        ListBuffer<JCTree> capFields = new ListBuffer<JCTree>();
-        for (List<JCVariableDecl> l = capsuleDecls; l.nonEmpty(); l = l.tail) {
-            capFields.add(l.head);
-            // Mark as private. Do not mark synthetic. Will cause other
-            // name resolution to fail.
-            l.head.sym.flags_field |= Flags.PRIVATE;
-            //Update the AST Modifiers for pretty printing.
-            l.head.mods = make.Modifiers(l.head.sym.flags_field);
-        }
+		// Enter the symbols into the capsule scope.
+		// Allows the symbols to be visible for other procedures
+		// and allows the symbols to be emitted as fields in the bytecode
+		for (List<JCVariableDecl> l = capsuleDecls; l.nonEmpty(); l = l.tail) {
+			JCVariableDecl v = l.head;
+			v.sym.owner = capScope.owner;
+			jchk.checkUnique(v.pos(), v.sym, capScope);
+			capScope.enter(v.sym);
+		}
 
-        // Copy the capsules over to the tree defs so they show up with
-        // print-flat flag.
-        JCCapsuleDecl tree = (JCCapsuleDecl)wire.sym.owner.tree;
-        tree.defs = tree.defs.prependList(capFields.toList());
-    }
+		// TODO: Generics are being annoying. Find a way to not copy the list.
+		ListBuffer<JCTree> capFields = new ListBuffer<JCTree>();
+		for (List<JCVariableDecl> l = capsuleDecls; l.nonEmpty(); l = l.tail) {
+			capFields.add(l.head);
+			// Mark as private. Do not mark synthetic. Will cause other
+			// name resolution to fail.
+			l.head.sym.flags_field |= Flags.PRIVATE;
+			// Update the AST Modifiers for pretty printing.
+			l.head.mods = make.Modifiers(l.head.sym.flags_field);
+		}
 
-    /** Get back to the 'class' level members scope from the current environment.
-     * Fails if a class symbol cannot be found.
-     * @param env
-     */
-    protected Scope enterSystemScope(Env<AttrContext> env) {
-        while (env != null && !env.tree.hasTag(JCTree.Tag.CAPSULEDEF)) {
-            env = env.next;
-        }
+		// Copy the capsules over to the tree defs so they show up with
+		// print-flat flag.
+		JCCapsuleDecl tree = (JCCapsuleDecl) wire.sym.owner.tree;
+		tree.defs = tree.defs.prependList(capFields.toList());
+	}
 
-        if (env != null) {
-            return ((JCClassDecl)env.tree).sym.members_field;
-        }
-        Assert.error();
-        return null;
-    }
+	/**
+	 * Get back to the 'class' level members scope from the current environment.
+	 * Fails if a class symbol cannot be found.
+	 * 
+	 * @param env
+	 */
+	protected Scope enterSystemScope(Env<AttrContext> env) {
+		while (env != null && !env.tree.hasTag(JCTree.Tag.CAPSULEDEF)) {
+			env = env.next;
+		}
+
+		if (env != null) {
+			return ((JCClassDecl) env.tree).sym.members_field;
+		}
+		Assert.error();
+		return null;
+	}
 }

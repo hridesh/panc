@@ -448,6 +448,14 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 		return r;
 	}
 	
+	@Override
+	public R visitCapsuleLambda(CapsuleLambdaExpressionTree node, P p) {
+		R r = scan(node.getParameters(), p);
+		r = scanAndReduce(node.getReturnType(), p, r);
+		r = scanAndReduce(node.getBody(), p, r);
+		return null;
+	}
+	
 	public R visitFree(FreeTree node, P p){
 		R r = scan(node.getExpression(), p);
 		return r;

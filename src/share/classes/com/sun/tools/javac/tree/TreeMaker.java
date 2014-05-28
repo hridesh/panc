@@ -232,6 +232,13 @@ public class TreeMaker implements JCTree.Factory {
 		tree.pos = pos;
 		return tree;
 	}
+	
+	public JCCapsuleLambda CapsuleLambdaExpression(List<JCVariableDecl> params,
+			JCExpression restype, JCTree body) {
+		JCCapsuleLambda tree = new JCCapsuleLambda(params, restype, body);
+		tree.pos = pos;
+		return tree;
+	}
 
 	public JCDesignBlock WiringBlock(JCModifiers mods, JCBlock body)  {
         JCDesignBlock tree = new JCDesignBlock(mods,

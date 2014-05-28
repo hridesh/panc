@@ -972,6 +972,9 @@ public class JavacParser implements Parser {
                 if (peekToken(FINAL) ||
                         peekToken(RPAREN) ||
                         peekToken(IDENTIFIER, COMMA) ||
+                        // Panini code
+                        peekToken(IDENTIFIER, RPAREN, COLON) ||
+                        // end Panini code
                         peekToken(IDENTIFIER, RPAREN, ARROW)) {
                     //implicit n-ary lambda
                     t = lambdaExpressionOrStatement(true, peekToken(FINAL), pos);
@@ -1381,8 +1384,22 @@ public class JavacParser implements Parser {
 
         return lambdaExpressionOrStatementRest(params, pos);
     }
-
+    
     JCExpression lambdaExpressionOrStatementRest(List<JCVariableDecl> args, int pos) {
+		// Panini code
+		if (token.kind == COLON && args.nonEmpty()) {// CapsuleLambda?
+			JCExpression type;
+			accept(COLON);
+			type = parseType();
+			accept(ARROW);
+			return lambdaExpressionOrStatementRest2(args, type, pos);
+		} else if (token.kind == ARROW && args.nonEmpty()){
+			accept(ARROW);
+			JCExpression type;
+			type = F.at(pos).TypeIdent(TypeTags.VOID);
+			return lambdaExpressionOrStatementRest2(args, type, pos);
+		}
+    	// end Panini code
         if (token.kind != ARROW) {
             //better error recovery
             return F.at(pos).Erroneous(args);
@@ -1395,6 +1412,22 @@ public class JavacParser implements Parser {
             lambdaStatement(args, pos, pos) :
             lambdaExpression(args, pos);
     }
+    
+    // Panini code
+    JCExpression lambdaExpressionOrStatementRest2(List<JCVariableDecl> args, JCExpression type, int pos){
+    	inLambda = true;
+		lambdaCapsuleName = args.head.name;
+		if (token.kind == LBRACE) {
+			JCBlock block = block(pos, 0);
+			inLambda = false;
+			return toP(F.at(pos).CapsuleLambdaExpression(args, type, block));
+		} else {
+			JCTree expr = parseExpression();
+			inLambda = false;
+			return toP(F.at(pos).CapsuleLambdaExpression(args, type, expr));
+		}
+    }
+    // end Panini code
 
     JCExpression lambdaStatement(List<JCVariableDecl> args, int pos, int pos2) {
         JCBlock block = block(pos2, 0);
@@ -3421,6 +3454,8 @@ public class JavacParser implements Parser {
         // Panini code
         case PROCCALL:
         case CAPSULE_WIRING:
+        case LAMBDA:
+        //end Panini code
             return t;
         default:
             JCExpression ret = F.at(t.pos).Erroneous(List.<JCTree>of(t));

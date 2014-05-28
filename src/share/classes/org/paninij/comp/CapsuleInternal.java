@@ -62,8 +62,8 @@ public class CapsuleInternal extends Internal {
 	protected Types types;
 	protected Resolve rs;
 
-	public CapsuleInternal(TreeMaker make, Names names, Types types, Enter enter,
-			MemberEnter memberEnter, Symtab syms, Resolve rs) {
+	public CapsuleInternal(TreeMaker make, Names names, Types types,
+			Enter enter, MemberEnter memberEnter, Symtab syms, Resolve rs) {
 		super(make, names);
 		this.types = types;
 		this.enter = enter;
@@ -90,36 +90,44 @@ public class CapsuleInternal extends Internal {
 			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
 				JCVariableDecl v = l.head;
 				JCExpression varType = tc.copy(v.vartype);
-				if(method.restype.type.tag == TypeTags.ARRAY)
-					caseStatements.append(var(
-							noMods,
-							"var" + varIndex,
-							varType,
-							cast(varType,
-									select(cast(PaniniConstants.DUCK_INTERFACE_NAME
-											+ "$" + PaniniConstants.ARRAY_DUCKS + "$"
-											+ tree.name,
-											id(PaniniConstants.PANINI_DUCK_TYPE)),
-											createFieldString(
-													method.name.toString(),
-													varType.toString(),
-													v.name.toString(),
-													method.params)))));
+				if (method.restype.type.tag == TypeTags.ARRAY)
+					caseStatements
+							.append(var(
+									noMods,
+									"var" + varIndex,
+									varType,
+									cast(varType,
+											select(cast(
+													PaniniConstants.DUCK_INTERFACE_NAME
+															+ "$"
+															+ PaniniConstants.ARRAY_DUCKS
+															+ "$" + tree.name,
+													id(PaniniConstants.PANINI_DUCK_TYPE)),
+													createFieldString(
+															method.name
+																	.toString(),
+															varType.toString(),
+															v.name.toString(),
+															method.params)))));
 				else
-					caseStatements.append(var(
-							noMods,
-							"var" + varIndex,
-							varType,
-							cast(varType,
-									select(cast(PaniniConstants.DUCK_INTERFACE_NAME
-											+ "$" + method.restype + "$"
-											+ tree.name,
-											id(PaniniConstants.PANINI_DUCK_TYPE)),
-											createFieldString(
-													method.name.toString(),
-													varType.toString(),
-													v.name.toString(),
-													method.params)))));
+					caseStatements
+							.append(var(
+									noMods,
+									"var" + varIndex,
+									varType,
+									cast(varType,
+											select(cast(
+													PaniniConstants.DUCK_INTERFACE_NAME
+															+ "$"
+															+ method.restype
+															+ "$" + tree.name,
+													id(PaniniConstants.PANINI_DUCK_TYPE)),
+													createFieldString(
+															method.name
+																	.toString(),
+															varType.toString(),
+															v.name.toString(),
+															method.params)))));
 				args.append(id("var" + varIndex++));
 			}
 
@@ -134,14 +142,13 @@ public class CapsuleInternal extends Internal {
 						PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_FINISH,
 						args(createOriginalCall(method, args)))));
-			} 
+			}
 			caseStatements.append(break_());
 			String constantName = PaniniConstants.PANINI_METHOD_CONST
 					+ method.name;
 			if (method.params.nonEmpty())
 				for (JCVariableDecl param : method.params) {
-					constantName = constantName + "$"
-							+ param.vartype;
+					constantName = constantName + "$" + param.vartype;
 				}
 			cases.append(case_(id(constantName), caseStatements));
 		}
@@ -151,75 +158,75 @@ public class CapsuleInternal extends Internal {
 
 		ListBuffer<JCStatement> exitBody = createTerminationLogic();
 		cases.append(case_(intlit(-2), exitBody));
+		
+		ListBuffer<JCStatement> lambdaBody = createLambdaLogic();
+		cases.append(case_(intlit(-3), lambdaBody));
 
 		messageLoopBody.append(swtch(
 				apply(PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_MESSAGE_ID), cases));
 
 		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
-		blockStats = createCapsuleMemberDisconnects(
-		        tree.sym.capsule_info.connectedCapsules);
-		
-		JCBlock b = body(
-				make.Try(body(
-						//Call capsule Wiring
+		blockStats = createCapsuleMemberDisconnects(tree.sym.capsule_info.connectedCapsules);
+
+		JCBlock b = body(make
+				.Try(body(
+						// Call capsule Wiring
 						make.Exec(createSimpleMethodCall(names.panini.InternalCapsuleWiring)),
-						//Call capsule Initialize
+						// Call capsule Initialize
 						make.Exec(createSimpleMethodCall(names.panini.PaniniCapsuleInit)),
 						var(mods(0), PaniniConstants.PANINI_TERMINATE,
 								make.TypeIdent(TypeTags.BOOLEAN), falsev()),
 						whilel(nott(id(PaniniConstants.PANINI_TERMINATE)),
-								body(messageLoopBody))), List.<JCCatch> nil(), body(blockStats)));
+								body(messageLoopBody))), List.<JCCatch> nil(),
+						body(blockStats)));
 		return b;
 	}
-	
+
 	private ListBuffer<JCStatement> createCapsuleMemberDisconnects(
 			List<JCVariableDecl> params) {
 		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
 		for (JCVariableDecl vdecl : params) {
 			if (vdecl.vartype.type.tsym.isCapsule()) {
-				JCStatement stmt = make
-						.Exec(make.Apply(
-								List.<JCExpression> nil(),
-								make.Select(
-										make.TypeCast(
-												make.Ident(names
-														.fromString(PaniniConstants.PANINI_QUEUE)),
-												make.Ident(vdecl.name)),
-										names.fromString(PaniniConstants.PANINI_DISCONNECT)),
-								List.<JCExpression> nil()));
+				JCStatement stmt = make.Exec(make.Apply(List
+						.<JCExpression> nil(), make.Select(make.TypeCast(make
+						.Ident(names.fromString(PaniniConstants.PANINI_QUEUE)),
+						make.Ident(vdecl.name)), names
+						.fromString(PaniniConstants.PANINI_DISCONNECT)), List
+						.<JCExpression> nil()));
 
 				blockStats.append(stmt);
-			} else if (vdecl.vartype.type.tsym.name.toString().equalsIgnoreCase("Array")) {
-				if (((ArrayType)vdecl.vartype.type).elemtype.tsym.isCapsule()) {
+			} else if (vdecl.vartype.type.tsym.name.toString()
+					.equalsIgnoreCase("Array")) {
+				if (((ArrayType) vdecl.vartype.type).elemtype.tsym.isCapsule()) {
 					ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
-			        JCVariableDecl arraycache = make.VarDef(make.Modifiers(0),
-			                names.fromString("index$"),
-			                make.TypeIdent(INT),
-			                make.Literal(0));
-			        JCBinary cond = make.Binary(LT, make.Ident(names.fromString("index$")),
-			                make.Select(make.Ident(vdecl.name),
-			                        names.fromString("length")));
-			        JCUnary unary = make.Unary(PREINC, make.Ident(names.fromString("index$")));
-			        JCExpressionStatement step =
-			                make.Exec(unary);
-			        loopBody.add(make
-							.Exec(make.Apply(
-									List.<JCExpression> nil(),
-									make.Select(
-											make.TypeCast(
+					JCVariableDecl arraycache = make.VarDef(make.Modifiers(0),
+							names.fromString("index$"), make.TypeIdent(INT),
+							make.Literal(0));
+					JCBinary cond = make.Binary(
+							LT,
+							make.Ident(names.fromString("index$")),
+							make.Select(make.Ident(vdecl.name),
+									names.fromString("length")));
+					JCUnary unary = make.Unary(PREINC,
+							make.Ident(names.fromString("index$")));
+					JCExpressionStatement step = make.Exec(unary);
+					loopBody.add(make.Exec(make.Apply(
+							List.<JCExpression> nil(),
+							make.Select(
+									make.TypeCast(
+											make.Ident(names
+													.fromString(PaniniConstants.PANINI_QUEUE)),
+											make.Indexed(
+													make.Ident(vdecl.name),
 													make.Ident(names
-															.fromString(PaniniConstants.PANINI_QUEUE)),
-															make.Indexed(make.Ident(vdecl.name), 
-																	make.Ident(names.fromString("index$")))),
-											names.fromString(PaniniConstants.PANINI_DISCONNECT)),
-									List.<JCExpression> nil())));
-			        JCForLoop floop =
-			                make.ForLoop(List.<JCStatement>of(arraycache),
-			                        cond,
-			                        List.of(step),
-			                        make.Block(0, loopBody.toList()));
-			        blockStats.append(floop);
+															.fromString("index$")))),
+									names.fromString(PaniniConstants.PANINI_DISCONNECT)),
+							List.<JCExpression> nil())));
+					JCForLoop floop = make.ForLoop(
+							List.<JCStatement> of(arraycache), cond,
+							List.of(step), make.Block(0, loopBody.toList()));
+					blockStats.append(floop);
 				}
 			}
 		}
@@ -239,36 +246,46 @@ public class CapsuleInternal extends Internal {
 			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
 				JCVariableDecl vdecl = l.head;
 				JCExpression varType = vdecl.vartype;
-				if(method.restype.type.tag == TypeTags.ARRAY)
-					caseStatements.append(var(
-							noMods,
-							"var" + varIndex,
-							varType,
-							cast(varType,
-									select(cast(PaniniConstants.DUCK_INTERFACE_NAME
-											+ "$" + PaniniConstants.ARRAY_DUCKS + "$"
-											+ tree.name,
-											id(PaniniConstants.PANINI_DUCK_TYPE)),
-											createFieldString(
-													method.name.toString(),
-													varType.toString(),
-													vdecl.name.toString(),
-													method.params)))));
+				if (method.restype.type.tag == TypeTags.ARRAY)
+					caseStatements
+							.append(var(
+									noMods,
+									"var" + varIndex,
+									varType,
+									cast(varType,
+											select(cast(
+													PaniniConstants.DUCK_INTERFACE_NAME
+															+ "$"
+															+ PaniniConstants.ARRAY_DUCKS
+															+ "$" + tree.name,
+													id(PaniniConstants.PANINI_DUCK_TYPE)),
+													createFieldString(
+															method.name
+																	.toString(),
+															varType.toString(),
+															vdecl.name
+																	.toString(),
+															method.params)))));
 				else
-					caseStatements.append(var(
-							noMods,
-							"var" + varIndex,
-							varType,
-							cast(varType,
-									select(cast(PaniniConstants.DUCK_INTERFACE_NAME
-											+ "$" + method.restype + "$"
-											+ tree.name,
-											id(PaniniConstants.PANINI_DUCK_TYPE)),
-											createFieldString(
-													method.name.toString(),
-													varType.toString(),
-													vdecl.name.toString(),
-													method.params)))));
+					caseStatements
+							.append(var(
+									noMods,
+									"var" + varIndex,
+									varType,
+									cast(varType,
+											select(cast(
+													PaniniConstants.DUCK_INTERFACE_NAME
+															+ "$"
+															+ method.restype
+															+ "$" + tree.name,
+													id(PaniniConstants.PANINI_DUCK_TYPE)),
+													createFieldString(
+															method.name
+																	.toString(),
+															varType.toString(),
+															vdecl.name
+																	.toString(),
+															method.params)))));
 				args.append(id("var" + varIndex++));
 			}
 
@@ -293,10 +310,9 @@ public class CapsuleInternal extends Internal {
 			String constantName = PaniniConstants.PANINI_METHOD_CONST
 					+ method.name;
 			if (method.params.nonEmpty())
-				for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail){
+				for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
 					JCVariableDecl param = l.head;
-					constantName = constantName + "$"
-							+ param.vartype;
+					constantName = constantName + "$" + param.vartype;
 				}
 			cases.append(case_(id(constantName), caseStatements));
 		}
@@ -312,10 +328,10 @@ public class CapsuleInternal extends Internal {
 								returnt(falsev())))));
 
 		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
-		blockStats = createCapsuleMemberDisconnects(
-		            tree.sym.capsule_info.connectedCapsules);
+		blockStats = createCapsuleMemberDisconnects(tree.sym.capsule_info.connectedCapsules);
 
-		blockStats.append(es(assign(PaniniConstants.PANINI_TERMINATE, truev())));
+		blockStats
+				.append(es(assign(PaniniConstants.PANINI_TERMINATE, truev())));
 		blockStats.append(returnt(truev()));
 		cases.append(case_(intlit(-2), blockStats));
 
@@ -340,13 +356,14 @@ public class CapsuleInternal extends Internal {
 		return apply(thist(), method.name + "$Original", tc.copy(args.toList()));
 	}
 
-	/** Create a simple method invocation for the method name.
+	/**
+	 * Create a simple method invocation for the method name.
+	 * 
 	 * @param methodName
 	 */
 	protected JCMethodInvocation createSimpleMethodCall(final Name methodName) {
-	    return make.Apply( List.<JCExpression> nil(),
-							make.Ident(methodName),
-							List.<JCExpression> nil());
+		return make.Apply(List.<JCExpression> nil(), make.Ident(methodName),
+				List.<JCExpression> nil());
 	}
 
 	private ListBuffer<JCStatement> createShutdownLogic() {
@@ -369,28 +386,81 @@ public class CapsuleInternal extends Internal {
 		exitBody.append(break_());
 		return exitBody;
 	}
+	
+	private ListBuffer<JCStatement> createLambdaLogic() {
+		ListBuffer<JCStatement> lambdaBody = new ListBuffer<JCStatement>();
+		lambdaBody.append(es(apply(
+						id(PaniniConstants.PANINI_DUCK_TYPE),
+				PaniniConstants.PANINI_FINISH, args(nullv()))));
+		lambdaBody.append(break_());
+		return lambdaBody;
+	}
 
+	public JCClassDecl createPaniniLambda(JCCapsuleLambda tree, Env<AttrContext> env){
+		
+		JCExpression restype = tree.restype;
+		if (restype instanceof JCPrimitiveTypeTree) {// primitive/void type
+			if (((JCPrimitiveTypeTree) restype).getPrimitiveTypeKind().equals(
+					TypeKind.VOID)) {
+				ListBuffer<JCTree> cons = new ListBuffer<JCTree>();
+				ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
+				for (JCVariableDecl exp : tree.params) {
+					params.add(exp);
+				}
+				return (createVoidDuck(
+						(JCCapsuleDecl) env.enclClass,
+						cons,
+						method(mods(0), names._default, tree.restype, params,
+								(JCBlock) tree.getBody()), true));
+			}
+		}
+
+		//Find the symbol of the return type of the lambda body
+		ClassSymbol c;
+		c = (ClassSymbol) rs.findIdent(env,
+				names.fromString(tree.getReturnType().toString()), TYP);
+		// if(c==null)//type not found
+		// ;//TODO;
+
+		ListBuffer<JCTree> constructors = new ListBuffer<JCTree>();
+		ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
+		for (JCVariableDecl exp : tree.params) {
+			params.add(exp);
+		}
+		Iterator<Symbol> iter = c.members().getElements().iterator();
+		JCClassDecl duckClass = generateNewDuckClass(
+				((JCCapsuleDecl) env.enclClass).name.toString()
+						+ "$"
+						+ ((JCCapsuleDecl) env.enclClass).lambdaExpressionCounts,
+				method(mods(0), names._default, tree.restype, params,
+						(JCBlock) tree.getBody()), constructors, c.type, iter,
+				c, env, true);
+		return duckClass;
+	}
+	
 	public List<JCClassDecl> generateClassWrappers(JCCapsuleDecl tree,
 			Env<AttrContext> env) {
 		ListBuffer<JCClassDecl> classes = new ListBuffer<JCClassDecl>();
 		Map<String, JCClassDecl> alreadedAddedDuckClasses = new HashMap<String, JCClassDecl>();
 
-		for (List<JCMethodDecl> l = tree.publicMethods; l.nonEmpty(); l = l.tail){
+		for (List<JCMethodDecl> l = tree.publicMethods; l.nonEmpty(); l = l.tail) {
 			JCMethodDecl method = l.head;
 			ListBuffer<JCTree> constructors = new ListBuffer<JCTree>();
 
 			Type restype = ((MethodType) method.sym.type).restype;
 			ClassSymbol c = checkAndResolveReturnType(env, rs, restype);
 
-			if(c!=null && !c.toString().equals("java.lang.String")){
+			if (c != null && !c.toString().equals("java.lang.String")) {
 				Iterator<Symbol> iter = c.members().getElements().iterator();
 				if (restype.tag == TypeTags.CLASS) {
-					if (!alreadedAddedDuckClasses.containsKey(restype.toString())) {
+					if (!alreadedAddedDuckClasses.containsKey(restype
+							.toString())) {
 						JCClassDecl duckClass = generateNewDuckClass(
 								tree.name.toString(), method, constructors,
-								restype, iter, c, env);
+								restype, iter, c, env, false);
 						classes.add(duckClass);
-						alreadedAddedDuckClasses.put(restype.toString(), duckClass);
+						alreadedAddedDuckClasses.put(restype.toString(),
+								duckClass);
 					} else {
 						if (!method.params.isEmpty()) {
 							JCClassDecl duckClass = alreadedAddedDuckClasses
@@ -399,117 +469,9 @@ public class CapsuleInternal extends Internal {
 						}
 					}
 				} else if (restype.toString().equals("void")) {
-					if (!alreadedAddedDuckClasses.containsKey(restype.toString())) {
-						List<JCExpression> implement;
-						ListBuffer<JCTree> wrappedMethods = new ListBuffer<JCTree>();
-	
-						JCVariableDecl fieldMessageId = var(mods(PRIVATE | FINAL),
-								PaniniConstants.PANINI_MESSAGE_ID,
-								make.TypeIdent(TypeTags.INT));
-						JCVariableDecl fieldRedeemed = var(mods(PRIVATE),
-								PaniniConstants.REDEEMED,
-								make.TypeIdent(TypeTags.BOOLEAN),
-								make.Literal(TypeTags.BOOLEAN, 0));
-	
-						wrappedMethods
-								.add(constructor(
-										mods(PUBLIC),
-										params(var(mods(0),
-												PaniniConstants.PANINI_MESSAGE_ID,
-												make.TypeIdent(TypeTags.INT))),
-										body(es(supert()),
-												es(assign(
-														select(thist(),
-																PaniniConstants.PANINI_MESSAGE_ID),
-														id(PaniniConstants.PANINI_MESSAGE_ID))))));
-	
-						wrappedMethods.add(createValueMethod());
-	
-						// Code to be generated for the flag logic.
-						// public final void panini$finish(Void t) {
-						// synchronized (this) {
-						// redeemed = true;
-						// notifyAll();
-						// }
-						// }
-						JCMethodDecl paniniFinish;
-						paniniFinish = method(
-								mods(PUBLIC | FINAL),
-								PaniniConstants.PANINI_FINISH,
-								voidt(),
-								params(var(mods(0), "t", id("Void"))),
-								body(sync(
-										thist(),
-										// The duck is ready.
-										body(es(assign(PaniniConstants.REDEEMED,
-												truev())), es(apply("notifyAll"))))));
-	
-						wrappedMethods.add(this.createPaniniMessageID());
-						wrappedMethods.add(createVoidFutureGetMethod());
-						implement = implementing(
-								ta(id(PaniniConstants.DUCK_INTERFACE_NAME),
-										args(id("Void")))).toList();
-	
-						ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
-	
-						if (!method.params.isEmpty()) {
-							ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
-							ListBuffer<JCVariableDecl> consParams = new ListBuffer<JCVariableDecl>();
-							consParams.add(var(mods(0),
-									PaniniConstants.PANINI_MESSAGE_ID,
-									make.TypeIdent(TypeTags.INT)));
-							consBody.add(es(assign(
-									select(thist(),
-											PaniniConstants.PANINI_MESSAGE_ID),
-									id(PaniniConstants.PANINI_MESSAGE_ID))));
-
-							for (List<JCVariableDecl> vl = method.params; vl
-									.nonEmpty(); vl = vl.tail) {
-								JCVariableDecl par = vl.head;
-								consParams.add(var(mods(0), par.name,
-										par.vartype));
-								consBody.add(es(assign(
-										select(thist(),
-												createFieldString(method.name,
-														par, method.params)),
-										id(par.name))));
-								variableFields
-										.add(var(mods(PUBLIC), names
-												.fromString(createFieldString(
-														method.name, par,
-														method.params)),
-												par.vartype));
-								if (!par.vartype.type.isPrimitive())
-									paniniFinish.body.stats = paniniFinish.body.stats
-											.append(es(assign(
-													select(thist(),
-															createFieldString(
-																	method.name,
-																	par,
-																	method.params)),
-													nullv())));
-							}
-							constructors.add(constructor(mods(PUBLIC),
-									consParams, body(consBody)));
-						}
-						wrappedMethods.add(paniniFinish);
-
-						JCClassDecl wrappedClass = make
-								.ClassDef(
-										mods(0),
-										names.fromString(PaniniConstants.DUCK_INTERFACE_NAME
-												+ "$"
-												+ restype
-												+ "$"
-												+ tree.name), List
-												.<JCTypeParameter> nil(), null,
-										implement,
-										defs(fieldMessageId, fieldRedeemed)
-												.appendList(variableFields)
-												.appendList(wrappedMethods)
-												.appendList(constructors)
-												.toList());
-
+					if (!alreadedAddedDuckClasses.containsKey(restype
+							.toString())) {
+						JCClassDecl wrappedClass = createVoidDuck(tree, constructors, method, false);
 						classes.add(wrappedClass);
 						alreadedAddedDuckClasses.put(restype.toString(),
 								wrappedClass);
@@ -520,13 +482,15 @@ public class CapsuleInternal extends Internal {
 							adaptDuckClass(method, iter, duckClass, false);
 						}
 					}
-				} else if (restype.tag == TypeTags.ARRAY){
-					if (!alreadedAddedDuckClasses.containsKey(PaniniConstants.ARRAY_DUCKS)) {
+				} else if (restype.tag == TypeTags.ARRAY) {
+					if (!alreadedAddedDuckClasses
+							.containsKey(PaniniConstants.ARRAY_DUCKS)) {
 						JCClassDecl duckClass = generateNewDuckClass(
 								tree.name.toString(), method, constructors,
-								restype, iter, c, env);
+								restype, iter, c, env, false);
 						classes.add(duckClass);
-						alreadedAddedDuckClasses.put(PaniniConstants.ARRAY_DUCKS, duckClass);
+						alreadedAddedDuckClasses.put(
+								PaniniConstants.ARRAY_DUCKS, duckClass);
 					} else {
 						if (!method.params.isEmpty()) {
 							JCClassDecl duckClass = alreadedAddedDuckClasses
@@ -535,19 +499,21 @@ public class CapsuleInternal extends Internal {
 						}
 					}
 				}
-			}else{
-				if(restype.isPrimitive()||c.toString().equals("java.lang.String")){
-					if (!alreadedAddedDuckClasses.containsKey(restype.toString())) {
+			} else {
+				if (restype.isPrimitive()
+						|| c.toString().equals("java.lang.String")) {
+					if (!alreadedAddedDuckClasses.containsKey(restype
+							.toString())) {
 						ListBuffer<JCTree> wrappedMethods = new ListBuffer<JCTree>();
-	
-						JCVariableDecl fieldMessageId = var(mods(PRIVATE | FINAL),
-								PaniniConstants.PANINI_MESSAGE_ID,
+
+						JCVariableDecl fieldMessageId = var(mods(PRIVATE
+								| FINAL), PaniniConstants.PANINI_MESSAGE_ID,
 								make.TypeIdent(TypeTags.INT));
 						JCVariableDecl fieldRedeemed = var(mods(PRIVATE),
 								PaniniConstants.REDEEMED,
 								make.TypeIdent(TypeTags.BOOLEAN),
 								make.Literal(TypeTags.BOOLEAN, 0));
-						
+
 						JCMethodDecl paniniFinish;
 						paniniFinish = method(
 								mods(PUBLIC | FINAL),
@@ -557,14 +523,15 @@ public class CapsuleInternal extends Internal {
 								body(sync(
 										thist(),
 										// The duck is ready.
-										body(es(assign(PaniniConstants.REDEEMED,
-												truev())), es(apply("notifyAll"))))));
-	
-						wrappedMethods.add(this.createPaniniMessageID());
-	
+										body(es(assign(
+												PaniniConstants.REDEEMED,
+												truev())),
+												es(apply("notifyAll"))))));
+
+						wrappedMethods.add(this.createPaniniMessageID(false));
+
 						ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
-	
-						
+
 						ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
 						ListBuffer<JCVariableDecl> consParams = new ListBuffer<JCVariableDecl>();
 						consParams.add(var(mods(0),
@@ -603,8 +570,8 @@ public class CapsuleInternal extends Internal {
 													nullv())));
 							}
 						}
-							constructors.add(constructor(mods(PUBLIC), consParams,
-									body(consBody)));
+						constructors.add(constructor(mods(PUBLIC), consParams,
+								body(consBody)));
 						wrappedMethods.add(paniniFinish);
 						String restypeString = restype.toString().equals(
 								"java.lang.String") ? "String" : restype
@@ -617,109 +584,112 @@ public class CapsuleInternal extends Internal {
 												+ "$"
 												+ restypeString
 												+ "$"
-												+ tree.name), List
-												.<JCTypeParameter> nil(), select(PrimitiveClass.get(restypeString).toString()),
-												List
-												.<JCExpression> nil(),
+												+ tree.name),
+										List.<JCTypeParameter> nil(),
+										select(PrimitiveClass
+												.get(restypeString).toString()),
+										List.<JCExpression> nil(),
 										defs(fieldMessageId, fieldRedeemed)
 												.appendList(variableFields)
 												.appendList(wrappedMethods)
-												.appendList(constructors).toList());
-	
+												.appendList(constructors)
+												.toList());
+
 						classes.add(wrappedClass);
 						alreadedAddedDuckClasses.put(restype.toString(),
 								wrappedClass);
 					} else {
 						JCClassDecl duckClass = alreadedAddedDuckClasses
 								.get(restype.toString());
-							adaptDuckClass(method, null, duckClass, true);
+						adaptDuckClass(method, null, duckClass, true);
 					}
 				}
 			}
 		}
 		return classes.toList();
 	}
-	
-	public enum PrimitiveClass implements Serializable {
-	    LONG,BOOLEAN,BYTE,CHAR,DOUBLE,FLOAT,INT,SHORT,STRING;
 
-	    public String toString(){
-	        switch(this){
-	        case LONG :
-	            return "org.paninij.lang.Long";
-	        case BOOLEAN :
-	            return "org.paninij.lang.Boolean";
-	        case CHAR :
-	            return "org.paninij.lang.Character";
-	        case DOUBLE :
-	            return "org.paninij.lang.Double";
-	        case FLOAT :
-	            return "org.paninij.lang.Float";
-	        case INT :
-	            return "org.paninij.lang.Integer";
-	        case SHORT :
-	            return "org.paninij.lang.Short";
-	        case STRING :
-	            return "org.paninij.lang.String";
-	        case BYTE :
-	            return "org.paninij.lang.Byte";
-	        }
-	        return null;
-	    }
-	    
-	    public static PrimitiveClass get(String value){
-	        if(value.equalsIgnoreCase("long"))
-	            return PrimitiveClass.LONG;
-	        else if(value.equals("boolean"))
-	            return PrimitiveClass.BOOLEAN;
-	        else if(value.equals("char"))
-	            return PrimitiveClass.CHAR;
-	        else if(value.equals("double"))
-	            return PrimitiveClass.DOUBLE;
-	        else if(value.equals("float"))
-	            return PrimitiveClass.FLOAT;
-	        else if(value.equals("int"))
-	            return PrimitiveClass.INT;
-	        else if(value.equals("short"))
-	            return PrimitiveClass.SHORT;
-	        else if(value.equals("String"))
-	            return PrimitiveClass.STRING;
-	        else if(value.equals("byte"))
-	            return PrimitiveClass.BYTE;
-	        else
-	            return null;
-	    }
+	public enum PrimitiveClass implements Serializable {
+		LONG, BOOLEAN, BYTE, CHAR, DOUBLE, FLOAT, INT, SHORT, STRING;
+
+		public String toString() {
+			switch (this) {
+			case LONG:
+				return "org.paninij.lang.Long";
+			case BOOLEAN:
+				return "org.paninij.lang.Boolean";
+			case CHAR:
+				return "org.paninij.lang.Character";
+			case DOUBLE:
+				return "org.paninij.lang.Double";
+			case FLOAT:
+				return "org.paninij.lang.Float";
+			case INT:
+				return "org.paninij.lang.Integer";
+			case SHORT:
+				return "org.paninij.lang.Short";
+			case STRING:
+				return "org.paninij.lang.String";
+			case BYTE:
+				return "org.paninij.lang.Byte";
+			}
+			return null;
+		}
+
+		public static PrimitiveClass get(String value) {
+			if (value.equalsIgnoreCase("long"))
+				return PrimitiveClass.LONG;
+			else if (value.equals("boolean"))
+				return PrimitiveClass.BOOLEAN;
+			else if (value.equals("char"))
+				return PrimitiveClass.CHAR;
+			else if (value.equals("double"))
+				return PrimitiveClass.DOUBLE;
+			else if (value.equals("float"))
+				return PrimitiveClass.FLOAT;
+			else if (value.equals("int"))
+				return PrimitiveClass.INT;
+			else if (value.equals("short"))
+				return PrimitiveClass.SHORT;
+			else if (value.equals("String"))
+				return PrimitiveClass.STRING;
+			else if (value.equals("byte"))
+				return PrimitiveClass.BYTE;
+			else
+				return null;
+		}
 	}
-	
-	private JCMethodDecl createDuckConstructor(Iterator<Symbol> iter, final boolean isVoid, final boolean isPrimitive){
+
+	private JCMethodDecl createDuckConstructor(Iterator<Symbol> iter,
+			final boolean isVoid, final boolean isPrimitive) {
 		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 		MethodSymbol constructor = null;
-		List<Type> thrownTypes = List.<Type>nil();
-		if(!isVoid){
+		List<Type> thrownTypes = List.<Type> nil();
+		if (!isVoid) {
 			while (iter.hasNext()) {
 				Symbol s = iter.next();
 				if (s.getKind() == ElementKind.CONSTRUCTOR) {
 					MethodSymbol m = (MethodSymbol) s;
 					if (m.isStatic() || ((m.flags() & PRIVATE) != 0))
 						continue; // Is this correct?
-					if (constructor == null){
+					if (constructor == null) {
 						constructor = m;
 						thrownTypes = m.getThrownTypes();
-					}
-					else if (m.params().length() < constructor.params().length()){
+					} else if (m.params().length() < constructor.params()
+							.length()) {
 						constructor = m;
 						thrownTypes = m.getThrownTypes();
 					}
 				}
 			}
 			if (constructor != null)
-				for (List<VarSymbol> l = constructor.params(); l.nonEmpty(); l = l.tail){
+				for (List<VarSymbol> l = constructor.params(); l.nonEmpty(); l = l.tail) {
 					VarSymbol v = l.head;
 					if (v.type.toString().equals("boolean"))
 						args.add(falsev());
 					else if (v.type.isPrimitive())
 						args.add(intlit(0));
-					else{
+					else {
 						args.add(make.TypeCast(make.Type(v.type), nullv()));
 					}
 				}
@@ -727,37 +697,41 @@ public class CapsuleInternal extends Internal {
 
 		List<JCExpression> thrown = make.Types(thrownTypes);
 		ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
-		if(isPrimitive){
+		if (isPrimitive) {
 			args.add(id(PaniniConstants.PANINI_MESSAGE_ID));
 			consBody.add(es(make.Apply(List.<JCExpression> nil(),
 					id(names._super), args.toList())));
-		}else
+		} else
 			consBody.add(es(make.Apply(List.<JCExpression> nil(),
 					id(names._super), args.toList())));
 		consBody.add(es(assign(
 				select(thist(), PaniniConstants.PANINI_MESSAGE_ID),
 				id(PaniniConstants.PANINI_MESSAGE_ID))));
-		return make.MethodDef(mods(PUBLIC), 
+		return make.MethodDef(
+				mods(PUBLIC),
 				names.init,
 				null,
-				List.<JCTypeParameter>nil(),
-				params(var(mods(0), PaniniConstants.PANINI_MESSAGE_ID,
-				make.TypeIdent(TypeTags.INT))).toList(),
-				thrown,
-				body(consBody),
-				null
-				);
+				List.<JCTypeParameter> nil(),
+				params(
+						var(mods(0), PaniniConstants.PANINI_MESSAGE_ID,
+								make.TypeIdent(TypeTags.INT))).toList(),
+				thrown, body(consBody), null);
 	}
-	
-	private JCMethodDecl createDuckConstructor(Iterator<Symbol> iter, boolean isVoid, JCMethodDecl method, JCMethodDecl paniniFinish, final boolean isPrimitive){
-		JCMethodDecl constructor = createDuckConstructor(iter, isVoid, isPrimitive);
-		for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail){
+
+	private JCMethodDecl createDuckConstructor(Iterator<Symbol> iter,
+			boolean isVoid, JCMethodDecl method, JCMethodDecl paniniFinish,
+			final boolean isPrimitive) {
+		JCMethodDecl constructor = createDuckConstructor(iter, isVoid,
+				isPrimitive);
+		for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
 			JCVariableDecl par = l.head;
-			constructor.params = constructor.params.append(var(mods(0), par.name, par.vartype));
-			constructor.body.stats = constructor.body.stats.append(es(assign(
-					select(thist(),
-							createFieldString(method.name, par,
-									method.params)), id(par.name))));
+			constructor.params = constructor.params.append(var(mods(0),
+					par.name, par.vartype));
+			constructor.body.stats = constructor.body.stats
+					.append(es(assign(
+							select(thist(),
+									createFieldString(method.name, par,
+											method.params)), id(par.name))));
 			if (!par.vartype.type.isPrimitive())
 				paniniFinish.body.stats = paniniFinish.body.stats
 						.append(es(assign(
@@ -766,6 +740,25 @@ public class CapsuleInternal extends Internal {
 												method.params)), nullv())));
 		}
 		return constructor;
+	}
+
+	private JCMethodDecl createLambdaDuckConstructor(
+			ListBuffer<JCVariableDecl> variables) {
+		JCBlock body;
+		ListBuffer<JCStatement> bodyStatements = new ListBuffer<JCStatement>();
+		for (JCVariableDecl var : variables) {
+			bodyStatements.add(es(assign(select(names._this, var.name),
+					id(var.name))));
+		}
+		bodyStatements.add(es(assign(
+				select(thist(), PaniniConstants.PANINI_MESSAGE_ID),
+				intlit(-3))));
+		bodyStatements.add(es(apply(variables.first().name.toString(),
+				PaniniConstants.PANINI_PUSH, args(id(names._this)))));
+		body = body(bodyStatements);
+
+		JCMethodDecl consructor = constructor(mods(0), variables, body);
+		return consructor;
 	}
 
 	private ListBuffer<JCExpression> superArgs(Iterator<Symbol> iter) {
@@ -784,7 +777,7 @@ public class CapsuleInternal extends Internal {
 			}
 		}
 		if (constructor != null)
-			for (List<VarSymbol> l = constructor.params(); l.nonEmpty(); l = l.tail){
+			for (List<VarSymbol> l = constructor.params(); l.nonEmpty(); l = l.tail) {
 				VarSymbol v = l.head;
 				if (v.type.toString().equals("boolean"))
 					args.add(falsev());
@@ -800,7 +793,7 @@ public class CapsuleInternal extends Internal {
 			JCClassDecl duckClass, final boolean isPrimitive) {
 		ListBuffer<JCTree> newFields = new ListBuffer<JCTree>();
 		JCMethodDecl paniniFinish = null;
-		for (List<JCTree> l = duckClass.defs; l.nonEmpty(); l=l.tail){
+		for (List<JCTree> l = duckClass.defs; l.nonEmpty(); l = l.tail) {
 			JCTree def = l.head;
 			if (def.hasTag(Tag.METHODDEF))
 				if (((JCMethodDecl) def).name.equals(names.panini.PaniniFinish))
@@ -817,7 +810,7 @@ public class CapsuleInternal extends Internal {
 						iter, method.restype.toString().equals("void"), method,
 						paniniFinish, isPrimitive));
 		}
-		for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l=l.tail){
+		for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
 			JCVariableDecl par = l.head;
 			newFields.add(var(mods(PUBLIC), names.fromString(createFieldString(
 					method.name, par, method.params)), par.vartype));
@@ -854,31 +847,168 @@ public class CapsuleInternal extends Internal {
 		else
 			return make.TypeApply(make.Ident(c), typaram.toList());
 	}
+	
+	/**
+	 * Creates a void duck class according to the tree and method type given.
+	 * Adds proper constructors needed to the constructor ListBuffer passed in.
+	 */
+	private JCClassDecl createVoidDuck(JCCapsuleDecl tree,
+			ListBuffer<JCTree> constructors, JCMethodDecl method,
+			boolean isLambdaDuck) {
+		List<JCExpression> implement;
+		ListBuffer<JCTree> wrappedMethods = new ListBuffer<JCTree>();
+
+		JCVariableDecl fieldMessageId = var(mods(PRIVATE | FINAL),
+				PaniniConstants.PANINI_MESSAGE_ID, make.TypeIdent(TypeTags.INT));
+		JCVariableDecl fieldRedeemed = var(mods(PRIVATE),
+				PaniniConstants.REDEEMED, make.TypeIdent(TypeTags.BOOLEAN),
+				make.Literal(TypeTags.BOOLEAN, 0));
+
+		wrappedMethods.add(constructor(
+				mods(PUBLIC),
+				params(var(mods(0), PaniniConstants.PANINI_MESSAGE_ID,
+						make.TypeIdent(TypeTags.INT))),
+				body(es(supert()),
+						es(assign(
+								select(thist(),
+										PaniniConstants.PANINI_MESSAGE_ID),
+								id(PaniniConstants.PANINI_MESSAGE_ID))))));
+
+		wrappedMethods.add(createValueMethod());
+
+		// Code to be generated for the flag logic.
+		// public final void panini$finish(Void t) {
+		// synchronized (this) {
+		// redeemed = true;
+		// notifyAll();
+		// }
+		// }
+		JCMethodDecl paniniFinish;
+		if (isLambdaDuck) {
+			paniniFinish = method(
+					mods(PUBLIC | FINAL),
+					PaniniConstants.PANINI_FINISH,
+					voidt(),
+					params(var(mods(0), "t", id("Void"))),
+					body(es(apply(PaniniConstants.PANINI_LAMBDA_BODY)),
+							sync(thist(),
+									// The duck is ready.
+									body(es(assign(PaniniConstants.REDEEMED,
+											truev())), es(apply("notifyAll"))))));
+			wrappedMethods.add(method(mods(PRIVATE | FINAL),
+					names.panini.PaniniLambdaBody, voidt(),
+					new ListBuffer<JCVariableDecl>(), method.body));
+		} else
+			paniniFinish = method(
+					mods(PUBLIC | FINAL),
+					PaniniConstants.PANINI_FINISH,
+					voidt(),
+					params(var(mods(0), "t", id("Void"))),
+					body(sync(
+							thist(),
+							// The duck is ready.
+							body(es(assign(PaniniConstants.REDEEMED, truev())),
+									es(apply("notifyAll"))))));
+
+		wrappedMethods.add(this.createPaniniMessageID(isLambdaDuck));
+		wrappedMethods.add(createVoidFutureGetMethod());
+		implement = implementing(
+				ta(id(PaniniConstants.DUCK_INTERFACE_NAME), args(id("Void"))))
+				.toList();
+
+		ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
+
+		if (isLambdaDuck) {
+			ListBuffer<JCVariableDecl> constructorVariables = new ListBuffer<JCVariableDecl>();
+			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
+				JCVariableDecl par = l.head;
+				if (syms.capsules.containsKey(names.fromString(par.vartype
+						.toString()))) {
+					constructorVariables.add(var(mods(0), par.name.toString(),
+							par.vartype.toString()));
+					variableFields.add(var(mods(PUBLIC), par.name.toString(),
+							par.vartype.toString()));
+				} else {
+					constructorVariables.add(var(mods(0), par.name.toString(),
+							par.vartype));
+					variableFields.add(var(mods(PUBLIC), par.name.toString(),
+							par.vartype));
+				}
+			}
+			constructors.add(createLambdaDuckConstructor(constructorVariables));
+		} else if (!method.params.isEmpty()) {
+			ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
+			ListBuffer<JCVariableDecl> consParams = new ListBuffer<JCVariableDecl>();
+			consParams.add(var(mods(0), PaniniConstants.PANINI_MESSAGE_ID,
+					make.TypeIdent(TypeTags.INT)));
+			consBody.add(es(assign(
+					select(thist(), PaniniConstants.PANINI_MESSAGE_ID),
+					id(PaniniConstants.PANINI_MESSAGE_ID))));
+
+			for (List<JCVariableDecl> vl = method.params; vl.nonEmpty(); vl = vl.tail) {
+				JCVariableDecl par = vl.head;
+				consParams.add(var(mods(0), par.name, par.vartype));
+				consBody.add(es(assign(
+						select(thist(),
+								createFieldString(method.name, par,
+										method.params)), id(par.name))));
+				variableFields.add(var(mods(PUBLIC), names
+						.fromString(createFieldString(method.name, par,
+								method.params)), par.vartype));
+				if (syms.capsules.containsKey(names.fromString(par.vartype
+						.toString()))) {
+				} else if (!par.vartype.type.isPrimitive())
+					paniniFinish.body.stats = paniniFinish.body.stats
+							.append(es(assign(
+									select(thist(),
+											createFieldString(method.name, par,
+													method.params)), nullv())));
+			}
+			constructors.add(constructor(mods(PUBLIC), consParams,
+					body(consBody)));
+		}
+		wrappedMethods.add(paniniFinish);
+
+		String className;
+		if (isLambdaDuck)
+			className = PaniniConstants.DUCK_INTERFACE_NAME + "$" + "void"
+					+ "$" + tree.name + "$" + tree.lambdaExpressionCounts;
+		else
+			className = PaniniConstants.DUCK_INTERFACE_NAME + "$" + "void"
+					+ "$" + tree.name;
+
+		JCClassDecl wrappedClass = make.ClassDef(mods(0),
+				names.fromString(className), List.<JCTypeParameter> nil(),
+				null, implement, defs(fieldMessageId, fieldRedeemed)
+						.appendList(variableFields).appendList(wrappedMethods)
+						.appendList(constructors).toList());
+		return wrappedClass;
+	}
 
 	private JCClassDecl generateNewDuckClass(String classNameSuffix,
 			JCMethodDecl method, ListBuffer<JCTree> constructors, Type restype,
-			Iterator<Symbol> iter, ClassSymbol c, Env<AttrContext> env) {
+			Iterator<Symbol> iter, ClassSymbol c, Env<AttrContext> env,
+			boolean isLambdaDuck) {
 		String rawClassName = trim(restype.toString());
 		if (restype.tag == TypeTags.ARRAY)
 			rawClassName = PaniniConstants.ARRAY_DUCKS;
 		ListBuffer<JCTypeParameter> typeParams = new ListBuffer<JCTypeParameter>();
-		for (List<TypeSymbol> l = c.getTypeParameters(); l.nonEmpty(); l=l.tail){
+		for (List<TypeSymbol> l = c.getTypeParameters(); l.nonEmpty(); l = l.tail) {
 			TypeSymbol ts = l.head;
 			typeParams.append(make.TypeParam(ts.name, (TypeVar) ts.type));
 		}
 		ListBuffer<JCExpression> typeExpressions = new ListBuffer<JCExpression>();
-		for (List<JCTypeParameter> l = typeParams.toList(); l.nonEmpty(); l=l.tail){
+		for (List<JCTypeParameter> l = typeParams.toList(); l.nonEmpty(); l = l.tail) {
 			JCTypeParameter tp = l.head;
 			typeExpressions.add(make.Ident(tp.name));
 		}
 		JCVariableDecl fieldWrapped;
 		if (restype.tag == TypeTags.ARRAY)
-			fieldWrapped = var(mods(PRIVATE),
-					PaniniConstants.PANINI_WRAPPED,
+			fieldWrapped = var(mods(PRIVATE), PaniniConstants.PANINI_WRAPPED,
 					id("Object"), nullv());
-		else fieldWrapped = var(mods(PRIVATE),
-				PaniniConstants.PANINI_WRAPPED,
-				signatureType(typeExpressions, c), nullv());
+		else
+			fieldWrapped = var(mods(PRIVATE), PaniniConstants.PANINI_WRAPPED,
+					signatureType(typeExpressions, c), nullv());
 		JCVariableDecl fieldMessageId = var(mods(PRIVATE | FINAL),
 				PaniniConstants.PANINI_MESSAGE_ID,
 				make.TypeIdent(TypeTags.INT), null);
@@ -887,25 +1017,29 @@ public class CapsuleInternal extends Internal {
 				make.Literal(TypeTags.BOOLEAN, 0));
 
 		ListBuffer<JCTree> wrappedMethods = new ListBuffer<JCTree>();
-		ListBuffer<JCExpression> inits = new ListBuffer<JCExpression>();
 		boolean providesHashCode = false;
 		boolean providesEquals = false;
-		if (restype.tag != TypeTags.ARRAY){
+		if (restype.tag != TypeTags.ARRAY) {
 			ClassSymbol cs = c;
 			Set<String> methods = new HashSet<String>();
-			for(Type type = restype; type != Type.noType && !type.toString().equals(names.java_lang_Object.toString()); type = cs.getSuperclass()){
+			for (Type type = restype; type != Type.noType
+					&& !type.toString().equals(
+							names.java_lang_Object.toString()); type = cs
+					.getSuperclass()) {
 				cs = checkAndResolveReturnType(env, rs, type);
-				Iterator<Symbol> iterator = cs.members().getElements().iterator();
+				Iterator<Symbol> iterator = cs.members().getElements()
+						.iterator();
 				while (iterator.hasNext()) {
 					Symbol s = iterator.next();
 					if (s.getKind() == ElementKind.METHOD) {
 						MethodSymbol m = (MethodSymbol) s;
 						JCMethodDecl value;
-						if(c.packge()!=env.enclClass.sym.packge())
+						if (c.packge() != env.enclClass.sym.packge())
 							if (m.isStatic() || ((m.flags() & PUBLIC) == 0)
 									|| ((m.flags() & SYNTHETIC) != 0))
 								continue; // Do not wrap static methods.
-						if (m.isStatic() || ((m.flags() & PROTECTED) != 0) ||((m.flags() & PRIVATE) != 0)
+						if (m.isStatic() || ((m.flags() & PROTECTED) != 0)
+								|| ((m.flags() & PRIVATE) != 0)
 								|| ((m.flags() & SYNTHETIC) != 0))
 							continue; // Do not wrap static methods.
 						if (!m.type.getReturnType().toString().equals("void")) {
@@ -913,12 +1047,15 @@ public class CapsuleInternal extends Internal {
 						} else {
 							value = createVoidFutureValueMethod(m, m.name);
 						}
-						
-						if(methods.add(m.toString()))
+
+						if (methods.add(m.toString()))
 							wrappedMethods.add(value);
-						if(!providesHashCode && m.name.contentEquals("hashCode") && m.getParameters().length() == 0)
+						if (!providesHashCode
+								&& m.name.contentEquals("hashCode")
+								&& m.getParameters().length() == 0)
 							providesHashCode = true;
-						if(!providesEquals && m.name.contentEquals("equals") && m.getParameters().length() == 1) {
+						if (!providesEquals && m.name.contentEquals("equals")
+								&& m.getParameters().length() == 1) {
 							providesEquals = true;
 						}
 					}
@@ -928,8 +1065,8 @@ public class CapsuleInternal extends Internal {
 		iter = c.members().getElements().iterator();
 		constructors.add(createDuckConstructor(iter, false, false));
 
-		JCMethodDecl messageIdMethod = createPaniniMessageID();
-		JCMethodDecl finishMethod = createPaniniFinishMethod(c);
+		JCMethodDecl messageIdMethod = createPaniniMessageID(isLambdaDuck);
+		JCMethodDecl finishMethod = createPaniniFinishMethod(c, isLambdaDuck);
 
 		JCExpression extending;
 		List<JCExpression> implement;
@@ -939,13 +1076,13 @@ public class CapsuleInternal extends Internal {
 					ta(id(PaniniConstants.DUCK_INTERFACE_NAME),
 							args(id(restype.toString()))),
 					id(restype.toString())).toList();
-		} else if (restype.tag == TypeTags.ARRAY){
+		} else if (restype.tag == TypeTags.ARRAY) {
 			extending = id("Panini$Duck$Array$Types");
-			implement = List.<JCExpression>nil();
-		} else if ((c.flags() & Flags.FINAL) !=0){
+			implement = List.<JCExpression> nil();
+		} else if ((c.flags() & Flags.FINAL) != 0) {
 			extending = ta(id("Panini$Duck$Final"),
 					args(signatureType(typeExpressions, c)));
-			implement = List.<JCExpression>nil();
+			implement = List.<JCExpression> nil();
 		} else {
 			JCMethodDecl get;
 			if (restype.toString().equals("void")) {
@@ -965,65 +1102,109 @@ public class CapsuleInternal extends Internal {
 				wrappedMethods.add(get);
 			}
 		}
+//		if (isLambdaDuck)
+//			implement = implement.append(id(PaniniConstants.PANINI_LAMBDA));
 
 		ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
 
-		if (!method.params.isEmpty()) {
-			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l=l.tail){
+		if (isLambdaDuck) {
+			ListBuffer<JCVariableDecl> constructorVariables = new ListBuffer<JCVariableDecl>();
+			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
+				JCVariableDecl par = l.head;
+				if (syms.capsules.containsKey(names.fromString(par.vartype
+						.toString()))) {
+					constructorVariables.add(var(mods(0), par.name.toString(),
+							par.vartype.toString()));
+					variableFields.add(var(mods(PUBLIC), par.name.toString(),
+							par.vartype.toString()));
+				} else {
+					constructorVariables.add(var(mods(0), par.name.toString(),
+							par.vartype));
+					variableFields.add(var(mods(PUBLIC), par.name.toString(),
+							par.vartype));
+				}
+			}
+			constructors.add(createLambdaDuckConstructor(constructorVariables));
+		} else if (!method.params.isEmpty()) {
+			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
 				JCVariableDecl par = l.head;
 				variableFields.add(var(mods(PUBLIC), names
 						.fromString(createFieldString(method.name, par,
 								method.params)), par.vartype));
 			}
 			iter = c.members().getElements().iterator();
-			constructors.add(createDuckConstructor(iter, false, method, finishMethod, false));
+			constructors.add(createDuckConstructor(iter, false, method,
+					finishMethod, false));
 		}
-		
+
+		// add lambda$body
+		if (isLambdaDuck) {
+			wrappedMethods.add(method(mods(PRIVATE | FINAL),
+					names.panini.PaniniLambdaBody, id(c.name),
+					new ListBuffer<JCVariableDecl>(), method.body));
+		}
+
 		ListBuffer<JCTree> wrapperMembers;
-		if (restype.tag == TypeTags.ARRAY || (c.flags() & Flags.FINAL) !=0)
-			wrapperMembers = defs(fieldWrapped, fieldMessageId, fieldRedeemed); 
-		else wrapperMembers = defs(fieldWrapped, fieldMessageId, fieldRedeemed, finishMethod, messageIdMethod); 
-		if(!providesHashCode) wrapperMembers.append(createHashCode());
-		if(!providesEquals) wrapperMembers.append(createEquals());
+		if (restype.tag == TypeTags.ARRAY || (c.flags() & Flags.FINAL) != 0)
+			wrapperMembers = defs(fieldWrapped, fieldMessageId, fieldRedeemed);
+		else
+			wrapperMembers = defs(fieldWrapped, fieldMessageId, fieldRedeemed,
+					finishMethod, messageIdMethod);
+		if (!providesHashCode)
+			wrapperMembers.append(createHashCode());
+		if (!providesEquals)
+			wrapperMembers.append(createEquals());
 
 		JCClassDecl wrappedClass = make.ClassDef(
 				mods(FINAL),
 				names.fromString(PaniniConstants.DUCK_INTERFACE_NAME + "$"
 						+ rawClassName + "$" + classNameSuffix),
-				typeParams.toList(),
-				extending,
-				implement,
-				wrapperMembers.appendList(variableFields).appendList(constructors)
-				.appendList(wrappedMethods).toList());
+				typeParams.toList(), extending, implement, wrapperMembers
+						.appendList(variableFields).appendList(constructors)
+						.appendList(wrappedMethods).toList());
 
 		return wrappedClass;
 	}
 
-	private JCMethodDecl createPaniniFinishMethod(ClassSymbol restype) {
+	private JCMethodDecl createPaniniFinishMethod(ClassSymbol restype,
+			boolean isLambdaDuck) {
 		ListBuffer<JCVariableDecl> finishParams = new ListBuffer<JCVariableDecl>();
-		if(restype.toString().equals("Array"))
+		if (restype.toString().equals("Array"))
 			finishParams.add(var(mods(0), "t", id("Object")));
 		else
 			finishParams.add(var(mods(0), "t", make.Ident(restype)));
-		JCMethodDecl finishMethod = method(
-				mods(PUBLIC | FINAL),
-				names.panini.PaniniFinish,
-				make.Type(syms.voidType),
-				finishParams,
-				body(sync(
-						thist(),
-						body(es(assign(PaniniConstants.PANINI_WRAPPED, id("t"))),
-								es(assign(PaniniConstants.REDEEMED, truev())),
-								es(apply("notifyAll"))))));
+
+		JCBlock finishBody;
+		if (isLambdaDuck)
+			finishBody = body(
+					es(assign(PaniniConstants.PANINI_WRAPPED,
+							apply("lambda$body"))),
+					sync(thist(),
+							body(es(assign(PaniniConstants.REDEEMED, truev())),
+									es(apply("notifyAll")))));
+		else
+			finishBody = body(sync(
+					thist(),
+					body(es(assign(PaniniConstants.PANINI_WRAPPED, id("t"))),
+							es(assign(PaniniConstants.REDEEMED, truev())),
+							es(apply("notifyAll")))));
+
+		JCMethodDecl finishMethod = method(mods(PUBLIC | FINAL),
+				names.panini.PaniniFinish, make.Type(syms.voidType),
+				finishParams, finishBody);
 		return finishMethod;
 	}
 
-	private JCMethodDecl createPaniniMessageID() {
-		return method(
-				mods(PUBLIC | FINAL),
+	private JCMethodDecl createPaniniMessageID(boolean isLambdaDuck) {
+		JCBlock methodBody;
+		if (isLambdaDuck)
+			methodBody = body(returnt(intlit(-3)));
+		else
+			methodBody = body(returnt(select(thist(),
+					PaniniConstants.PANINI_MESSAGE_ID)));
+		return method(mods(PUBLIC | FINAL),
 				names.fromString(PaniniConstants.PANINI_MESSAGE_ID),
-				make.TypeIdent(TypeTags.INT),
-				body(returnt(select(thist(), PaniniConstants.PANINI_MESSAGE_ID))));
+				make.TypeIdent(TypeTags.INT), methodBody);
 	}
 
 	private JCMethodDecl createHashCode() {
@@ -1087,12 +1268,12 @@ public class CapsuleInternal extends Internal {
 		JCExpression restype = make.Type(m.type.getReturnType());
 
 		ListBuffer<JCTypeParameter> tp = new ListBuffer<JCTypeParameter>();
-		for (List<TypeSymbol> l = m.getTypeParameters(); l.nonEmpty(); l=l.tail){
+		for (List<TypeSymbol> l = m.getTypeParameters(); l.nonEmpty(); l = l.tail) {
 			TypeSymbol ts = l.head;
 			tp.appendList(make.TypeParams(List.<Type> of(ts.type)));
 		}
 		if (m.getParameters() != null) {
-			for (List<VarSymbol> l = m.getParameters(); l.nonEmpty(); l = l.tail){
+			for (List<VarSymbol> l = m.getParameters(); l.nonEmpty(); l = l.tail) {
 				VarSymbol v = l.head;
 				params.add(make.VarDef(v, null));
 				args.add(id(v.name));
@@ -1117,13 +1298,13 @@ public class CapsuleInternal extends Internal {
 		ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
 		ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 		ListBuffer<JCTypeParameter> tp = new ListBuffer<JCTypeParameter>();
-		for (List<TypeSymbol> l = m.getTypeParameters(); l.nonEmpty(); l = l.tail){
+		for (List<TypeSymbol> l = m.getTypeParameters(); l.nonEmpty(); l = l.tail) {
 			TypeSymbol ts = l.head;
 			tp.appendList(make.TypeParams(List.<Type> of(ts.type)));
 		}
 
 		if (m.getParameters() != null) {
-			for (List<VarSymbol> l = m.getParameters(); l.nonEmpty(); l = l.tail){
+			for (List<VarSymbol> l = m.getParameters(); l.nonEmpty(); l = l.tail) {
 				VarSymbol v = l.head;
 				params.add(make.VarDef(v, null));
 				args.add(id(v.name));
@@ -1185,8 +1366,6 @@ public class CapsuleInternal extends Internal {
 		return value;
 	}
 
-	
-	
 	public ClassSymbol checkAndResolveReturnType(Env<AttrContext> env,
 			Resolve rs, Type restype) {
 		ClassSymbol c;
@@ -1205,29 +1384,29 @@ public class CapsuleInternal extends Internal {
 	private boolean hasDuplicate(JCClassDecl c, List<JCVariableDecl> v,
 			Name name) {
 		boolean result = false;
-		for (List<JCTree> l = c.defs; l.nonEmpty(); l = l.tail){
+		for (List<JCTree> l = c.defs; l.nonEmpty(); l = l.tail) {
 			JCTree def = l.head;
 			if (def.getTag() == Tag.METHODDEF
 					&& ((JCMethodDecl) def).name.equals(names.init)) {
-				JCMethodDecl mdecl = (JCMethodDecl)def;
+				JCMethodDecl mdecl = (JCMethodDecl) def;
 				if (mdecl.params.length() == v.length() + 1) {
 					result = true;
 					for (int i = 1; i < mdecl.params.length(); i++) {
-						if (!mdecl.params.get(i).vartype
-								.toString().equals(
-										v.get(i - 1).vartype.toString())) {
+						if (!mdecl.params.get(i).vartype.toString().equals(
+								v.get(i - 1).vartype.toString())) {
 							result = false;
 							i = mdecl.params.length();
 						}
 					}
 					if (result) {
-						for (int i=0; i<v.length(); i++){
+						for (int i = 0; i < v.length(); i++) {
 							mdecl.body.stats = mdecl.body.stats
 									.append(es(assign(
 											select(thist(),
 													createFieldString(name,
 															v.get(i), v)),
-											id(mdecl.params.get(i+1).name.toString()))));
+											id(mdecl.params.get(i + 1).name
+													.toString()))));
 						}
 						break;
 					}
@@ -1248,7 +1427,7 @@ public class CapsuleInternal extends Internal {
 		String fieldName;
 		fieldName = vartype + "$" + paramName + "$" + name;
 		if (params.nonEmpty())
-			for(List<JCVariableDecl> l = params; l.nonEmpty(); l=l.tail){
+			for (List<JCVariableDecl> l = params; l.nonEmpty(); l = l.tail) {
 				JCVariableDecl v = l.head;
 				fieldName = fieldName + "$" + v.vartype.toString();
 			}

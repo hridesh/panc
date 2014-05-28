@@ -50,8 +50,8 @@ public interface PaniniCapsule{
   	 * @throws SecurityException - if the client capsule is not allowed to access this capsule.
   	 * 
   	 */
+  	public void panini$push (Object o);
   	public void exit ();
-  	
   	public void start();
   	public void join() throws java.lang.InterruptedException; 
 }
