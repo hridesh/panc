@@ -123,6 +123,7 @@ public class JavacParser implements Parser {
         this.allowDiamond = source.allowDiamond();
         this.allowMulticatch = source.allowMulticatch();
         this.allowStringFolding = fac.options.getBoolean("allowStringFolding", true);
+        this.allowLambda = true;
         this.allowLambda = source.allowLambda() &&
                 fac.options.isSet("allowLambda");
         this.allowMethodReferences = source.allowMethodReferences() &&
@@ -1415,15 +1416,11 @@ public class JavacParser implements Parser {
     
     // Panini code
     JCExpression lambdaExpressionOrStatementRest2(List<JCVariableDecl> args, JCExpression type, int pos){
-    	inLambda = true;
-		lambdaCapsuleName = args.head.name;
 		if (token.kind == LBRACE) {
 			JCBlock block = block(pos, 0);
-			inLambda = false;
 			return toP(F.at(pos).CapsuleLambdaExpression(args, type, block));
 		} else {
 			JCTree expr = parseExpression();
-			inLambda = false;
 			return toP(F.at(pos).CapsuleLambdaExpression(args, type, expr));
 		}
     }
