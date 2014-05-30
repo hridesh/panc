@@ -175,6 +175,7 @@ public class EffectIntra {
 	public static void addFieldAccessEffect(JCFieldAccess jcf,
 			AliasingGraph aliasing, EffectSet result, int readOrWrite) {
 		Symbol sym = jcf.sym;
+		if(sym!=null)
 		if ((sym.flags_field & Flags.STATIC) == 0) {
 			if (sym.getKind() == ElementKind.FIELD) {
 				JCExpression selected = jcf.selected;

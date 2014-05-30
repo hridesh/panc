@@ -298,24 +298,22 @@ public final class Attr extends CapsuleInternal {
 		transformCapsuleLambda(tree, attr, env, rs);
 	}
 
-	/**
-	 * 
-	 * @param tree
-	 * @param attr
-	 * @param env
-	 * @param rs
-	 */
-	private void transformCapsuleLambda(JCCapsuleLambda tree,
+	public void visitPrimitiveCapsuleLambda(JCPrimitiveCapsuleLambda tree,
 			final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env,
 			Resolve rs) {
-		final JCCapsuleLambda lambda = tree;
-		// Make sure intracapsule calls in lambdas don't go through queues by
-		// calling %Original methods
+		transformCapsuleLambda(tree, attr, env, rs);
+	}
+	
+	/**
+	 * Make sure intracapsule calls are calling the $Original versions
+	 * so that calls don't go through the queues again.
+	 */
+	private void transformCapsuleLambdaBody(JCTree tree, final Name capsuleName){
 		class IntraCapsuleCallsTransformer extends TreeScanner {
 			@Override
 			public final void visitSelect(JCFieldAccess tree) {
 				if (tree.selected.toString().equals(
-						lambda.capsuleName.toString())) {
+						capsuleName.toString())) {
 					tree.name = tree.name
 							.append(names
 									.fromString(PaniniConstants.PANINI_ORIGINAL_METHOD_SUFFIX));
@@ -325,18 +323,83 @@ public final class Attr extends CapsuleInternal {
 		}
 		IntraCapsuleCallsTransformer icct = new IntraCapsuleCallsTransformer();
 		tree.accept(icct);
+	}
+	
+	private void transformCapsuleLambda(JCTree tree,
+			final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env,
+			Resolve rs) {
+		final JCTree lambda = tree;
+		if (lambda instanceof JCCapsuleLambda) {
+			transformCapsuleLambdaBody(tree,
+					((JCCapsuleLambda) lambda).capsuleName);
+			JCClassDecl lambdaDuck;
+			lambdaDuck = createPaniniLambda((JCCapsuleLambda) tree, env);
+			enter.classEnter(List.<JCClassDecl> of(lambdaDuck), env.outer);
 
-		JCClassDecl lambdaDuck;
-		lambdaDuck = createPaniniLambda(tree, env);
-		enter.classEnter(List.<JCClassDecl> of(lambdaDuck), env.outer);
-//		System.out.println(lambdaDuck);// -DEBUG: prints out resulting duck class
-		// Enumeration of lambda classes
-		((JCCapsuleDecl) env.enclClass).lambdaExpressionCounts++;
-		tree.newClass = true;
-		tree.clazz = id(lambdaDuck.name);
-		for (JCVariableDecl var : tree.params) {
-			tree.args = tree.args.append(id(var.name));
+			// Enumeration of lambda classes
+			((JCCapsuleDecl) env.enclClass).lambdaExpressionCounts++;
+			((JCCapsuleLambda) tree).newClass = true;
+			((JCCapsuleLambda) tree).clazz = id(lambdaDuck.name);
+			for (JCVariableDecl var : ((JCCapsuleLambda) tree).params) {
+				((JCCapsuleLambda) tree).args = ((JCCapsuleLambda) tree).args
+						.append(id(var.name));
+			}
+		} else if (tree instanceof JCPrimitiveCapsuleLambda) {
+			transformCapsuleLambdaBody(tree,
+					((JCPrimitiveCapsuleLambda) lambda).capsuleName);
+			JCClassDecl lambdaDuck;
+			lambdaDuck = createPrimitivePaniniLambda(
+					(JCPrimitiveCapsuleLambda) tree, env);
+			enter.classEnter(List.<JCClassDecl> of(lambdaDuck), env.outer);
+//			System.out.println(lambdaDuck);// prints out resulting duck class
+			ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+			for (JCVariableDecl var : ((JCPrimitiveCapsuleLambda) tree).params) {
+				args.add(id(var.name));
+			}
+
+			String restypeString = ((JCPrimitiveCapsuleLambda) tree).restype
+					.toString();
+
+			// set up the lambda, switch to newClass.apply mode
+			((JCPrimitiveCapsuleLambda) tree).meth = select(
+					newt(PaniniConstants.DUCK_INTERFACE_NAME
+							+ "$"
+							+ restypeString
+							+ "$"
+							+ env.enclClass.name.toString()
+							+ "$"
+							+ ((JCCapsuleDecl) env.enclClass).lambdaExpressionCounts,
+							args),
+					getValue(((JCPrimitiveCapsuleLambda) tree).restype));
+			((JCCapsuleDecl) env.enclClass).lambdaExpressionCounts++;
+			((JCPrimitiveCapsuleLambda) tree).newClass = true;
 		}
+	}
+	
+	
+	private String getValue(JCExpression exp){
+		if(exp instanceof JCPrimitiveTypeTree)
+		switch(((JCPrimitiveTypeTree) exp).getPrimitiveTypeKind()){
+			case LONG:
+				return "longValue";
+			case BOOLEAN:
+				return "booleanValue";
+			case CHAR:
+				return "charValue";
+			case DOUBLE:
+				return "doubleValue";
+			case FLOAT:
+				return "floatValue";
+			case INT:
+				return "intValue";
+			case SHORT:
+				return "shortValue";
+			case BYTE:
+				return "byteValue";
+			default:
+				return null;
+		}
+		return "";
 	}
 
 	public final void preVisitMethodDef(JCMethodDecl tree,

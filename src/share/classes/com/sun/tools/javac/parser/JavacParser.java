@@ -1416,13 +1416,16 @@ public class JavacParser implements Parser {
     
     // Panini code
     JCExpression lambdaExpressionOrStatementRest2(List<JCVariableDecl> args, JCExpression type, int pos){
-		if (token.kind == LBRACE) {
-			JCBlock block = block(pos, 0);
-			return toP(F.at(pos).CapsuleLambdaExpression(args, type, block));
-		} else {
-			JCTree expr = parseExpression();
-			return toP(F.at(pos).CapsuleLambdaExpression(args, type, expr));
-		}
+		JCTree body;
+		if (token.kind == LBRACE)
+			body = block(pos, 0);
+		else
+			body = parseExpression();
+		if (type.getTag().equals(Tag.TYPEIDENT) &&!type.toString().equals("void")) {
+			return toP(F.at(pos).CapsulePrimitiveLambdaExpression(args, type,
+					body));
+		} else
+			return toP(F.at(pos).CapsuleLambdaExpression(args, type, body));
     }
     // end Panini code
 

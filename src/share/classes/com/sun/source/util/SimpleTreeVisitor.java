@@ -341,5 +341,9 @@ public class SimpleTreeVisitor<R, P> implements TreeVisitor<R, P> {
 	public R visitCapsuleLambda(CapsuleLambdaExpressionTree node, P p) {
 		return defaultAction(node, p);
 	};
+	
+	public R visitPrimitiveCapsuleLambda(CapsulePrimitiveLambdaExpressionTree node, P p) {
+		return defaultAction(node, p);
+	};
 	// end Panini code
 }

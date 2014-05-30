@@ -604,6 +604,20 @@ public class Pretty extends JCTree.Visitor {
             throw new UncheckedIOException(e);
         }
     }
+    
+    @Override
+    public void visitPrimitiveCapsuleLambda(JCPrimitiveCapsuleLambda tree) {
+    	try {
+            print("(");
+            printExprs(tree.params);
+            print("):");
+            printExpr(tree.restype);
+            print(" ->");
+            printExpr(tree.body);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
         
     public void visitCapsuleDef(JCCapsuleDecl tree){
     	try{

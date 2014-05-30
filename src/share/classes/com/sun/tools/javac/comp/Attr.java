@@ -846,6 +846,11 @@ public class Attr extends JCTree.Visitor {
     public void visitCapsuleLambda(JCCapsuleLambda tree){
     	pAttr.visitCapsuleLambda(tree, this, env, rs);
     }
+    
+    @Override
+    public void visitPrimitiveCapsuleLambda(JCPrimitiveCapsuleLambda tree){
+    	pAttr.visitPrimitiveCapsuleLambda(tree, this, env, rs);
+    }
 
     @Override
     public void visitCapsuleArray(JCCapsuleArray tree) {

@@ -322,10 +322,26 @@ public class Internal {
         return make0().TypeIdent(TypeTags.BYTE);
     }
     
+    protected JCPrimitiveTypeTree chart() {
+        return make0().TypeIdent(TypeTags.CHAR);
+    }
+    
     protected JCPrimitiveTypeTree longt() {
         return make0().TypeIdent(TypeTags.LONG);
     }
+    
+    protected JCPrimitiveTypeTree doublet() {
+        return make0().TypeIdent(TypeTags.DOUBLE);
+    }
 
+    protected JCPrimitiveTypeTree floatt() {
+        return make0().TypeIdent(TypeTags.FLOAT);
+    }
+    
+    protected JCPrimitiveTypeTree shortt() {
+        return make0().TypeIdent(TypeTags.SHORT);
+    }
+    
     protected JCLiteral truev() {
         return make0().Literal(new Boolean(true));
     }
@@ -484,6 +500,12 @@ public class Internal {
         return make0().Apply(List.<JCExpression>nil(),
                              make0().Select(id(s), n),
                              List.<JCExpression>nil());
+    }
+    
+    protected JCMethodInvocation apply(String function, ListBuffer<JCExpression> args) {
+        return make0().Apply(List.<JCExpression>nil(),
+                             id(function),
+                             args.toList());
     }
 
     protected JCMethodInvocation supert() {

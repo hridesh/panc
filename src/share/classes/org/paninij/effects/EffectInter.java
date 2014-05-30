@@ -386,6 +386,7 @@ public class EffectInter {
 
 	private static final boolean IOeffect(JCFieldAccess meth) {
 		Symbol field = meth.sym;
+		if(field!=null)
 		if (field.toString().indexOf("print(") != -1 ||
 				field.toString().compareTo("println(") != -1) {
 			JCExpression selected = meth.selected;
@@ -409,6 +410,7 @@ public class EffectInter {
 		{"java.lang.Math","sqrt"}};
 
 	private static final boolean pure(Symbol meth) {
+		if(meth == null) return false;
 		Symbol c = meth.enclClass();
 		if (c.toString().startsWith("java.lang.String")) {
 			return true;

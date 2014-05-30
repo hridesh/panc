@@ -1082,6 +1082,75 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		}
     }
 
+    /**
+     * A capsule lambda expression.
+     */
+    public static class JCPrimitiveCapsuleLambda extends JCMethodInvocation implements CapsulePrimitiveLambdaExpressionTree {
+
+        public List<JCVariableDecl> params;
+        public JCTree body;
+        public Type targetType;
+        public boolean canCompleteNormally = true;
+        public List<Type> inferredThrownTypes;
+        public JCExpression restype;
+        public Name capsuleName;
+        public boolean newClass = false;
+
+        public JCPrimitiveCapsuleLambda(List<JCVariableDecl> params, JCExpression restype,
+                        JCTree body) {
+        	super(List.<JCExpression>nil(), restype, List.<JCExpression>nil());
+            this.params = params;
+            this.restype = restype;
+            this.body = body;
+            this.capsuleName = params.head.name;
+        }
+        @Override
+        public Tag getTag() {
+        	if(!newClass)
+        		return LAMBDA;
+        	else
+        		return APPLY;
+        				
+        }
+        @Override
+        public void accept(Visitor v) {
+        	if(!newClass)
+        		v.visitPrimitiveCapsuleLambda(this);
+        	else
+        		v.visitApply(this);
+        }
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+        	if(!newClass)
+        		return v.visitPrimitiveCapsuleLambda(this, d);
+        	else
+        		return v.visitMethodInvocation(this, d);
+            
+        }
+        public Kind getKind() {
+        	if(!newClass)
+        		return Kind.CAPSULE_LAMBDA;
+        	else
+        		return Kind.METHOD_INVOCATION;
+        }
+        public JCTree getBody() {
+            return body;
+        }
+        public java.util.List<? extends VariableTree> getParameters() {
+            return params;
+        }
+        @Override
+        public BodyKind getBodyKind() {
+            return body.hasTag(BLOCK) ?
+                    BodyKind.STATEMENT :
+                    BodyKind.EXPRESSION;
+        }
+		@Override
+		public Tree getReturnType() {
+			return restype;
+		}
+    }
+    
 	public static class JCFree extends JCExpression implements FreeTree {
 		public JCExpression exp;
 
@@ -3487,6 +3556,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitIndexedCapsuleWiring(JCCapsuleArrayCall that) { visitTree(that); }
         public void visitCapsuleArray(JCCapsuleArray that)   { visitTree(that); }
         public void visitCapsuleLambda(JCCapsuleLambda that)   { visitTree(that); }
+        public void visitPrimitiveCapsuleLambda(JCPrimitiveCapsuleLambda that)   { visitTree(that); }
         /**
          * Wiring blocks/system decls delegate to visitMethodDef unless specifically
          * overriden for a reason. Keeps the common case of 'this is a method decl'.

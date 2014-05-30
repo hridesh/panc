@@ -31,7 +31,7 @@ import java.util.List;
  *   (x,y)-> { return x + y; }
  * </pre>
  */
-public interface CapsuleLambdaExpressionTree extends ExpressionTree {
+public interface CapsulePrimitiveLambdaExpressionTree extends ExpressionTree {
 
     /**
      * Lambda expressions come in two forms: (i) expression lambdas, whose body

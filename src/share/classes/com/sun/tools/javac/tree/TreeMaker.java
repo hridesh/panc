@@ -240,6 +240,13 @@ public class TreeMaker implements JCTree.Factory {
 		return tree;
 	}
 
+	public JCPrimitiveCapsuleLambda CapsulePrimitiveLambdaExpression(List<JCVariableDecl> params,
+			JCExpression restype, JCTree body) {
+		JCPrimitiveCapsuleLambda tree = new JCPrimitiveCapsuleLambda(params, restype, body);
+		tree.pos = pos;
+		return tree;
+	}
+	
 	public JCDesignBlock WiringBlock(JCModifiers mods, JCBlock body)  {
         JCDesignBlock tree = new JCDesignBlock(mods,
                 names.panini.InternalCapsuleWiring, TypeIdent(TypeTags.VOID),

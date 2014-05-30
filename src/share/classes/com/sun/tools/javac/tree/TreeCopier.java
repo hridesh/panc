@@ -508,6 +508,14 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         return M.at(t.pos).CapsuleLambdaExpression(params, restype, body);
 	}
     
+    public JCTree visitPrimitiveCapsuleLambda(CapsulePrimitiveLambdaExpressionTree node, P p) {
+    	JCPrimitiveCapsuleLambda t = (JCPrimitiveCapsuleLambda) node;
+        JCExpression restype = copy(t.restype, p);
+        List<JCVariableDecl> params = copy(t.params, p);
+        JCTree body = copy(t.body, p);
+        return M.at(t.pos).CapsulePrimitiveLambdaExpression(params, restype, body);
+	}
+    
 	public JCTree visitWiringBlock(InternalWiringMethod node, P p) {
 		JCDesignBlock t = (JCDesignBlock)node;
         JCModifiers mods = copy(t.mods, p);
