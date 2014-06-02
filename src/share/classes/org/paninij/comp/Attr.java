@@ -344,6 +344,7 @@ public final class Attr extends CapsuleInternal {
 				((JCCapsuleLambda) tree).args = ((JCCapsuleLambda) tree).args
 						.append(id(var.name));
 			}
+			tree.accept(attr);
 		} else if (tree instanceof JCPrimitiveCapsuleLambda) {
 			transformCapsuleLambdaBody(tree,
 					((JCPrimitiveCapsuleLambda) lambda).capsuleName);
