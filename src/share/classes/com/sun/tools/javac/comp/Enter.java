@@ -773,7 +773,7 @@ public class Enter extends JCTree.Visitor {
 	        c.flags_field = processCapsuleAnnotations(tree, c);
 	        ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
 			if ((c.flags_field & SERIAL) != 0) {
-				definitions = translateSerialCapsule(tree, c, localEnv, false);
+				definitions = translateSerialCapsule(tree, c, localEnv, false, false);
 				tree.extending = make.Ident(names
 						.fromString(PaniniConstants.PANINI_CAPSULE_SEQUENTIAL));
 				tree.parentCapsule.sym.capsule_info.translated_serial = c;
@@ -784,7 +784,7 @@ public class Enter extends JCTree.Visitor {
 						.fromString(PaniniConstants.PANINI_CAPSULE_TASK));
 				tree.parentCapsule.sym.capsule_info.translated_task = c;
 			} else if ((c.flags_field & MONITOR) != 0) {
-				definitions = translateSerialCapsule(tree, c, localEnv, true);
+				definitions = translateSerialCapsule(tree, c, localEnv, true, false);
 				tree.extending = make.Ident(names
 						.fromString(PaniniConstants.PANINI_CAPSULE_SEQUENTIAL));
 				tree.parentCapsule.sym.capsule_info.translated_monitor = c;
@@ -813,6 +813,9 @@ public class Enter extends JCTree.Visitor {
 	                null));
 	    	tree.defs = definitions.toList();
         }else {
+        	if(tree.implementing.isEmpty()){//signatures
+        		tree.defs = translateSerialCapsule(tree, c, localEnv, false, true).toList();
+        	}
         	List<JCVariableDecl> fields = tree.getParameters();
 	    	while(fields.nonEmpty()){
 	    		tree.defs = tree.defs.prepend(make.VarDef(make.Modifiers(PUBLIC),
@@ -847,7 +850,7 @@ public class Enter extends JCTree.Visitor {
     }
     
 	private ListBuffer<JCTree> translateSerialCapsule(JCCapsuleDecl tree,
-			ClassSymbol c, Env<AttrContext> localEnv, boolean isMonitor) {
+			ClassSymbol c, Env<AttrContext> localEnv, boolean isMonitor, boolean isSignature) {
 		ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
 		for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
 			JCTree def = l.head;
@@ -862,7 +865,18 @@ public class Enter extends JCTree.Visitor {
 					definitions.add(mdecl);
 				} else if ((mdecl.mods.flags & PRIVATE) == 0
 						&& (mdecl.mods.flags & PROTECTED) == 0) {
-					JCProcDecl p = make.ProcDef(make.Modifiers(PUBLIC | FINAL),
+					long methodFlags = (PUBLIC | FINAL);
+					if(isSignature){
+						methodFlags = (PUBLIC);
+						JCMethodDecl push = make.MethodDef(make.Modifiers(PUBLIC), 
+								names.fromString(PaniniConstants.PANINI_PUSH), 
+								make.TypeIdent(TypeTags.VOID), List.<JCTypeParameter>nil(), 
+								List.<JCVariableDecl>of(make.VarDef(make.Modifiers(0), names.fromString("o"),
+										make.Ident(names.fromString("Object")), null))
+										, List.<JCExpression>nil(), null, null);
+						definitions.add(push);
+					}
+					JCProcDecl p = make.ProcDef(make.Modifiers(methodFlags),
 							mdecl.name, mdecl.restype, mdecl.typarams,
 							mdecl.params, mdecl.thrown, mdecl.body, null);
 					if (isMonitor)
@@ -871,7 +885,7 @@ public class Enter extends JCTree.Visitor {
 					tree.publicMethods = tree.publicMethods.append(p);
 					TreeCopier<Void> tc = new TreeCopier<Void>(make);
 					JCMethodDecl methodCopy = make.MethodDef(
-							make.Modifiers(PUBLIC | FINAL),
+							make.Modifiers(methodFlags),
 							mdecl.name.append(names.fromString("$Original")),
 							tc.copy(mdecl.restype), tc.copy(mdecl.typarams),
 							tc.copy(mdecl.params), tc.copy(mdecl.thrown),
