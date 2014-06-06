@@ -1,11 +1,19 @@
 #!/bin/bash
 
-mydir=`dirname $0`
+PANC_LOC="${BASH_SOURCE[0]}"
+while [ -h "$PANC_LOC" ]; do # resolve $PANC_LOC until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$PANC_LOC" )" && pwd )"
+  PANC_LOC="$(readlink "$PANC_LOC")"
+  [[ $PANC_LOC != /* ]] && PANC_LOC="$DIR/$PANC_LOC" # if $PANC_LOC was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+PANC_DIR="$( cd -P "$( dirname "$PANC_LOC" )" && pwd )"
+
+# PANC_DIR=`dirname $0`
 case `uname -s` in
     CYGWIN*)
-      mydir=`cygpath -m $mydir`
+      PANC_DIR=`cygpath -m $PANC_DIR`
       ;;
 esac
-export PANC_HOME=$mydir/..
+export PANC_HOME=$PANC_DIR/..
 
 $PANC_HOME/lib/dist/bin/panc -source 1.6 -target 1.6 -cp $PANC_HOME/lib/panini_rt.jar:. -Xlint:-options ${@}
