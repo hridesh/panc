@@ -344,7 +344,6 @@ public final class Attr extends CapsuleInternal {
 				((JCCapsuleLambda) tree).args = ((JCCapsuleLambda) tree).args
 						.append(id(var.name));
 			}
-			tree.accept(attr);
 		} else if (tree instanceof JCPrimitiveCapsuleLambda) {
 			transformCapsuleLambdaBody(tree,
 					((JCPrimitiveCapsuleLambda) lambda).capsuleName);
@@ -375,6 +374,7 @@ public final class Attr extends CapsuleInternal {
 			((JCCapsuleDecl) env.enclClass).lambdaExpressionCounts++;
 			((JCPrimitiveCapsuleLambda) tree).newClass = true;
 		}
+		tree.accept(attr);
 	}
 	
 	

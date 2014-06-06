@@ -876,6 +876,29 @@ public class CapsuleInternal extends Internal {
 				select(thist(),
 						PaniniConstants.PANINI_MESSAGE_ID),
 				id(PaniniConstants.PANINI_MESSAGE_ID))));
+		if (isLambdaDuck) {
+			ListBuffer<JCVariableDecl> constructorVariables = new ListBuffer<JCVariableDecl>();
+			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
+				JCVariableDecl par = l.head;
+				if (syms.capsules.containsKey(names
+						.fromString(par.vartype.toString()))) {
+					constructorVariables
+							.add(var(mods(0), par.name.toString(),
+									par.vartype.toString()));
+					variableFields
+							.add(var(mods(PUBLIC), par.name.toString(),
+									par.vartype.toString()));
+				} else {
+					constructorVariables.add(var(mods(0),
+							par.name.toString(), par.vartype));
+					variableFields.add(var(mods(PUBLIC),
+							par.name.toString(), par.vartype));
+				}
+			}
+			constructors
+					.add(createPrimitiveLambdaDuckConstructor(constructorVariables));
+		}
+		else
 		if (!method.params.isEmpty()) {
 			for (List<JCVariableDecl> vl = method.params; vl
 					.nonEmpty(); vl = vl.tail) {
@@ -890,29 +913,7 @@ public class CapsuleInternal extends Internal {
 				variableFields.add(var(mods(PUBLIC), names
 						.fromString(createFieldString(method.name, par,
 								method.params)), par.vartype));
-				if (isLambdaDuck) {
-					ListBuffer<JCVariableDecl> constructorVariables = new ListBuffer<JCVariableDecl>();
-					for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
-						par = l.head;
-						if (syms.capsules.containsKey(names
-								.fromString(par.vartype.toString()))) {
-							constructorVariables
-									.add(var(mods(0), par.name.toString(),
-											par.vartype.toString()));
-							variableFields
-									.add(var(mods(PUBLIC), par.name.toString(),
-											par.vartype.toString()));
-						} else {
-							constructorVariables.add(var(mods(0),
-									par.name.toString(), par.vartype));
-							variableFields.add(var(mods(PUBLIC),
-									par.name.toString(), par.vartype));
-						}
-					}
-					constructors
-							.add(createPrimitiveLambdaDuckConstructor(constructorVariables));
-				}
-				else
+				
 				if (!par.vartype.type.isPrimitive())
 					paniniFinish.body.stats = paniniFinish.body.stats
 							.append(es(assign(
