@@ -862,7 +862,7 @@ public class CapsuleInternal extends Internal {
 								truev())),
 								es(apply("notifyAll"))))));
 
-		wrappedMethods.add(this.createPaniniMessageID(true));
+		wrappedMethods.add(this.createPaniniMessageID(isLambdaDuck));
 
 		ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
 
