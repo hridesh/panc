@@ -295,13 +295,37 @@ public final class Attr extends CapsuleInternal {
 	public void visitCapsuleLambda(JCCapsuleLambda tree,
 			final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env,
 			Resolve rs) {
+		checkLambdaArguments(tree);
 		transformCapsuleLambda(tree, attr, env, rs);
 	}
 
 	public void visitPrimitiveCapsuleLambda(JCPrimitiveCapsuleLambda tree,
 			final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env,
 			Resolve rs) {
+		checkLambdaArguments(tree);
 		transformCapsuleLambda(tree, attr, env, rs);
+	}
+	
+	private void checkLambdaArguments(JCCapsuleLambda tree){
+		boolean first = true;
+		for(List<JCVariableDecl> l = tree.params; l.nonEmpty(); l=l.tail){
+			JCVariableDecl exp = l.head;
+			if(!first && syms.capsules.containsKey(names.fromString(exp.vartype.toString()))){
+				log.error(exp.pos(), "capsule.type.free.variables.found");
+			}
+			first = false;
+		}
+	}
+	
+	private void checkLambdaArguments(JCPrimitiveCapsuleLambda tree){
+		boolean first = true;
+		for(List<JCVariableDecl> l = tree.params; l.nonEmpty(); l=l.tail){
+			JCVariableDecl exp = l.head;
+			if(!first && syms.capsules.containsKey(names.fromString(exp.vartype.toString()))){
+				log.error(exp.pos(), "capsule.type.free.variables.found");
+			}
+			
+		}
 	}
 	
 	/**

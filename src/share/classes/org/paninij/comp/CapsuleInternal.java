@@ -878,23 +878,7 @@ public class CapsuleInternal extends Internal {
 				id(PaniniConstants.PANINI_MESSAGE_ID))));
 		if (isLambdaDuck) {
 			ListBuffer<JCVariableDecl> constructorVariables = new ListBuffer<JCVariableDecl>();
-			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
-				JCVariableDecl par = l.head;
-				if (syms.capsules.containsKey(names
-						.fromString(par.vartype.toString()))) {
-					constructorVariables
-							.add(var(mods(0), par.name.toString(),
-									par.vartype.toString()));
-					variableFields
-							.add(var(mods(PUBLIC), par.name.toString(),
-									par.vartype.toString()));
-				} else {
-					constructorVariables.add(var(mods(0),
-							par.name.toString(), par.vartype));
-					variableFields.add(var(mods(PUBLIC),
-							par.name.toString(), par.vartype));
-				}
-			}
+			copyConstructorFields(constructorVariables, variableFields, method);
 			constructors
 					.add(createPrimitiveLambdaDuckConstructor(constructorVariables));
 		}
@@ -1041,21 +1025,7 @@ public class CapsuleInternal extends Internal {
 
 		if (isLambdaDuck) {
 			ListBuffer<JCVariableDecl> constructorVariables = new ListBuffer<JCVariableDecl>();
-			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
-				JCVariableDecl par = l.head;
-				if (syms.capsules.containsKey(names.fromString(par.vartype
-						.toString()))) {
-					constructorVariables.add(var(mods(0), par.name.toString(),
-							par.vartype.toString()));
-					variableFields.add(var(mods(PUBLIC), par.name.toString(),
-							par.vartype.toString()));
-				} else {
-					constructorVariables.add(var(mods(0), par.name.toString(),
-							par.vartype));
-					variableFields.add(var(mods(PUBLIC), par.name.toString(),
-							par.vartype));
-				}
-			}
+			copyConstructorFields(constructorVariables, variableFields, method);
 			constructors.add(createLambdaDuckConstructor(constructorVariables));
 		} else if (!method.params.isEmpty()) {
 			ListBuffer<JCStatement> consBody = new ListBuffer<JCStatement>();
@@ -1227,24 +1197,9 @@ public class CapsuleInternal extends Internal {
 //			implement = implement.append(id(PaniniConstants.PANINI_LAMBDA));
 
 		ListBuffer<JCTree> variableFields = new ListBuffer<JCTree>();
-
 		if (isLambdaDuck) {
 			ListBuffer<JCVariableDecl> constructorVariables = new ListBuffer<JCVariableDecl>();
-			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
-				JCVariableDecl par = l.head;
-				if (syms.capsules.containsKey(names.fromString(par.vartype
-						.toString()))) {
-					constructorVariables.add(var(mods(0), par.name.toString(),
-							par.vartype.toString()));
-					variableFields.add(var(mods(PUBLIC), par.name.toString(),
-							par.vartype.toString()));
-				} else {
-					constructorVariables.add(var(mods(0), par.name.toString(),
-							par.vartype));
-					variableFields.add(var(mods(PUBLIC), par.name.toString(),
-							par.vartype));
-				}
-			}
+			copyConstructorFields(constructorVariables, variableFields, method);
 			constructors.add(createLambdaDuckConstructor(constructorVariables));
 		} else if (!method.params.isEmpty()) {
 			for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
@@ -1285,6 +1240,30 @@ public class CapsuleInternal extends Internal {
 						.appendList(wrappedMethods).toList());
 
 		return wrappedClass;
+	}
+	
+	/**
+	 * Copy the variables of a public method into the given list buffer used for creating constructors
+	 * Also make create a copy of those fields in the variable list buffer given.
+	 */
+	private void copyConstructorFields(
+			ListBuffer<JCVariableDecl> constructorVariables,
+			ListBuffer<JCTree> variableFields, JCMethodDecl method) {
+		for (List<JCVariableDecl> l = method.params; l.nonEmpty(); l = l.tail) {
+			JCVariableDecl par = l.head;
+			if (syms.capsules.containsKey(names.fromString(par.vartype
+					.toString()))) {
+				constructorVariables.add(var(mods(0), par.name.toString(),
+						par.vartype.toString()));
+				variableFields.add(var(mods(PUBLIC), par.name.toString(),
+						par.vartype.toString()));
+			} else {
+				constructorVariables.add(var(mods(0), par.name.toString(),
+						par.vartype));
+				variableFields.add(var(mods(PUBLIC), par.name.toString(),
+						par.vartype));
+			}
+		}
 	}
 
 	private JCMethodDecl createPaniniFinishMethod(ClassSymbol restype,
