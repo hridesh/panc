@@ -44,6 +44,7 @@ public class PaniniConstants {
 	public final static String PANINI_LAMBDA_BODY = "lambda$body";
 	public final static String ARRAY_DUCKS = "Array$Types";
 	public final static String PANINI_FINISH = "panini$finish";
+	public final static String PANINI_FINISH2 = "panini$finish2";//used for string lambdas
 	public final static String PANINI_MESSAGE = "panini$message";
 	public final static String PANINI_DUCK_GET = "panini$get";
 	public final static String PANINI_GET_NEXT_DUCK = "get$Next$Duck";

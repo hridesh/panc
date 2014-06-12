@@ -403,6 +403,8 @@ public final class Attr extends CapsuleInternal {
 	
 	
 	private String getValue(JCExpression exp){
+		if(exp instanceof JCIdent)
+			return "toString";
 		if(exp instanceof JCPrimitiveTypeTree)
 		switch(((JCPrimitiveTypeTree) exp).getPrimitiveTypeKind()){
 			case LONG:

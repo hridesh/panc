@@ -535,6 +535,9 @@ public class CapsuleInternal extends Internal {
 	}
 	
 	private JCExpression boxPrimitive(JCExpression exp){
+		if(exp instanceof JCIdent){
+			return id("String");
+		}
 		if(exp instanceof JCPrimitiveTypeTree){
 			switch (((JCPrimitiveTypeTree) exp).getPrimitiveTypeKind()){
 			case LONG:
@@ -835,6 +838,19 @@ public class CapsuleInternal extends Internal {
 		JCMethodDecl paniniFinish;
 		if (isLambdaDuck) {
 			JCExpression restype = boxPrimitive(method.restype);
+			if(method.restype.toString().equals("String")){
+				paniniFinish = method(
+						mods(PUBLIC | FINAL),
+						PaniniConstants.PANINI_FINISH,
+						voidt(),
+						params(var(mods(0), "t", restype)),
+						body(es(apply(PaniniConstants.PANINI_FINISH2,
+								args(apply(PaniniConstants.PANINI_LAMBDA_BODY)))),
+								sync(thist(),
+										// The duck is ready.
+										body(es(assign(PaniniConstants.REDEEMED,
+												truev())), es(apply("notifyAll"))))));
+			}else
 			paniniFinish = method(
 					mods(PUBLIC | FINAL),
 					PaniniConstants.PANINI_FINISH,
@@ -846,7 +862,10 @@ public class CapsuleInternal extends Internal {
 									// The duck is ready.
 									body(es(assign(PaniniConstants.REDEEMED,
 											truev())), es(apply("notifyAll"))))));
-			wrappedMethods.add(method(mods(PRIVATE), names.panini.PaniniLambdaBody, method.restype, method.body));
+			
+			wrappedMethods
+					.add(method(mods(PRIVATE), names.panini.PaniniLambdaBody,
+							method.restype, method.body));
 		} else
 //		//Maybe I should remove this.
 		paniniFinish = method(
@@ -1297,9 +1316,6 @@ public class CapsuleInternal extends Internal {
 
 	private JCMethodDecl createPaniniMessageID(boolean isLambdaDuck) {
 		JCBlock methodBody;
-		if (isLambdaDuck)
-			methodBody = body(returnt(intlit(-3)));
-		else
 			methodBody = body(returnt(select(thist(),
 					PaniniConstants.PANINI_MESSAGE_ID)));
 		return method(mods(PUBLIC | FINAL),

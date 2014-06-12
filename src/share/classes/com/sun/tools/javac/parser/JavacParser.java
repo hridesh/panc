@@ -29,12 +29,10 @@ import java.util.*;
 
 import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
 import com.sun.source.tree.Tree.Kind;
-
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.parser.Tokens.*;
 import com.sun.tools.javac.parser.Tokens.Comment.CommentStyle;
 import com.sun.tools.javac.tree.*;
-import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag;
@@ -42,7 +40,6 @@ import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
 
 import static com.sun.tools.javac.parser.Tokens.TokenKind.*;
-
 import static com.sun.tools.javac.util.ListBuffer.lb;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.ASSERT;
@@ -52,6 +49,7 @@ import static com.sun.tools.javac.parser.Tokens.TokenKind.EQ;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.GT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.IMPORT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.LT;
+
 
 // Panini code
 import org.paninij.parser.PaniniTokens;
@@ -1421,7 +1419,7 @@ public class JavacParser implements Parser {
 			body = block(pos, 0);
 		else
 			body = parseExpression();
-		if (type.getTag().equals(Tag.TYPEIDENT) &&!type.toString().equals("void")) {
+		if ((type.getTag().equals(Tag.TYPEIDENT) &&!type.toString().equals("void"))||type.toString().equals("String")) {
 			return toP(F.at(pos).CapsulePrimitiveLambdaExpression(args, type,
 					body));
 		} else

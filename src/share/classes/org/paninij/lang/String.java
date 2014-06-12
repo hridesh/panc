@@ -251,6 +251,21 @@ public class String extends Object implements CharSequence,
             notifyAll();
         }
     }
+    
+    /**
+     * Save the value and notify listeners the value is available.
+     * This is a duplicate of panini$finish only used by string lambdas because the 
+     * panini$finish method will be overwritten
+     * @param s    {@code java.lang.String} to use as a value. Method will pull
+     *             the wrapped {@code String} out as the value.
+     */
+    public void panini$finish2(java.lang.String s) {
+        synchronized(this) {
+            value = s;
+            panini$redeemed = true;
+            notifyAll();
+        }
+    }
 
     /**
      * Get the message id for the duck. The message id is used by the generated
