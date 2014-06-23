@@ -175,7 +175,6 @@ public class EffectIntra {
 	public static void addFieldAccessEffect(JCFieldAccess jcf,
 			AliasingGraph aliasing, EffectSet result, int readOrWrite) {
 		Symbol sym = jcf.sym;
-		if(sym!=null)
 		if ((sym.flags_field & Flags.STATIC) == 0) {
 			if (sym.getKind() == ElementKind.FIELD) {
 				JCExpression selected = jcf.selected;
@@ -205,7 +204,6 @@ public class EffectIntra {
 	public static void addIdentEffect(JCIdent left, EffectSet fcg,
 			int readOrWrite) {
 		Symbol sym = left.sym;
-		if(sym!=null)
 		if ((sym.flags_field & Flags.STATIC) == 0) {
 			ElementKind kind = sym.getKind();
 			if (kind == ElementKind.FIELD) {
