@@ -852,6 +852,15 @@ public class Enter extends JCTree.Visitor {
 	private ListBuffer<JCTree> translateSerialCapsule(JCCapsuleDecl tree,
 			ClassSymbol c, Env<AttrContext> localEnv, boolean isMonitor, boolean isSignature) {
 		ListBuffer<JCTree> definitions = new ListBuffer<JCTree>();
+		if(isSignature){
+			JCMethodDecl push = make.MethodDef(make.Modifiers(PUBLIC), 
+					names.fromString(PaniniConstants.PANINI_PUSH), 
+					make.TypeIdent(TypeTags.VOID), List.<JCTypeParameter>nil(), 
+					List.<JCVariableDecl>of(make.VarDef(make.Modifiers(0), names.fromString("o"),
+							make.Ident(names.fromString("Object")), null))
+							, List.<JCExpression>nil(), null, null);
+			definitions.add(push);
+		}
 		for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
 			JCTree def = l.head;
 			if (def.getTag() == Tag.METHODDEF) {
@@ -868,13 +877,6 @@ public class Enter extends JCTree.Visitor {
 					long methodFlags = (PUBLIC | FINAL);
 					if(isSignature){
 						methodFlags = (PUBLIC);
-						JCMethodDecl push = make.MethodDef(make.Modifiers(PUBLIC), 
-								names.fromString(PaniniConstants.PANINI_PUSH), 
-								make.TypeIdent(TypeTags.VOID), List.<JCTypeParameter>nil(), 
-								List.<JCVariableDecl>of(make.VarDef(make.Modifiers(0), names.fromString("o"),
-										make.Ident(names.fromString("Object")), null))
-										, List.<JCExpression>nil(), null, null);
-						definitions.add(push);
 					}
 					JCProcDecl p = make.ProcDef(make.Modifiers(methodFlags),
 							mdecl.name, mdecl.restype, mdecl.typarams,
