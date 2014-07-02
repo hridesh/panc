@@ -37,7 +37,7 @@ public interface PaniniCapsule{
   	 * from all its parents, a terminate call is made to shutdown the capsule
   	 * running thread. This is part of automatic garbage collection of capsules.
   	 */
-  	public void panini$disconnect();
+  	public void shutdown();
   	
   	/**
   	 * Causes the current capsule to immediately cease execution. 
