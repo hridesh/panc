@@ -2807,182 +2807,180 @@ public class JavacParser implements Parser {
         }
     }
     ////////////////AUXILARY PANINI METHODS///////////////////////
-     JCStatement capsuleDecl(JCModifiers mod, String dc){
-     	accept(IDENTIFIER);
-     	int pos = token.pos;
-     	Name name = ident();
-     	if(token.kind == EXTENDS){
-     		log.error(token.pos, "capsule.extend.error");
-     		nextToken();
-     		parseType();
-     	}
- 		List<JCVariableDecl> params; 
-     	if(token.kind == LPAREN)
-     		params = formalParameters();
-     	else
-     		params = List.<JCVariableDecl>nil();
-     	List<JCExpression> implementing = List.nil();
-        if (token.kind == IMPLEMENTS) {
-            nextToken();
-            implementing = typeList();
-        }
-//     	List<JCTree> defs = classOrInterfaceBody(name, false);
-        initializerDeclared = false;
-        List<JCTree> defs = capsuleBody(name);
-     	JCCapsuleDecl result = 
-     			toP(F.at(pos).CapsuleDef(mod, name, params, implementing, defs));
-     	attach(result, dc);
-     	return result;
-     }
+    JCStatement capsuleDecl(JCModifiers mod, String dc){
+    	accept(IDENTIFIER);
+    	int pos = token.pos;
+    	Name name = ident();
+    	if(token.kind == EXTENDS){
+    		log.error(token.pos, "capsule.extend.error");
+    		nextToken();
+    		parseType();
+    	}
+    	List<JCVariableDecl> params; 
+    	if(token.kind == LPAREN)
+    		params = formalParameters();
+    	else
+    		params = List.<JCVariableDecl>nil();
+    	List<JCExpression> implementing = List.nil();
+    	if (token.kind == IMPLEMENTS) {
+    		nextToken();
+    		implementing = typeList();
+    	}
+    	initializerDeclared = false;
+    	List<JCTree> defs = capsuleBody(name);
+    	JCCapsuleDecl result = toP(F.at(pos).CapsuleDef(mod, name, params, implementing, defs));
+    	attach(result, dc);
+    	return result;
+    }
      
-     List<JCTree> capsuleBody(Name className) {
-         accept(LBRACE);
-         if (token.pos <= endPosTable.errorEndPos) {
-             // error recovery
-             skip(false, true, false, false);
-             if (token.kind == LBRACE)
-                 nextToken();
-         }
-         ListBuffer<JCTree> defs = new ListBuffer<JCTree>();
-         while (token.kind != RBRACE && token.kind != EOF) {
-             defs.appendList(capsuleBodyDeclaration(className, false));
-             if (token.pos <= endPosTable.errorEndPos) {
-                // error recovery
-                skip(false, true, true, false);
-            }
-         }
-         accept(RBRACE);
-         return defs.toList();
-     }
+    List<JCTree> capsuleBody(Name className) {
+	accept(LBRACE);
+	if (token.pos <= endPosTable.errorEndPos) {
+	    // error recovery
+	    skip(false, true, false, false);
+	    if (token.kind == LBRACE)
+		nextToken();
+	}
+	ListBuffer<JCTree> defs = new ListBuffer<JCTree>();
+	while (token.kind != RBRACE && token.kind != EOF) {
+	    defs.appendList(capsuleBodyDeclaration(className, false));
+	    if (token.pos <= endPosTable.errorEndPos) {
+		// error recovery
+		skip(false, true, true, false);
+	    }
+	}
+	accept(RBRACE);
+	return defs.toList();
+    }
      
-     protected List<JCTree> capsuleBodyDeclaration(Name className, boolean isInterface) {
-         if (token.kind == SEMI) {
-             nextToken();
-             return List.<JCTree>nil();
-         } else {
-             String dc = token.comment(CommentStyle.JAVADOC);
-             int pos = token.pos;
-             JCModifiers mods = modifiersOpt();
-             if (token.kind == CLASS ||
-                 token.kind == INTERFACE ||
-                 allowEnums && token.kind == ENUM) {
-                 return List.<JCTree>of(classOrInterfaceOrEnumDeclaration(mods, dc));
-             } else if (token.kind == LBRACE && !isInterface &&
-                        (mods.flags & Flags.StandardFlags & ~Flags.STATIC) == 0 &&
-                        mods.annotations.isEmpty()) {
-                 return List.<JCTree>of(block(pos, mods.flags));
-             } else if(token.kind == TokenKind.INIT){
-            	 int prevPos = token.pos;
-            	 if(mods.flags!=0)
-            		 return List.<JCTree>of(syntaxError(mods.pos, null, "mods.for.init"));
-            	 nextToken();
-            	 JCBlock body = null;
-            	 if (token.kind == LBRACE) {
-                     body = block();
-                     pos = token.pos;
-                 }else
-                	 return List.<JCTree>of(syntaxError(token.pos, null, "expected", LBRACE));
-            	 if(initializerDeclared){
-            		 log.error(prevPos, "capsules.cant.have.multiple.initializers");
-            		 return List.<JCTree>nil();
-            	 }
-            	 initializerDeclared = true;
-            	 return List.<JCTree>of(to(F.at(pos).InitDef(to(F.at(pos).Modifiers(Flags.PROTECTED)), body)));
-             } else if (token.kind == IDENTIFIER
-                     && token.name().toString().equals("design")
-                     ) {
-                 JCTree designDecl = designDecl(mods, dc);
-                 return List.<JCTree>of(designDecl);
-             } else {
-                 //State, proc decl, or helper method.
-                 pos = token.pos;
-                 List<JCTypeParameter> typarams = typeParametersOpt();
-                 // if there are type parameters but no modifiers, save the start
-                 // position of the method in the modifiers.
-                 if (typarams.nonEmpty() && mods.pos == Position.NOPOS) {
-                     mods.pos = pos;
-                     storeEnd(mods, pos);
-                 }
-                 Token tk = token;
-                 pos = token.pos;
-                 JCExpression type;
-                 boolean isVoid = token.kind == VOID;
-                 if (isVoid) {
-                     type = to(F.at(pos).TypeIdent(TypeTags.VOID));
-                     nextToken();
-                 } else {
-                     type = parseType();
-                 }
-                 if (token.kind == LPAREN && !isInterface && type.hasTag(IDENT)) {
-                     if (isInterface || tk.name() != className)
-                         error(pos, "invalid.meth.decl.ret.type.req");
-                     //Void proc or helper method
-                     checkModsCapsuleMethodDecl(mods, false);
-                     return List.of(methodDeclaratorRest(
-                         pos, mods, null, names.init, typarams,
-                         isInterface, true, dc));
-                 } else {
-                     pos = token.pos;
-                     Name name = ident();
-                     if (token.kind == LPAREN) {
-                         // proc or helper method
-                         checkModsCapsuleMethodDecl(mods, false);
-                         return List.of(methodDeclaratorRest(
-                             pos, mods, type, name, typarams,
-                             isInterface, isVoid, dc));
-                     } else if (!isVoid && typarams.isEmpty()) {
-                         boolean prevCreateVarDefs = createVarDefs;
-                         try {
-                             createVarDefs = false;
-                             //State decl list
-                             List<JCTree> defs =
-                                     variableDeclaratorsRest(pos, mods, type, name, isInterface, dc,
-                                             new ListBuffer<JCTree>()).toList();
-                             storeEnd(defs.last(), token.endPos);
-                             accept(SEMI);
-                             return defs;
-                         } finally {
-                             createVarDefs = prevCreateVarDefs;
-                         }
-                     } else {
-                         pos = token.pos;
-                         List<JCTree> err = isVoid
-                             ? List.<JCTree>of(toP(F.at(pos).MethodDef(mods, name, type, typarams,
-                                 List.<JCVariableDecl>nil(), List.<JCExpression>nil(), null, null)))
-                             : null;
-                         return List.<JCTree>of(syntaxError(token.pos, err, "expected", LPAREN));
-                     }
-                 }
-             }
-         }
-     }
-     
-     JCStatement signatureDecl(JCModifiers mod, String dc){
-    	 mod.flags |= Flags.INTERFACE;
-      	accept(IDENTIFIER);
-      	int pos = token.pos;
-      	Name name = ident();
-      	if(token.kind == EXTENDS){
-      		log.error(token.pos, "capsule.extend.error");
-      		nextToken();
-      		parseType();
-      	}
-  		List<JCVariableDecl> params; 
-      	if(token.kind == LPAREN)
-      		params = formalParameters();
-      	else
-      		params = List.<JCVariableDecl>nil();
-      	List<JCExpression> implementing = List.nil();
-      	List<JCTree> defs = classOrInterfaceBody(name, true);
-      	JCCapsuleDecl result = 
-      			toP(F.at(pos).CapsuleDef(mod, name, params, implementing, defs));
-      	attach(result, dc);
-      	return result;
-      }
-     
-     public List<JCVariableDecl> capsuleParameters(){
-    	 return formalParameters();
-     }
+    protected List<JCTree> capsuleBodyDeclaration(Name className, boolean isInterface) {
+	if (token.kind == SEMI) {
+	    nextToken();
+	    return List.<JCTree>nil();
+	} else {
+	    String dc = token.comment(CommentStyle.JAVADOC);
+	    int pos = token.pos;
+	    JCModifiers mods = modifiersOpt();
+	    if (token.kind == CLASS ||
+		    token.kind == INTERFACE ||
+		    allowEnums && token.kind == ENUM) {
+		return List.<JCTree>of(classOrInterfaceOrEnumDeclaration(mods, dc));
+	    } else if (token.kind == LBRACE && !isInterface &&
+		    (mods.flags & Flags.StandardFlags & ~Flags.STATIC) == 0 &&
+		    mods.annotations.isEmpty()) {
+		return List.<JCTree>of(block(pos, mods.flags));
+	    } else if(token.kind == TokenKind.INIT){
+		int prevPos = token.pos;
+		if(mods.flags!=0)
+		    return List.<JCTree>of(syntaxError(mods.pos, null, "mods.for.init"));
+			    nextToken();
+			    JCBlock body = null;
+			    if (token.kind == LBRACE) {
+				body = block();
+				pos = token.pos;
+			    }else
+				return List.<JCTree>of(syntaxError(token.pos, null, "expected", LBRACE));
+			    if(initializerDeclared){
+				log.error(prevPos, "capsules.cant.have.multiple.initializers");
+				return List.<JCTree>nil();
+			    }
+			    initializerDeclared = true;
+			    return List.<JCTree>of(to(F.at(pos).InitDef(to(F.at(pos).Modifiers(Flags.PROTECTED)), body)));
+	    } else if (token.kind == IDENTIFIER
+		    && token.name().toString().equals("design")
+		    ) {
+		JCTree designDecl = designDecl(mods, dc);
+		return List.<JCTree>of(designDecl);
+	    } else {
+		//State, proc decl, or helper method.
+		pos = token.pos;
+		List<JCTypeParameter> typarams = typeParametersOpt();
+		// if there are type parameters but no modifiers, save the start
+		// position of the method in the modifiers.
+		if (typarams.nonEmpty() && mods.pos == Position.NOPOS) {
+		    mods.pos = pos;
+		    storeEnd(mods, pos);
+		}
+		Token tk = token;
+		pos = token.pos;
+		JCExpression type;
+		boolean isVoid = token.kind == VOID;
+		if (isVoid) {
+		    type = to(F.at(pos).TypeIdent(TypeTags.VOID));
+		    nextToken();
+		} else {
+		    type = parseType();
+		}
+		if (token.kind == LPAREN && !isInterface && type.hasTag(IDENT)) {
+		    if (isInterface || tk.name() != className)
+			error(pos, "invalid.meth.decl.ret.type.req");
+		    //Void proc or helper method
+		    checkModsCapsuleMethodDecl(mods, false);
+		    return List.of(methodDeclaratorRest(
+			    pos, mods, null, names.init, typarams,
+			    isInterface, true, dc));
+		} else {
+		    pos = token.pos;
+		    Name name = ident();
+		    if (token.kind == LPAREN) {
+			// proc or helper method
+			checkModsCapsuleMethodDecl(mods, false);
+			return List.of(methodDeclaratorRest(
+				pos, mods, type, name, typarams,
+				isInterface, isVoid, dc));
+		    } else if (!isVoid && typarams.isEmpty()) {
+			boolean prevCreateVarDefs = createVarDefs;
+			try {
+			    createVarDefs = false;
+			    //State decl list
+			    List<JCTree> defs =
+				    variableDeclaratorsRest(pos, mods, type, name, isInterface, dc,
+					    new ListBuffer<JCTree>()).toList();
+			    storeEnd(defs.last(), token.endPos);
+			    accept(SEMI);
+			    return defs;
+			} finally {
+			    createVarDefs = prevCreateVarDefs;
+			}
+		    } else {
+			pos = token.pos;
+			List<JCTree> err = isVoid
+				? List.<JCTree>of(toP(F.at(pos).MethodDef(mods, name, type, typarams,
+					List.<JCVariableDecl>nil(), List.<JCExpression>nil(), null, null)))
+					: null;
+				return List.<JCTree>of(syntaxError(token.pos, err, "expected", LPAREN));
+		    }
+		}
+	    }
+	}
+    }
+
+    JCStatement signatureDecl(JCModifiers mod, String dc){
+	mod.flags |= Flags.INTERFACE;
+	accept(IDENTIFIER);
+	int pos = token.pos;
+	Name name = ident();
+	if(token.kind == EXTENDS){
+	    log.error(token.pos, "capsule.extend.error");
+	    nextToken();
+	    parseType();
+	}
+	List<JCVariableDecl> params; 
+	if(token.kind == LPAREN)
+	    params = formalParameters();
+	else
+	    params = List.<JCVariableDecl>nil();
+	List<JCExpression> implementing = List.nil();
+	List<JCTree> defs = classOrInterfaceBody(name, true);
+	JCCapsuleDecl result = 
+		toP(F.at(pos).CapsuleDef(mod, name, params, implementing, defs));
+	attach(result, dc);
+	return result;
+    }
+
+    public List<JCVariableDecl> capsuleParameters(){
+	return formalParameters();
+    }
      // end Panini code
 
     /** ClassDeclaration = CLASS Ident TypeParametersOpt [EXTENDS Type]
