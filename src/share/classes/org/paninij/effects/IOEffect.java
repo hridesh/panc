@@ -19,8 +19,15 @@
 
 package org.paninij.effects;
 
+import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
+
 public class IOEffect implements CallEffect {
-	public IOEffect() {}
+	// the stmt that cause this effect
+	public final JCMethodInvocation tree;
+
+	public IOEffect(JCMethodInvocation tree) {
+		this.tree = tree;
+	}
 
 	public void printEffect() {
 		System.out.println("IO effect");
@@ -39,4 +46,6 @@ public class IOEffect implements CallEffect {
 	}
 
 	public int pos() { return -1; }
+
+	public JCMethodInvocation call_stmt() { return tree; }
 }

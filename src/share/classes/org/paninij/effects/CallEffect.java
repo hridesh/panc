@@ -19,8 +19,12 @@
 
 package org.paninij.effects;
 
+import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
+
 public interface CallEffect extends EffectEntry {
 	// The position of the method call in the source code. It serves as a unique
 	// identifier for the method call within the capsule.
 	public int pos();
+
+	public JCMethodInvocation call_stmt();
 }

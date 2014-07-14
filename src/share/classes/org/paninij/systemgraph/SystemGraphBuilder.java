@@ -27,6 +27,7 @@ import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.ArrayType;
+import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.comp.*;
 
@@ -63,8 +64,8 @@ public class SystemGraphBuilder {
 	 */
 	public void addMultipleNodes(SystemGraph graph, Name name, int amount,
 			final ClassSymbol c) {
-		for (int i=0;i<amount;i++) {
-			graph.addNode(names.fromString(name+"["+i+"]"), c);
+		for (int i = 0; i < amount; i++) {
+			graph.addNode(names.fromString(name + "[" + i + "]"), c);
 		}
 		graph.capsuleArrays.put(name, amount);
 	}
@@ -121,16 +122,19 @@ public class SystemGraphBuilder {
 				MethodSymbol meth = ce.meth;
 				int pos = ce.pos;
 				int line = ce.line;
+				JCMethodInvocation tree = ce.tree;
 
-				if (n!=null)
+				if (n != null)
 					for (MethodSymbol ms :
 						n.capsule.capsule_info.procedures.keySet()) {
 						if (ms.toString().compareTo(meth.toString()) == 0) {
-							graph.setEdge(node, fromProc, n, ms, pos, line);
+							graph.setEdge(node, fromProc, n, ms, pos, line,
+									tree);
 							break;
 						}
 						if (types(ms).compareTo(types(meth)) == 0) {
-							graph.setEdge(node, fromProc, n, ms, pos, line);
+							graph.setEdge(node, fromProc, n, ms, pos, line,
+									tree);
 							break;
 						}
 					}
@@ -140,6 +144,7 @@ public class SystemGraphBuilder {
 				MethodSymbol meth = fe.meth;
 				int pos = fe.pos;
 				int line = fe.line;
+				JCMethodInvocation tree = fe.tree;
 
 				int size = calleeName.length();
 				HashMap<Name, Node> connections = node.connections;
@@ -153,11 +158,13 @@ public class SystemGraphBuilder {
 						for (MethodSymbol ms :
 							n.capsule.capsule_info.procedures.keySet()) {
 							if (ms.toString().compareTo(meth.toString()) == 0) {
-								graph.setEdge(node, fromProc, n, ms, pos, line);
+								graph.setEdge(node, fromProc, n, ms, pos, line,
+										tree);
 								break;
 							}
 							if (types(ms).compareTo(types(meth)) == 0) {
-								graph.setEdge(node, fromProc, n, ms, pos, line);
+								graph.setEdge(node, fromProc, n, ms, pos, line,
+										tree);
 								break;
 							}
 						}

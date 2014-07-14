@@ -105,8 +105,15 @@ public abstract class SeqConstCheckAlgorithm {
 	 * @param route2
 	 */
 	protected void warnSeqInconsistency(Route route1, Route route2) {
-	    log.warning("deterministic.inconsistency.warning",
-	            route1.routeStr(), route2.routeStr());
+		ArrayList<ClassMethod> nodes = route1.nodes;
+		ArrayList<Edge> edges1 = route1.edges;
+		ArrayList<Edge> edges2 = route2.edges;
+		ClassMethod cm = nodes.get(0);
+		Edge edge1 = edges1.get(0);
+		Edge edge2 = edges2.get(0);
+		log.warning("sc.warning", edge1.line, edge2.line,
+				AnalysisUtil.rmDollar(cm.cs.className()),
+				edge1.tree, edge2.tree);
 	}
 
 	private final boolean detect(HashSet<EffectEntry> s1,

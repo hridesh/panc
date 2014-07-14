@@ -230,7 +230,7 @@ public class EffectInter {
 											(MethodSymbol)(jcfa.sym), pos,
 											ds.getLineNumber(pos),
 											ds.getColumnNumber(pos, false),
-											sf.toString());
+											sf.toString(), body);
 
 									// pair of calls that need to be tested
 									for (CallEffect ce : rs.alive) {
@@ -295,7 +295,7 @@ public class EffectInter {
 					return new CapsuleEffect(cap, caps, (MethodSymbol)jcf.sym,
 							pos, ds.getLineNumber(pos), // do not expend tab
 							ds.getColumnNumber(pos, false),
-							cap.sourcefile.toString());
+							cap.sourcefile.toString(), tree);
 				}
 			}
 
@@ -319,7 +319,7 @@ public class EffectInter {
 								(MethodSymbol)jcf.sym, pos,
 								ds.getLineNumber(pos), // do not expend tab
 								ds.getColumnNumber(pos, false),
-								cap.sourcefile.toString());
+								cap.sourcefile.toString(), tree);
 					}
 				}
 			}
@@ -461,7 +461,7 @@ public class EffectInter {
 					return new ForeachEffect(curr_cap, caps, jcaa.index,
 							ms, pos, ds.getLineNumber(pos), // do not expend tab
 							ds.getColumnNumber(pos, false),
-							curr_cap.sourcefile.toString());
+							curr_cap.sourcefile.toString(), jcmd);
 				}
 			}
 		}
@@ -496,7 +496,7 @@ public class EffectInter {
 		} else if (meth instanceof JCFieldAccess) { // selected.m(...)
 			JCFieldAccess jcf = (JCFieldAccess)meth;
 			if (IOeffect(jcf)) {
-				rs.calls.add(new IOEffect());
+				rs.calls.add(new IOEffect(tree));
 				return;
 			}
 
@@ -526,7 +526,7 @@ public class EffectInter {
 							(MethodSymbol)jcf.sym, pos,
 							ds.getLineNumber(pos), // do not expend tab
 							ds.getColumnNumber(pos, false),
-							curr_cap.sourcefile.toString());
+							curr_cap.sourcefile.toString(), tree);
 
 					// pair of calls that need to be tested
 					for (CallEffect ce1 : rs.alive) {
@@ -559,13 +559,13 @@ public class EffectInter {
 										jcaa.index, (MethodSymbol)jcf.sym, pos,
 										ds.getLineNumber(pos),
 										ds.getColumnNumber(pos, false),
-										curr_cap.sourcefile.toString());
+										curr_cap.sourcefile.toString(), tree);
 							} else {
 								fe = new ForeachEffect(curr_cap, fld, false,
 										(MethodSymbol)jcf.sym, pos,
 										ds.getLineNumber(pos),
 										ds.getColumnNumber(pos, false),
-										curr_cap.sourcefile.toString());
+										curr_cap.sourcefile.toString(), tree);
 							}
 
 							// pair of calls that need to be tested
@@ -610,7 +610,7 @@ public class EffectInter {
 								jcaa.index, (MethodSymbol)jcf.sym, pos,
 								ds.getLineNumber(pos),
 								ds.getColumnNumber(pos, false), // no expend tab
-								curr_cap.sourcefile.toString());
+								curr_cap.sourcefile.toString(), tree);
 
 						// pair of calls that need to be tested
 						for (CallEffect ce : rs.alive) {
@@ -657,7 +657,7 @@ public class EffectInter {
 									receiver, ms, pos,
 									ds.getLineNumber(pos), // do not expend tab
 									ds.getColumnNumber(pos, false),
-									curr_cap.sourcefile.toString());
+									curr_cap.sourcefile.toString(), jcmi);
 
 							rs.alive.remove(ce);
 							rs.collected.add(ce);

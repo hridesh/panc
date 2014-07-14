@@ -1,3 +1,3 @@
 - compiler.warn.deterministic.inconsistency.warning.count: 1
-- compiler.warn.deterministic.inconsistency.warning: Main.m.run()-37->, Main.m.run()-38->
+- compiler.warn.sc.warning: 37, 38, Main, i2.set(new IntegerC(2)), i1.get()
 2 warnings

@@ -21,6 +21,7 @@ package org.paninij.effects;
 
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 
 public class CapsuleEffect implements CallEffect {
 	public final ClassSymbol caller;
@@ -36,9 +37,12 @@ public class CapsuleEffect implements CallEffect {
 	public final int col;
 	// the file of this call
 	public final String fileName;
+	// the stmt that cause this effect
+	public final JCMethodInvocation tree;
 
 	public CapsuleEffect(ClassSymbol caller, Symbol callee,
-			MethodSymbol meth, int pos, int line, int col, String fileName) {
+			MethodSymbol meth, int pos, int line, int col, String fileName,
+			JCMethodInvocation tree) {
 		this.caller = caller;
 		this.callee = callee;
 		this.meth = meth;
@@ -46,6 +50,7 @@ public class CapsuleEffect implements CallEffect {
 		this.line = line;
 		this.col = col;
 		this.fileName = fileName;
+		this.tree = tree;
 	}
 
 	public void printEffect() {
@@ -84,4 +89,6 @@ public class CapsuleEffect implements CallEffect {
 	}
 
 	public int pos() { return pos; }
+
+	public JCMethodInvocation call_stmt() { return tree; }
 }
