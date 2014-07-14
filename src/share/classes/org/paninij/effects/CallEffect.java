@@ -19,6 +19,8 @@
 
 package org.paninij.effects;
 
+import javax.tools.JavaFileObject;
+
 import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 
 public interface CallEffect extends EffectEntry {
@@ -27,4 +29,6 @@ public interface CallEffect extends EffectEntry {
 	public int pos();
 
 	public JCMethodInvocation call_stmt();
+
+	public JavaFileObject source_file();
 }

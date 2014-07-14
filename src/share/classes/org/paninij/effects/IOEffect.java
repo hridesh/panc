@@ -19,14 +19,19 @@
 
 package org.paninij.effects;
 
+import javax.tools.JavaFileObject;
+
 import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 
 public class IOEffect implements CallEffect {
 	// the stmt that cause this effect
 	public final JCMethodInvocation tree;
+	// the source file that contains this effect
+	public final JavaFileObject source_file;
 
-	public IOEffect(JCMethodInvocation tree) {
+	public IOEffect(JCMethodInvocation tree, JavaFileObject source_file) {
 		this.tree = tree;
+		this.source_file = source_file;
 	}
 
 	public void printEffect() {
@@ -48,4 +53,5 @@ public class IOEffect implements CallEffect {
 	public int pos() { return -1; }
 
 	public JCMethodInvocation call_stmt() { return tree; }
+	public JavaFileObject source_file() { return source_file; }
 }

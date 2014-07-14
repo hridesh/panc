@@ -19,6 +19,8 @@
 
 package org.paninij.effects;
 
+import javax.tools.JavaFileObject;
+
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
@@ -46,17 +48,19 @@ public class ForeachEffect implements CallEffect {
 	public final String fileName;
 	// the stmt that cause this effect
 	public final JCMethodInvocation tree;
+	// the source file that contains this effect
+	public final JavaFileObject source_file;
 
 	public ForeachEffect(ClassSymbol caller, Symbol callee, JCExpression index,
 			MethodSymbol meth, int pos, int line, int col, String fileName,
-			JCMethodInvocation tree) {
+			JCMethodInvocation tree, JavaFileObject source_file) {
 		this(caller, callee, AnalysisUtil.isZero(index), meth, pos, line, col,
-				fileName, tree);
+				fileName, tree, source_file);
 	}
 
 	public ForeachEffect(ClassSymbol caller, Symbol callee, boolean index,
 			MethodSymbol meth, int pos, int line, int col, String fileName,
-			JCMethodInvocation tree) {
+			JCMethodInvocation tree, JavaFileObject source_file) {
 		this.caller = caller;
 		this.callee = callee;
 		this.index = index;
@@ -66,6 +70,7 @@ public class ForeachEffect implements CallEffect {
 		this.col = col;
 		this.fileName = fileName;
 		this.tree = tree;
+		this.source_file = source_file;
 	}
 
 	public void printEffect() {
@@ -105,6 +110,6 @@ public class ForeachEffect implements CallEffect {
 	}
 
 	public int pos() { return pos; }
-
 	public JCMethodInvocation call_stmt() { return tree; }
+	public JavaFileObject source_file() { return source_file; }
 }

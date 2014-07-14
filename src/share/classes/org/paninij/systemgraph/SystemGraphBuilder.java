@@ -22,6 +22,8 @@ import static com.sun.tools.javac.code.TypeTags.ARRAY;
 
 import java.util.HashMap;
 
+import javax.tools.JavaFileObject;
+
 import com.sun.tools.javac.code.Attribute.Compound;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
@@ -123,18 +125,19 @@ public class SystemGraphBuilder {
 				int pos = ce.pos;
 				int line = ce.line;
 				JCMethodInvocation tree = ce.tree;
+				JavaFileObject source_file = ce.source_file;
 
 				if (n != null)
 					for (MethodSymbol ms :
 						n.capsule.capsule_info.procedures.keySet()) {
 						if (ms.toString().compareTo(meth.toString()) == 0) {
 							graph.setEdge(node, fromProc, n, ms, pos, line,
-									tree);
+									tree, source_file);
 							break;
 						}
 						if (types(ms).compareTo(types(meth)) == 0) {
 							graph.setEdge(node, fromProc, n, ms, pos, line,
-									tree);
+									tree, source_file);
 							break;
 						}
 					}
@@ -145,6 +148,7 @@ public class SystemGraphBuilder {
 				int pos = fe.pos;
 				int line = fe.line;
 				JCMethodInvocation tree = fe.tree;
+				JavaFileObject source_file = fe.source_file;
 
 				int size = calleeName.length();
 				HashMap<Name, Node> connections = node.connections;
@@ -159,12 +163,12 @@ public class SystemGraphBuilder {
 							n.capsule.capsule_info.procedures.keySet()) {
 							if (ms.toString().compareTo(meth.toString()) == 0) {
 								graph.setEdge(node, fromProc, n, ms, pos, line,
-										tree);
+										tree, source_file);
 								break;
 							}
 							if (types(ms).compareTo(types(meth)) == 0) {
 								graph.setEdge(node, fromProc, n, ms, pos, line,
-										tree);
+										tree, source_file);
 								break;
 							}
 						}

@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.HashMap;
 import java.util.Stack;
 
+import javax.tools.JavaFileObject;
+
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
@@ -114,10 +116,12 @@ public class SystemGraph {
 		public final int pos, line;
 		// the source code statement of this call edge
 		public final JCMethodInvocation tree;
+		// the source file that contains this effect
+		public final JavaFileObject source_file;
 		
 		Edge(Node fromNode, MethodSymbol fromProcedure, Node toNode,
 				MethodSymbol toProcedure, int pos, int line,
-				JCMethodInvocation tree) {
+				JCMethodInvocation tree, JavaFileObject source_file) {
 			this.fromNode = fromNode;
 			this.fromProcedure = fromProcedure;
 			this.toNode = toNode;
@@ -125,6 +129,7 @@ public class SystemGraph {
 			this.pos = pos;
 			this.line = line;
 			this.tree = tree;
+			this.source_file = source_file;
 		}
 
 		public String toString(){
@@ -176,9 +181,10 @@ public class SystemGraph {
 	}
 
 	void setEdge(Node fromNode, MethodSymbol fromProc, Node toNode,
-			MethodSymbol toProc, int pos, int line, JCMethodInvocation tree) {
+			MethodSymbol toProc, int pos, int line, JCMethodInvocation tree,
+			JavaFileObject source_file) {
 		edges.add(new Edge(fromNode, fromProc, toNode, toProc, pos, line,
-				tree));
+				tree, source_file));
 	}
 
 	public String toString(){
