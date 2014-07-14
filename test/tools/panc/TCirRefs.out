@@ -1,5 +1,5 @@
-- compiler.warn.cyclic.references.exists: d, c, M
 - compiler.warn.cyclic.references.exists: e, c, M
+- compiler.warn.cyclic.references.exists: d, c, M
 - compiler.err.warnings.and.werror
 1 error
 2 warnings
