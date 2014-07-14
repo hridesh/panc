@@ -30,6 +30,8 @@ import org.paninij.effects.CallEffect;
 import org.paninij.effects.EffectEntry;
 import org.paninij.effects.EffectSet;
 import org.paninij.effects.FieldEffect;
+import org.paninij.path.Path;
+import org.paninij.path.Path_Parameter;
 import org.paninij.systemgraph.SystemGraph;
 import org.paninij.systemgraph.SystemGraph.Edge;
 import org.paninij.systemgraph.SystemGraph.Node;
@@ -127,10 +129,10 @@ public abstract class SeqConstCheckAlgorithm {
 				}
 				if (ee1 instanceof FieldEffect) {
 					if (ee2 instanceof FieldEffect) {
-						FieldEffect ae1 = (FieldEffect)ee1;
-						FieldEffect ae2 = (FieldEffect)ee2;
+						FieldEffect fe1 = (FieldEffect)ee1;
+						FieldEffect fe2 = (FieldEffect)ee2;
 
-						if (ae1.f.equals(ae2.f)) {
+						if (conflictingEffect(fe1, fe2)) {
 							pathsAlgorithm(path1, path2, er1, er2);
 							return false;
 						}
@@ -139,6 +141,20 @@ public abstract class SeqConstCheckAlgorithm {
 			}
 		}
 		return true;
+	}
+
+	private final boolean conflictingEffect(FieldEffect fe1, FieldEffect fe2) {
+		if (fe1.f.equals(fe2.f)) {
+			Path p1 = fe1.path;
+			Path p2 = fe2.path;
+			if (p1 instanceof Path_Parameter && p2 instanceof Path_Parameter) {
+				Path_Parameter pp1 = (Path_Parameter)p1;
+				Path_Parameter pp2 = (Path_Parameter)p2;
+				return !(pp1.id == 0 && pp2.id == 0);
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private final void pathsAlgorithm(Route r1, Route r2, Route er1,

@@ -214,7 +214,7 @@ public class SystemGraphBuilder {
 						}
 					}
 				}
-				if (ms.effect!=null) {
+				if (ms.effect != null) {
 					translateCallEffects(n, ms, graph, ms.effect);
 				}
 			}

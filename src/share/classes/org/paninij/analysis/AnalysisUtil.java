@@ -134,6 +134,17 @@ public class AnalysisUtil {
 		return false;
 	}
 
+	// for the leak detection, test whether a method should be analyzed
+	public static boolean shouldLeakAnalyze(JCCapsuleDecl capsule,
+			JCMethodDecl meth) {
+		if (meth.sym.toString().contains("$Original") ||
+				// an active Capsule.
+				activeRun(capsule.sym, meth.sym)) {
+			return true;
+		}
+		return false;
+	}
+
 	public static boolean activeRun(ClassSymbol cs, MethodSymbol meth) {
 		return (cs.capsule_info.definedRun &&
 				meth.toString().compareTo("run()") == 0);
