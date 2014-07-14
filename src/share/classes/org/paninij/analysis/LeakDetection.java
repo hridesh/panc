@@ -81,7 +81,7 @@ public class LeakDetection {
 			if (jct instanceof JCMethodDecl) {
 				JCMethodDecl meth = (JCMethodDecl)jct;
 
-				if (AnalysisUtil.shouldAnalyze(capsule, meth) &&
+				if (AnalysisUtil.shouldLeakAnalyze(capsule, meth) &&
 						meth.body != null) {
 					if (!noReturnLeak(meth, cs)) {
 						noReturnLeak = false;
@@ -143,7 +143,7 @@ public class LeakDetection {
 		for (JCTree jct : defs) {
 			if (jct instanceof JCMethodDecl) {
 				JCMethodDecl jcmd = (JCMethodDecl) jct;
-				if (AnalysisUtil.shouldAnalyze(capsule, jcmd)) {
+				if (AnalysisUtil.shouldLeakAnalyze(capsule, jcmd)) {
 					if (jcmd.body != null) {
 						backwardsintra(capsule, jcmd);
 
