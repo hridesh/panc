@@ -23,26 +23,26 @@
  * @compile/ref=Escape.out -XDrawDiagnostics  Escape.java
  */
 
-interface Escape {
+interface EscapeInterface {
 	public void method();
 }
 
 capsule B {
-	void escape(Escape fun){
+	void escape(EscapeInterface fun){
 		fun.method();
 	}
 }
 
-capsule A {
+capsule Escape {
 	design{
 		B b;
-		A escapee;
+		Escape escapee;
 	}
 
 	void run() {
-		b.escape(new Escape(){
+		b.escape(new EscapeInterface(){
 			public void method(){
-				// a reference to a capsule of type A leaked to B
+				// a reference to a capsule of type Escape leaked to B
 				escapee.nothing();
 			}
 		});

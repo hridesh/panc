@@ -1,2 +1,2 @@
-TEscapeThroughAnonClass.java:53:33: compiler.warn.confinement.violation: escapeei, A, run()
+TEscapeThroughAnonClass.java:53:33: compiler.warn.confinement.violation: escapeei, TEscapeThroughAnonClass, run()
 1 warning

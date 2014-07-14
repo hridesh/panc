@@ -21,11 +21,12 @@
  * @summary Make sure CapType name(, name)+ type decls parse.
  * @compile TEmptySysParam.java
  */
-capsule C () { void run() {} }
+capsule C () {}
 
-capsule SysParamTest() {
+capsule TEmptySysParam () {
     design {
         C  i2;
         i2();
     }
+    void run() {}
 }

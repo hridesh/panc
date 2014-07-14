@@ -29,7 +29,7 @@ interface Escape {
 	void method();
 }
 
-capsule B (A a) {
+capsule B (TEscapeThroughAnonClass a) {
 	ArrayList bal = new ArrayList();
 
 	void escape(Escape fun){
@@ -37,12 +37,12 @@ capsule B (A a) {
 	}
 }
 
-capsule A {
+capsule TEscapeThroughAnonClass {
 	ArrayList aal = new ArrayList();
 	int escapeei = 0;
 
 	design {
-		A a;
+		TEscapeThroughAnonClass a;
 		B b;
 		b(a);
 	}

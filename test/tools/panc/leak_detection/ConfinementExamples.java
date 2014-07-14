@@ -44,7 +44,7 @@ capsule M (C c) {
 	}
 }
 
-capsule ConfineTest {
+capsule ConfinementExamples {
 	design {
 		C c; M m;
 		m(c);

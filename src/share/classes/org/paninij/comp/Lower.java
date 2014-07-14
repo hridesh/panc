@@ -22,6 +22,10 @@ import static com.sun.tools.javac.code.Flags.PUBLIC;
 import static com.sun.tools.javac.code.Flags.STATIC;
 import static com.sun.tools.javac.code.Flags.SYNTHETIC;
 
+import javax.tools.JavaFileObject;
+
+import sun.util.logging.resources.logging;
+
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Scope;
 import com.sun.tools.javac.code.Symtab;
@@ -120,7 +124,7 @@ public class Lower {
         JCVariableDecl mainArg = make.VarDef(
                 new VarSymbol(0, sysArgs, stringArrayType, null), null);
 
-        createMainMethodBody(tree, sysArgs, mainStmts);
+        createMainMethodBody(tree, sysArgs, mainStmts, env);
 
         //Add the statements to the method tree.
         JCMethodDecl maindecl = make.MethodDef(msym, make.Block(0, mainStmts.toList()));
@@ -140,7 +144,7 @@ public class Lower {
      * @param sysArgs   [in]
      * @param mainStmts [out]
      */
-    private void createMainMethodBody(JCCapsuleDecl tree, Name sysArgs,  ListBuffer<JCStatement> mainStmts) {
+    private void createMainMethodBody(JCCapsuleDecl tree, Name sysArgs,  ListBuffer<JCStatement> mainStmts, Env<AttrContext> env) {
         Assert.check((tree.sym.flags_field & Flags.ACTIVE) != 0 ,
                 "Attempting to install a main method in a non-thread capsule kind"
                 );
@@ -148,7 +152,13 @@ public class Lower {
         if ( tree.sym.capsule_info.refCount == 0 && tree.hasSynthRunMethod ) {
             createMainThrowsUnrunnable(mainStmts);
         } else {
-            createMainRunCapsule(tree, sysArgs, mainStmts);
+			if (!env.toplevel.sourcefile.isNameCompatible(
+					tree.parentCapsule.name.toString(),
+					JavaFileObject.Kind.SOURCE))
+				pAttr.log.error("active.capsule.filename.mismatch",
+						tree.parentCapsule.name,
+						env.toplevel.sourcefile.getName());
+			createMainRunCapsule(tree, sysArgs, mainStmts);
         }
     }
 

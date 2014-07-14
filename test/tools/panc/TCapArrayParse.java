@@ -23,10 +23,11 @@
  * @compile TCapArrayParse.java
  */
 
-capsule C1() { void run() {} }
+capsule C1() {}
 
-capsule S(String[] args) {
+capsule TCapArrayParse(String[] args) {
     design {
         C1 c1s[2];
     }
+    void run(){}
 }

@@ -21,9 +21,9 @@
  * @summary Make sure CapType name(, name)+ type decls parse.
  * @compile TCapIdentList.java
  */
-capsule Indirection () { void run() {} }
+capsule Indirection () {}
 
-capsule TCapIdentList () {
+capsule TCapIdentList {
     design {
         Indirection i1, i2;
         i1();i2();
@@ -35,4 +35,5 @@ capsule TCapIdentList () {
         //allowing you to declare single instance of the same capsule type;
         Indirection arr[2], i4;
     }
+    void run() {} 
 }

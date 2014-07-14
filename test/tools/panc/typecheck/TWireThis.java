@@ -23,7 +23,7 @@
  * @compile TWireThis.java
  */
 
-capsule M() {
+capsule TWireThis() {
     design {
         C other;
         other(this);
@@ -32,7 +32,7 @@ capsule M() {
     void foo() {}
 }
 
-capsule C(M mediator) {
+capsule C(TWireThis mediator) {
     void run() {
         mediator.foo();
     }
