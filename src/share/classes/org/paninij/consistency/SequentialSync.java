@@ -89,12 +89,12 @@ public class SequentialSync extends SeqConstCheckAlgorithm {
 		}
 
 		if (twoPathsMayConflict(direct, e1, e2)) {
-			warnings.add(new BiRoute(er1, er2));
+			warnings.add(new BiRoute(r1, r2));
 			return;
 		}
 
 		if (twoPathsMayConflict(indirect, e1, e2)) {
-			check(r1, 1, er1, er2);
+			check(r1, 1, r1, r2);
 			return;
 		}
 	}

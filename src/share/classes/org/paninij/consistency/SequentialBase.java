@@ -67,14 +67,14 @@ public class SequentialBase extends SeqConstCheckAlgorithm {
 		if (paths != null) {
 			for (Route r : paths) {
 				if (twoPathsMayConflict(allpairs, r.edges.get(0), e2)) {
-					warnings.add(new BiRoute(er1, er2));
+					warnings.add(new BiRoute(r1, r2));
 					return;
 				}
 			}
 		}
 
 		if (twoPathsMayConflict(allpairs, e1, e2)) {
-			warnings.add(new BiRoute(er1, er2));
+			warnings.add(new BiRoute(r1, r2));
 		}
 	}
 }

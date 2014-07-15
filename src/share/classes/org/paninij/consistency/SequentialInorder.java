@@ -86,7 +86,7 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 						j = check(r, 0, r2, j, er1, er2);
 	
 						if (j >= size2 - 1) {
-							warnings.add(new BiRoute(er1, er2));
+							warnings.add(new BiRoute(r1, r2));
 							return;
 						}
 						if (j != temp) {
@@ -99,7 +99,7 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 		}
 
 		if (j >= size2 - 1) {
-			warnings.add(new BiRoute(er1, er2));
+			warnings.add(new BiRoute(r1, r2));
 			return;
 		}
 		int size1 = ns1.size();
@@ -166,7 +166,7 @@ public class SequentialInorder extends SeqConstCheckAlgorithm {
 				}
 			}
 			if (j >= size2 - 1 && i < size1 - 1) {
-				warnings.add(new BiRoute(er1, er2));
+				warnings.add(new BiRoute(r1, r2));
 				return size2 - 1;
 			}
 
