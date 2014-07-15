@@ -22,6 +22,8 @@ import static com.sun.tools.javac.code.Flags.PUBLIC;
 import static com.sun.tools.javac.code.Flags.STATIC;
 import static com.sun.tools.javac.code.Flags.SYNTHETIC;
 
+import java.io.File;
+
 import javax.tools.JavaFileObject;
 
 import sun.util.logging.resources.logging;
@@ -157,9 +159,9 @@ public class Lower {
 					JavaFileObject.Kind.SOURCE))
 				pAttr.log.error("active.capsule.filename.mismatch",
 						tree.parentCapsule.name,
-						env.toplevel.sourcefile.getName());
+						new File(env.toplevel.sourcefile.getName()).getName());
 			createMainRunCapsule(tree, sysArgs, mainStmts);
-        }
+		}
     }
 
     /**

@@ -19,7 +19,7 @@
 
 /* @test
  * @summary Make sure naming of main capsule is the same as the containing filename
- * @compile/fail/ref=TMainCapsuleNameMismatch.out TMainCapsuleNameMismatch.java
+ * @compile/fail/ref=TMainCapsuleNameMismatch.out -XDrawDiagnostics TMainCapsuleNameMismatch.java
  */
 capsule TMainCapsuleNameMismatch{}
 
