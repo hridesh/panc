@@ -25,13 +25,12 @@ import java.util.Set;
 import java.util.HashMap;
 import java.util.Stack;
 
-import sun.util.logging.resources.logging;
+import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.code.Symbol.CapsuleExtras;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
-
+import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 import com.sun.tools.javac.util.*;
 
 public class SystemGraph {
@@ -115,15 +114,22 @@ public class SystemGraph {
 		public final MethodSymbol fromProcedure, toProcedure;
 		// the source code postion of this call edge
 		public final int pos, line;
+		// the source code statement of this call edge
+		public final JCMethodInvocation tree;
+		// the source file that contains this effect
+		public final JavaFileObject source_file;
 		
 		Edge(Node fromNode, MethodSymbol fromProcedure, Node toNode,
-				MethodSymbol toProcedure, int pos, int line) {
+				MethodSymbol toProcedure, int pos, int line,
+				JCMethodInvocation tree, JavaFileObject source_file) {
 			this.fromNode = fromNode;
 			this.fromProcedure = fromProcedure;
 			this.toNode = toNode;
 			this.toProcedure = toProcedure;
 			this.pos = pos;
 			this.line = line;
+			this.tree = tree;
+			this.source_file = source_file;
 		}
 
 		public String toString(){
@@ -158,10 +164,12 @@ public class SystemGraph {
 	
 	public HashMap<Name, Node> nodes = new HashMap<Name, Node>();
 	public Set<Edge> edges = new HashSet<Edge>(); 
-	public HashMap<Name, Integer> capsuleArrays = new HashMap<Name, Integer>();//this is to save size of arrays. maybe view arrays as an whole instead.
+	// this is to save size of arrays. maybe view arrays as an whole instead.
+	public HashMap<Name, Integer> capsuleArrays = new HashMap<Name, Integer>();
 	
 	void addNode(Name name, ClassSymbol sym){
-	    Assert.check(!nodes.containsKey(name), "Graph already contains node for " + name);
+	    Assert.check(!nodes.containsKey(name),
+	    		"Graph already contains node for " + name);
 		nodes.put(name, new Node(name, sym));
 	}
 	
@@ -171,13 +179,14 @@ public class SystemGraph {
 		}else
 			nodes.get(fromNode).addConnection(alias, null);
 	}
-	
+
 	void setEdge(Node fromNode, MethodSymbol fromProc, Node toNode,
-			MethodSymbol toProc, int pos, int line) {
-		edges.add(new Edge(fromNode, fromProc, toNode, toProc, pos, line));
+			MethodSymbol toProc, int pos, int line, JCMethodInvocation tree,
+			JavaFileObject source_file) {
+		edges.add(new Edge(fromNode, fromProc, toNode, toProc, pos, line,
+				tree, source_file));
 	}
-	
-	@Override
+
 	public String toString(){
 		StringBuilder s = new StringBuilder();
 		s.append("Nodes: \n");

@@ -14,21 +14,41 @@
  * For more details and the latest version of this code please see
  * http://paninij.org
  * 
- * Contributor(s): Yuheng Long
+ * Contributor(s): Hridesh Rajan
  */
 
-package org.paninij.effects;
+/* 
+ * @test
+ * @summary Compile the TestSequential example. Do not check the graphs.
+ *          May cause spurious failures depending on how the graph output and the Seq inconsistency warnings (from stdout and err) are interleaved.
+ * @compile/ref=TestSequential.out -XDrawDiagnostics TestSequential.java
+ */
 
-import javax.tools.JavaFileObject;
+capsule C (D d1, D d2) {
+	void mC () {
+		d1.mD(); 
+		d2.mD(); 
+	}
+}
 
-import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
+capsule D (S s) {
+	void mD () {
+		s.mS(); 
+	}
+}
 
-public interface CallEffect extends EffectEntry {
-	// The position of the method call in the source code. It serves as a unique
-	// identifier for the method call within the capsule.
-	public int pos();
+capsule S {
+	int si = 0;
+	void mS () { si++; }
+}
 
-	public JCMethodInvocation call_stmt();
-
-	public JavaFileObject source_file();
+capsule TestSequential {
+	design {
+		C c; D d1; D d2; S s;
+		c(d1,d2); 
+		d1(s); d2(s);
+	}
+	void run() {
+		c.mC();
+	}
 }

@@ -195,7 +195,7 @@ public class AnnotationProcessor extends Internal {
 				char c = s.charAt(1);
 				switch (c) {
 				case 'I':
-					effect = new IOEffect();
+					effect = new IOEffect(null, null);
 					break;
 				case 'F':// field effect owner name of symbol
 					ownerSymbol = rs.findIdent(env, names.fromString(split[0]),
@@ -214,7 +214,7 @@ public class AnnotationProcessor extends Internal {
 							Integer.parseInt(split[split.length - 4]),
 							Integer.parseInt(split[split.length - 3]),
 							Integer.parseInt(split[split.length - 2]),
-							split[split.length - 1]);
+							split[split.length - 1], null, null);
 					break;
 				case 'E': // foreacheffect
 					ownerSymbol = rs.findIdent(env, names.fromString(split[0]),
@@ -222,11 +222,12 @@ public class AnnotationProcessor extends Internal {
 					m = findMethod(rs.findIdent(env,
 							names.fromString(split[2]), Kinds.TYP), split);
 					effect = new ForeachEffect( (ClassSymbol)ownerSymbol,
-							findField(ownerSymbol, split[1]), Boolean.parseBoolean(split[split.length - 5]), m,
+							findField(ownerSymbol, split[1]),
+							Boolean.parseBoolean(split[split.length - 5]), m,
 							Integer.parseInt(split[split.length - 4]),
 							Integer.parseInt(split[split.length - 3]),
 							Integer.parseInt(split[split.length - 2]),
-							split[split.length - 1]);
+							split[split.length - 1], null, null);
 					break;
 				case 'A': // Array effect
 					// m = findMethod(ownerSymbol, split);

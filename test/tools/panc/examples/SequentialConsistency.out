@@ -1,3 +1,2 @@
-- compiler.warn.deterministic.inconsistency.warning.count: 1
-- compiler.warn.deterministic.inconsistency.warning: Main.m.run()-37->, Main.m.run()-38->
-2 warnings
+SequentialConsistency.java:37:28: compiler.warn.sc.warning: i2.set(new IntegerC(2)), i1.get(), 37, 38, Store
+1 warning

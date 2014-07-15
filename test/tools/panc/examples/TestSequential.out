@@ -1,0 +1,2 @@
+TestSequential.java:29:22: compiler.warn.sc.warning: d1.mD(), d2.mD(), 29, 30, S
+1 warning

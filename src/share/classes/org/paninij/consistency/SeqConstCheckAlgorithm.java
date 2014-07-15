@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import javax.tools.JavaFileObject;
+
 import org.paninij.analysis.AnalysisUtil;
 import org.paninij.effects.ArrayEffect;
 import org.paninij.effects.BiCall;
@@ -36,6 +38,7 @@ import org.paninij.systemgraph.SystemGraph.Node;
 
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.util.JCDiagnostic;
 import com.sun.tools.javac.util.Log;
 
 /**
@@ -91,8 +94,8 @@ public abstract class SeqConstCheckAlgorithm {
 	protected void reportTrimmedWarnings(HashSet<BiRoute> warnings) {
 	    final int warningsCount = warnings.size();
 	    if (warningsCount > 0) {
-	        log.warning("deterministic.inconsistency.warning.count",
-	        		warnings.size());
+	        /* log.warning("deterministic.inconsistency.warning.count",
+	        		warnings.size()); */
 	        for (BiRoute r : warnings) {
 	            warnSeqInconsistency(r.r1, r.r2);
 	        }
@@ -105,8 +108,25 @@ public abstract class SeqConstCheckAlgorithm {
 	 * @param route2
 	 */
 	protected void warnSeqInconsistency(Route route1, Route route2) {
-	    log.warning("deterministic.inconsistency.warning",
-	            route1.routeStr(), route2.routeStr());
+		ArrayList<ClassMethod> nodes = route1.nodes;
+		ArrayList<Edge> edges1 = route1.edges;
+		ArrayList<Edge> edges2 = route2.edges;
+
+		ClassMethod cm = nodes.get(nodes.size() - 1);
+		Edge edge1 = edges1.get(0);
+		Edge edge2 = edges2.get(0);
+
+		JCDiagnostic.DiagnosticPosition diag =
+				new JCDiagnostic.SimpleDiagnosticPosition(edge1.pos);
+
+		// set the source of the file and record the pre-state
+		JavaFileObject previous = log.useSource(edge1.source_file);
+		log.warning(diag, "sc.warning", edge1.tree, edge2.tree,
+				edge1.line, edge2.line,
+				AnalysisUtil.rmDollar(cm.cs.className()));
+
+		// store back the pre-state
+		log.useSource(previous);
 	}
 
 	private final boolean detect(HashSet<EffectEntry> s1,
@@ -278,8 +298,8 @@ public abstract class SeqConstCheckAlgorithm {
 		}
 
         reportTotalWarnings(warnings);
-        HashSet<BiRoute> trimmed = ConsistencyUtil.trim(warnings);
-        reportTrimmedWarnings(trimmed);
+        // HashSet<BiRoute> trimmed = ConsistencyUtil.trim(warnings);
+        reportTrimmedWarnings(warnings);
 	}
 
 	public static boolean twoPathsMayConflict(HashSet<BiCall> allpairs,
