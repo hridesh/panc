@@ -1186,6 +1186,8 @@ public class CapsuleInternal extends Internal {
 					ta(id(PaniniConstants.DUCK_INTERFACE_NAME),
 							args(id(restype.toString()))),
 					id(restype.toString())).toList();
+				JCMethodDecl get = createFutureGetMethod(c);
+				wrappedMethods.add(get);
 		} else if (restype.tag == TypeTags.ARRAY) {
 			extending = id("Panini$Duck$Array$Types");
 			implement = List.<JCExpression> nil();
