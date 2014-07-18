@@ -137,7 +137,8 @@ public class AnalysisUtil {
 	// for the leak detection, test whether a method should be analyzed
 	public static boolean shouldLeakAnalyze(JCCapsuleDecl capsule,
 			JCMethodDecl meth) {
-		if (meth.sym.toString().contains("$Original") ||
+		if ((meth.mods.flags & Flags.PRIVATE) != 0 ||
+				meth.sym.toString().contains("$Original") ||
 				// an active Capsule.
 				activeRun(capsule.sym, meth.sym)) {
 			return true;

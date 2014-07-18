@@ -1,0 +1,2 @@
+ConfinementPrivate.java:39:22: compiler.warn.confinement.violation: d, ConfinementPrivate, privateM()
+1 warning
