@@ -236,8 +236,10 @@ public class Check {
                 if(decl.sym != null) {
                     if(decl.sym.kind == STATE_KIND) {
                         if(states.contains(decl.sym)) {
+                        	System.out.println("removing "+ decl.sym);
                             states.remove(decl.sym);
                         } else {
+                        	System.out.println("found again "+ decl.sym);
                             log.warning(tree.pos, "state.already.initialized", tree.name);
                         }
                     }

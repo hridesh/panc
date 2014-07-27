@@ -726,12 +726,30 @@ public class DesignDeclTransformer extends TreeTranslator {
                             make.Block(0, lbody.toList()));
             assigns.append(thNameLoop);
         }
+
+        JCVariableDecl arraycache2 = make.VarDef(make.Modifiers(0),
+                names.fromString("index$"),
+                make.TypeIdent(INT),
+                make.Literal(0));
+        JCBinary cond2 = make.Binary(LT, make.Ident(names.fromString("index$")),
+                make.Select(make.Ident(vdecl.name),
+                        names.fromString("length")));
+        JCUnary unary2 = make.Unary(PREINC, make.Ident(names.fromString("index$")));
+        JCExpressionStatement step2 =
+                make.Exec(unary2);
+        ListBuffer<JCStatement> loopBody2 = new ListBuffer<JCStatement>();
+        loopBody2.add(make.Exec(make.Apply(List.<JCExpression>nil(),
+                make.Select(make.Indexed(make.Ident(vdecl.name), make.Ident(names.fromString("index$"))), names.panini.Start),
+                List.<JCExpression>nil())));
+        JCForLoop floop2 =
+                make.ForLoop(List.<JCStatement>of(arraycache2),
+                        cond2,
+                        List.of(step2),
+                        make.Block(0, loopBody2.toList()));
+        starts.prepend(floop2);
         
         final boolean capTypeDefinedRun = c.capsule_info.definedRun;
         for(int j = mat.size-1; j>=0;j--){
-            starts.prepend(make.Exec(make.Apply(List.<JCExpression>nil(),
-                    make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.panini.Start),
-                    List.<JCExpression>nil())));
             final Name connectCapIdx = names.fromString(vdecl.name.toString()+"["+j+"]");
             systemGraphBuilder.addConnection(sysGraph, names._this,
                     connectCapIdx, connectCapIdx);

@@ -24,6 +24,8 @@ import java.util.HashMap;
 import com.sun.source.tree.Tree.Kind;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
+import com.sun.tools.javac.code.Symbol.VarSymbol;
+import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCAssign;
@@ -59,6 +61,7 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
+import com.sun.tools.javac.util.Names;
 
 /**
  * Visit the system and interpret java computations to their values.
@@ -77,6 +80,8 @@ public class DesignDeclRewriter extends TreeTranslator {
     final Log log;
     final TreeMaker make;
     final ArithTreeInterp atInterp;
+    final Names names;
+    final Symtab syms;
 
     final TreeCopier<Void> copy;
 
@@ -130,15 +135,17 @@ public class DesignDeclRewriter extends TreeTranslator {
         return result;
     }
 
-    public DesignDeclRewriter(TreeMaker treeMaker, Log log, ClassSymbol parentCapsule) {
+    public DesignDeclRewriter(TreeMaker treeMaker, Log log, ClassSymbol parentCapsule, Names names, Symtab syms) {
         this.log = log;
         this.make = treeMaker;
         this.parentCapsule = parentCapsule;
         this.copy = new TreeCopier<Void>(make);
         this.atInterp = new ArithTreeInterp();
+        this.names = names;
+        this.syms = syms;
     }
 
-    @Override
+	@Override
     public void visitIdent(JCIdent tree) {
         JCTree bound = valueEnv.lookup(tree.name);
         // Don't lose the identifier if we don't know about it!
@@ -254,6 +261,8 @@ public class DesignDeclRewriter extends TreeTranslator {
 
         ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
 
+//        unrolledStats = createUnrolledStatsWireall(tree, capsuleArraySize);
+        
         for (int i = 0; i < capsuleArraySize; i++) {
             unrolledStats.add(make.Exec( // others -> center
                     createIndexedCapsuleWiring(tree.many, i, tree.args)));
@@ -261,6 +270,33 @@ public class DesignDeclRewriter extends TreeTranslator {
 
         tree.unrolled = unrolledStats.toList();
         result = tree;
+    }
+    
+    private ListBuffer<JCStatement> createUnrolledStatsWireall(JCWireall tree, int size){
+    	ListBuffer<JCStatement> unrolledStats = new ListBuffer<JCStatement>();
+        JCVariableDecl arraycache = make.VarDef(make.Modifiers(0),
+                names.fromString("index$"),
+                make.TypeIdent(TypeTags.INT),
+                make.Literal(0));
+        VarSymbol var = new VarSymbol(0, names.fromString("index$"), 
+        		syms.intType, null);
+        arraycache = make.VarDef(var, make.Literal(0));
+        
+        JCBinary cond = make.Binary(Tag.LT, make.Ident(names.fromString("index$")),
+                make.Literal(TypeTags.INT, size));
+        JCUnary unary = make.Unary(Tag.PREINC, make.Ident(names.fromString("index$")));
+        JCExpressionStatement step =
+                make.Exec(unary);
+        ListBuffer<JCStatement> loopBody = new ListBuffer<JCStatement>();
+        loopBody.add(make.Exec(make.CapsuleArrayCall(getIdentName(tree.many),
+                make.Ident(names.fromString("index$")), tree.many, tree.args)));
+        JCForLoop floop =
+                make.ForLoop(List.<JCStatement>of(arraycache),
+                        cond,
+                        List.of(step),
+                        make.Block(0, loopBody.toList()));
+        unrolledStats.add(floop);
+        return unrolledStats;
     }
 
     @Override

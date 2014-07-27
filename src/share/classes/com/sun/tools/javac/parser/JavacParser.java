@@ -3793,6 +3793,12 @@ public class JavacParser implements Parser {
         int pos = token.pos;
         accept(LPAREN);
         List<JCStatement> inits = token.kind == SEMI ? List.<JCStatement>nil() : forInit();
+        if (inits.length() == 1 &&
+                inits.head.hasTag(VARDEF) &&
+                ((JCVariableDecl) inits.head).init == null &&
+                token.kind == COLON) {
+        	//what to do with for each loops??
+                }
         accept(SEMI);
         return inits;
     }

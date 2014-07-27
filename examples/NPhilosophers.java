@@ -117,10 +117,15 @@ capsule NPhilosophers {
         Indexer i;
         i(new Index());
 
+        wireall(phils, forks[PhilUtil.getLeftForkIndex(i.get().get(), phils.length)],
+                forks[PhilUtil.getRightForkIndex(i.get().get(), phils.length)],
+                PhilUtil.getPhillyName(i.getAndInc().get()));
+        
         for(Philosopher phil : phils) {
             phil(forks[PhilUtil.getLeftForkIndex(i.get().get(), phils.length)],
                     forks[PhilUtil.getRightForkIndex(i.get().get(), phils.length)],
                     PhilUtil.getPhillyName(i.getAndInc().get()));
         }
     }
+    void run(){}
 }
