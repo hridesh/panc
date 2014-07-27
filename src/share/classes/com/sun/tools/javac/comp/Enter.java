@@ -349,7 +349,7 @@ public class Enter extends JCTree.Visitor {
             tree.packge.package_info = c;
         }
     // Panini code
-        tree.defs = capsuleSplitter(tree.defs, tree);
+        tree.defs = capsuleSplitter(tree.defs);
     // end Panini code
         classEnter(tree.defs, topEnv);
         if (addEnv) {
@@ -360,7 +360,7 @@ public class Enter extends JCTree.Visitor {
     }
     
     // Panini Code
-	private List<JCTree> capsuleSplitter(List<JCTree> defs, JCCompilationUnit top) {
+	private List<JCTree> capsuleSplitter(List<JCTree> defs) {
 		ListBuffer<JCTree> copiedDefs = new ListBuffer<JCTree>();
 		TreeCopier<Void> tc = new TreeCopier<Void>(make);
 		for (List<JCTree> l = defs; l.nonEmpty(); l = l.tail) {
@@ -380,15 +380,8 @@ public class Enter extends JCTree.Visitor {
 						if ((mdecl.name.toString().equals("run") && mdecl.params
 								.isEmpty())
 								|| mdecl.name
-										.equals(names.panini.InternalCapsuleWiring)) {
+										.equals(names.panini.InternalCapsuleWiring))
 							hasRun = true;
-//							if (!top.sourcefile.isNameCompatible(
-//									capsule.name.toString(),
-//									JavaFileObject.Kind.SOURCE))
-//								log.error("active.capsule.filename.mismatch",
-//										capsule.name);
-							
-						}
 						if ((mdecl.mods.flags & PRIVATE) == 0
 								&& !mdecl.name
 										.equals(names.panini.PaniniCapsuleInit)
@@ -562,7 +555,7 @@ public class Enter extends JCTree.Visitor {
             duplicateClass(tree.pos(), c);
             result = types.createErrorType(tree.name, (TypeSymbol)owner, Type.noType);
             tree.sym = (ClassSymbol)result.tsym;
-            return;	
+            return;
         }
         chk.compiled.put(c.flatname, c);
         enclScope.enter(c);

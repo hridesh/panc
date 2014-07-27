@@ -358,7 +358,6 @@ public final class Attr extends CapsuleInternal {
 					((JCCapsuleLambda) lambda).capsuleName);
 			JCClassDecl lambdaDuck;
 			lambdaDuck = createPaniniLambda((JCCapsuleLambda) tree, env);
-//			System.out.println(lambdaDuck);
 			enter.classEnter(List.<JCClassDecl> of(lambdaDuck), env.outer);
 
 			// Enumeration of lambda classes
@@ -376,7 +375,7 @@ public final class Attr extends CapsuleInternal {
 			lambdaDuck = createPrimitivePaniniLambda(
 					(JCPrimitiveCapsuleLambda) tree, env);
 			enter.classEnter(List.<JCClassDecl> of(lambdaDuck), env.outer);
-//			System.out.println(lambdaDuck);// prints camout resulting duck class
+//			System.out.println(lambdaDuck);// prints out resulting duck class
 			ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
 			for (JCVariableDecl var : ((JCPrimitiveCapsuleLambda) tree).params) {
 				args.add(id(var.name));
@@ -399,7 +398,6 @@ public final class Attr extends CapsuleInternal {
 			((JCCapsuleDecl) env.enclClass).lambdaExpressionCounts++;
 			((JCPrimitiveCapsuleLambda) tree).newClass = true;
 		}
-//		System.out.println(tree);
 		tree.accept(attr);
 	}
 	
@@ -596,7 +594,6 @@ public final class Attr extends CapsuleInternal {
 		}
 
 		pchk.checkStateInit(tree.sym, env);
-		System.out.println(tree);
 	}
 
 	private ListBuffer<JCStatement> createCapsuleMemberDisconnects(
@@ -701,7 +698,7 @@ public final class Attr extends CapsuleInternal {
 		SystemGraph sysGraph;
 
 		DesignDeclRewriter interp = new DesignDeclRewriter(make, log,
-				env.enclClass.sym, names, syms);
+				env.enclClass.sym);
 		JCDesignBlock rewritenTree = interp.rewrite(tree);
 		// we do not want to go on to generating the main method if there are
 		// errors in the design decl
