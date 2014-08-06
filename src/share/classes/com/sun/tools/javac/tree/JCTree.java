@@ -589,22 +589,23 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 
 	}
     
-    public static class JCWhen extends JCMethodDecl implements WhenTree{
+	public static class JCWhen extends JCMethodDecl implements WhenTree {
 		JCExpression cond;
 		JCStatement statement;
 		public Kind kind;
 		public Tag tag;
 
 		protected JCWhen(JCExpression cond, JCStatement statement) {
-			super(null, null, null, List.<JCTypeParameter>nil(), 
-					List.<JCVariableDecl>nil(), List.<JCExpression>nil(), null, null, null);
+			super(null, null, null, List.<JCTypeParameter> nil(), List
+					.<JCVariableDecl> nil(), List.<JCExpression> nil(), null,
+					null, null);
 			this.cond = cond;
 			this.statement = statement;
 			this.kind = Kind.WHEN;
 			this.tag = Tag.WHEN;
 		}
-		
-		public void changeTag(){
+
+		public void changeTag() {
 			tag = Tag.METHODDEF;
 			kind = Kind.METHOD;
 		}
@@ -638,7 +639,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		public void accept(Visitor v) {
 			v.visitMethodDef(this);
 		}
-    }
+	}
     
 	public static class JCProcDecl extends JCMethodDecl implements ProcedureTree {
 		public Kind kind;

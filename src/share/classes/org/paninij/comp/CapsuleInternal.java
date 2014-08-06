@@ -167,9 +167,9 @@ public class CapsuleInternal extends Internal {
 		messageLoopBody.append(swtch(
 				apply(PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_MESSAGE_ID), cases));
-		
+
 		messageLoopBody.appendList(whenMethodCalls(tree));
-		
+
 		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
 		blockStats = createCapsuleMemberDisconnects(tree.sym.capsule_info.connectedCapsules);
 
@@ -187,15 +187,17 @@ public class CapsuleInternal extends Internal {
 		return b;
 	}
 	
-	private ListBuffer<JCStatement> whenMethodCalls(JCCapsuleDecl tree){
+	private ListBuffer<JCStatement> whenMethodCalls(JCCapsuleDecl tree) {
 		ListBuffer<JCStatement> statements = new ListBuffer<JCStatement>();
 		int count = 0;
-		for(JCExpression exp : tree.whenConditions){
-			statements.add(make.If(exp, es(apply(PaniniConstants.PANINI_WHEN+"$"+count)), null));
+		for (JCExpression exp : tree.whenConditions) {
+			statements.add(make.If(exp, es(apply(PaniniConstants.PANINI_WHEN
+					+ "$" + count)), null));
 			count++;
 		}
 		ListBuffer<JCStatement> stat = new ListBuffer<JCStatement>();
-		stat.add(make.If(id(PaniniConstants.PANINI_CHECK_WHEN), body(statements), null));
+		stat.add(make.If(id(PaniniConstants.PANINI_CHECK_WHEN),
+				body(statements), null));
 		return stat;
 	}
 
