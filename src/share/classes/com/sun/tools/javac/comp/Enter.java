@@ -360,6 +360,9 @@ public class Enter extends JCTree.Visitor {
     }
     
     // Panini Code
+    /**
+     * returns 4 copies of class definitions for each capsule declaration
+     */
 	private List<JCTree> capsuleSplitter(List<JCTree> defs) {
 		ListBuffer<JCTree> copiedDefs = new ListBuffer<JCTree>();
 		TreeCopier<Void> tc = new TreeCopier<Void>(make);
@@ -369,10 +372,12 @@ public class Enter extends JCTree.Visitor {
 					&& (((JCCapsuleDecl) def).mods.flags & INTERFACE) == 0) {
 				ListBuffer<JCVariableDecl> stateToInit = new ListBuffer<JCVariableDecl>();
 				ListBuffer<JCMethodDecl> initMethods = new ListBuffer<JCMethodDecl>();
+				ListBuffer<JCWhen> whenMethods = new ListBuffer<JCWhen>();
 				JCCapsuleDecl capsule = (JCCapsuleDecl) def;
 				ListBuffer<JCTree> interfaceBody = new ListBuffer<JCTree>();
 				reorderDefs(capsule);
 				boolean hasRun = false;
+				int whenCounter = 0;
 				for (List<JCTree> c = capsule.defs; c.nonEmpty(); c = c.tail) {
 					JCTree capsuleDefs = c.head;
 					if (capsuleDefs.getTag() == METHODDEF) {
@@ -417,6 +422,12 @@ public class Enter extends JCTree.Visitor {
 								vdecl.name, tc.copy(vdecl.vartype), null));
 					} else if (capsuleDefs.getTag() == CLASSDEF) {
 						// skip
+					} else if (capsuleDefs.getTag() == WHEN) {
+						((JCWhen) capsuleDefs).name = ((JCWhen) capsuleDefs).name
+								.append(names.fromString("$" + whenCounter));
+						((JCWhen) capsuleDefs).changeTag();
+						whenMethods.add((JCWhen) capsuleDefs);
+						whenCounter++;
 					} else
 						interfaceBody.add(tc.copy(capsuleDefs));
 				}
@@ -460,6 +471,9 @@ public class Enter extends JCTree.Visitor {
 				copyCapsule.initMethods = initMethods.toList();
 				copyCapsule.stateToInit = stateToInit.toList();
 				//
+				for(JCWhen w : whenMethods){
+					copyActive.whenConditions = copyActive.whenConditions.append(w.getCondition());
+				}
 				copyCapsule.accessMods = capsule.mods.flags;
 				copiedDefs.add(copyCapsule);
 				copiedDefs.add(copyActive);
