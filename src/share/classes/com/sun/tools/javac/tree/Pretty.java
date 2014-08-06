@@ -464,6 +464,23 @@ public class Pretty extends JCTree.Visitor {
         }
     }
     
+	public void visitWhen(JCWhen tree) {
+		try {
+			print("when ");
+			if (tree.cond.hasTag(PARENS)) {
+                printExpr(tree.cond);
+            } else {
+                print("(");
+                printExpr(tree.cond);
+                print(")");
+            }
+			print(" ");
+			printStat(tree.statement);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+	}
+    
     public void visitProcApply(JCProcInvocation tree){
     	try {
             if (!tree.typeargs.isEmpty()) {

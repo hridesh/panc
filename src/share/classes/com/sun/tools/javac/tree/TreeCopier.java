@@ -460,6 +460,13 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         return M.at(t.pos).MethodDef(mods, t.name, restype, typarams, params, thrown, body, defaultValue);
     }
     
+    public JCTree visitWhen(WhenTree node, P p){
+    	JCWhen t  = (JCWhen) node;
+        JCExpression cond = copy(t.cond, p);
+        JCStatement st = copy(t.statement, p);
+        return M.at(t.pos).When(cond, st);
+    }
+    
     public JCTree visitProcInvocation(ProcInvocationTree node, P p) {
         JCProcInvocation t = (JCProcInvocation) node;
         List<JCExpression> typeargs = copy(t.typeargs, p);

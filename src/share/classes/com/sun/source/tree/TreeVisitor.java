@@ -110,6 +110,7 @@ public interface TreeVisitor<R,P> {
     R visitOther(Tree node, P p);
     // Panini Code
     R visitProc(ProcedureTree tree, P p);
+    R visitWhen(WhenTree tree, P p);
     R visitProcInvocation(ProcInvocationTree tree, P p);
     R visitState(StateTree tree, P p);
     R visitCapsuleWiring(CapsuleWiringTree node, P p);

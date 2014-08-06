@@ -407,6 +407,10 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 		return visitMethod(node, p);
 	}
     
+    public R visitWhen(WhenTree node, P p) {
+    	return visitMethod(node, p);
+	}
+    
     public R visitProcInvocation(ProcInvocationTree node, P p) {
 		return visitMethodInvocation(node, p);
 	}

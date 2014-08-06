@@ -70,6 +70,12 @@ public class TreeScanner extends Visitor {
         visitMethodDef(tree);
     }
     
+    public void visitWhen(JCWhen tree) {
+        scan(tree.cond);
+        scan(tree.statement);
+        
+    }
+    
     public void visitProcApply(JCProcInvocation tree) {
         visitApply(tree);
     }
