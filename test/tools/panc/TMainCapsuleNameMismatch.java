@@ -27,6 +27,6 @@ capsule TMainCapsule {
     design {
         TMainCapsuleNameMismatch mm;
     }
-    
-    void run() {} 
+
+    void run() {}
 }
