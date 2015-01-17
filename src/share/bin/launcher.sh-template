@@ -43,17 +43,17 @@ mylib="$mydir/../lib"
 # dependent jar files for additional dependencies.
 
 if [ "$LANGTOOLS_USE_BOOTCLASSPATH" != "no" ]; then
-   cp=`unzip -c "$mylib/#PROGRAM#.jar" META-INF/MANIFEST.MF |
+   cp=`unzip -c "$mylib/panc.jar" META-INF/MANIFEST.MF |
        grep "Class-Path:" |
-       sed -e 's|Class-Path: *||' -e 's|\([a-z]*\.jar\) *|'"$mylib"'/\1#PS#|g'`
-   bcp="$mylib/#PROGRAM#.jar#PS#$cp"
+       sed -e 's|Class-Path: *||' -e 's|\([a-z]*\.jar\) *|'"$mylib"'/\1:|g'`
+   bcp="$mylib/panc.jar:$cp"
 fi
 
 # tools currently assumes that assertions are enabled in the launcher
 ea=-ea:com.sun.tools...
 
 # Any parameters starting with -J are passed to the JVM.
-# All other parameters become parameters of #PROGRAM#.
+# All other parameters become parameters of panc.
 
 # Separate out -J* options for the JVM
 # Unset IFS and use newline as arg separator to preserve spaces in args
@@ -71,5 +71,11 @@ for i in "$@" ; do
 done
 unset DUALCASE
 
+if [ "`uname`" = "Linux" ] 
+then
 IFS=$nl
-"#TARGET_JAVA#" "${bcp:+-Xbootclasspath/p:"$bcp"}" ${ea} ${javaOpts} -jar "${mylib}/#PROGRAM#.jar" ${toolOpts}
+"$JAVA_HOME/bin/java" "${bcp:+-Xbootclasspath/p:"$bcp"}" ${ea} ${javaOpts} -jar "${mylib}/panc.jar" ${toolOpts}
+else [ "`uname`" = "Darwin" ]
+IFS=$nl
+"java" "${bcp:+-Xbootclasspath/p:"$bcp"}" ${ea} ${javaOpts} -jar "${mylib}/panc.jar" ${toolOpts}
+fi
