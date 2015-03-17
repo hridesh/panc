@@ -28,9 +28,12 @@ package com.sun.tools.javac.tree;
 import java.util.*;
 import java.io.IOException;
 import java.io.StringWriter;
+
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.TypeKind;
 import javax.tools.JavaFileObject;
+
+import org.paninij.util.PaniniConstants;
 
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
@@ -351,6 +354,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         LETEXPR,                         // ala scheme
         // Panini code
         PROC,
+        WHEN,
         /**
          * This is the tag used for capsule array indexed wiring
          * TODO: rename
@@ -583,6 +587,58 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 				return v.visitInit(this, d);
 		}
 
+	}
+    
+	public static class JCWhen extends JCMethodDecl implements WhenTree {
+		JCExpression cond;
+		JCStatement statement;
+		public Kind kind;
+		public Tag tag;
+
+		protected JCWhen(JCExpression cond, JCStatement statement) {
+			super(null, null, null, List.<JCTypeParameter> nil(), List
+					.<JCVariableDecl> nil(), List.<JCExpression> nil(), null,
+					null, null);
+			this.cond = cond;
+			this.statement = statement;
+			this.kind = Kind.WHEN;
+			this.tag = Tag.WHEN;
+		}
+
+		public void changeTag() {
+			tag = Tag.METHODDEF;
+			kind = Kind.METHOD;
+		}
+
+		@Override
+		public Kind getKind() {
+			return kind;
+		}
+
+		@Override
+		public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+			return v.visitMethod(this, d);
+		}
+
+		@Override
+		public JCExpression getCondition() {
+			return cond;
+		}
+
+		@Override
+		public JCStatement getStatement() {
+			return statement;
+		}
+
+		@Override
+		public Tag getTag() {
+			return tag;
+		}
+
+		@Override
+		public void accept(Visitor v) {
+			v.visitMethodDef(this);
+		}
 	}
     
 	public static class JCProcDecl extends JCMethodDecl implements ProcedureTree {
@@ -933,6 +989,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		 * This is used to enumerate the lamdba ducks created from the lamdba expressions.
 		 */
 		public int lambdaExpressionCounts;
+		/**
+		 * Store a list of conditions for when statements. Listed in the order as they are declared.
+		 */
+		public List<JCExpression> whenConditions = List.<JCExpression>nil();
 
 		public JCCapsuleDecl(JCModifiers mods, Name name,
 				List<JCVariableDecl> params, List<JCExpression> implementing,
@@ -3550,6 +3610,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
         // Panini code
         public void visitProcDef(JCProcDecl that)            { visitTree(that); }
+        public void visitWhen(JCWhen that)                   { visitTree(that); }
         public void visitProcApply(JCProcInvocation that)    { visitTree(that); }
         public void visitStateDef(JCStateDecl that)	         { visitTree(that); }
         public void visitCapsuleWiring(JCCapsuleWiring that) { visitTree(that); }
@@ -3568,7 +3629,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
         public void visitForAllLoop(JCForAllLoop that)       { visitTree(that); }
         public void visitInitDef(JCInitDecl that) 			 { visitTree(that); }
         public void visitForeach(JCForeach that)	 	     { visitTree(that); }
-        public void visitWireall(JCWireall that)         { visitTree(that); }
+        public void visitWireall(JCWireall that)             { visitTree(that); }
         public void visitStar(JCStar that)					 { visitTree(that); }
         public void visitRing(JCRing that)					 { visitTree(that); }
         public void visitAssociate(JCAssociate that)		 { visitTree(that); }

@@ -10,23 +10,16 @@
  * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
  * for the specific language governing rights and limitations under the
  * License.
- *
+ * 
  * For more details and the latest version of this code please see
  * http://paninij.org
- *
+ * 
  * Contributor(s): Eric Lin
  */
+package com.sun.source.tree;
 
-/* @test
- * @summary Make sure naming of main capsule is the same as the containing filename
- * @compile/fail/ref=TMainCapsuleNameMismatch.out -XDrawDiagnostics TMainCapsuleNameMismatch.java
- */
-capsule TMainCapsuleNameMismatch{}
+public interface WhenTree extends MethodTree {
+	ExpressionTree getCondition();
 
-capsule TMainCapsule {
-    design {
-        TMainCapsuleNameMismatch mm;
-    }
-    
-    void run() {} 
+	StatementTree getStatement();
 }

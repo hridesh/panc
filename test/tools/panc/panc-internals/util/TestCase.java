@@ -24,9 +24,9 @@ package util;
  * @since panini-0.9.2
  */
 public class TestCase {
-    public void assertEquals(String message, int i, int pos) {
-        if (i != pos) {
-            fail(message);
+    public void assertEquals(String message, int exp, int act) {
+        if (exp != act) {
+            fail(message + ": " + exp + " != " + act);
         }
     }
 
@@ -41,9 +41,9 @@ public class TestCase {
         }
     }
 
-    public void assertEquals(String message, int i, long l) {
-        if (i != l) {
-            fail(message + ":" + i + ":" + l);
+    public void assertEquals(String message, int exp, long act) {
+        if (exp != act) {
+            fail(message + ": " + exp + " != " + act);
         }
     }
 

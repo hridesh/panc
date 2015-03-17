@@ -684,31 +684,72 @@ public class DesignDeclTransformer extends TreeTranslator {
                         List.of(step),
                         make.Block(0, loopBody.toList()));
         assigns.append(floop);
+        // TODO: assigning name to thread
+        if(initName.contains("$thread")) {
+        	ListBuffer<JCStatement> lbody = new ListBuffer<JCStatement>();
+            JCVariableDecl ac = make.VarDef(make.Modifiers(0),
+                    names.fromString("index$"),
+                    make.TypeIdent(INT),
+                    make.Literal(0));
+            JCBinary condition = make.Binary(LT, make.Ident(names.fromString("index$")),
+                    make.Select(make.Ident(vdecl.name),
+                            names.fromString("length")));
+            JCUnary u = make.Unary(PREINC, make.Ident(names.fromString("index$")));
+            JCExpressionStatement stmt =
+                    make.Exec(u);
+            
+            String prefix = vdecl.name.toString()+"[";
+        	String postfix = "]"+":"+((JCCapsuleDecl)c.tree).parentCapsule.name.toString();
+        	JCBinary rhs = make.Binary(Tag.PLUS, 
+        			make.Binary(Tag.PLUS, 
+        					make.Literal(TypeTags.CLASS, prefix), make.Ident(names.fromString("index$"))),
+        			make.Literal(TypeTags.CLASS, postfix));
+        	ListBuffer<JCExpression> exprs = new ListBuffer<JCExpression>();
+        	exprs.add(make.Ident(names.fromString("thName$")));
+        	lbody.add(make.VarDef(make.Modifiers(0), 
+        			names.fromString("thName$"), 
+        			make.Ident(names.fromString("String")), 
+        			rhs));
+        	lbody.add(make
+					.Exec(make.Apply(
+							List.<JCExpression> nil(),
+							make.Select(
+									make.TypeCast(
+											make.Ident(c.type.tsym),
+											make.Indexed(make.Ident(vdecl.name), make.Ident(names.fromString("index$")))),
+									names.fromString("setName")),
+									exprs.toList())));
+            JCForLoop thNameLoop =
+                    make.ForLoop(List.<JCStatement>of(ac),
+                    		condition,
+                            List.of(stmt),
+                            make.Block(0, lbody.toList()));
+            assigns.append(thNameLoop);
+        }
 
+        JCVariableDecl arraycache2 = make.VarDef(make.Modifiers(0),
+                names.fromString("index$"),
+                make.TypeIdent(INT),
+                make.Literal(0));
+        JCBinary cond2 = make.Binary(LT, make.Ident(names.fromString("index$")),
+                make.Select(make.Ident(vdecl.name),
+                        names.fromString("length")));
+        JCUnary unary2 = make.Unary(PREINC, make.Ident(names.fromString("index$")));
+        JCExpressionStatement step2 =
+                make.Exec(unary2);
+        ListBuffer<JCStatement> loopBody2 = new ListBuffer<JCStatement>();
+        loopBody2.add(make.Exec(make.Apply(List.<JCExpression>nil(),
+                make.Select(make.Indexed(make.Ident(vdecl.name), make.Ident(names.fromString("index$"))), names.panini.Start),
+                List.<JCExpression>nil())));
+        JCForLoop floop2 =
+                make.ForLoop(List.<JCStatement>of(arraycache2),
+                        cond2,
+                        List.of(step2),
+                        make.Block(0, loopBody2.toList()));
+        starts.prepend(floop2);
+        
         final boolean capTypeDefinedRun = c.capsule_info.definedRun;
         for(int j = mat.size-1; j>=0;j--){
-            starts.prepend(make.Exec(make.Apply(List.<JCExpression>nil(),
-                    make.Select(make.Indexed(make.Ident(vdecl.name), make.Literal(j)), names.panini.Start),
-                    List.<JCExpression>nil())));
-
-            // TODO: assigning name to thread
-            if(initName.contains("$thread")) {
-            	String name = vdecl.name.toString()+"["+j+"]"+":"+((JCCapsuleDecl)c.tree).parentCapsule.name.toString();
-            	JCLiteral sName = make.Literal(TypeTags.CLASS, name);
-            	ListBuffer<JCExpression> exprs = new ListBuffer<JCExpression>();
-            	exprs.add(sName);
-            	JCStatement stmt = make
-    					.Exec(make.Apply(
-    							List.<JCExpression> nil(),
-    							make.Select(
-    									make.TypeCast(
-    											make.Ident(c.type.tsym),
-    											make.Indexed(make.Ident(vdecl.name), make.Literal(j))),
-    									names.fromString("setName")),
-    									exprs.toList()));
-            	assigns.append(stmt);
-            }
-            
             final Name connectCapIdx = names.fromString(vdecl.name.toString()+"["+j+"]");
             systemGraphBuilder.addConnection(sysGraph, names._this,
                     connectCapIdx, connectCapIdx);

@@ -146,6 +146,19 @@ public class TreeMaker implements JCTree.Factory {
 		return tree;
 	}
 
+	public JCWhen When(JCExpression cond, JCStatement statement) {
+		JCWhen tree = new JCWhen(cond, statement);
+		tree.pos = pos;
+		tree.mods = Modifiers(PRIVATE|FINAL);
+		tree.restype = TypeIdent(TypeTags.VOID);
+		tree.name = names.fromString(PaniniConstants.PANINI_WHEN);
+		if(statement.hasTag(Tag.BLOCK))
+			tree.body = (JCBlock)statement;
+		else
+			tree.body = Block(0, List.<JCStatement>of(statement));
+		return tree;
+	}
+
 	public JCProcInvocation ProcApply(List<JCExpression> typeargs,
 			JCExpression fn, List<JCExpression> args) {
 		JCProcInvocation tree = new JCProcInvocation(typeargs, fn, args);

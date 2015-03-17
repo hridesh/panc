@@ -80,6 +80,8 @@ public class CapsuleInternal extends Internal {
 				PaniniConstants.DUCK_INTERFACE_NAME,
 				apply(PaniniConstants.PANINI_GET_NEXT_DUCK)));
 
+		messageLoopBody.append(var(mods(0), PaniniConstants.PANINI_CHECK_WHEN,
+				booleant(), truev()));
 		ListBuffer<JCCase> cases = new ListBuffer<JCCase>();
 		int varIndex = 0;
 
@@ -166,6 +168,8 @@ public class CapsuleInternal extends Internal {
 				apply(PaniniConstants.PANINI_DUCK_TYPE,
 						PaniniConstants.PANINI_MESSAGE_ID), cases));
 
+		messageLoopBody.appendList(whenMethodCalls(tree));
+
 		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
 		blockStats = createCapsuleMemberDisconnects(tree.sym.capsule_info.connectedCapsules);
 
@@ -181,6 +185,20 @@ public class CapsuleInternal extends Internal {
 								body(messageLoopBody))), List.<JCCatch> nil(),
 						body(blockStats)));
 		return b;
+	}
+	
+	private ListBuffer<JCStatement> whenMethodCalls(JCCapsuleDecl tree) {
+		ListBuffer<JCStatement> statements = new ListBuffer<JCStatement>();
+		int count = 0;
+		for (JCExpression exp : tree.whenConditions) {
+			statements.add(make.If(exp, es(apply(PaniniConstants.PANINI_WHEN
+					+ "$" + count)), null));
+			count++;
+		}
+		ListBuffer<JCStatement> stat = new ListBuffer<JCStatement>();
+		stat.add(make.If(id(PaniniConstants.PANINI_CHECK_WHEN),
+				body(statements), null));
+		return stat;
 	}
 
 	private ListBuffer<JCStatement> createCapsuleMemberDisconnects(
@@ -371,13 +389,15 @@ public class CapsuleInternal extends Internal {
 								.Apply(List.<JCExpression> nil(),
 										id(PaniniConstants.PANINI_PUSH),
 										List.<JCExpression> of(id(PaniniConstants.PANINI_DUCK_TYPE)))),
-								break_())));
+								es(assign(PaniniConstants.PANINI_CHECK_WHEN,
+										falsev())), break_())));
 		return shutDownBody;
 	}
 
 	private ListBuffer<JCStatement> createTerminationLogic() {
 		ListBuffer<JCStatement> exitBody = new ListBuffer<JCStatement>();
 		exitBody.append(es(assign(PaniniConstants.PANINI_TERMINATE, truev())));
+		exitBody.append(es(assign(PaniniConstants.PANINI_CHECK_WHEN, falsev())));
 		exitBody.append(break_());
 		return exitBody;
 	}

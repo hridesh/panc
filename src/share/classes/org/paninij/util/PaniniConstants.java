@@ -61,6 +61,8 @@ public class PaniniConstants {
 	public final static String PANINI_JOIN = "join";
 	public final static String PANINI_INIT = "panini$init";
 	public final static String PANINI_CAPSULE_INIT = "panini$capsule$init";
+	public final static String PANINI_WHEN = "panini$when";
+	public final static String PANINI_CHECK_WHEN = "panini$check$when";
 	public final static String PANINI_ORIGINAL_METHOD_SUFFIX = "$Original";
 
 	public final static String PANINI_DUCK_HASHCODE = "hashCode";
