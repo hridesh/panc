@@ -704,6 +704,12 @@ public class Attr extends JCTree.Visitor {
         } else if (checkExtensible &&
                    classExpected &&
                    (t.tsym.flags() & INTERFACE) != 0) {
+        	// Panini code
+			if (t.tsym.isCapsule()) {
+				chk.checkNonCyclic(tree.pos(), t);
+				return t;
+			}
+        	// end Panini code
                 log.error(tree.pos(), "no.intf.expected.here");
             return types.createErrorType(t);
         }
@@ -1304,12 +1310,19 @@ public class Attr extends JCTree.Visitor {
             chk.setLint(prevLint);
         }
         // Panini code
-        if( (tree.sym.owner.flags_field & SYNTHETIC) == 0 //Ignore assigns in generated blocks.
-                && env.enclClass.sym.isCapsule() && tree.init!=null && tree.init.type!=null){
-            if(syms.capsules.containsKey(names.fromString(tree.init.type.toString()))) {
-                log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
-            }
-        }
+		if (!tree.name.toString().equals("panini$superCapsule")
+				&& (tree.sym.owner.flags_field & SYNTHETIC) == 0 // Ignore
+																	// assigns
+																	// in
+																	// generated
+																	// blocks.
+				&& env.enclClass.sym.isCapsule() && tree.init != null
+				&& tree.init.type != null) {
+			if (syms.capsules.containsKey(names.fromString(tree.init.type
+					.toString()))) {
+				log.error(tree.pos(), "capsule.cannot.be.stored.in.local");
+			}
+		}
         //end Panini code
     }
 

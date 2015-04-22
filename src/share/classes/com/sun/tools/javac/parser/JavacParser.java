@@ -2820,10 +2820,11 @@ public class JavacParser implements Parser {
     	accept(IDENTIFIER);
     	int pos = token.pos;
     	Name name = ident();
+    	JCExpression extending = null;
     	if(token.kind == EXTENDS){
-    		log.error(token.pos, "capsule.extend.error");
+//    		log.error(token.pos, "capsule.extend.error");
     		nextToken();
-    		parseType();
+    		extending = parseType();
     	}
     	List<JCVariableDecl> params; 
     	if(token.kind == LPAREN)
@@ -2837,7 +2838,11 @@ public class JavacParser implements Parser {
     	}
     	initializerDeclared = false;
     	List<JCTree> defs = capsuleBody(name);
-    	JCCapsuleDecl result = toP(F.at(pos).CapsuleDef(mod, name, params, implementing, defs));
+    	if(extending!=null)
+    		implementing = List.<JCExpression>of(extending);
+    	JCCapsuleDecl result = toP(F.at(pos).CapsuleDef(mod, name, params, null, implementing, defs));
+    	if(extending!=null)
+    		result.needsDelegation = true;
     	attach(result, dc);
     	return result;
     }
@@ -2978,6 +2983,7 @@ public class JavacParser implements Parser {
 	accept(IDENTIFIER);
 	int pos = token.pos;
 	Name name = ident();
+	JCExpression extending = null;
 	if(token.kind == EXTENDS){
 	    log.error(token.pos, "capsule.extend.error");
 	    nextToken();
@@ -2991,7 +2997,7 @@ public class JavacParser implements Parser {
 	List<JCExpression> implementing = List.nil();
 	List<JCTree> defs = classOrInterfaceBody(name, true);
 	JCCapsuleDecl result = 
-		toP(F.at(pos).CapsuleDef(mod, name, params, implementing, defs));
+		toP(F.at(pos).CapsuleDef(mod, name, params, extending, implementing, defs));
 	attach(result, dc);
 	return result;
     }

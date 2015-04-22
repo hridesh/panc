@@ -963,6 +963,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		public JCMethodDecl computeMethod;
 		public JCCapsuleDecl parentCapsule;
 		public boolean needsDefaultRun;
+		public boolean needsDelegation;
+		public List<JCMethodDecl> delegationMethods;
 		/**
 		 * Whether or not the capsule defined a run method.
 		 * true if the compiler generated the run method -- e.g. for
@@ -995,11 +997,12 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 		public List<JCExpression> whenConditions = List.<JCExpression>nil();
 
 		public JCCapsuleDecl(JCModifiers mods, Name name,
-				List<JCVariableDecl> params, List<JCExpression> implementing,
+				List<JCVariableDecl> params, JCExpression extending, List<JCExpression> implementing,
 				List<JCTree> defs) {
-			super(mods, name, List.<JCTypeParameter> nil(), null, implementing, defs,
+			super(mods, name, List.<JCTypeParameter> nil(), extending, implementing, defs,
 					null);
 			//Append the capsule flag.
+			this.extending = extending;
 			this.mods.flags |= Flags.CAPSULE;
 			this.name = name;
 			this.params = params;
@@ -1011,6 +1014,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition
 			this.needsDefaultRun = false;
 			this.hasSynthRunMethod = false;
 			this.lambdaExpressionCounts = 0;
+			this.delegationMethods = List.<JCMethodDecl> nil();
 		}
 
 		public Kind getKind() {

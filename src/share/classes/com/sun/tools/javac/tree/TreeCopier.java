@@ -541,6 +541,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 		return M.at(t.pos).CapsuleDef(t.getModifiers(),
 				t.getName(), 
 				t.getParameters(), 
+				copy(t.extending, p),
 				t.getImplementsClause(),
 				t.getMembers());
 	}

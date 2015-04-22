@@ -5,6 +5,6 @@ ASTs in the compiler. Generally these tests will make use of the
 This directory is intended to serve as a 'source' directory for IDEs, such as
 eclipse, and only contain valid java code.
 
-Files with an '@test' tag should be on thes same level as this README file.
+Files with an '@test' tag should be on the same level as this README file.
 Placing all the 'tests' in the default package/root of this source directory
 simplifies getting the build path set correctly for jtreg.

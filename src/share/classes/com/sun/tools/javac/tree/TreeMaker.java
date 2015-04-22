@@ -283,9 +283,9 @@ public class TreeMaker implements JCTree.Factory {
     }
 
 	public JCCapsuleDecl CapsuleDef(JCModifiers mods, Name name,
-			List<JCVariableDecl> params, List<JCExpression> implementing,
+			List<JCVariableDecl> params, JCExpression extending, List<JCExpression> implementing,
 			List<JCTree> defs) {
-		JCCapsuleDecl tree = new JCCapsuleDecl(mods, name, params,
+		JCCapsuleDecl tree = new JCCapsuleDecl(mods, name, params, extending, 
 				implementing, defs);
 		tree.pos = pos;
 		return tree;

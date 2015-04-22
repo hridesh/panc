@@ -64,6 +64,7 @@ public class PaniniConstants {
 	public final static String PANINI_WHEN = "panini$when";
 	public final static String PANINI_CHECK_WHEN = "panini$check$when";
 	public final static String PANINI_ORIGINAL_METHOD_SUFFIX = "$Original";
+	public final static String PANINI_SUPERCAPSULE = "panini$superCapsule";
 
 	public final static String PANINI_DUCK_HASHCODE = "hashCode";
 	public final static String PANINI_DUCK_EQUALS = "equals";

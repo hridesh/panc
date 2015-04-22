@@ -28,6 +28,7 @@ import org.paninij.effects.LoopSynchronize.CollectedCall;
 import org.paninij.path.*;
 
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
 
@@ -60,14 +61,14 @@ public class EffectIntra {
 	}
 
 	private final void flowThrough(JCTree tree, AliasingGraph aliasing,
-							   EffectSet inValue, EffectSet out) {
+							   EffectSet inValue, EffectSet out, MethodSymbol sym) {
 		out.init(inValue);
 
 		// if (out.isBottom) { return; }
 
 		if (tree instanceof JCMethodInvocation) { /////////// Calls
 			inter.intraProcessMethodCall((JCMethodInvocation)tree, aliasing,
-					out, this);
+					out, sym, this);
 		} else if (tree instanceof JCAssign) { // lhs =
 			abstractCommandAssign(tree, ((JCAssign)tree).lhs, aliasing, out);
 		} else if (tree instanceof JCAssignOp) { // lhs X=
@@ -115,8 +116,8 @@ public class EffectIntra {
 				tree instanceof JCAssert || tree instanceof JCBlock ||
 				tree instanceof JCBreak || tree instanceof JCCase ||
 				tree instanceof JCClassDecl || tree instanceof JCContinue ||
-				tree instanceof JCDoWhileLoop || tree instanceof JCForLoop ||
-				tree instanceof JCEnhancedForLoop || tree instanceof JCIf ||
+				tree instanceof JCDoWhileLoop || tree instanceof JCIf||
+				tree instanceof JCEnhancedForLoop ||
 				tree instanceof JCExpressionStatement ||
 				tree instanceof JCLabeledStatement || tree instanceof JCSkip || 
 				tree instanceof JCSwitch || tree instanceof JCSynchronized ||
@@ -126,6 +127,7 @@ public class EffectIntra {
 		} else if (tree instanceof JCCompilationUnit || tree instanceof JCImport
 				|| tree instanceof JCMethodDecl || tree instanceof JCErroneous
 				|| tree instanceof LetExpr) {
+		} else if (tree instanceof JCForLoop){
 		} else throw new Error("JCTree match faliure " + tree);
 	}
 
@@ -233,7 +235,7 @@ public class EffectIntra {
 		}
 	}
 
-	public EffectSet doAnalysis(List<JCTree> endNodes) {
+	public EffectSet doAnalysis(List<JCTree> endNodes, MethodSymbol sym) {
 		JCTree head = order.get(0);
 		TreeSet<JCTree> changedUnits = AnalysisUtil.constructWorklist(order);
 
@@ -316,7 +318,7 @@ public class EffectIntra {
 			// Compute afterFlow and store it.
 			EffectSet afterFlow = effectAfterFlow.get(s);
 
-			flowThrough(s, aliasing.get(s), beforeFlow, afterFlow);
+			flowThrough(s, aliasing.get(s), beforeFlow, afterFlow, sym);
 
 			for (JCTree forloop : loop_call.keySet()) {
 				JCForLoop jcf = (JCForLoop)forloop;

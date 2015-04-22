@@ -291,7 +291,6 @@ public class EffectInter {
 					DiagnosticSource ds =
 						new DiagnosticSource(cap.sourcefile, null);
 					int pos = tree.getPreferredPosition();
-
 					return new CapsuleEffect(cap, caps, (MethodSymbol)jcf.sym,
 							pos, ds.getLineNumber(pos), // do not expend tab
 							ds.getColumnNumber(pos, false),
@@ -471,7 +470,7 @@ public class EffectInter {
 	}
 
 	public final void intraProcessMethodCall(JCMethodInvocation tree,
-			AliasingGraph ag, EffectSet rs, EffectIntra intra) {
+			AliasingGraph ag, EffectSet rs, MethodSymbol sym, EffectIntra intra) {
 		JCExpression meth = tree.meth;
 		meth = AnalysisUtil.getEssentialExpr(meth);
 		if (meth instanceof JCIdent) {
@@ -530,6 +529,7 @@ public class EffectInter {
 							ds.getColumnNumber(pos, false),
 							curr_cap.sourcefile.toString(), tree,
 							curr_cap.sourcefile);
+
 
 					// pair of calls that need to be tested
 					for (CallEffect ce1 : rs.alive) {
@@ -726,7 +726,7 @@ public class EffectInter {
 				new EffectIntra(this, curr_meth, jcmd.order, beforeFlow);
 			java.util.List<JCTree> ends = new ArrayList<JCTree>(body.endNodes);
 			ends.addAll(body.exitNodes);
-			EffectSet newResult = fcIntra.doAnalysis(ends);
+			EffectSet newResult = fcIntra.doAnalysis(ends, jcmd.sym);
 			newResult.compress();
 
 			// If the effect does not change, no need to put the methods that

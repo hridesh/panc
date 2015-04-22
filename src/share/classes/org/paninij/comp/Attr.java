@@ -37,9 +37,12 @@ import java.util.Set;
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.CapsuleProcedure;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Scope.Entry;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Scope;
+import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.code.Type.MethodType;
@@ -51,12 +54,15 @@ import com.sun.tools.javac.comp.Resolve;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleDecl;
 import com.sun.tools.javac.tree.JCTree.JCCapsuleLambda;
+import com.sun.tools.javac.tree.JCTree.JCCatch;
+import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCLambda;
 import com.sun.tools.javac.tree.JCTree.JCStateDecl;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.JCDesignBlock;
 import com.sun.tools.javac.tree.JCTree.Tag;
+import com.sun.tools.javac.tree.TreeCopier;
 import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.TreeMaker;
@@ -71,6 +77,7 @@ import org.paninij.analysis.ASTCFGBuilder;
 import org.paninij.consistency.ConsistencyUtil;
 import org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
 import org.paninij.consistency.SeqConstCheckAlgorithm;
+import org.paninij.session.SessionAnalysis;
 import org.paninij.systemgraph.SystemGraph;
 import org.paninij.systemgraph.SystemGraphBuilder;
 import org.paninij.util.PaniniConstants;
@@ -457,8 +464,155 @@ public final class Attr extends CapsuleInternal {
 				Attribute.Compound buf = annotate.enterAnnotation(
 						tree.mods.annotations.last(), Type.noType, env);
 				ms.attributes_field = ms.attributes_field.append(buf);
+//				System.out.println(buf);
+			}
+			if((tree.sym.toString().contains("$Original")||(tree.sym.flags_field&Flags.PRIVATE) !=0)&&((owner.flags_field&Flags.ACTIVE)!=0)){
+				SessionAnalysis s = new SessionAnalysis(tree);
+				tree.accept(s);
+//				System.out.println(tree.sym.owner + " " + tree.sym);
+//				System.out.println(tree.sym.sessionType);
 			}
 		}
+	}
+	
+	private final void addDelegationMethod(final JCCapsuleDecl tree, 
+			final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env,
+			Resolve rs){
+		JCExpression extending = ((JCCapsuleDecl) tree.sym.capsule_info.parentCapsule.tree).implementing.head;
+		int methodIndex = tree.publicMethods.size();
+		if(((JCCapsuleDecl)tree.sym.capsule_info.parentCapsule.tree).delegationMethods.isEmpty())
+			return;
+		
+		JCVariableDecl superCapsule;
+		superCapsule = var(
+				mods(Flags.PRIVATE | FINAL),
+				PaniniConstants.PANINI_SUPERCAPSULE,
+				extending,
+				newt(extending+"$thread"));
+		tree.defs = tree.defs.prepend(superCapsule);
+		memberEnter.memberEnter(superCapsule, env);
+		TreeCopier<Void> tc = new TreeCopier<Void>(make);
+		for(JCMethodDecl m : ((JCCapsuleDecl)tree.sym.capsule_info.parentCapsule.tree).delegationMethods){
+			MethodSymbol ms = m.sym;
+			JCBlock body = null;
+			ListBuffer<JCExpression> args = new ListBuffer<JCExpression>();
+			for(VarSymbol v : ms.params){
+				args.add(id(v.name));
+			}
+			ListBuffer<JCVariableDecl> params = new ListBuffer<JCVariableDecl>();
+			for(JCVariableDecl v : m.params){
+				params.add(tc.copy(v));
+			}
+			if (m.name.toString().contains(
+					PaniniConstants.PANINI_ORIGINAL_METHOD_SUFFIX)) {
+				if (ms.getReturnType().toString().equals("void"))
+					body = body(es(apply(PaniniConstants.PANINI_SUPERCAPSULE,
+							m.name.toString(), args)));
+				else
+					body = body(returnt(apply(PaniniConstants.PANINI_SUPERCAPSULE,
+							m.name.toString(), args)));
+			} else {
+				String constantName = PaniniConstants.PANINI_METHOD_CONST
+						+ m.name;
+				if (m.params.nonEmpty())
+					for (JCVariableDecl param : m.params) {
+						constantName = constantName + "$" + param.vartype;
+					}
+				
+				JCVariableDecl methodConstant;
+				superCapsule = var(
+						mods(Flags.PRIVATE | Flags.STATIC| FINAL),
+						constantName,
+						intt(),
+						intlit(methodIndex++));
+				tree.defs = tree.defs.prepend(superCapsule);
+				memberEnter.memberEnter(superCapsule, env);
+				
+				ListBuffer<JCStatement> copyBody = new ListBuffer<JCStatement>();
+				copyBody.append(make.Exec(make.Apply(List.<JCExpression> nil(),
+						make.Ident(names.fromString(PaniniConstants.PANINI_PUSH)),
+						List.<JCExpression> of(make
+								.Ident(names.panini.PaniniDuckFuture)))));
+				JCExpression duckType = enter.getDuckType(tree, m);
+				args.prepend(make.Ident(names.fromString(constantName)));
+				copyBody.prepend(make.Try(
+						make.Block(
+								0,
+								List.<JCStatement> of(make.Exec(make.Assign(
+										id(names.panini.PaniniDuckFuture),
+										make.NewClass(
+												null,
+												List.<JCExpression> nil(),
+												duckType,
+												args.toList(),
+												null))))),
+						List.<JCCatch> of(make.Catch(
+								make.VarDef(make.Modifiers(0),
+										names.fromString("e"),
+										make.Ident(names.fromString("Exception")),
+										null),
+								make.Block(
+										0,
+										List.<JCStatement> of(make.Throw(make.NewClass(
+												null,
+												List.<JCExpression> nil(),
+												make.Ident(names
+														.fromString("DuckException")),
+												List.<JCExpression> of(make
+														.Ident(names
+																.fromString("e"))),
+												null)))))), null));
+				copyBody.prepend(make.VarDef(make.Modifiers(0),
+						names.panini.PaniniDuckFuture, duckType,
+						make.Literal(TypeTags.BOT, null)));
+				if (!m.restype.toString().equals("void"))
+					copyBody.append(enter.procedureReturnStatement(m));
+				body = body(copyBody);
+			}
+			if(!tree.name.toString().contains("$thread"))
+				body = body();
+			JCMethodDecl method = method(mods(ms.flags_field &= ~Flags.ABSTRACT), 
+					m.name, tc.copy(m.restype), params,body);
+			if(!method.name.toString().contains(PaniniConstants.PANINI_ORIGINAL_METHOD_SUFFIX))
+				tree.publicMethods = tree.publicMethods.append(method);
+			tree.defs = tree.defs.append(method);
+			memberEnter.memberEnter(method, env);
+			tree.sym.members().enter(method.sym);
+		}
+	}
+	
+	private final void inheritanceDelegation(final JCCapsuleDecl tree,
+			final com.sun.tools.javac.comp.Attr attr, Env<AttrContext> env,
+			Resolve rs){
+		JCExpression extending = tree.implementing.head;
+		Symbol s = rs.findType(env, names.fromString(extending.toString()));
+		if (tree.sym.isInterface()) {
+			Entry element = s.members().elems;
+			boolean lastOneIsOrg = false;
+			while (element != null) {
+				if (element.sym.toString().contains("$Original")) {
+					JCMethodDecl method = make.MethodDef(
+							(MethodSymbol) element.sym, null);
+					tree.defs = tree.defs.append(method);
+					tree.delegationMethods = tree.delegationMethods.append(method);
+					lastOneIsOrg = true;
+					memberEnter.memberEnter(method, env);
+					tree.sym.members().enter(method.sym);
+				} else if (lastOneIsOrg) {
+					JCMethodDecl method = make.MethodDef(
+							(MethodSymbol) element.sym, null);
+					tree.defs = tree.defs.append(method);
+					tree.delegationMethods = tree.delegationMethods.append(method);
+					lastOneIsOrg = false;
+					memberEnter.memberEnter(method, env);
+					tree.sym.members().enter(method.sym);
+				}
+				element = element.sibling;
+			}
+		} else {
+			addDelegationMethod(tree, attr, env, rs);
+		}
+//		tree.implementing = tree.implementing.append(tree.extending);
 	}
 
 	public final void visitCapsuleDef(final JCCapsuleDecl tree,
@@ -466,7 +620,9 @@ public final class Attr extends CapsuleInternal {
 			Resolve rs) {
 		tree.sym.capsule_info.connectedCapsules = tree.sym.capsule_info.connectedCapsules
 				.appendList(tree.params);
-
+		if(tree.implementing.size()>1&&tree.needsDelegation||(!tree.sym.isInterface()&&tree.parentCapsule.delegationMethods.nonEmpty())){
+			inheritanceDelegation(tree, attr, env, rs);
+		}
 		if (tree.needsDefaultRun) {
 			List<JCClassDecl> wrapperClasses = generateClassWrappers(tree, env);
 			enter.classEnter(wrapperClasses, env.outer);
@@ -592,10 +748,9 @@ public final class Attr extends CapsuleInternal {
 					vdecl.mods.flags |= FINAL;
 			}
 		}
-
 		pchk.checkStateInit(tree.sym, env);
 	}
-
+	
 	private ListBuffer<JCStatement> createCapsuleMemberDisconnects(
 			List<JCVariableDecl> params) {
 		ListBuffer<JCStatement> blockStats = new ListBuffer<JCStatement>();
@@ -751,8 +906,7 @@ public final class Attr extends CapsuleInternal {
 
 		// replace the systemDef/wiring block with the new body.
 		tree.body.stats = mainStmts;
-		// System.out.println(tree);
-		// System.out.println(tree.sysGraph);
+//		 System.out.println(tree.sysGraph);
 	}
 
 	public final void postVisitSystemDefs(Env<AttrContext> env) {

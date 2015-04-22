@@ -35,7 +35,6 @@ public class LoopCapCall extends TreeScanner {
 
 	public void visitForLoop(JCForLoop that) {
 		super.visitForLoop(that);
-
 		LoopTarget lt = new LoopTarget();
 		that.body.accept(lt);
 

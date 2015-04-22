@@ -449,8 +449,9 @@ public class Enter extends JCTree.Visitor {
 						FINAL, annotationProcessor.createCapsuleAnnotation(
 								Flags.ACTIVE, capsule)), names
 						.fromString(capsule.name + "$thread"), tc
-						.copy(capsule.params), List.<JCExpression> of(make
-						.Ident(capsule.name)), tc.copy(capsule.defs));
+						.copy(capsule.params), tc.copy(capsule.extending), List
+						.<JCExpression> of(make.Ident(capsule.name)), tc
+						.copy(capsule.defs));
 				copyActive.accessMods = capsule.mods.flags;
 				JCCapsuleDecl copyCapsule = make
 						.CapsuleDef(
@@ -459,7 +460,8 @@ public class Enter extends JCTree.Visitor {
 												Flags.INTERFACE, capsule)),
 								capsule.name,
 								tc.copy(capsule.params),
-								tc.copy(capsule.implementing)
+								tc.copy(capsule.extending),
+								capsule.implementing
 										.append(make.Ident(names
 												.fromString(PaniniConstants.PANINI_QUEUE))),
 								interfaceBody.toList());
@@ -481,22 +483,25 @@ public class Enter extends JCTree.Visitor {
 							FINAL, annotationProcessor.createCapsuleAnnotation(
 									Flags.TASK, capsule)), names
 							.fromString(capsule.name + "$task"), tc
-							.copy(capsule.params), List.<JCExpression> of(make
-							.Ident(capsule.name)), tc.copy(capsule.defs));
+							.copy(capsule.params), tc.copy(capsule.extending),
+							List.<JCExpression> of(make.Ident(capsule.name)),
+							tc.copy(capsule.defs));
 					copyTask.accessMods = capsule.mods.flags;
 					JCCapsuleDecl copySerial = make.CapsuleDef(make.Modifiers(
 							FINAL, annotationProcessor.createCapsuleAnnotation(
 									Flags.SERIAL, capsule)), names
 							.fromString(capsule.name + "$serial"), tc
-							.copy(capsule.params), List.<JCExpression> of(make
-							.Ident(capsule.name)), tc.copy(capsule.defs));
+							.copy(capsule.params), tc.copy(capsule.extending),
+							List.<JCExpression> of(make.Ident(capsule.name)),
+							tc.copy(capsule.defs));
 					copySerial.accessMods = capsule.mods.flags;
 					JCCapsuleDecl copyMonitor = make.CapsuleDef(make.Modifiers(
 							FINAL, annotationProcessor.createCapsuleAnnotation(
 									Flags.MONITOR, capsule)), names
 							.fromString(capsule.name + "$monitor"), tc
-							.copy(capsule.params), List.<JCExpression> of(make
-							.Ident(capsule.name)), tc.copy(capsule.defs));
+							.copy(capsule.params), tc.copy(capsule.extending),
+							List.<JCExpression> of(make.Ident(capsule.name)),
+							tc.copy(capsule.defs));
 					copyMonitor.accessMods = capsule.mods.flags;
 					copiedDefs.add(copyTask);
 					copyTask.parentCapsule = copyCapsule;
@@ -1173,7 +1178,7 @@ public class Enter extends JCTree.Visitor {
 		return c.flags_field;
     }
     
-    private JCStatement procedureReturnStatement(final JCMethodDecl mdecl){
+    public JCStatement procedureReturnStatement(final JCMethodDecl mdecl){
 		String returnType = mdecl.restype.toString();
 		JCStatement returnStat;
 		Name duckFuture = names.panini.PaniniDuckFuture;
@@ -1233,7 +1238,7 @@ public class Enter extends JCTree.Visitor {
 		return returnStat;
     }
     
-    private JCExpression getDuckType(final JCCapsuleDecl tree, final JCMethodDecl mdecl){
+    public JCExpression getDuckType(final JCCapsuleDecl tree, final JCMethodDecl mdecl){
     	JCExpression duck;
     	String restype = mdecl.restype.toString();
     	if(restype.contains("[")&&restype.contains("]"))
