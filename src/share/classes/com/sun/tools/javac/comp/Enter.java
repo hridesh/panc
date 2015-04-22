@@ -465,6 +465,8 @@ public class Enter extends JCTree.Visitor {
 										.append(make.Ident(names
 												.fromString(PaniniConstants.PANINI_QUEUE))),
 								interfaceBody.toList());
+				if(capsule.needsDelegation)
+					copyCapsule.needsDelegation = true;
 				// Record the init methods and state decls that still need
 				// initialized.
 				copyCapsule.initMethods = initMethods.toList();

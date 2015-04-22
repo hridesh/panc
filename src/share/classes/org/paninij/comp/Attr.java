@@ -620,7 +620,7 @@ public final class Attr extends CapsuleInternal {
 			Resolve rs) {
 		tree.sym.capsule_info.connectedCapsules = tree.sym.capsule_info.connectedCapsules
 				.appendList(tree.params);
-		if(tree.implementing.size()>1&&tree.needsDelegation||(!tree.sym.isInterface()&&tree.parentCapsule.delegationMethods.nonEmpty())){
+		if((tree.implementing.size()>1&&tree.needsDelegation)||(!tree.sym.isInterface()&&tree.parentCapsule.delegationMethods.nonEmpty())){
 			inheritanceDelegation(tree, attr, env, rs);
 		}
 		if (tree.needsDefaultRun) {
