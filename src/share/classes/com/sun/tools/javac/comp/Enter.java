@@ -396,18 +396,6 @@ public class Enter extends JCTree.Visitor {
 									tc.copy(mdecl.params),
 									tc.copy(mdecl.thrown), null,
 									tc.copy(mdecl.defaultValue)));
-							if (!hasRun)
-								interfaceBody
-										.add(make.MethodDef(
-												tc.copy(mdecl.mods),
-												mdecl.name.append(names
-														.fromString(PaniniConstants.PANINI_ORIGINAL_METHOD_SUFFIX)),
-												tc.copy(mdecl.restype), tc
-														.copy(mdecl.typarams),
-												tc.copy(mdecl.params), tc
-														.copy(mdecl.thrown),
-												null,
-												tc.copy(mdecl.defaultValue)));
 						}
 						if (mdecl.name.equals(names.panini.PaniniCapsuleInit)) {
 							initMethods.add(mdecl);
@@ -433,18 +421,6 @@ public class Enter extends JCTree.Visitor {
 				excp = make.Select(excp, names.fromString("lang"));
 				excp = make.Select(excp,
 						names.fromString("InterruptedException"));
-				interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC),
-						names.fromString(PaniniConstants.PANINI_START),
-						make.TypeIdent(TypeTags.VOID),
-						List.<JCTypeParameter> nil(),
-						List.<JCVariableDecl> nil(), List.<JCExpression> nil(),
-						null, null));
-				interfaceBody.add(make.MethodDef(make.Modifiers(PUBLIC),
-						names.fromString(PaniniConstants.PANINI_JOIN),
-						make.TypeIdent(TypeTags.VOID),
-						List.<JCTypeParameter> nil(),
-						List.<JCVariableDecl> nil(),
-						List.<JCExpression> of(excp), null, null));
 				JCCapsuleDecl copyActive = make.CapsuleDef(make.Modifiers(
 						FINAL, annotationProcessor.createCapsuleAnnotation(
 								Flags.ACTIVE, capsule)), names
