@@ -19,8 +19,6 @@
 
 package org.paninij.runtime;
 
-import java.util.concurrent.locks.ReentrantLock;
-import com.sun.tools.javac.util.*;
 import org.paninij.runtime.types.Panini$Duck;
 
 public abstract class PaniniCapsuleThread extends Thread implements
@@ -29,7 +27,6 @@ public abstract class PaniniCapsuleThread extends Thread implements
 	protected volatile int panini$capsule$head, panini$capsule$tail,
 			panini$capsule$size;
 	public volatile int panini$ref$count;
-	protected final ReentrantLock queueLock = new ReentrantLock();
 	public static final int PANINI$SHUTDOWN = -1;
 	public static final int PANINI$EXIT = -2;
 

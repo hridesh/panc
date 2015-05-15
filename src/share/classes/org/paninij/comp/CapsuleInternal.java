@@ -389,8 +389,7 @@ public class CapsuleInternal extends Internal {
 								.Apply(List.<JCExpression> nil(),
 										id(PaniniConstants.PANINI_PUSH),
 										List.<JCExpression> of(id(PaniniConstants.PANINI_DUCK_TYPE)))),
-								es(assign(PaniniConstants.PANINI_CHECK_WHEN,
-										falsev())), break_())));
+								break_())));
 		return shutDownBody;
 	}
 
