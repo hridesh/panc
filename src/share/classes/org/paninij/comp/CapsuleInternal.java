@@ -198,6 +198,7 @@ public class CapsuleInternal extends Internal {
 		ListBuffer<JCStatement> stat = new ListBuffer<JCStatement>();
 		stat.add(make.If(id(PaniniConstants.PANINI_CHECK_WHEN),
 				body(statements), null));
+		stat.add(es(assign(PaniniConstants.PANINI_CHECK_WHEN, truev())));
 		return stat;
 	}
 
@@ -389,6 +390,7 @@ public class CapsuleInternal extends Internal {
 								.Apply(List.<JCExpression> nil(),
 										id(PaniniConstants.PANINI_PUSH),
 										List.<JCExpression> of(id(PaniniConstants.PANINI_DUCK_TYPE)))),
+										es(assign(PaniniConstants.PANINI_CHECK_WHEN, falsev())),
 								break_())));
 		return shutDownBody;
 	}
