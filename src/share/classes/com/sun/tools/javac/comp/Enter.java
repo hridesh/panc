@@ -396,6 +396,18 @@ public class Enter extends JCTree.Visitor {
 									tc.copy(mdecl.params),
 									tc.copy(mdecl.thrown), null,
 									tc.copy(mdecl.defaultValue)));
+							if (!hasRun)
+								interfaceBody
+										.add(make.MethodDef(
+												tc.copy(mdecl.mods),
+												mdecl.name.append(names
+														.fromString(PaniniConstants.PANINI_ORIGINAL_METHOD_SUFFIX)),
+												tc.copy(mdecl.restype), tc
+														.copy(mdecl.typarams),
+												tc.copy(mdecl.params), tc
+														.copy(mdecl.thrown),
+												null,
+												tc.copy(mdecl.defaultValue)));
 						}
 						if (mdecl.name.equals(names.panini.PaniniCapsuleInit)) {
 							initMethods.add(mdecl);
