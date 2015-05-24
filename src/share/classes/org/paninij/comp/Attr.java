@@ -77,7 +77,6 @@ import org.paninij.analysis.ASTCFGBuilder;
 import org.paninij.consistency.ConsistencyUtil;
 import org.paninij.consistency.ConsistencyUtil.SEQ_CONST_ALG;
 import org.paninij.consistency.SeqConstCheckAlgorithm;
-import org.paninij.session.SessionAnalysis;
 import org.paninij.systemgraph.SystemGraph;
 import org.paninij.systemgraph.SystemGraphBuilder;
 import org.paninij.util.PaniniConstants;
@@ -464,13 +463,6 @@ public final class Attr extends CapsuleInternal {
 				Attribute.Compound buf = annotate.enterAnnotation(
 						tree.mods.annotations.last(), Type.noType, env);
 				ms.attributes_field = ms.attributes_field.append(buf);
-//				System.out.println(buf);
-			}
-			if((tree.sym.toString().contains("$Original")||(tree.sym.flags_field&Flags.PRIVATE) !=0)&&((owner.flags_field&Flags.ACTIVE)!=0)){
-				SessionAnalysis s = new SessionAnalysis(tree);
-				tree.accept(s);
-//				System.out.println(tree.sym.owner + " " + tree.sym);
-//				System.out.println(tree.sym.sessionType);
 			}
 		}
 	}
