@@ -41,7 +41,8 @@ interface RouteCalc {
   void calculateRoute(Position dst);
 }
 
-system NavSystem {
+capsule NavSystem {
+ design {
   ManeuverGen mg;
   FakeDataGenerator gen;
   RouteCalculator rc;
@@ -52,6 +53,7 @@ system NavSystem {
   rc(mg, gen);
   gps(mg, gen);
   ui(rc);
+ }
 }
 
 capsule ManeuverGen(UI ui) {
