@@ -18,5 +18,5 @@
  */
 
 capsule Greeter (Console c) {
-	void run(){ c.printGreeting(); }
+	void greet(){ c.printGreeting(); }
 }

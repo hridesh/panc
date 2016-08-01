@@ -17,7 +17,12 @@
  * Contributor(s): Hridesh Rajan, Eric Lin
  */
 
-system HelloWorld {
-	Console c; Greeter g;
-	g(c);
+capsule HelloWorld {
+ 	design {
+		Console c; Greeter g;
+		g(c);
+	}
+	void run() {
+	 	g.greet();
+	}
 }
