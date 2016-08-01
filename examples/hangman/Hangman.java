@@ -70,8 +70,23 @@ capsule Refresher(View view, Game game, int rate){
 	}
 }
 
-capsule Master(InputListener listen, Game game, Refresher refresh, View view){
-	
+capsule Master(){
+
+	design {
+        	InputListener listener;
+        	Refresher refresher;
+        	ScannerDevice in;
+        	TextView view;
+        	Timer timer;
+        	Game game;
+        	timer();
+        	game(timer);
+        	in(new Scanner(System.in));
+        	view(System.out);
+        	listener(in, game, view);
+        	refresher(view, game, 5000);
+	}
+
 	void run(){
 		game.startNewGame("hello", 30, 6);
 		view.display(game.copyState(), game.timeLeft().val());
@@ -87,8 +102,8 @@ capsule Master(InputListener listen, Game game, Refresher refresh, View view){
 		}
 		endgameMessage();
 		
-		refresh.kill();
-		listen.kill();
+		refresher.kill();
+		listener.kill();
 		game.kill();
 		view.message("That's all folks!");
 		
@@ -104,21 +119,4 @@ capsule Master(InputListener listen, Game game, Refresher refresh, View view){
 			view.message("YOU LOSE!");
 		}
 	}
-}
-
-system Hangman{
-	Master master;
-	InputListener listener;
-	Refresher refresher;
-	ScannerDevice in;
-	TextView out;
-	Timer timer;
-	Game game;
-	timer();
-	game(timer);
-	in(new Scanner(System.in));
-	out(System.out);
-	listener(in, game, out);
-	refresher(out, game, 5000);
-	master(listener, game, refresher, out);
 }
