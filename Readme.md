@@ -53,4 +53,18 @@ Find the line that contains “boot.java.home = /usr/lib/jvm/java-7-openjdk-i386
 
 Once you have it, using the terminal, navigate to make folder and use “ant” command to build Panini.
 
+### Conventions for Changes and Additions
+
+We follow two conventions for changing existing code of the Panini compiler and for adding new code to it.
+
+1. We make minimum changes to existing code to make periodic merge with main javac compiler (made available by Oracle) easier. For example, we do not change indentation of existing code (because that is an unnecessary change). Another example, we do not change names of existing classes, fields, methods unless that change is essential to implementing the new functionality.
+
+2. All changes in existing java files begin with a single-line comment “// Panini code” without the quotes, one space after “//” and end with “// end Panini code”, also without the quotes and one space after the “//”.
+
+IMPORTANT: Note a single space between '//' and 'Panini' and '//' and 'end'. It is essential to follow this convention to be able to find code changes.
+
+New files added purely for the purpose of implementing Panini's functionality do not have any such restriction, but they MUST include Panini’s license at the top. See the following file for an example.
+
+https://github.com/hridesh/panc/blob/master/src/share/classes/org/paninij/runtime/PaniniCapsule.java
+
 
