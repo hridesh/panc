@@ -32,8 +32,17 @@
  *  The Control capsule controls all other capsules in the KWIC system
  *  to achieve the desired functionality. 
 */
-capsule Control (LineStorage lines, Input input, CircularShifter shifter, 
-		Alphabetizer alphabetizer, Output output, String file){
+capsule Control (){
+	design {
+		LineStorage lines; LineStorage shifts;
+        	Input input; CircularShifter shifter;
+        	Alphabetizer alphabetizer; Output output; Control control;
+        	String file = "../shaks12.txt";
+        	alphabetizer(shifter);
+        	shifter(lines,shifts);
+        	input(lines);
+        	output(alphabetizer);
+	}
 
 /**
  * Parses the data, makes shifts and sorts them. At the end prints the
@@ -66,16 +75,4 @@ capsule Control (LineStorage lines, Input input, CircularShifter shifter,
     KWIC kwic = new KWIC();
     kwic.execute(args[0]);
   }
-}
-
-system KWIC {
-	LineStorage lines; LineStorage shifts; 
-	Input input; CircularShifter shifter; 
-	Alphabetizer alphabetizer; Output output; Control control;
-	String file = "../shaks12.txt";
-	alphabetizer(shifter);
-	shifter(lines,shifts);
-	input(lines);
-	output(alphabetizer);
-	control(lines,input,shifter,alphabetizer,output);
 }
